@@ -1,1 +1,4 @@
-java -cp libs/clojure-1.4.0.jar clojure.main -i main.clj
+cd C:\Juan\Dropbox\Facultad\Tesis\IDE\src
+java -cp libs/clojure-1.4.0.jar;. clojure.main -i main.clj
+
+cmd
