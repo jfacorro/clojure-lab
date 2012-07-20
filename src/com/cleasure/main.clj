@@ -1,4 +1,4 @@
-(ns com.cleajure.main
+(ns com.cleasure.main
 	(:import
 		[javax.swing JFrame JPanel JScrollPane JTextPane JTextField JButton JFileChooser UIManager]
 		[javax.swing.text StyleContext DefaultStyledDocument]
