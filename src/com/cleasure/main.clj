@@ -1,8 +1,9 @@
 (ns com.cleasure.main
 	(:import
-		[javax.swing JFrame JPanel JScrollPane JTextPane JTextField JButton JFileChooser UIManager]
+		[javax.swing JFrame JPanel JScrollPane JTextPane JTextArea JTextField JButton JFileChooser UIManager JSplitPane]
 		[javax.swing.text StyleContext DefaultStyledDocument]
 		[javax.swing.event DocumentListener]
+		[java.io OutputStream PrintStream File]
 		[java.awt BorderLayout FlowLayout Font]
 		[java.awt.event MouseAdapter KeyAdapter KeyEvent])
 	(:require 
@@ -13,6 +14,7 @@
 
 (def ^:dynamic *app-name* "Cleajure")
 (def ^:dynamic *default-font* (Font. "Consolas" Font/PLAIN 14))
+(def ^:dynamic *default-dir* (. (File. ".") getCanonicalPath))
 
 ; Set native look & feel instead of Swings default
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -40,13 +42,14 @@
 	(.replace str "\r" ""))
 
 (defn open-src [txt-code txt-path]
-	(let [	dialog	(JFileChooser.)
+	(let [	dialog	(JFileChooser. *default-dir*)
 			result	(. dialog showOpenDialog (. txt-code getParent))
 			file	(. dialog getSelectedFile)
 			path	(if file (. file getPath) nil)]
 		(when path
 			(. txt-path setText path)
-			(. txt-code setText (remove-cr (slurp path))))))
+			(. txt-code setText (remove-cr (slurp path)))
+			(hl/high-light txt-code))))
 
 (defn eval-src [txt-code]
 	(load-string (.getText txt-code)))
@@ -75,24 +78,24 @@
 			(proxy [KeyAdapter] []
 				(keyReleased [e] (when (check-key e key mask) (f)))))))
 
-(defn on-text-changed [cmpt f]
-	(let [doc (. cmpt getStyledDocument)]
-		(.addDocumentListener doc
-			(proxy [DocumentListener] []
-				(insertUpdate [e] (f))
-				(removeUpdate [e] (f))))))
+(defn set-log [txt]
+	(let [out (proxy [OutputStream] []
+			(write	([b] (.append txt (str (char b))))
+				([b off len] (.append txt (String. b off len)))))]
+		(System/setOut (PrintStream. out true))))
 
 (defn make-main [name]
 	(let 
 		[	main		(JFrame. name)
-			txt-code		(JTextPane. (DefaultStyledDocument.))
-			txt-path		(JTextField.)
+			txt-code	(JTextPane. (DefaultStyledDocument.))
+			pnl-code	(JPanel.)
+			txt-log		(JTextArea.)
+			txt-path	(JTextField.)
+			split		(JSplitPane.)
 			pnl-buttons	(JPanel.)
 			btn-save		(JButton. "Save")
 			btn-open		(JButton. "Open")
 			btn-eval		(JButton. "Eval")]
-		(.setFont txt-code *default-font*)
-		(.setEditable txt-path false)
 
 		; Add buttons click handlers
 		(on-click btn-open #(open-src txt-code txt-path))
@@ -111,17 +114,39 @@
 			KeyEvent/VK_ENTER
 			KeyEvent/CTRL_MASK)
 
+		; set-log
+		(set-log txt-log)
+		
+		; Set controls properties
+		(.setFont txt-code *default-font*)
+		(.setEditable txt-path false)
+		(. txt-log setEditable false)
+
 		; buttons panel
 		(doto pnl-buttons
 			(.setLayout (FlowLayout.))
 			(.add btn-save)
 			(.add btn-open)
 			(.add btn-eval))
+		
+		(doto pnl-code
+			(.setLayout (BorderLayout.))
+			(.add txt-code BorderLayout/CENTER))
+
+		(doto split
+			(.setOrientation JSplitPane/HORIZONTAL_SPLIT)
+			(.setLeftComponent (JScrollPane. pnl-code))
+			(.setRightComponent txt-log))
+
 		(doto main
+			(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
 			(.setSize 800 600)
 			(.add pnl-buttons BorderLayout/NORTH)
-			(.add (JScrollPane. txt-code) BorderLayout/CENTER)
+			(.add split BorderLayout/CENTER)
 			(.add txt-path BorderLayout/SOUTH)
-			(.show))))
+			(.setVisible true))
+
+		(doto split
+			(.setDividerLocation 0.8))))
 
 (def main (make-main *app-name*))
