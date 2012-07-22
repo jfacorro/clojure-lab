@@ -5,13 +5,15 @@
 			JTextField JButton JFileChooser UIManager JSplitPane 
 			SwingUtilities]
 		[javax.swing.text StyleContext DefaultStyledDocument]
+		[javax.swing.undo UndoManager]
 		[javax.swing.event DocumentListener]
 		[java.io OutputStream PrintStream File OutputStreamWriter]
 		[java.awt BorderLayout FlowLayout Font]
 		[java.awt.event MouseAdapter KeyAdapter KeyEvent])
 	(:require 
 		[clojure.reflect :as r]
-		[com.cleasure.ui.high-lighter :as hl])
+		[com.cleasure.ui.high-lighter :as hl]
+		[com.cleasure.ui.text.undo-redo :as undo])
 	(:use
 		[clojure.java.io]))
 
@@ -104,10 +106,12 @@
 (defn make-main [name]
 	(let 
 		[	main		(JFrame. name)
-			txt-code	(JTextPane. (DefaultStyledDocument.))
-			pnl-code	(JPanel.)
-			txt-path	(JTextField.)
-			txt-log	(JTextArea.)
+			doc		(DefaultStyledDocument.)
+			txt-code		(JTextPane. doc)
+			undo-mgr		(UndoManager.)
+			pnl-code		(JPanel.)
+			txt-path		(JTextField.)
+			txt-log		(JTextArea.)
 			split		(JSplitPane.)
 			pnl-buttons	(JPanel.)
 			btn-save		(JButton. "Save")
@@ -128,14 +132,19 @@
 		(on-keypress txt-code #(save-src txt-code txt-path) KeyEvent/VK_S KeyEvent/CTRL_MASK)
 		; Eval: CTRL + Enter
 		(on-keypress txt-code #(println (eval-code (.getSelectedText txt-code)))
-			KeyEvent/VK_ENTER
-			KeyEvent/CTRL_MASK)
+			KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
+		; Undo/redo
+		(on-keypress txt-code #(when (.canUndo undo-mgr) (. undo-mgr undo)) 
+			KeyEvent/VK_Z KeyEvent/CTRL_MASK)
+		(on-keypress txt-code #(when (.canRedo undo-mgr) (. undo-mgr redo))
+			KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
 		; Set controls properties
 		(.setFont txt-code *default-font*)
 		(.setEditable txt-path false)
 		(. txt-log setEditable false)
 		(redirect-out txt-log)
+		(undo/on-undoable doc undo-mgr)
 
 		; buttons panel
 		(doto pnl-buttons
@@ -154,7 +163,7 @@
 			(.setRightComponent (JScrollPane. txt-log)))
 
 		(doto main
-			(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+			;(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
 			(.setSize 800 600)
 			(.add pnl-buttons BorderLayout/NORTH)
 			(.add split BorderLayout/CENTER)
