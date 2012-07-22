@@ -7,4 +7,6 @@
 
 (def tree (JTree.))
 
-(.add main tree BorderLayout/EAST)
+(doto main
+	(.add tree BorderLayout/WEST)
+	(.setVisible true))
