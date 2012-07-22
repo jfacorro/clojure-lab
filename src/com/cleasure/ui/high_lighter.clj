@@ -1,7 +1,9 @@
 (ns com.cleasure.ui.high-lighter
 	(:import
 		[javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
-		[java.awt Color]))
+		[java.awt Color])
+	(:require
+		[com.cleasure.lang.clojure.keywords :as k]))
 
 (def style-constants {
 	:bold			StyleConstants/Bold, 
@@ -19,7 +21,7 @@
 				:delimiters	(defstyle {:bold false :foreground Color/red :font-family "Consolas" :font-size (int 14)})
 				:default	(defstyle {:bold false :foreground Color/black :font-family "Consolas" :font-size (int 14)})})
 
-(def keywords #{"def" "defn" "fn" "ns" "in-ns" "all-ns" "doseq" "println" "print"})
+(def keywords k/keywords)
 (def delimiters #{"(" ")" "{" "}" "[" "]"})
 
 (def styles-map {	:keywords	keywords
