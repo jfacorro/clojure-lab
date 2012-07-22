@@ -1,6 +1,9 @@
 (ns com.cleasure.main
 	(:import
-		[javax.swing JFrame JPanel JScrollPane JTextPane JTextArea JTextField JButton JFileChooser UIManager JSplitPane]
+		[javax.swing 
+			JFrame JPanel JScrollPane JTextPane JTextArea 
+			JTextField JButton JFileChooser UIManager JSplitPane 
+			SwingUtilities]
 		[javax.swing.text StyleContext DefaultStyledDocument]
 		[javax.swing.event DocumentListener]
 		[java.io OutputStream PrintStream File]
@@ -15,6 +18,7 @@
 (def ^:dynamic *app-name* "Cleajure")
 (def ^:dynamic *default-font* (Font. "Consolas" Font/PLAIN 14))
 (def ^:dynamic *default-dir* (. (File. ".") getCanonicalPath))
+(def ^:dynamic *txt-log* (JTextArea.))
 
 ; Set native look & feel instead of Swings default
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -32,14 +36,14 @@
 				#(or (str-contains? % name) (empty name))
 				(sort (for [m methods] (:name m)))))))
 
+(defn queue-ui-action [f]
+	(SwingUtilities/invokeLater 
+		(proxy [Runnable] [] (run [] (f)))))
+
 (defn save-src [txt-code txt-path]
 	(let [content (.getText txt-code)]
 		(with-open [wrtr (writer (.getText txt-path))]
 			(.write wrtr content))))
-
-(defn remove-cr [str] 
-	"Removes carriage returns from the string."
-	(.replace str "\r" ""))
 
 (defn open-src [txt-code txt-path]
 	(let [	dialog	(JFileChooser. *default-dir*)
@@ -48,11 +52,17 @@
 			path	(if file (. file getPath) nil)]
 		(when path
 			(. txt-path setText path)
-			(. txt-code setText (remove-cr (slurp path)))
+			(. txt-code setText (slurp path))
 			(hl/high-light txt-code))))
 
+(defn append-log [msg]
+	(queue-ui-action #(. *txt-log* append msg)))
+
+(defn eval-code [code]
+	(append-log (with-out-str (load-string code))))
+
 (defn eval-src [txt-code]
-	(load-string (.getText txt-code)))
+	(eval-code (.getText txt-code)))
 
 (defn on-click [cmpt f]
 	(.addMouseListener cmpt 
@@ -78,18 +88,19 @@
 			(proxy [KeyAdapter] []
 				(keyReleased [e] (when (check-key e key mask) (f)))))))
 
-(defn set-log [txt]
-	(let [out (proxy [OutputStream] []
-			(write	([b] (.append txt (str (char b))))
-				([b off len] (.append txt (String. b off len)))))]
-		(System/setOut (PrintStream. out true))))
+(defn on-changed [cmpt f]
+	(let [doc (. cmpt getStyledDocument)]
+		(.addDocumentListener doc
+			(proxy [DocumentListener] []
+				(changedUpdate [e] nil)
+				(insertUpdate [e] (queue-ui-action f))
+				(removeUpdate [e] (queue-ui-action f))))))
 
 (defn make-main [name]
 	(let 
 		[	main		(JFrame. name)
 			txt-code	(JTextPane. (DefaultStyledDocument.))
 			pnl-code	(JPanel.)
-			txt-log		(JTextArea.)
 			txt-path	(JTextField.)
 			split		(JSplitPane.)
 			pnl-buttons	(JPanel.)
@@ -103,24 +114,21 @@
 		(on-click btn-eval #(eval-src txt-code))
 
 		; High-light text after key release.
-		(on-keyrelease txt-code #(hl/high-light txt-code))
+		(on-changed txt-code #(hl/high-light txt-code))
 
 		; Open: CTRL + O
 		(on-keypress txt-code #(open-src txt-code txt-path) KeyEvent/VK_O KeyEvent/CTRL_MASK)
 		; Save: CTRL + S
 		(on-keypress txt-code #(save-src txt-code txt-path) KeyEvent/VK_S KeyEvent/CTRL_MASK)
 		; Eval: CTRL + Enter
-		(on-keypress txt-code #(println (load-string (.getSelectedText txt-code)))
+		(on-keypress txt-code #(println (eval-code (.getSelectedText txt-code)))
 			KeyEvent/VK_ENTER
 			KeyEvent/CTRL_MASK)
 
-		; set-log
-		(set-log txt-log)
-		
 		; Set controls properties
 		(.setFont txt-code *default-font*)
 		(.setEditable txt-path false)
-		(. txt-log setEditable false)
+		(. *txt-log* setEditable false)
 
 		; buttons panel
 		(doto pnl-buttons
@@ -136,7 +144,7 @@
 		(doto split
 			(.setOrientation JSplitPane/HORIZONTAL_SPLIT)
 			(.setLeftComponent (JScrollPane. pnl-code))
-			(.setRightComponent txt-log))
+			(.setRightComponent *txt-log*))
 
 		(doto main
 			(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
