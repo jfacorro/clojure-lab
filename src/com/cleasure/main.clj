@@ -6,7 +6,7 @@
 			SwingUtilities]
 		[javax.swing.text StyleContext DefaultStyledDocument]
 		[javax.swing.event DocumentListener]
-		[java.io OutputStream PrintStream File]
+		[java.io OutputStream PrintStream File OutputStreamWriter]
 		[java.awt BorderLayout FlowLayout Font]
 		[java.awt.event MouseAdapter KeyAdapter KeyEvent])
 	(:require 
@@ -18,7 +18,6 @@
 (def ^:dynamic *app-name* "Cleajure")
 (def ^:dynamic *default-font* (Font. "Consolas" Font/PLAIN 14))
 (def ^:dynamic *default-dir* (. (File. ".") getCanonicalPath))
-(def ^:dynamic *txt-log* (JTextArea.))
 
 ; Set native look & feel instead of Swings default
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -55,11 +54,8 @@
 			(. txt-code setText (slurp path))
 			(hl/high-light txt-code))))
 
-(defn append-log [msg]
-	(queue-ui-action #(. *txt-log* append msg)))
-
 (defn eval-code [code]
-	(append-log (with-out-str (load-string code))))
+	(load-string code))
 
 (defn eval-src [txt-code]
 	(eval-code (.getText txt-code)))
@@ -96,12 +92,22 @@
 				(insertUpdate [e] (queue-ui-action f))
 				(removeUpdate [e] (queue-ui-action f))))))
 
+(defn redirect-out [txt]
+	(let [	stream	(proxy [OutputStream] []
+				(write
+					([b off len] (. txt append (String. b off len)))
+					([b] (. txt append (String. b)))))
+		out	(PrintStream. stream true)]
+		(System/setOut out)
+		(System/setErr out)))
+
 (defn make-main [name]
 	(let 
 		[	main		(JFrame. name)
 			txt-code	(JTextPane. (DefaultStyledDocument.))
 			pnl-code	(JPanel.)
 			txt-path	(JTextField.)
+			txt-log	(JTextArea.)
 			split		(JSplitPane.)
 			pnl-buttons	(JPanel.)
 			btn-save		(JButton. "Save")
@@ -128,7 +134,8 @@
 		; Set controls properties
 		(.setFont txt-code *default-font*)
 		(.setEditable txt-path false)
-		(. *txt-log* setEditable false)
+		(. txt-log setEditable false)
+		(redirect-out txt-log)
 
 		; buttons panel
 		(doto pnl-buttons
@@ -144,7 +151,7 @@
 		(doto split
 			(.setOrientation JSplitPane/HORIZONTAL_SPLIT)
 			(.setLeftComponent (JScrollPane. pnl-code))
-			(.setRightComponent *txt-log*))
+			(.setRightComponent (JScrollPane. txt-log)))
 
 		(doto main
 			(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
@@ -158,3 +165,8 @@
 			(.setDividerLocation 0.8))))
 
 (def main (make-main *app-name*))
+
+(in-ns 'clojure.core)
+(def ^:dynamic *out-custom* (java.io.OutputStreamWriter. System/out))
+(def ^:dynamic *out-original* (java.io.OutputStreamWriter. System/out))
+(def ^:dynamic *out* *out-custom*)
