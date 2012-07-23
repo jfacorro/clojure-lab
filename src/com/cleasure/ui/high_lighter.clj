@@ -14,7 +14,7 @@
 (defn defstyle [attrs]
 	(let [style (SimpleAttributeSet.)]
 		(doseq [[k v] attrs]
-			(. style addAttribute (k style-constants) v))
+			(.addAttribute style (k style-constants) v))
 		style))
 
 (def styles {	:keywords	(defstyle {:bold true :foreground Color/blue :font-family "Consolas" :font-size (int 14)})
@@ -33,13 +33,13 @@
 	located."
 	(let [	len (.length ptrn)]
 		(loop [	start	0
-				idx 	(. text indexOf ptrn start)
+				idx 	(.indexOf text ptrn start)
 				idxs	[]]
 			(if (= idx -1) 
 				idxs
 				(recur
 					idx 
-					(. text indexOf ptrn (+ idx len))
+					(.indexOf text ptrn (+ idx len))
 					(conj idxs idx))))))
 
 (defn remove-cr [str] 
@@ -47,12 +47,12 @@
 	(.replace str "\r" ""))
 
 (defn high-light [txt-pane]
-	(let [	doc (. txt-pane getStyledDocument)
-			text (. txt-pane getText)
+	(let [	doc (.getStyledDocument txt-pane)
+			text (.getText txt-pane)
 			stripped (remove-cr text)]
-		(. doc setCharacterAttributes 0 (. text length) (:default styles) true)
+		(.setCharacterAttributes doc 0 (.length text) (:default styles) true)
 		(doseq [[s kws] styles-map]
 			(doseq [kw kws]
 				(doseq [idx (all-index-of stripped kw)]
-					(. doc setCharacterAttributes idx (.length kw) (s styles) true))))
-		(. txt-pane setCharacterAttributes (:default styles) true)))
+					(.setCharacterAttributes doc idx (.length kw) (s styles) true))))
+		(.setCharacterAttributes txt-pane (:default styles) true)))

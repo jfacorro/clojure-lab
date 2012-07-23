@@ -1,6 +1,7 @@
 (import 
 	[javax.swing JTree JSplitPane JMenuBar JMenu JMenuItem]
-	[java.awt BorderLayout])
+	[java.awt BorderLayout]
+	[java.io File])
 (require 'clojure.repl)
 
 ;------------------------------------------
@@ -15,6 +16,7 @@
 		(.add tree BorderLayout/WEST)
 		(.setVisible true))
 )
+
 ;------------------------------------------
 ; Menu bar
 ;------------------------------------------

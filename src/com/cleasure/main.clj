@@ -17,8 +17,8 @@
 	(:use
 		[clojure.java.io]))
 
-(def ^:dynamic *app-name* "Cleajure")
-(def ^:dynamic *default-dir* (. (File. ".") getCanonicalPath))
+(def app-name "Cleajure")
+(def default-dir (.getCanonicalPath (File. ".")))
 
 ; Set native look & feel instead of Swings default
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -68,7 +68,7 @@
 				(keyReleased [e] (when (check-key e key mask) (f)))))))
 
 (defn on-changed [cmpt f]
-	(let [doc (. cmpt getStyledDocument)]
+	(let [doc (.getStyledDocument cmpt)]
 		(.addDocumentListener doc
 			(proxy [DocumentListener] []
 				(changedUpdate [e] nil)
@@ -76,15 +76,15 @@
 				(removeUpdate [e] (queue-ui-action f))))))
 
 (defn current-txt [tabs]
-	(let [	idx		(. tabs getSelectedIndex)
-			scroll	(. tabs getComponentAt idx)
+	(let [	idx		(.getSelectedIndex tabs)
+			scroll	(.getComponentAt tabs  idx)
 			pnl		(.. scroll getViewport getView)
-			txt		(. pnl getComponent 0)]
+			txt		(.getComponent pnl 0)]
 			txt))
 
 (defn current-path [tabs]
-	(let [	idx		(. tabs getSelectedIndex)
-			path	(. tabs getTitleAt idx)]
+	(let [	idx		(.getSelectedIndex tabs)
+			path	(.getTitleAt tabs idx)]
 			path))
 
 (defn save-src [tabs]
@@ -97,13 +97,13 @@
 (defn new-document [a b] nil)
 
 (defn open-src [tabs]
-	(let [	dialog	(JFileChooser. *default-dir*)
-		result	(. dialog showOpenDialog nil)
-		file	(. dialog getSelectedFile)
-		path	(if file (. file getPath) nil)]
+	(let [	dialog	(JFileChooser. default-dir)
+		result	(.showOpenDialog dialog nil)
+		file	(.getSelectedFile dialog)
+		path	(if file (.getPath file) nil)]
 		(when path
 			(let [txt-code (new-document tabs path)]
-				(. txt-code setText (slurp path))
+				(.setText txt-code (slurp path))
 				(hl/high-light txt-code)))))
 
 (defn eval-src [tabs]
@@ -128,9 +128,9 @@
 		(undo/on-undoable doc undo-mgr)
 
 		; Undo/redo key events
-		(on-keypress txt-code #(when (.canUndo undo-mgr) (. undo-mgr undo))
+		(on-keypress txt-code #(when (.canUndo undo-mgr) (.undo undo-mgr))
 			KeyEvent/VK_Z KeyEvent/CTRL_MASK)
-		(on-keypress txt-code #(when (.canRedo undo-mgr) (. undo-mgr redo))
+		(on-keypress txt-code #(when (.canRedo undo-mgr) (.redo undo-mgr))
 			KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
 		; High-light text after key release.
@@ -145,8 +145,8 @@
 (defn redirect-out [txt]
 	(let [	stream	(proxy [OutputStream] []
 				(write
-					([b off len] (. txt append (String. b off len)))
-					([b] (. txt append (String. b)))))
+					([b off len] (.append txt (String. b off len)))
+					([b] (.append txt (String. b)))))
 		out	(PrintStream. stream true)]
 		(System/setOut out)
 		(System/setErr out)))
@@ -187,7 +187,7 @@
 			split		(JSplitPane.)]
 
 		; Set controls properties
-		(. txt-log setEditable false)
+		(.setEditable txt-log false)
 		(redirect-out txt-log)
 
 		(doto split
@@ -207,7 +207,7 @@
 			(.setDividerLocation 0.8))
 		main))
 
-(def main (make-main *app-name*))
+(def main (make-main app-name))
 
 (in-ns 'clojure.core)
 (def ^:dynamic *out-custom* (java.io.OutputStreamWriter. System/out))

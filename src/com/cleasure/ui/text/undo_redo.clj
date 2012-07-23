@@ -9,5 +9,5 @@
 			(undoableEditHappened [e]
 				(let [edit (.getEdit e)]
 					(when-not (= "style change" (.getPresentationName edit))
-						(. undo-mgr addEdit edit)))))]
-		(. doc addUndoableEditListener handler)))
+						(.addEdit undo-mgr edit)))))]
+		(.addUndoableEditListener doc handler)))
