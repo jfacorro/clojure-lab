@@ -3,56 +3,75 @@
 		[javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
 		[java.awt Color])
 	(:require
-		[com.cleasure.lang.clojure.keywords :as k]))
+		[com.cleasure.lang.clojure.keywords :as k]
+		[clojure.set :as set]))
 
 (def style-constants {
-	:bold			StyleConstants/Bold, 
-	:foreground		StyleConstants/Foreground, 
-	:font-size		StyleConstants/FontSize,
+	:bold		StyleConstants/Bold, 
+	:foreground	StyleConstants/Foreground, 
+	:font-size	StyleConstants/FontSize,
 	:font-family	StyleConstants/FontFamily})
 
 (defn defstyle [attrs]
-	(let [style (SimpleAttributeSet.)]
-		(doseq [[k v] attrs]
-			(.addAttribute style (k style-constants) v))
-		style))
+  (let [style (SimpleAttributeSet.)]
+    (doseq [[k v] attrs]
+      (.addAttribute style (k style-constants) v))
+  style))
 
-(def styles {	:keywords	(defstyle {:bold true :foreground Color/blue :font-family "Consolas" :font-size (int 14)})
-				:delimiters	(defstyle {:bold false :foreground Color/red :font-family "Consolas" :font-size (int 14)})
-				:default	(defstyle {:bold false :foreground Color/black :font-family "Consolas" :font-size (int 14)})})
+(def styles {:keywords (defstyle {:bold true :foreground Color/blue :font-family "Consolas" :font-size (int 14)})
+             :symbols (defstyle {:bold false :foreground Color/orange :font-family "Consolas" :font-size (int 14)})
+             :delimiters (defstyle {:bold false :foreground Color/gray :font-family "Consolas" :font-size (int 14)})
+             :default (defstyle {:bold false :foreground Color/black :font-family "Consolas" :font-size (int 14)})})
 
 (def keywords k/keywords)
+(def symbols (for [n (keys (ns-refers *ns*))] (str n)))
 (def delimiters #{"(" ")" "{" "}" "[" "]"})
+(def blanks #{ \( \) \{ \} \[ \] \,  \space \newline \tab })
 
-(def styles-map {	:keywords	keywords
-		:delimiters	delimiters})
+(def styles-map {:keywords keywords, :delimiters delimiters, :symbols symbols})
 
-(defn all-index-of [text ptrn]
-	"Finds all indexes where ptrn is matched in text and
-	return a list with the intervals in which de matches are
-	located."
-	(let [	len (.length ptrn)]
-		(loop [	start	0
-				idx 	(.indexOf text ptrn start)
-				idxs	[]]
-			(if (= idx -1) 
-				idxs
-				(recur
-					idx 
-					(.indexOf text ptrn (+ idx len))
-					(conj idxs idx))))))
+(defn blank? [c] (blanks c))
+
+(defn valid-match? [s ptrn idx]
+  "Check if the pattern is surrounded by 'blank' characters
+  in the given idx."
+  (let [len (.length ptrn)
+        begin (dec idx)
+        end (+ idx len)]
+    (or (delimiters ptrn)
+        (and (<= 0 begin)
+          (pos? end) 
+          (< end (.length s))
+          (blank? (.charAt s begin))
+          (blank? (.charAt s end))))))
+
+(defn all-indexes [s ptrn]
+  "Finds all indexes where ptrn is matched in text and
+   returns a list with the indexes in which the matches 
+   are located."
+  (let [f #(.indexOf s ptrn (inc %1))
+        idxs (drop 1 (iterate f -1))]
+    (filter 
+      #(valid-match? s ptrn %1) 
+      (for [idx idxs :while (<= 0 idx)] idx))))
 
 (defn remove-cr [str] 
-	"Removes carriage returns from the string."
-	(.replace str "\r" ""))
+  "Removes carriage returns from the string."
+  (.replace str "\r" ""))
 
 (defn high-light [txt-pane]
-	(let [	doc (.getStyledDocument txt-pane)
-			text (.getText txt-pane)
-			stripped (remove-cr text)]
-		(.setCharacterAttributes doc 0 (.length text) (:default styles) true)
-		(doseq [[s kws] styles-map]
-			(doseq [kw kws]
-				(doseq [idx (all-index-of stripped kw)]
-					(.setCharacterAttributes doc idx (.length kw) (s styles) true))))
-		(.setCharacterAttributes txt-pane (:default styles) true)))
+  (let [doc (.getStyledDocument txt-pane)
+        text (.getText txt-pane)
+        stripped (remove-cr text)]
+    (.setCharacterAttributes doc 0 (.length text) (:default styles) true)
+    (doseq [[s kws] styles-map]
+      (doseq [kw kws]
+        (doseq [idx (all-indexes stripped kw)]
+          (.setCharacterAttributes doc idx (.length kw) (s styles) true))))
+    (.setCharacterAttributes txt-pane (:default styles) true)))
+
+
+
+
+
+

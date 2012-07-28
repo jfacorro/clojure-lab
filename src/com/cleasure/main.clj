@@ -1,21 +1,17 @@
 (ns com.cleasure.main
-	(:import
-		[javax.swing 
-			JFrame JPanel JScrollPane JTextPane JTextArea 
-			JTextField JButton JFileChooser UIManager JSplitPane 
-			SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke]
-		[javax.swing.text StyleContext DefaultStyledDocument]
-		[javax.swing.undo UndoManager]
-		[javax.swing.event DocumentListener]
-		[java.io OutputStream PrintStream File OutputStreamWriter]
-		[java.awt BorderLayout FlowLayout Font]
-		[java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener])
-	(:require 
-		[clojure.reflect :as r]
-		[com.cleasure.ui.high-lighter :as hl]
-		[com.cleasure.ui.text.undo-redo :as undo])
-	(:use
-		[clojure.java.io]))
+  (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
+            JTextField JButton JFileChooser UIManager JSplitPane 
+            SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke]
+           [javax.swing.text StyleContext DefaultStyledDocument]
+           [javax.swing.undo UndoManager]
+           [javax.swing.event DocumentListener]
+           [java.io OutputStream PrintStream File OutputStreamWriter]
+           [java.awt BorderLayout FlowLayout Font]
+           [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener])
+  (:require [clojure.reflect :as r]
+            [com.cleasure.ui.high-lighter :as hl]
+            [com.cleasure.ui.text.undo-redo :as undo])
+  (:use [clojure.java.io]))
 
 (def app-name "Cleajure")
 (def default-dir (.getCanonicalPath (File. ".")))
@@ -24,29 +20,28 @@
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 
 (defn str-contains? [s ptrn]
-	"Checks if a string contains a substring"
-	(.contains (str s) ptrn))
+  "Checks if a string contains a substring"
+  (.contains (str s) ptrn))
 
 (defn list-methods
-	([c] (list-methods  c ""))
-	([c name]
-		(let [	members	(:members (r/type-reflect c :ancestors true))
-			methods	(filter #(:return-type %) members)]
-			(filter
-				#(or (str-contains? % name) (empty name))
-				(sort (for [m methods] (:name m)))))))
+  ([c] (list-methods  c ""))
+  ([c name]
+    (let [members (:members (r/type-reflect c :ancestors true))
+          methods (filter #(:return-type %) members)]
+      (filter 
+        #(or (str-contains? % name) (empty name))
+        (sort (for [m methods] (:name m)))))))
 
 (defn queue-ui-action [f]
-	(SwingUtilities/invokeLater 
-		(proxy [Runnable] [] (run [] (f)))))
+  (SwingUtilities/invokeLater (proxy [Runnable] [] (run [] (f)))))
 
 (defn eval-code [code]
-	(println (load-string code)))
+  (println (load-string code)))
 
 (defn on-click [cmpt f]
-	(.addActionListener cmpt 
-		(proxy [ActionListener] []
-			(actionPerformed [e] (f)))))
+  (.addActionListener cmpt 
+    (proxy [ActionListener] []
+      (actionPerformed [e] (f)))))
 
 (defn check-key [evt k m]
 	"Checks if the key and the modifier match with the event's values"
@@ -76,16 +71,16 @@
 				(removeUpdate [e] (queue-ui-action f))))))
 
 (defn current-txt [tabs]
-	(let [	idx		(.getSelectedIndex tabs)
-			scroll	(.getComponentAt tabs  idx)
-			pnl		(.. scroll getViewport getView)
-			txt		(.getComponent pnl 0)]
-			txt))
+  (let [idx (.getSelectedIndex tabs)
+        scroll (.getComponentAt tabs  idx)
+        pnl (.. scroll getViewport getView)
+        txt (.getComponent pnl 0)]
+  txt))
 
 (defn current-path [tabs]
-	(let [	idx		(.getSelectedIndex tabs)
-			path	(.getTitleAt tabs idx)]
-			path))
+  (let [idx (.getSelectedIndex tabs)
+        path (.getTitleAt tabs idx)]
+     path))
 
 (defn save-src [tabs]
 	(let [	txt-code	(current-txt tabs)
@@ -114,7 +109,8 @@
 	(let [	doc		(DefaultStyledDocument.)
 		txt-code		(JTextPane. doc)
 		undo-mgr		(UndoManager.)
-		pnl-code		(JPanel.)]
+		pnl-code		(JPanel.)
+		pnl-scroll	(JScrollPane. pnl-code)]
 
 		(doto pnl-code
 			(.setLayout (BorderLayout.))
@@ -136,8 +132,10 @@
 		; High-light text after key release.
 		(on-changed txt-code #(hl/high-light txt-code))
 
+		(.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16));
+
 		(doto tabs
-			(.addTab title (JScrollPane. pnl-code))
+			(.addTab title pnl-scroll)
 			(.setSelectedIndex  (- (.getTabCount tabs) 1)))
 
 		txt-code))
@@ -180,36 +178,35 @@
 		menubar))
 
 (defn make-main [name]
-	(let 
-		[	main		(JFrame. name)
-			tabs		(JTabbedPane.)
-			txt-log		(JTextArea.)
-			split		(JSplitPane.)]
+  (let [main (JFrame. name)
+        tabs (JTabbedPane.)
+        txt-log (JTextArea.)
+        split (JSplitPane.)]
+    ; Set controls properties
+    (.setEditable txt-log false)
+    (redirect-out txt-log)
 
-		; Set controls properties
-		(.setEditable txt-log false)
-		(redirect-out txt-log)
+    (doto split
+      (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
+      (.setResizeWeight 1.0)
+      (.setLeftComponent tabs)
+      (.setRightComponent (JScrollPane. txt-log)))
 
-		(doto split
-			(.setOrientation JSplitPane/HORIZONTAL_SPLIT)
-			(.setResizeWeight 1.0)
-			(.setLeftComponent tabs)
-			(.setRightComponent (JScrollPane. txt-log)))
+    (doto main
+      ;(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+      (.setSize 800 600)
+      (.setJMenuBar (build-menu tabs))
+      (.add split BorderLayout/CENTER)
+      (.setVisible true))
 
-		(doto main
-			;(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-			(.setSize 800 600)
-			(.setJMenuBar (build-menu tabs))
-			(.add split BorderLayout/CENTER)
-			(.setVisible true))
-
-		(doto split
-			(.setDividerLocation 0.8))
-		main))
+    (doto split
+      (.setDividerLocation 0.8))
+      
+    main))
 
 (def main (make-main app-name))
 
 (in-ns 'clojure.core)
 (def ^:dynamic *out-custom* (java.io.OutputStreamWriter. System/out))
-(def ^:dynamic *out-original* (java.io.OutputStreamWriter. System/out))
+(def ^:dynamic *out-original* *out*)
 (def ^:dynamic *out* *out-custom*)
