@@ -19,12 +19,12 @@
   style))
 
 (def styles {:keywords (defstyle {:bold true :foreground Color/blue :font-family "Consolas" :font-size (int 14)})
-             :symbols (defstyle {:bold false :foreground Color/orange :font-family "Consolas" :font-size (int 14)})
+             :symbols (defstyle {:bold true :foreground Color/orange :font-family "Consolas" :font-size (int 14)})
              :delimiters (defstyle {:bold false :foreground Color/gray :font-family "Consolas" :font-size (int 14)})
              :default (defstyle {:bold false :foreground Color/black :font-family "Consolas" :font-size (int 14)})})
 
 (def keywords k/keywords)
-(def symbols (for [n (keys (ns-refers *ns*))] (str n)))
+(def symbols (set (map str (keys (ns-refers *ns*)))))
 (def delimiters #{"(" ")" "{" "}" "[" "]"})
 (def blanks #{ \( \) \{ \} \[ \] \,  \space \newline \tab })
 
@@ -33,17 +33,18 @@
 (defn blank? [c] (blanks c))
 
 (defn valid-match? [s ptrn idx]
-  "Check if the pattern is surrounded by 'blank' characters
-  in the given idx."
-  (let [len (.length ptrn)
-        begin (dec idx)
+  "Check if ptrn is surrounded by 'blank' characters
+  in the given idx for the string s."
+  (let [len (count ptrn)
+        begin (if (pos? idx) (dec idx) idx)
         end (+ idx len)]
     (or (delimiters ptrn)
-        (and (<= 0 begin)
-          (pos? end) 
-          (< end (.length s))
-          (blank? (.charAt s begin))
-          (blank? (.charAt s end))))))
+        (and
+          (<= 0 begin)
+          (or (zero? begin) (blank? (.charAt s begin)))
+          (pos? end)
+          (<= end (count s))
+          (or (= end (count s)) (blank? (.charAt s end)))))))
 
 (defn all-indexes [s ptrn]
   "Finds all indexes where ptrn is matched in text and
@@ -51,8 +52,8 @@
    are located."
   (let [f #(.indexOf s ptrn (inc %1))
         idxs (drop 1 (iterate f -1))]
-    (filter 
-      #(valid-match? s ptrn %1) 
+    (filter
+      #(valid-match? s ptrn %1)
       (for [idx idxs :while (<= 0 idx)] idx))))
 
 (defn remove-cr [str] 
@@ -61,17 +62,10 @@
 
 (defn high-light [txt-pane]
   (let [doc (.getStyledDocument txt-pane)
-        text (.getText txt-pane)
-        stripped (remove-cr text)]
+        text (remove-cr (.getText txt-pane))]
     (.setCharacterAttributes doc 0 (.length text) (:default styles) true)
-    (doseq [[s kws] styles-map]
+    (doseq [[stl kws] styles-map]
       (doseq [kw kws]
-        (doseq [idx (all-indexes stripped kw)]
-          (.setCharacterAttributes doc idx (.length kw) (s styles) true))))
+        (doseq [idx (all-indexes text kw)]
+          (.setCharacterAttributes doc idx (.length kw) (stl styles) true))))
     (.setCharacterAttributes txt-pane (:default styles) true)))
-
-
-
-
-
-
