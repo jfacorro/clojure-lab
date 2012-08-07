@@ -8,9 +8,7 @@
 
 (def style-constants {
 	:bold		StyleConstants/Bold, 
-	:foreground	StyleConstants/Foreground, 
-	:font-size	StyleConstants/FontSize,
-	:font-family	StyleConstants/FontFamily})
+	:foreground	StyleConstants/Foreground})
 
 (defn defstyle [attrs]
   "Creates a new style with the given

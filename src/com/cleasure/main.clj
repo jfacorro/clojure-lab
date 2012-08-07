@@ -14,7 +14,7 @@
   (:use [clojure.java.io]))
 
 (def app-name "Cleajure")
-(def *current-font* (Font. "Consolas" Font/PLAIN 14))
+(def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (.getCanonicalPath (File. ".")))
 
 ; Set the system's native look & feel instead of Swings default
@@ -97,18 +97,6 @@
     (with-open [wrtr (writer path)]
       (.write wrtr content))))
 
-(defn new-document [a b] nil)
-
-(defn open-src [tabs]
-  (let [dialog (JFileChooser. default-dir)
-        result (.showOpenDialog dialog nil)
-        file (.getSelectedFile dialog)
-        path (if file (.getPath file) nil)]
-    (when path
-      (let [txt-code (new-document tabs path)]
-        (.setText txt-code (slurp path))
-        (hl/high-light txt-code)))))
-
 (defn eval-src [tabs]
   (let [txt (current-txt tabs)]
     (eval-code (.getText txt))))
@@ -117,8 +105,9 @@
   (let [pos (.getLength doc)
         root (.getDefaultRootElement doc)
         n (.getElementIndex root pos)]
-    (.setText lines
-      (apply str (interpose "\n" (range 1 (+ 2 n)))))))
+    (doto lines
+      (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
+      (.updateUI))))
 
 (defn new-document [tabs title]
   "Add a new tab to tabs and sets
@@ -141,8 +130,10 @@
     (doto txt-lines
       (.setFont *current-font*)
       (.setEditable false)
-      (.setBackground Color/LIGHT_GRAY)
-      (.setText "1"))
+      ;(.setEnabled false)
+      (.setBackground Color/LIGHT_GRAY))
+
+    (update-line-numbers doc txt-lines)
 
     ; Eval: CTRL + Enter
     (on-keypress txt-code #(eval-code (.getSelectedText txt-code))
@@ -160,13 +151,26 @@
     (on-changed txt-code #(hl/high-light txt-code))
     (on-changed txt-code #(update-line-numbers doc txt-lines))
 
-    (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16));
+    (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
     (doto tabs
       (.addTab title pnl-scroll)
-      (.setSelectedIndex  (- (.getTabCount tabs) 1)))
+      (.setSelectedIndex (- (.getTabCount tabs) 1)))
 
     txt-code))
+
+(defn open-src [tabs]
+  (let [dialog (JFileChooser. default-dir)
+        result (.showOpenDialog dialog nil)
+        file (.getSelectedFile dialog)
+        path (if file (.getPath file) nil)]
+    (when path
+      (let [txt-code (new-document tabs path)]
+        (doto txt-code
+          (.setText (slurp path))
+          (.setCaretPosition 0)
+          (.grabFocus))
+        (hl/high-light txt-code)))))
 
 (defn redirect-out [txt]
   (let [stream (proxy [OutputStream] []
