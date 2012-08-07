@@ -20,10 +20,10 @@
       (.addAttribute style (k style-constants) v))
   style))
 
-(def styles {:keywords (defstyle {:bold true :foreground Color/blue :font-family "Consolas" :font-size (int 14)})
-             :symbols (defstyle {:bold true :foreground Color/orange :font-family "Consolas" :font-size (int 14)})
-             :delimiters (defstyle {:bold false :foreground Color/gray :font-family "Consolas" :font-size (int 14)})
-             :default (defstyle {:bold false :foreground Color/black :font-family "Consolas" :font-size (int 14)})})
+(def styles {:keywords (defstyle {:bold true :foreground Color/blue})
+             :symbols (defstyle {:bold true :foreground Color/orange})
+             :delimiters (defstyle {:bold false :foreground Color/gray})
+             :default (defstyle {:bold false :foreground Color/black})})
 
 (def keywords k/keywords)
 (def symbols (set (map str (keys (ns-refers *ns*)))))

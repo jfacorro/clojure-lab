@@ -14,6 +14,7 @@
   (:use [clojure.java.io]))
 
 (def app-name "Cleajure")
+(def *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (.getCanonicalPath (File. ".")))
 
 ; Set the system's native look & feel instead of Swings default
@@ -135,7 +136,10 @@
     (doto pnl-scroll
        (.setRowHeaderView txt-lines))
 
+    (.setFont txt-code *current-font*)
+
     (doto txt-lines
+      (.setFont *current-font*)
       (.setEditable false)
       (.setBackground Color/LIGHT_GRAY)
       (.setText "1"))
@@ -160,7 +164,7 @@
 
     (doto tabs
       (.addTab title pnl-scroll)
-      (.setSelectedIndex  (- (.getTabCount tabs) 1)))   
+      (.setSelectedIndex  (- (.getTabCount tabs) 1)))
 
     txt-code))
 
