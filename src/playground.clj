@@ -1,34 +1,32 @@
 (import 
-	[javax.swing JTree JSplitPane JMenuBar JMenu JMenuItem]
-	[java.awt BorderLayout]
-	[java.io File])
+  [javax.swing JTree JSplitPane JMenuBar JMenu JMenuItem]
+  [java.awt BorderLayout]
+  [java.io File])
+
 (require 'clojure.repl)
 
 ;------------------------------------------
 ; Tree
 ;------------------------------------------
 (defn tree-test []
-	(def main com.cleasure.main/main)
+  (def main com.cleasure.main/main)
+  (def tree (JTree. (array "one" "two")))
+  (doto main
+    (.add tree BorderLayout/WEST)
+    (.setVisible true)))
 
-	(def tree (JTree. (array "one" "two")))
-
-	(doto main
-		(.add tree BorderLayout/WEST)
-		(.setVisible true))
-)
-
+(tree-test)
 ;------------------------------------------
 ; Menu bar
 ;------------------------------------------
 (defn menu-test []
-	(def main com.cleasure.main/main)
-	(def menubar (JMenuBar.))
-	(def menu (JMenu. "File"))
-	(def item (JMenuItem. "Open"))
-	(.add menu item)
-	(.add menubar menu)
-	(.setJMenuBar main menubar)
-)
+  (def main com.cleasure.main/main)
+  (def menubar (JMenuBar.))
+  (def menu (JMenu. "File"))
+  (def item (JMenuItem. "Open"))
+  (.add menu item)
+  (.add menubar menu)
+  (.setJMenuBar main menubar))
 
 ;------------------------------------------------------------------
 (defn load-string
@@ -41,5 +39,5 @@
                 (clojure.lang.LineNumberingPushbackReader.))]
     (clojure.lang.Compiler/load rdr)))
 
-(load-string ":A")
+(for [l [\j \u \a \n]] l)
 

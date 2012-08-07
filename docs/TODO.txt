@@ -1,0 +1,17 @@
+TODO:
+-----
+- Create new process when evaluting code.
+- Create REPL(s) sections.
+- Project Mgmt:
+	- Add "Open Project" functionality.
+		- Add menu item.
+		- Validate project file.
+	- Add tree file structure.
+- Code Editor:
+	- Add line number.
+	- Syntax high-lighting.
+		- Strings
+		- Comments
+	- Balance delimiters: ( [ {
+	- Mark corresponding delimiter.
+	- Indent code.

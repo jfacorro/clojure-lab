@@ -13,6 +13,8 @@
 	:font-family	StyleConstants/FontFamily})
 
 (defn defstyle [attrs]
+  "Creates a new style with the given
+   attributes values."
   (let [style (SimpleAttributeSet.)]
     (doseq [[k v] attrs]
       (.addAttribute style (k style-constants) v))

@@ -1,12 +1,12 @@
 (ns com.cleasure.main
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
-            JTextField JButton JFileChooser UIManager JSplitPane 
+            JTextField JButton JFileChooser UIManager JSplitPane JTree
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke]
            [javax.swing.text StyleContext DefaultStyledDocument]
            [javax.swing.undo UndoManager]
            [javax.swing.event DocumentListener]
            [java.io OutputStream PrintStream File OutputStreamWriter]
-           [java.awt BorderLayout FlowLayout Font]
+           [java.awt BorderLayout FlowLayout Font Color]
            [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener])
   (:require [clojure.reflect :as r]
             [com.cleasure.ui.high-lighter :as hl :reload :verbose]
@@ -16,8 +16,11 @@
 (def app-name "Cleajure")
 (def default-dir (.getCanonicalPath (File. ".")))
 
-; Set native look & feel instead of Swings default
-(UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+; Set the system's native look & feel instead of Swings default
+(javax.swing.UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
+;(UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+;(UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
+;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
 
 (defn str-contains? [s ptrn]
   "Checks if a string contains a substring"
@@ -36,7 +39,10 @@
   (SwingUtilities/invokeLater (proxy [Runnable] [] (run [] (f)))))
 
 (defn eval-code [code]
-  (println (load-string code)))
+  (try
+    (println (load-string code))
+    (catch Exception e
+	(println (.getMessage e)))))
 
 (defn on-click [cmpt f]
   (.addActionListener cmpt
@@ -106,15 +112,33 @@
   (let [txt (current-txt tabs)]
     (eval-code (.getText txt))))
 
+(defn update-line-numbers [doc lines]
+  (let [pos (.getLength doc)
+        root (.getDefaultRootElement doc)
+        n (.getElementIndex root pos)]
+    (.setText lines
+      (apply str (interpose "\n" (range 1 (+ 2 n)))))))
+
 (defn new-document [tabs title]
+  "Add a new tab to tabs and sets
+  its title."
   (let [doc (DefaultStyledDocument.)
         txt-code (JTextPane. doc)
         undo-mgr (UndoManager.)
         pnl-code (JPanel.)
-        pnl-scroll (JScrollPane. pnl-code)]
+        pnl-scroll (JScrollPane. pnl-code)
+        txt-lines (JTextArea.)]
     (doto pnl-code
       (.setLayout (BorderLayout.))
       (.add txt-code BorderLayout/CENTER))
+
+    (doto pnl-scroll
+       (.setRowHeaderView txt-lines))
+
+    (doto txt-lines
+      (.setEditable false)
+      (.setBackground Color/LIGHT_GRAY)
+      (.setText "1"))
 
     ; Eval: CTRL + Enter
     (on-keypress txt-code #(eval-code (.getSelectedText txt-code))
@@ -130,12 +154,13 @@
 
     ; High-light text after key release.
     (on-changed txt-code #(hl/high-light txt-code))
+    (on-changed txt-code #(update-line-numbers doc txt-lines))
 
     (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16));
 
     (doto tabs
       (.addTab title pnl-scroll)
-      (.setSelectedIndex  (- (.getTabCount tabs) 1)))
+      (.setSelectedIndex  (- (.getTabCount tabs) 1)))   
 
     txt-code))
 
@@ -179,26 +204,36 @@
   (let [main (JFrame. name)
         tabs (JTabbedPane.)
         txt-log (JTextArea.)
-        split (JSplitPane.)]
+        pane-center-left (JSplitPane.)
+        pane-all (JSplitPane.)
+        files-tree (JTree. (to-array []))]
     ; Set controls properties
     (.setEditable txt-log false)
     (redirect-out txt-log)
 
-    (doto split
+    (doto pane-center-left
       (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
       (.setResizeWeight 1.0)
       (.setLeftComponent tabs)
       (.setRightComponent (JScrollPane. txt-log)))
 
+    (doto pane-all
+      (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
+      (.setLeftComponent (JScrollPane. files-tree))
+      (.setRightComponent pane-center-left))
+
     (doto main
       ;(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setSize 800 600)
       (.setJMenuBar (build-menu tabs))
-      (.add split BorderLayout/CENTER)
+      (.add pane-all BorderLayout/CENTER)
       (.setVisible true))
 
-    (doto split
-      (.setDividerLocation 0.8))
+    (doto pane-center-left
+      (.setDividerLocation 0.7))
+
+    (doto pane-all
+      (.setDividerLocation 150))
       
     main))
 
