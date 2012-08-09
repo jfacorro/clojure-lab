@@ -224,7 +224,9 @@
         pane-all (JSplitPane.)
         files-tree (JTree. (to-array []))]
     ; Set controls properties
-    (.setEditable txt-log false)
+    (doto txt-log
+      (.setEditable false)
+      (.setFont *current-font*))
     (redirect-out txt-log)
 
     (doto pane-center-left
