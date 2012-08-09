@@ -1,3 +1,4 @@
+
 (ns com.cleasure.lang.clojure.keywords)
 
 (def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
@@ -9,19 +10,19 @@
 
 (def blanks (conj delimiters "\\s"))
 
-(defn escape [s]
-  (-> (str s) 
+(defn re-escape [s]
+  (-> (str s)
       (.replace "*" "\\*") 
       (.replace "+" "\\+")
       (.replace "." "\\.")
       (.replace "?" "\\?")
-      ;(.replace "[" "\\[")
-      ;(.replace "]" "\\]")
+      ; (.replace "[" "\\[")
+      ; (.replace "]" "\\]")
       (.replace "(" "\\(")
       (.replace ")" "\\)")))
 
 (defn alt-regex [coll]
-  (apply str (interpose "|" (map escape coll))))
+  (apply str (interpose "|" (map re-escape coll))))
 
 (def syntax {
   :special-forms {:regex (alt-regex special-forms)
@@ -32,7 +33,8 @@
                :style {:bold true :foreground {:r 150, :g 150, :b 150}}}
   :keyword {:regex ":\\w+"
             :style {:bold true :foreground {:r 153, :g 0, :b 115}}}
-  :comment {:regex ";.*"
+  :comment {:regex ";.*[\\n]?"
             :style {:bold true :foreground {:r 153, :g 153, :b 136}}}
-  :string {:regex "(?<!;)\".*?\""
+  :string-comments {:regex "(?<!\\\\)\".*?(?<!\\\\)\""
+           :desc  "Ignore '\\\"' as delimiters."
            :style {:bold true :foreground {:r 223 :g 16, :b 67}}}})
