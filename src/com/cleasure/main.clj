@@ -9,7 +9,7 @@
            [java.awt BorderLayout FlowLayout Font Color]
            [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener])
   (:require [clojure.reflect :as r]
-            [com.cleasure.ui.high-lighter :as hl :reload :verbose]
+            [com.cleasure.ui.high-lighter :as hl :reload true]
             [com.cleasure.ui.text.undo-redo :as undo])
   (:use [clojure.java.io]))
 
@@ -28,7 +28,7 @@
   (.contains (str s) ptrn))
 
 (defn list-methods
-  ([c] (list-methods  c ""))
+  ([c] (list-methods c ""))
   ([c name]
     (let [members (:members (r/type-reflect c :ancestors true))
           methods (filter #(:return-type %) members)]
@@ -181,13 +181,17 @@
     (System/setOut out)
     (System/setErr out)))
 
+(def menu {:name "File" 
+           :items [{:name "New" :action #(print "New")}]})
+
 (defn build-menu [tabs]
   (let [menubar (JMenuBar.)
         menu (JMenu. "File")
         item-new (JMenuItem. "New")
         item-open (JMenuItem. "Open")
         item-save (JMenuItem. "Save")
-        item-eval (JMenuItem. "Eval")]
+        item-eval (JMenuItem. "Eval")
+        item-exit (JMenuItem. "Exit")]
     (on-click item-new #(new-document tabs "Untitled"))
     (.setAccelerator item-new (KeyStroke/getKeyStroke KeyEvent/VK_N KeyEvent/CTRL_MASK))
 
@@ -200,10 +204,14 @@
     (on-click item-eval #(eval-src tabs))
     (.setAccelerator item-eval (KeyStroke/getKeyStroke KeyEvent/VK_E KeyEvent/CTRL_MASK))
 
+    (on-click item-exit #(System/exit 0))
+    (.setAccelerator item-exit (KeyStroke/getKeyStroke KeyEvent/VK_X KeyEvent/CTRL_MASK))
+
     (.add menu item-new)
     (.add menu item-open)
     (.add menu item-save)
     (.add menu item-eval)
+    (.add menu item-exit)
 
     (.add menubar menu)
     menubar))
@@ -221,7 +229,7 @@
 
     (doto pane-center-left
       (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
-      (.setResizeWeight 1.0)
+      (.setResizeWeight 0.8)
       (.setLeftComponent tabs)
       (.setRightComponent (JScrollPane. txt-log)))
 
@@ -230,20 +238,16 @@
       (.setLeftComponent (JScrollPane. files-tree))
       (.setRightComponent pane-center-left))
 
+    (.setDividerLocation pane-center-left 0.8)
+
+    (.setDividerLocation pane-all 150)
+
     (doto main
       ;(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setSize 800 600)
       (.setJMenuBar (build-menu tabs))
       (.add pane-all BorderLayout/CENTER)
-      (.setVisible true))
-
-    (doto pane-center-left
-      (.setDividerLocation 0.7))
-
-    (doto pane-all
-      (.setDividerLocation 150))
-      
-    main))
+      (.setVisible true))))
 
 (def main (make-main app-name))
 

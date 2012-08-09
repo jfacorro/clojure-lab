@@ -1,71 +1,75 @@
 (ns com.cleasure.ui.high-lighter
 	(:import
 		[javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
-		[java.awt Color])
+		[java.awt Color]
+                  [java.util.regex Matcher])
 	(:require
-		[com.cleasure.lang.clojure.keywords :as k]
+		[com.cleasure.lang.clojure.keywords :as k :reload true]
 		[clojure.set :as set]))
 
 (def style-constants {
 	:bold		StyleConstants/Bold, 
 	:foreground	StyleConstants/Foreground})
 
-(defn defstyle [attrs]
+(defn rgb-to-int [rgb]
+  (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
+
+(defn parse-attrs [stl]
+  (if (:foreground stl)
+    (let [rgb (:foreground stl)
+          color (Color. (rgb-to-int rgb))]
+      (merge stl {:foreground color}))
+    stl))
+
+(defn make-style [attrs]
   "Creates a new style with the given
    attributes values."
-  (let [style (SimpleAttributeSet.)]
-    (doseq [[k v] attrs]
+  (let [style (SimpleAttributeSet.)
+        att (parse-attrs attrs)]
+    (doseq [[k v] att]
       (.addAttribute style (k style-constants) v))
-  style))
+    style))
 
-(def styles {:keywords (defstyle {:bold true :foreground Color/blue})
-             :symbols (defstyle {:bold true :foreground Color/orange})
-             :delimiters (defstyle {:bold false :foreground Color/gray})
-             :default (defstyle {:bold false :foreground Color/black})})
+(def ^:dynamic *default* (make-style {:foreground {:r 0 :g 0 :b 0}}))
+(def ^:dynamic *syntax* k/syntax)
 
-(def keywords k/keywords)
-(def symbols (set (map str (keys (ns-refers *ns*)))))
-(def delimiters #{"(" ")" "{" "}" "[" "]"})
-(def blanks #{ \( \) \{ \} \[ \] \,  \space \newline \tab })
+(:keyword *syntax*)
 
-(def styles-map {:keywords keywords, :delimiters delimiters, :symbols symbols})
+(defn get-limits [^Matcher m]
+  "Using the regex matcher provided returns the 
+   start and end of the next match."
+  (if (. m find) 
+    [(. m start) (. m end) (. m group)]
+    nil))
 
-(defn blank? [c] (blanks c))
-
-(defn valid-match? [s ptrn idx]
-  "Check if ptrn is surrounded by 'blank' characters
-  in the given idx for the string s."
-  (let [len (count ptrn)
-        begin (if (pos? idx) (dec idx) idx)
-        end (+ idx len)]
-    (or (delimiters ptrn)
-        (and
-          (<= 0 begin)
-          (or (zero? begin) (blank? (.charAt s begin)))
-          (pos? end)
-          (<= end (count s))
-          (or (= end (count s)) (blank? (.charAt s end)))))))
-
-(defn all-indexes [s ptrn]
-  "Finds all indexes where ptrn is matched in text and
-   returns a list with the indexes in which the matches 
-   are located."
-  (let [f #(.indexOf s ptrn (inc %1))
-        idxs (drop 1 (iterate f -1))]
-    (filter
-      #(valid-match? s ptrn %1)
-      (for [idx idxs :while (<= 0 idx)] idx))))
+(defn limits 
+  ([ptrn s]
+    (let [m (re-matcher (re-pattern ptrn) s)]
+      (limits m)))
+  ([m]
+    (lazy-seq
+      (when-let [lim (get-limits m)]
+        (cons lim (limits m))))))
 
 (defn remove-cr [str] 
   "Removes carriage returns from the string."
   (.replace str "\r" ""))
 
+(defn apply-style
+  ([txt strt end stl]
+    (.setCharacterAttributes txt strt end stl true))
+  ([txt stl]
+    (.setCharacterAttributes txt stl true)))
+
 (defn high-light [txt-pane]
   (let [doc (.getStyledDocument txt-pane)
-        text (remove-cr (.getText txt-pane))]
-    (.setCharacterAttributes doc 0 (.length text) (:default styles) true)
-    (doseq [[stl kws] styles-map]
-      (doseq [kw kws]
-        (doseq [idx (all-indexes text kw)]
-          (.setCharacterAttributes doc idx (.length kw) (stl styles) true))))
-    (.setCharacterAttributes txt-pane (:default styles) true)))
+        text (remove-cr (.getText txt-pane))
+        len (.length text)]
+    (apply-style doc 0 len *default*)
+    (doseq [[_ v] *syntax*]
+      (let [stl (make-style (:style v))
+            ptrn (:regex v)] 
+        (doseq [[strt end _] (limits ptrn text)]
+          (apply-style doc strt (- end strt) stl)
+		  nil)))
+        (apply-style txt-pane *default*)))
