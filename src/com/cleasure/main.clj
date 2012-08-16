@@ -147,9 +147,9 @@
     (on-keypress txt-code #(when (.canRedo undo-mgr) (.redo undo-mgr))
                  KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
-    ; High-light text after key release.
+    ; High-light text after code edition.
     (on-changed txt-code #(hl/high-light txt-code))
-    (on-changed txt-code #(update-line-numbers doc txt-lines))
+    ;(on-changed txt-code #(update-line-numbers doc txt-lines))
 
     (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
@@ -219,21 +219,31 @@
 (defn make-main [name]
   (let [main (JFrame. name)
         tabs (JTabbedPane.)
-        txt-log (JTextArea.)
+        txt-repl (JTextArea.)
+        txt-in (JTextArea.)
+        pane-repl (JSplitPane.)
         pane-center-left (JSplitPane.)
         pane-all (JSplitPane.)
         files-tree (JTree. (to-array []))]
     ; Set controls properties
-    (doto txt-log
+    (doto txt-repl
       (.setEditable false)
       (.setFont *current-font*))
-    (redirect-out txt-log)
+
+    ;Redirect standard out
+    (redirect-out txt-repl)
+
+    (doto pane-repl
+      (.setOrientation JSplitPane/VERTICAL_SPLIT)
+      (.setResizeWeight 0.8)
+      (.setTopComponent (JScrollPane. txt-repl))
+      (.setBottomComponent txt-in))
 
     (doto pane-center-left
       (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
       (.setResizeWeight 0.8)
       (.setLeftComponent tabs)
-      (.setRightComponent (JScrollPane. txt-log)))
+      (.setRightComponent pane-repl))
 
     (doto pane-all
       (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
