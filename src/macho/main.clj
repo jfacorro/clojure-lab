@@ -1,4 +1,4 @@
-(ns com.cleasure.main
+(ns macho.main
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
             JTextField JButton JFileChooser UIManager JSplitPane JTree
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke]
@@ -9,11 +9,13 @@
            [java.awt BorderLayout FlowLayout Font Color]
            [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener])
   (:require [clojure.reflect :as r]
-            [com.cleasure.ui.high-lighter :as hl :reload true]
-            [com.cleasure.ui.text.undo-redo :as undo])
+            [macho.ui.swing.highlighter :as hl :reload true]
+            [macho.ui.swing.undo :as undo])
   (:use [clojure.java.io]))
 
-(def app-name "Cleajure")
+(def app-name "macho")
+(def new-doc-title "Untitled")
+
 (def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (.getCanonicalPath (File. ".")))
 
@@ -88,7 +90,13 @@
 (defn current-path [tabs]
   (let [idx (.getSelectedIndex tabs)
         path (.getTitleAt tabs idx)]
-     path))
+    (if (= path new-doc-title)
+      (let [dialog (JFileChooser. default-dir)
+            result (.showSaveDialog dialog nil)
+            file (.getSelectedFile dialog)
+            path (if file (.getPath file) nil)]
+         path)
+       path)))
 
 (defn save-src [tabs]
   (let [txt-code (current-txt tabs)
@@ -192,7 +200,7 @@
         item-save (JMenuItem. "Save")
         item-eval (JMenuItem. "Eval")
         item-exit (JMenuItem. "Exit")]
-    (on-click item-new #(new-document tabs "Untitled"))
+    (on-click item-new #(new-document tabs new-doc-title))
     (.setAccelerator item-new (KeyStroke/getKeyStroke KeyEvent/VK_N KeyEvent/CTRL_MASK))
 
     (on-click item-open #(open-src tabs))
@@ -255,13 +263,14 @@
     (.setDividerLocation pane-all 150)
 
     (doto main
-      ;(.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+      (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setSize 800 600)
       (.setJMenuBar (build-menu tabs))
       (.add pane-all BorderLayout/CENTER)
       (.setVisible true))))
 
-(def main (make-main app-name))
+(defn -main []
+  (def frame (make-main app-name)))
 
 (in-ns 'clojure.core)
 (def ^:dynamic *out-custom* (java.io.OutputStreamWriter. System/out))

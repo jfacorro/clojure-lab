@@ -1,10 +1,10 @@
-(ns com.cleasure.ui.high-lighter
+(ns macho.ui.swing.highlighter
 	(:import
 		[javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
 		[java.awt Color]
                   [java.util.regex Matcher])
 	(:require
-		[com.cleasure.lang.clojure.keywords :as k :reload true]
+		[macho.lang.clojure :as lang :reload true]
 		[clojure.set :as set]))
 
 (def style-constants {
@@ -31,7 +31,7 @@
     style))
 
 (def ^:dynamic *default* (make-style {:foreground {:r 0 :g 0 :b 0}}))
-(def ^:dynamic *syntax* k/syntax)
+(def ^:dynamic *syntax* lang/syntax)
 
 (:keyword *syntax*)
 

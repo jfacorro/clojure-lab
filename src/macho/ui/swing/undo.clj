@@ -1,4 +1,4 @@
-(ns com.cleasure.ui.text.undo-redo
+(ns macho.ui.swing.undo
 	(:import 
 		[javax.swing.undo UndoManager AbstractUndoableEdit]
 		[javax.swing.text DefaultStyledDocument$AttributeUndoableEdit]
@@ -8,6 +8,6 @@
 	(let [handler (proxy [UndoableEditListener] []
 			(undoableEditHappened [e]
 				(let [edit (.getEdit e)]
-					(when-not (= "style change" (.getPresentationName edit))
+					(when-not (.contains (.getPresentationName edit) "style")
 						(.addEdit undo-mgr edit)))))]
 		(.addUndoableEditListener doc handler)))

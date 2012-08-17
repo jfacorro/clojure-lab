@@ -1,4 +1,4 @@
-(ns com.cleasure.lang.clojure.keywords)
+(ns macho.lang.clojure)
 
 ;-----------------------------------------------------------
 ; Special forms and characters collections definitions

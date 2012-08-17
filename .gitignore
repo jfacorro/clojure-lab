@@ -3,3 +3,4 @@ clojure-clr/
 lib/
 ~*.*
 .*
+*.jar
