@@ -1,12 +1,15 @@
 (ns macho.ui.swing.highlighter
-  (:import [javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
-           [java.awt Color]
-           [java.util.regex Matcher])
-  (:require [macho.lang.clojure :as lang :reload true]
-            [clojure.set :as set]))
+	(:import
+		[javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
+		[java.awt Color]
+                  [java.util.regex Matcher])
+	(:require
+		[macho.lang.clojure :as lang :reload true]
+		[clojure.set :as set]))
 
-(def style-constants {:bold StyleConstants/Bold, 
-	             :foreground StyleConstants/Foreground})
+(def style-constants {
+	:bold		StyleConstants/Bold, 
+	:foreground	StyleConstants/Foreground})
 
 (defn rgb-to-int [rgb]
   (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
@@ -33,8 +36,8 @@
 (:keyword *syntax*)
 
 (defn get-limits [^Matcher m]
-  "Using the regex matcher provided returns the
-  start and end of the next match."
+  "Using the regex matcher provided returns the 
+   start and end of the next match."
   (if (. m find) 
     [(. m start) (. m end) (. m group)]
     nil))
@@ -63,10 +66,10 @@
         text (remove-cr (.getText txt-pane))
         len (.length text)]
     (apply-style doc 0 len *default*)
-    ;(println "highlighting... mofooooo")
     (doseq [[_ v] *syntax*]
       (let [stl (make-style (:style v))
             ptrn (:regex v)] 
         (doseq [[strt end _] (limits ptrn text)]
-          (apply-style doc strt (- end strt) stl) nil)))
+          (apply-style doc strt (- end strt) stl)
+		  nil)))
         (apply-style txt-pane *default*)))
