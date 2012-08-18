@@ -20,9 +20,7 @@
   (def lbl (label "Hello, macho!"))
   (def txt (text-pane))
 
-  ;(set-attr! main-win :size [width height])
   (size! main width height)
-  ;(set-attr! main :icon (image icon-path))
   (icon! main (image icon-path))
   (font! lbl default-font)
   (font! txt default-font)

@@ -29,6 +29,7 @@
 
 (def ^:dynamic *default* (make-style {:foreground {:r 0 :g 0 :b 0}}))
 (def ^:dynamic *syntax* lang/syntax)
+(def ^:dynamic *higlighting* (atom false))
 
 (:keyword *syntax*)
 
@@ -59,14 +60,13 @@
     (.setCharacterAttributes txt stl true)))
 
 (defn high-light [txt-pane]
-  (let [doc (.getStyledDocument txt-pane)
-        text (remove-cr (.getText txt-pane))
-        len (.length text)]
-    (apply-style doc 0 len *default*)
-    ;(println "highlighting... mofooooo")
-    (doseq [[_ v] *syntax*]
-      (let [stl (make-style (:style v))
-            ptrn (:regex v)] 
-        (doseq [[strt end _] (limits ptrn text)]
-          (apply-style doc strt (- end strt) stl) nil)))
-        (apply-style txt-pane *default*)))
+    (let [doc (.getStyledDocument txt-pane)
+          text (remove-cr (.getText txt-pane))
+          len (.length text)]
+      (apply-style doc 0 len *default*)
+      (doseq [[_ v] *syntax*]
+        (let [stl (make-style (:style v))
+              ptrn (:regex v)] 
+          (doseq [[strt end _] (limits ptrn text)]
+            (apply-style doc strt (- end strt) stl) nil)))
+      (apply-style txt-pane *default*)))

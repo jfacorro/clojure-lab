@@ -120,7 +120,7 @@
       (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
       (.updateUI))))
 
-(defn new-document [tabs title]
+(defn new-document [tabs title & src]
   "Adds a new tab to tabs and sets its title."
   (let [doc (DefaultStyledDocument.)
         txt-code (JTextPane. doc)
@@ -128,6 +128,9 @@
         pnl-code (JPanel.)
         pnl-scroll (JScrollPane. pnl-code)
         txt-lines (JTextArea.)]
+
+    ;; Load the text all at once
+    (when src (.setText txt-code (apply str src)))
 
     (doto pnl-code
       (.setLayout (BorderLayout.))
@@ -179,9 +182,10 @@
         path (if file (.getPath file) nil)]
     (when path
       (reset! default-dir (.getCanonicalPath (File. path)))
-      (let [txt-code (new-document tabs path)]
+      (let [src (slurp path)
+            txt-code (new-document tabs path src)]
+            ;doc (.getStyledDocument txt-code)
         (doto txt-code
-          (.setText (slurp path))
           (.setCaretPosition 0)
           (.grabFocus))
         (hl/high-light txt-code)))))
