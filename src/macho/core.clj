@@ -1,4 +1,4 @@
-(ns macho.main
+(ns macho.core
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
             JTextField JButton JFileChooser UIManager JSplitPane JTree
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke]
@@ -13,17 +13,19 @@
             [macho.ui.swing.undo :as undo])
   (:use [clojure.java.io]))
 
+(declare main tabs docs tree repl menu)
+
 (def app-name "macho")
 (def new-doc-title "Untitled")
 
 (def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
-(def default-dir (.getCanonicalPath (File. ".")))
+(def default-dir (atom (.getCanonicalPath (File. "."))))
 
-; Set the system's native look & feel instead of Swings default
+;; Set the application look & feel instead of Swings default.
 (javax.swing.UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
-;(UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
-;(UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
-;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
+;; (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+;; (UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
+;; (UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
 
 (defn str-contains? [s ptrn]
   "Checks if a string contains a substring"
@@ -45,7 +47,8 @@
   (try
     (println (load-string code))
     (catch Exception e
-	(println (.getMessage e)))))
+	(println (.getMessage e))
+         (.printStackTrace e))))
 
 (defn on-click [cmpt f]
   (.addActionListener cmpt
@@ -53,7 +56,7 @@
       (actionPerformed [e] (f)))))
 
 (defn check-key [evt k m]
-  "Checks if the key and the modifier match with the event's values"
+  "Checks if the key and the modifier match the event's values"
   (and 
     (or (= k (.getKeyCode evt)) (not k))
     (or (= m (.getModifiers evt)) (not m))))
@@ -118,14 +121,14 @@
       (.updateUI))))
 
 (defn new-document [tabs title]
-  "Add a new tab to tabs and sets
-  its title."
+  "Adds a new tab to tabs and sets its title."
   (let [doc (DefaultStyledDocument.)
         txt-code (JTextPane. doc)
         undo-mgr (UndoManager.)
         pnl-code (JPanel.)
         pnl-scroll (JScrollPane. pnl-code)
         txt-lines (JTextArea.)]
+
     (doto pnl-code
       (.setLayout (BorderLayout.))
       (.add txt-code BorderLayout/CENTER))
@@ -143,21 +146,23 @@
 
     (update-line-numbers doc txt-lines)
 
-    ; Eval: CTRL + Enter
+    ;; Eval: CTRL + Enter
     (on-keypress txt-code #(eval-code (.getSelectedText txt-code))
                  KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
-    ; Add Undo manager
+
+    ;; Add Undo manager
     (undo/on-undoable doc undo-mgr)
 
-    ; Undo/redo key events
+    ;; Undo/redo key events
     (on-keypress txt-code #(when (.canUndo undo-mgr) (.undo undo-mgr))
                  KeyEvent/VK_Z KeyEvent/CTRL_MASK)
     (on-keypress txt-code #(when (.canRedo undo-mgr) (.redo undo-mgr))
                  KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
-    ; High-light text after code edition.
+    ;; High-light text after code edition.
     (on-changed txt-code #(hl/high-light txt-code))
-    ;(on-changed txt-code #(update-line-numbers doc txt-lines))
+    ;; Update line numbers
+    (on-changed txt-code #(update-line-numbers doc txt-lines))
 
     (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
@@ -168,17 +173,22 @@
     txt-code))
 
 (defn open-src [tabs]
-  (let [dialog (JFileChooser. default-dir)
+  (let [dialog (JFileChooser. @default-dir)
         result (.showOpenDialog dialog nil)
         file (.getSelectedFile dialog)
         path (if file (.getPath file) nil)]
     (when path
+      (reset! default-dir (.getCanonicalPath (File. path)))
       (let [txt-code (new-document tabs path)]
         (doto txt-code
           (.setText (slurp path))
           (.setCaretPosition 0)
           (.grabFocus))
         (hl/high-light txt-code)))))
+
+(defn close [tabs]
+  (let [idx (.getSelectedIndex tabs)]
+    (.removeTabAt tabs idx)))
 
 (defn redirect-out [txt]
   (let [stream (proxy [OutputStream] []
@@ -198,6 +208,7 @@
         item-new (JMenuItem. "New")
         item-open (JMenuItem. "Open")
         item-save (JMenuItem. "Save")
+        item-close (JMenuItem. "Close")
         item-eval (JMenuItem. "Eval")
         item-exit (JMenuItem. "Exit")]
     (on-click item-new #(new-document tabs new-doc-title))
@@ -209,6 +220,9 @@
     (on-click item-save #(save-src tabs))
     (.setAccelerator item-save (KeyStroke/getKeyStroke KeyEvent/VK_S KeyEvent/CTRL_MASK))
 
+    (on-click item-close #(close tabs))
+    (.setAccelerator item-close (KeyStroke/getKeyStroke KeyEvent/VK_W KeyEvent/CTRL_MASK))
+
     (on-click item-eval #(eval-src tabs))
     (.setAccelerator item-eval (KeyStroke/getKeyStroke KeyEvent/VK_E KeyEvent/CTRL_MASK))
 
@@ -218,6 +232,7 @@
     (.add menu item-new)
     (.add menu item-open)
     (.add menu item-save)
+    (.add menu item-close)
     (.add menu item-eval)
     (.add menu item-exit)
 
