@@ -27,7 +27,7 @@
       (.addAttribute style (k style-constants) v))
     style))
 
-(def ^:dynamic *default* (make-style {:foreground {:r 0 :g 0 :b 0}}))
+(def ^:dynamic *default* (make-style {:foreground {:r 0 :g 131 :b 131}}))
 (def ^:dynamic *syntax* lang/syntax)
 (def ^:dynamic *higlighting* (atom false))
 

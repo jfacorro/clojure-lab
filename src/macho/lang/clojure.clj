@@ -8,18 +8,18 @@
 
 (def symbols (keys (ns-refers *ns*)))
 
-(def delimiters #{"(" ")" "{" "}" "[" "]"})
+(def delimiters #{"(" ")" "{" "}" "[" "]" "#("})
 
 (def escape-chars-map
   (let [esc-chars "(){}[]*+.?"]
       (zipmap esc-chars
-              (map #(str "\\" %) esc-chars))))
+              (map #(str \\ %) esc-chars))))
 
 ;(def blanks (let [bs (wrap (re-escape (conj delimiters "\\s")) "[" "]")
 ;                 re (]
 ;                  )
 
-(defn re-escape [s]
+(defn re-escape [s] 
   (->> (str s)
        (replace escape-chars-map)
        (reduce str)))
@@ -31,7 +31,7 @@
     (apply str (concat strt s end))))
 
 (defn alt-regex [coll]
-  (wrap 
+  (wrap  
     (apply str (interpose "|" (map re-escape coll)))
     "(" ")"))
 
@@ -42,10 +42,12 @@
             :style {:bold true :foreground {:r 0, :g 134, :b 179}}}
   :delimiters {:regex (alt-regex delimiters)
                :style {:bold true :foreground {:r 120, :g 120, :b 120}}}
+  :accesor {:regex "(?<=\\()\\.\\w+"
+            :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
   :keyword {:regex ":[\\w-!\\?]+"
             :style {:bold true :foreground {:r 153, :g 0, :b 115}}}
-  :comment {:regex ";.*[\\n]?"
-            :style {:bold true :foreground {:r 153, :g 153, :b 136}}}
-  :string-comments {:regex "(?<!\\\\)\".*?(?<!\\\\)\""
+  :string-comments {:regex "(?s)(?<!\\\\)\".*?(?<!\\\\)\""
            :desc  "Ignore '\\\"' as delimiters."
-           :style {:bold true :foreground {:r 223 :g 16, :b 67}}}})
+           :style {:bold true :foreground {:r 223 :g 16, :b 67}}}
+  :comment {:regex ";.*\\n"
+            :style {:bold true :foreground {:r 153, :g 153, :b 136}}}})

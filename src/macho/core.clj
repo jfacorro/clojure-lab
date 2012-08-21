@@ -47,10 +47,10 @@
   (try
     (println (load-string code))
     (catch Exception e
-	(println (.getMessage e))
+	(println (.getMessage e)) 
          (.printStackTrace e))))
 
-(defn on-click [cmpt f]
+(defn on-click [cmpt f] 
   (.addActionListener cmpt
     (proxy [ActionListener] []
       (actionPerformed [e] (f)))))
@@ -59,7 +59,7 @@
   "Checks if the key and the modifier match the event's values"
   (and 
     (or (= k (.getKeyCode evt)) (not k))
-    (or (= m (.getModifiers evt)) (not m))))
+    (or (= m (.getModifiers evt)) (not m)))) 
 
 (defn on-keypress
   ([cmpt f] (on-keypress cmpt f nil nil))
@@ -69,12 +69,12 @@
         (keyPressed [e] (when (check-key e key mask) (f)))))))
 
 (defn on-keyrelease
-  ([cmpt f] (on-keyrelease cmpt f nil nil))
+  ([cmpt f] (on-keyrelease cmpt f nil nil)) 
   ([cmpt f key mask]
     (.addKeyListener cmpt
       (proxy [KeyAdapter] []
         (keyReleased [e] (when (check-key e key mask) (f)))))))
-
+ 
 (defn on-changed [cmpt f]
   (let [doc (.getStyledDocument cmpt)]
     (.addDocumentListener doc
@@ -120,60 +120,62 @@
       (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
       (.updateUI))))
 
-(defn new-document [tabs title & src]
+(defn new-document
   "Adds a new tab to tabs and sets its title."
-  (let [doc (DefaultStyledDocument.)
-        txt-code (JTextPane. doc)
-        undo-mgr (UndoManager.)
-        pnl-code (JPanel.)
-        pnl-scroll (JScrollPane. pnl-code)
-        txt-lines (JTextArea.)]
+  ([tabs title] (new-document tabs title nil))
+  ([tabs title src]
+    (let [doc (DefaultStyledDocument.)
+          txt-code (JTextPane. doc)
+          undo-mgr (UndoManager.)
+          pnl-code (JPanel.)
+          pnl-scroll (JScrollPane. pnl-code)
+          txt-lines (JTextArea.)]
 
-    ;; Load the text all at once
-    (when src (.setText txt-code (apply str src)))
+      ;; Load the text all at once
+      (when src (.setText txt-code src))
 
-    (doto pnl-code
-      (.setLayout (BorderLayout.))
-      (.add txt-code BorderLayout/CENTER))
+      (doto pnl-code
+        (.setLayout (BorderLayout.))
+        (.add txt-code BorderLayout/CENTER))
 
-    (doto pnl-scroll
-       (.setRowHeaderView txt-lines))
+      (doto pnl-scroll
+         (.setRowHeaderView txt-lines))
 
-    (.setFont txt-code *current-font*)
+      (.setFont txt-code *current-font*)
 
-    (doto txt-lines
-      (.setFont *current-font*)
-      (.setEditable false)
-      ;(.setEnabled false)
-      (.setBackground Color/LIGHT_GRAY))
+      (doto txt-lines
+        (.setFont *current-font*)
+        (.setEditable false)
+        ;(.setEnabled false)
+        (.setBackground Color/LIGHT_GRAY))
 
-    (update-line-numbers doc txt-lines)
+      (update-line-numbers doc txt-lines)
 
-    ;; Eval: CTRL + Enter
-    (on-keypress txt-code #(eval-code (.getSelectedText txt-code))
-                 KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
+      ;; Eval: CTRL + Enter
+      (on-keypress txt-code #(eval-code (.getSelectedText txt-code))
+                   KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
-    ;; Add Undo manager
-    (undo/on-undoable doc undo-mgr)
+      ;; Add Undo manager
+      (undo/on-undoable doc undo-mgr)
 
-    ;; Undo/redo key events
-    (on-keypress txt-code #(when (.canUndo undo-mgr) (.undo undo-mgr))
-                 KeyEvent/VK_Z KeyEvent/CTRL_MASK)
-    (on-keypress txt-code #(when (.canRedo undo-mgr) (.redo undo-mgr))
-                 KeyEvent/VK_Y KeyEvent/CTRL_MASK)
+      ;; Undo/redo key events
+      (on-keypress txt-code #(when (.canUndo undo-mgr) (.undo undo-mgr))
+                   KeyEvent/VK_Z KeyEvent/CTRL_MASK)
+      (on-keypress txt-code #(when (.canRedo undo-mgr) (.redo undo-mgr))
+                   KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
-    ;; High-light text after code edition.
-    (on-changed txt-code #(hl/high-light txt-code))
-    ;; Update line numbers
-    (on-changed txt-code #(update-line-numbers doc txt-lines))
+      ;; High-light text after code edition.
+      (on-changed txt-code #(hl/high-light txt-code))
+      ;; Update line numbers
+      (on-changed txt-code #(update-line-numbers doc txt-lines))
 
-    (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
+      (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
-    (doto tabs
-      (.addTab title pnl-scroll)
-      (.setSelectedIndex (- (.getTabCount tabs) 1)))
+      (doto tabs
+        (.addTab title pnl-scroll)
+        (.setSelectedIndex (- (.getTabCount tabs) 1)))
 
-    txt-code))
+      txt-code)))
 
 (defn open-src [tabs]
   (let [dialog (JFileChooser. @default-dir)

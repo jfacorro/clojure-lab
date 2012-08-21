@@ -2,8 +2,8 @@
   (:import [javax.swing JTextField JTextPane JTextArea]
            [javax.swing.text DefaultStyledDocument]))
 
-(defn text 
-  ([] (text nil))
+(defn text-field
+  ([] (text-field nil))
   ([s] (JTextField. s)))
 
 (defn text-area
