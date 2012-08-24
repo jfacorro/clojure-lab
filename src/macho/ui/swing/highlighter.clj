@@ -31,8 +31,6 @@
 (def ^:dynamic *syntax* lang/syntax)
 (def ^:dynamic *higlighting* (atom false))
 
-(:keyword *syntax*)
-
 (defn get-limits [^Matcher m]
   "Using the regex matcher provided returns the
   start and end of the next match."
