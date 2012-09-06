@@ -8,21 +8,20 @@
 
 (def symbols (keys (ns-refers *ns*)))
 
-(def delimiters #{"(" ")" "{" "}" "[" "]" "#("})
+(def delimiters #{"(" ")" "{" "}" "[" "]" "#" "," " "})
 
 (def escape-chars-map
   (let [esc-chars "(){}[]*+.?"]
       (zipmap esc-chars
               (map #(str \\ %) esc-chars))))
 
-;(def blanks (let [bs (wrap (re-escape (conj delimiters "\\s")) "[" "]")
-;                 re (]
-;                  )
-
 (defn re-escape [s] 
   (->> (str s)
        (replace escape-chars-map)
        (reduce str)))
+
+(def blanks-behind (str "(?<=[" (apply str (map re-escape delimiters)) "]|^)"))
+(def blanks-ahead (str "(?=[" (apply str (map re-escape delimiters)) "]|$)"))
 
 (defn wrap
   "Wraps a string s around the supplied delimiters"
@@ -35,18 +34,23 @@
     (apply str (interpose "|" (map re-escape coll)))
     "(" ")"))
 
+(defn wrap-blanks [s]
+  (wrap s blanks-behind blanks-ahead))
+
 (def syntax {
-  :special-forms {:regex (wrap (alt-regex special-forms) "\\b")
+  :special-forms {:regex (wrap-blanks (alt-regex special-forms))
                   :style {:bold true :foreground {:r 0, :g 0, :b 0}}}
-  :symbols {:regex (wrap (alt-regex symbols) "\\b")
+  :symbols {:regex (wrap-blanks (alt-regex symbols))
             :style {:bold true :foreground {:r 0, :g 134, :b 179}}}
   :delimiters {:regex (alt-regex delimiters)
                :style {:bold true :foreground {:r 120, :g 120, :b 120}}}
   :accesor {:regex "(?<=\\()\\.\\w+"
             :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
-  :keyword {:regex ":[\\w-!\\?]+"
+  :keyword {:regex (wrap-blanks "\\^?:[\\w-!\\?]+")
             :style {:bold true :foreground {:r 153, :g 0, :b 115}}}
-  :string-comments {:regex "(?s)(?<!\\\\)\".*?(?<!\\\\)\""
+  :namespace {:regex (wrap-blanks "(?:\\w+\\.|(?<=\\.)\\w+)+(?:/\\w+)?")
+              :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
+  :string {:regex "(?s)(?<!\\\\)\".*?(?<!\\\\)\""
            :desc  "Ignore '\\\"' as delimiters."
            :style {:bold true :foreground {:r 223 :g 16, :b 67}}}
   :comment {:regex ";.*\\n"

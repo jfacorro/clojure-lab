@@ -12,7 +12,7 @@
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo])
   (:use [clojure.java.io]))
-
+                 
 (declare main tabs docs tree repl menu)
 
 (def app-name "macho")
@@ -47,8 +47,7 @@
   (try
     (println (load-string code))
     (catch Exception e
-	(println (.getMessage e)) 
-         (.printStackTrace e))))
+	(println (.getMessage e)))))
 
 (defn on-click [cmpt f] 
   (.addActionListener cmpt
@@ -58,22 +57,22 @@
 (defn check-key [evt k m]
   "Checks if the key and the modifier match the event's values"
   (and 
-    (or (= k (.getKeyCode evt)) (not k))
-    (or (= m (.getModifiers evt)) (not m)))) 
+    (or (nil? k) (= k (.getKeyCode evt)))
+    (or (nil? m) (= m (.getModifiers evt))))) 
 
 (defn on-keypress
   ([cmpt f] (on-keypress cmpt f nil nil))
   ([cmpt f key mask]
     (.addKeyListener cmpt
       (proxy [KeyAdapter] []
-        (keyPressed [e] (when (check-key e key mask) (f)))))))
+        (keyPressed [e] (when (check-key e key mask) (f e)))))))
 
 (defn on-keyrelease
   ([cmpt f] (on-keyrelease cmpt f nil nil)) 
   ([cmpt f key mask]
     (.addKeyListener cmpt
       (proxy [KeyAdapter] []
-        (keyReleased [e] (when (check-key e key mask) (f)))))))
+        (keyReleased [e] (when (check-key e key mask) (f e)))))))
  
 (defn on-changed [cmpt f]
   (let [doc (.getStyledDocument cmpt)]
@@ -105,8 +104,7 @@
   (let [txt-code (current-txt tabs)
         path (current-path tabs)
         content (.getText txt-code)]
-    (with-open [wrtr (writer path)]
-      (.write wrtr content))))
+    (spit path content)))
 
 (defn eval-src [tabs]
   (let [txt (current-txt tabs)]
@@ -119,6 +117,20 @@
     (doto lines
       (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
       (.updateUI))))
+
+(defn insert-text [^JTextPane txt s]
+  (let [doc (.getDocument txt)
+        pos (.getCaretPosition txt)]
+    (.insertString doc pos s nil)))
+
+(defn input-format [^JTextPane txt e]
+  (let [k (.getKeyCode e)]
+    (cond (= KeyEvent/VK_LEFT_PARENTHESIS k)
+            (queue-ui-action #(insert-text txt ")"))
+          (= KeyEvent/VK_TAB k)
+            (do 
+              (.consume e)
+              (queue-ui-action  #(insert-text txt "  "))))))
 
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -159,13 +171,15 @@
       (undo/on-undoable doc undo-mgr)
 
       ;; Undo/redo key events
-      (on-keypress txt-code #(when (.canUndo undo-mgr) (.undo undo-mgr))
+      (on-keypress txt-code #(do % (when (.canUndo undo-mgr) (.undo undo-mgr)))
                    KeyEvent/VK_Z KeyEvent/CTRL_MASK)
-      (on-keypress txt-code #(when (.canRedo undo-mgr) (.redo undo-mgr))
+      (on-keypress txt-code #(do % (when (.canRedo undo-mgr) (.redo undo-mgr)))
                    KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
+      (on-keypress txt-code #(input-format txt-code %))
+
       ;; High-light text after code edition.
-      (on-changed txt-code #(hl/high-light txt-code))
+      (on-changed txt-code #(do (hl/high-light txt-code)))
       ;; Update line numbers
       (on-changed txt-code #(update-line-numbers doc txt-lines))
 
