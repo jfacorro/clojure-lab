@@ -1,23 +1,23 @@
 (ns macho.ui.swing.highlighter
   (:import [javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
-           [javax.swing JTextPane]
+           [javax.swing JTextPane SwingUtilities]
            [java.awt Color]
            [java.util.regex Matcher])
   (:require [macho.lang.clojure :as lang :reload true]
             [clojure.set :as set]))
 
-(def style-constants {:bold StyleConstants/Bold, 
+(def style-constants {:bold StyleConstants/Bold,
+                      :background StyleConstants/Background,
 	             :foreground StyleConstants/Foreground})
 
 (defn rgb-to-int [rgb]
   (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
 
-(defn parse-attrs [stl] 
-  (if (:foreground stl)
-    (let [rgb (:foreground stl)
-          color (Color. (rgb-to-int rgb))]
-      (merge stl {:foreground color}))
-    stl))
+(defn parse-attrs [stl]
+  (let [color-attr #{:foreground :background}
+        to-color (fn [[k v]] [k (Color. (rgb-to-int v))])
+        attrs (mapcat to-color (filter (comp color-attr key) stl))]
+    (apply assoc stl attrs)))
 
 (defn make-style [attrs]
   "Creates a new style with the given
@@ -29,8 +29,8 @@
     style))
 
 (defn init-styles [stls]
-  (let [m (map (fn [[k v]] [k (assoc v :style (make-style (v :style)))]) stls)]
-    (apply hash-map (apply concat m))))
+  (let [f (fn [[k v]] {k (assoc v :style (make-style (v :style)))})]
+    (reduce #(merge %1 (f %2)) stls stls)))
 
 (def ^:dynamic *default* (make-style {:foreground {:r 0 :g 131 :b 131}}))
 (def ^:dynamic *syntax* (init-styles lang/syntax))
@@ -39,9 +39,8 @@
 (defn get-limits [^Matcher m]
   "Using the regex matcher provided returns the
   start and end of the next match."
-  (if (. m find) 
-    [(. m start) (. m end)]
-    nil))
+  (when (. m find) 
+    [(. m start) (. m end)]))
 
 (defn limits
   ([ptrn s]
@@ -58,18 +57,22 @@
 
 (defn apply-style
   ([^JTextPane txt strt end stl]
-    (.setCharacterAttributes txt strt end stl true))
+    (SwingUtilities/invokeLater #(.setCharacterAttributes txt strt end stl true)))
   ([^JTextPane txt stl]
-    (.setCharacterAttributes txt stl true)))
+    (SwingUtilities/invokeLater #(.setCharacterAttributes txt stl true))))
 
 (defn high-light [^JTextPane txt-pane]
     (let [doc (.getStyledDocument txt-pane)
           text (remove-cr (.getText txt-pane))
           len (.length text)]
       (apply-style doc 0 len *default*)
-      (doseq [v (vals *syntax*)]
+      (doseq [[k v] *syntax*]
         (let [stl (v :style)
-              ptrn (v :regex)] 
+              ptrn (v :regex)]
           (doseq [[strt end] (limits ptrn text)]
-            (apply-style doc strt (- end strt) stl) nil)))
+            (apply-style doc strt (- end strt) stl))))
       (apply-style txt-pane *default*)))
+
+
+
+

@@ -2,7 +2,7 @@
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
             JTextField JButton JFileChooser UIManager JSplitPane JTree
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke]
-           [javax.swing.text StyleContext DefaultStyledDocument]
+           [javax.swing.text StyleContext DefaultStyledDocument] 
            [javax.swing.undo UndoManager]
            [javax.swing.event DocumentListener]
            [java.io OutputStream PrintStream File OutputStreamWriter]
@@ -12,13 +12,13 @@
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo])
   (:use [clojure.java.io]))
-                 
+
 (declare main tabs docs tree repl menu)
 
 (def app-name "macho")
 (def new-doc-title "Untitled")
 
-(def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
+(def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14)) 
 (def default-dir (atom (.getCanonicalPath (File. "."))))
 
 ;; Set the application look & feel instead of Swings default.
@@ -41,7 +41,7 @@
         (sort (for [m methods] (:name m)))))))
 
 (defn queue-ui-action [f]
-  (SwingUtilities/invokeLater (proxy [Runnable] [] (run [] (f)))))
+  (SwingUtilities/invokeLater f))
 
 (defn eval-code [code]
   (try
@@ -85,7 +85,7 @@
 (defn current-txt [tabs]
   (let [idx (.getSelectedIndex tabs)
         scroll (.getComponentAt tabs  idx)
-        pnl (.. scroll getViewport getView)
+        pnl (.. scroll getViewport getView) 
         txt (.getComponent pnl 0)]
   txt))
 
@@ -93,11 +93,12 @@
   (let [idx (.getSelectedIndex tabs)
         path (.getTitleAt tabs idx)]
     (if (= path new-doc-title)
-      (let [dialog (JFileChooser. default-dir)
+      (let [dialog (JFileChooser. @default-dir)
             result (.showSaveDialog dialog nil)
             file (.getSelectedFile dialog)
             path (if file (.getPath file) nil)]
-         path)
+        (when path (.setTitleAt tabs idx path))
+        path)
        path)))
 
 (defn save-src [tabs]
@@ -130,7 +131,7 @@
           (= KeyEvent/VK_TAB k)
             (do 
               (.consume e)
-              (queue-ui-action  #(insert-text txt "  "))))))
+              (queue-ui-action #(insert-text txt "  "))))))
 
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -153,18 +154,15 @@
       (doto pnl-scroll
          (.setRowHeaderView txt-lines))
 
-      (.setFont txt-code *current-font*)
-
       (doto txt-lines
         (.setFont *current-font*)
         (.setEditable false)
-        ;(.setEnabled false)
         (.setBackground Color/LIGHT_GRAY))
 
       (update-line-numbers doc txt-lines)
 
       ;; Eval: CTRL + Enter
-      (on-keypress txt-code #(eval-code (.getSelectedText txt-code))
+      (on-keypress txt-code #(do % (eval-code (.getSelectedText txt-code)))
                    KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
       ;; Add Undo manager
@@ -179,15 +177,17 @@
       (on-keypress txt-code #(input-format txt-code %))
 
       ;; High-light text after code edition.
-      (on-changed txt-code #(do (hl/high-light txt-code)))
-      ;; Update line numbers
-      (on-changed txt-code #(update-line-numbers doc txt-lines))
+      (on-changed txt-code #(do (hl/high-light txt-code) (update-line-numbers doc txt-lines)))
 
       (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
       (doto tabs
         (.addTab title pnl-scroll)
         (.setSelectedIndex (- (.getTabCount tabs) 1)))
+
+      (doto txt-code
+        (.setFont *current-font*)
+        (.setBackground Color/black))
 
       txt-code)))
 
@@ -259,10 +259,9 @@
     (.add menubar menu)
     menubar))
 
-(defn make-main [name]
+(defn make-main [name txt-repl]
   (let [main (JFrame. name)
         tabs (JTabbedPane.)
-        txt-repl (JTextArea.)
         txt-in (JTextArea.)
         pane-repl (JSplitPane.)
         pane-center-left (JSplitPane.)
@@ -272,9 +271,6 @@
     (doto txt-repl
       (.setEditable false)
       (.setFont *current-font*))
-
-    ;Redirect standard out
-    (redirect-out txt-repl)
 
     (doto pane-repl
       (.setOrientation JSplitPane/VERTICAL_SPLIT)
@@ -303,11 +299,19 @@
       (.setJMenuBar (build-menu tabs))
       (.add pane-all BorderLayout/CENTER)
       (.setVisible true))))
+;------------------------------------------
+(in-ns 'clojure.core)
+(use 'clojure.repl)
+
+(defn rebind-out "Allows standard *out* rebinding."
+  [out]
+  (def ^:dynamic *out-original* *out*)
+  (def ^:dynamic *out* out))
+;------------------------------------------
+(in-ns 'macho.core)
 
 (defn -main []
-  (def frame (make-main app-name)))
-
-(in-ns 'clojure.core)
-(def ^:dynamic *out-custom* (java.io.OutputStreamWriter. System/out))
-(def ^:dynamic *out-original* *out*)
-(def ^:dynamic *out* *out-custom*)
+  (def txt-repl (JTextArea.))
+  (redirect-out txt-repl)
+  (clojure.core/rebind-out (java.io.OutputStreamWriter. System/out))
+  (make-main app-name txt-repl))
