@@ -1,5 +1,8 @@
-(use 'popen)
-(use 'clojure.repl)
+(ns repl-proc
+  (:import 
+        [javax.swing BorderLayout JFrame JTextArea JScrollPane])
+  (:use [popen]
+        [clojure.repl]))
 
 (def repl-cmd ["java" "-cp" "../libs/clojure-1.4.0.jar;." "clojure.main"])
 
@@ -8,18 +11,12 @@
 (def out (stdout p))
 (def in (stdin p))
 
-(import 'javax.swing.JFrame)
-(import 'javax.swing.JTextArea)
-(import 'javax.swing.JScrollPane)
-(import 'java.awt.BorderLayout)
-
 (def frame (JFrame.))
-(def txt (JTextArea.))
-(.setEditable txt false)
+(def txt (doto (JTextArea.) (.setEditable false))
 
 (doto frame
   (.setVisible true)
-  (.setSize 400 400)
+  (.setSize 400 400))
   (.add (JScrollPane. txt) BorderLayout/CENTER))
 
 (defn read-out [out txt]

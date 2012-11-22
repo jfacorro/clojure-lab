@@ -18,7 +18,7 @@
 (def app-name "macho")
 (def new-doc-title "Untitled")
 
-(def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14)) 
+(def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (atom (.getCanonicalPath (File. "."))))
 
 ;; Set the application look & feel instead of Swings default.
@@ -47,6 +47,7 @@
   (try
     (println (load-string code))
     (catch Exception e
+         (println e)
 	(println (.getMessage e)))))
 
 (defn on-click [cmpt f] 
@@ -84,12 +85,15 @@
 
 (defn current-txt [tabs]
   (let [idx (.getSelectedIndex tabs)
-        scroll (.getComponentAt tabs  idx)
+        scroll (.getComponentAt tabs idx)
         pnl (.. scroll getViewport getView) 
         txt (.getComponent pnl 0)]
   txt))
 
-(defn current-path [tabs]
+(defn current-path 
+  "Finds the current working tab and shows a 
+  file chooser window if it's a new file."
+  [tabs]
   (let [idx (.getSelectedIndex tabs)
         path (.getTitleAt tabs idx)]
     (if (= path new-doc-title)
@@ -105,7 +109,8 @@
   (let [txt-code (current-txt tabs)
         path (current-path tabs)
         content (.getText txt-code)]
-    (spit path content)))
+    (when path
+      (spit path content))))
 
 (defn eval-src [tabs]
   (let [txt (current-txt tabs)]
@@ -135,6 +140,7 @@
 
 (defn new-document
   "Adds a new tab to tabs and sets its title."
+  ([tabs] (new-document tabs new-doc-title))
   ([tabs title] (new-document tabs title nil))
   ([tabs title src]
     (let [doc (DefaultStyledDocument.)
@@ -219,8 +225,13 @@
     (System/setOut out)
     (System/setErr out)))
 
-(def menu {:name "File" 
-           :items [{:name "New" :action #(print "New")}]})
+(def menu-options 
+  [{:name "File" 
+     :items [
+        {:name "New" :action #(print "New") :keys [KeyEvent/VK_N KeyEvent/CTRL_MASK]}
+      ]
+  }]
+)
 
 (defn build-menu [tabs]
   (let [menubar (JMenuBar.)
@@ -231,7 +242,7 @@
         item-close (JMenuItem. "Close")
         item-eval (JMenuItem. "Eval")
         item-exit (JMenuItem. "Exit")]
-    (on-click item-new #(new-document tabs new-doc-title))
+    (on-click item-new #(new-document tabs))
     (.setAccelerator item-new (KeyStroke/getKeyStroke KeyEvent/VK_N KeyEvent/CTRL_MASK))
 
     (on-click item-open #(open-src tabs))
@@ -297,7 +308,7 @@
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setSize 800 600)
       (.setJMenuBar (build-menu tabs))
-      (.add pane-all BorderLayout/CENTER)
+      (.add pane-center-left BorderLayout/CENTER)
       (.setVisible true))))
 ;------------------------------------------
 (in-ns 'clojure.core)
