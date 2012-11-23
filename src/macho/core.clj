@@ -12,47 +12,49 @@
            [javax.swing.text DefaultHighlighter$DefaultHighlightPainter])
   (:require [clojure.reflect :as r]
             [macho.ui.swing.highlighter :as hl :reload true]
-            [macho.ui.swing.undo :as undo])
-  (:use [clojure.java.io]))
+            [macho.ui.swing.undo :as undo :reload true])
+  (:use [clojure.java.io]
+        [macho.ui.swing image]))
 ;;------------------------------
 (declare main tabs docs tree repl menu)
 ;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
+(def icons-paths ["./resources/icon-16.png" "./resources/icon-32.png" "./resources/icon-64.png"])
+(def icons (for [path icons-paths] (image path)))
 ;;------------------------------
 (def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (atom (.getCanonicalPath (File. "."))))
 ;;------------------------------
 ;; Set the application look & feel instead of Swings default.
-(javax.swing.UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
+(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
 ;; (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;; (UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
 ;; (UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
 ;;------------------------------
-(defn str-contains? [s ptrn]
-  "Checks if a string contains a substring"
-  (.contains (str s) ptrn))
-;;------------------------------
 (defn list-methods
+  "Lists the methods for the supplied class."
   ([c] (list-methods c ""))
   ([c name]
     (let [members (:members (r/type-reflect c :ancestors true))
           methods (filter #(:return-type %) members)]
       (filter 
-        #(or (str-contains? % name) (empty name))
+        #(or (.contains (str %) name) (empty? name))
         (sort (for [m methods] (:name m)))))))
 ;;------------------------------
-(defn queue-ui-action [f]
+(defn ui-action [f]
   (SwingUtilities/invokeLater f))
 ;;------------------------------
-(defn eval-code [code]
+(defn eval-code 
+  "Evaluates the code in the string supplied."
+  [^String code]
   (try
     (println (load-string code))
     (catch Exception e
          (println e)
 	(println (.getMessage e)))))
 ;;------------------------------
-(defn on-click [cmpt f] 
+(defn on-click [cmpt f]
   (.addActionListener cmpt
     (proxy [ActionListener] []
       (actionPerformed [e] (f)))))
@@ -82,8 +84,8 @@
     (.addDocumentListener doc
       (proxy [DocumentListener] []
         (changedUpdate [e] nil)
-        (insertUpdate [e] (queue-ui-action f))
-        (removeUpdate [e] (queue-ui-action f))))))
+        (insertUpdate [e] (ui-action f))
+        (removeUpdate [e] (ui-action f))))))
 ;;------------------------------
 (defn current-txt [tabs]
   (let [idx (.getSelectedIndex tabs)
@@ -155,15 +157,15 @@
   (let [c (.getKeyChar e)
         k (.getKeyCode e)]
     (cond (= \( c)
-            (queue-ui-action #(insert-text txt ")"))
+            (ui-action #(insert-text txt ")"))
           (= \{ c)
-            (queue-ui-action #(insert-text txt "}"))
+            (ui-action #(insert-text txt "}"))
           (= \[ c)
-            (queue-ui-action #(insert-text txt "]"))
+            (ui-action #(insert-text txt "]"))
           (= KeyEvent/VK_TAB k)
             (do 
               (.consume e)
-              (queue-ui-action #(insert-text txt "  " false))))))
+              (ui-action #(insert-text txt "  " false))))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -376,6 +378,7 @@
 
     (doto main
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
+      (.setIconImages icons)
       (.setSize 800 600)
       (.setJMenuBar (build-menu tabs txt-repl))
       (.add pane-center-left BorderLayout/CENTER)

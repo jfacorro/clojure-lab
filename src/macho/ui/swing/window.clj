@@ -14,6 +14,10 @@
   "Sets the size of the window."
   (.setIconImage w img))
 
+(defn icons! [w imgs]
+  "Sets the size of the window."
+  (.setIconImages w imgs))
+
 (defn icon [w]
   "Gets the size of the window."
   (.getIconImage w))

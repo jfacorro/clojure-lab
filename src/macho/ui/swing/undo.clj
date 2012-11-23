@@ -4,7 +4,8 @@
            [javax.swing.event UndoableEditListener]))
 
 (defn on-undoable [doc undo-mgr]
-  (let [handler (proxy [UndoableEditListener] []
+  (let [mgr (UndoManager.)
+        handler (proxy [UndoableEditListener] []
                   (undoableEditHappened [e]
                     (let [edit (.getEdit e)]
                       (when-not (.contains (.getPresentationName edit) "style")
