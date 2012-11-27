@@ -82,7 +82,7 @@
         (keyReleased [e] (when (check-key e key mask) (f e)))))))
 ;;------------------------------
 (defn on-changed [cmpt f]
-  (let [doc (.getStyledDocument cmpt)]
+  (let [doc (.getDocument cmpt)]
     (.addDocumentListener doc
       (proxy [DocumentListener] []
         (changedUpdate [e] nil)
@@ -95,6 +95,10 @@
         pnl (.. scroll getViewport getView) 
         txt (.getComponent pnl 0)]
   txt))
+;;------------------------------
+(defn current-doc [tabs]
+  (let [txt (current-txt tabs)]
+    (.getDocument txt)))
 ;;------------------------------
 (defn current-path 
   "Finds the current working tab and shows a 
@@ -118,7 +122,9 @@
     (when path
       (spit path content))))
 ;;------------------------------
-(defn eval-src [tabs]
+(defn eval-src
+  "Evaluates source code."
+  [tabs]
   (let [txt (current-txt tabs)]
     (eval-code (.getText txt))))
 ;;------------------------------
@@ -129,8 +135,8 @@
   (let [txt  (current-txt tabs)
         doc  (.getDocument txt)
         hl   (.getHighlighter txt)
-        patr (DefaultHighlighter$DefaultHighlightPainter. Color/LIGHT_GRAY)
-        s    (.toLowerCase (hl/remove-cr (.getText txt)))
+        patr (DefaultHighlighter$DefaultHighlightPainter. Color/YELLOW)
+        s    (.toLowerCase (.getText doc 0 (.getLength doc)))
         ptrn (JOptionPane/showInputDialog tabs "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
         lims (when ptrn (hl/limits (.toLowerCase ptrn) s))]
     (.removeAllHighlights hl)
@@ -199,7 +205,7 @@
       (update-line-numbers doc txt-lines)
 
       ;; Eval: CTRL + Enter
-      (on-keypress txt-code #(do % (eval-code (.getSelectedText txt-code)))
+      (on-keypress txt-code (fn [_] (eval-code (.getSelectedText txt-code)))
                    KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
       ;; Add Undo manager
@@ -208,10 +214,10 @@
 
       ;; Undo/redo key events
       (on-keypress txt-code 
-                   #(do % (when (.canUndo undo-mgr) (.undo undo-mgr)))
+                   (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
                    KeyEvent/VK_Z KeyEvent/CTRL_MASK)
       (on-keypress txt-code
-                   #(do % (when (.canRedo undo-mgr) (.redo undo-mgr)))
+                   (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
                    KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
       (on-keypress txt-code #(input-format txt-code %))
@@ -227,7 +233,7 @@
 
       (doto txt-code
         (.setFont *current-font*)
-        (.setBackground Color/black))
+        (.setBackground Color/BLACK))
 
       txt-code)))
 ;;------------------------------
@@ -393,5 +399,5 @@
 (defn -main
   "Program startup function."
   []
-  (make-main app-name))
+  (def main (make-main app-name)))
 ;;------------------------------

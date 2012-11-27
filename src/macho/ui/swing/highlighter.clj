@@ -62,9 +62,9 @@
     (SwingUtilities/invokeLater #(.setCharacterAttributes txt stl true))))
 
 (defn high-light [^JTextPane txt-pane]
-    (let [doc (.getStyledDocument txt-pane)
-          text (remove-cr (.getText txt-pane))
-          len (.length text)]
+    (let [doc (.getDocument txt-pane)
+          len (.getLength doc)
+          text (.getText doc 0 len)]
       (apply-style doc 0 len *default*)
       (doseq [[k v] *syntax*]
         (let [stl (v :style)
