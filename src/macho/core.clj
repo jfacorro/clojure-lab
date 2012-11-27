@@ -9,7 +9,7 @@
            [java.awt BorderLayout FlowLayout Font Color]
            [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener]
            [javax.swing.text DefaultHighlighter$DefaultHighlightPainter]
-           [macho.ui.swing UndoManager])
+           [javax.swing.undo UndoManager])
   (:require [clojure.reflect :as r]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true])
@@ -176,7 +176,7 @@
   ([tabs title src]
     (let [doc (DefaultStyledDocument.)
           txt-code (JTextPane. doc)
-          undo-mgr (UndoManager. txt-code doc)
+          undo-mgr (UndoManager.)
           pnl-code (JPanel.)
           pnl-scroll (JScrollPane. pnl-code)
           txt-lines (JTextArea.)]
@@ -203,6 +203,7 @@
                    KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
       ;; Add Undo manager
+      (.setLimit undo-mgr -1)
       (undo/on-undoable doc undo-mgr)
 
       ;; Undo/redo key events

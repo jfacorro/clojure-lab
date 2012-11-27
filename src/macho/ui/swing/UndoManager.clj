@@ -12,82 +12,58 @@
 ;------------------------------------
 ; Getter and setter
 ;------------------------------------
-(defn set-field [this field value]
+(defn set-field [^macho.ui.swing.UndoManager this ^clojure.lang.Keyword field value]
   (let [state (.state this)]
     (swap! state #(into % {field value}))))
 ;------------------------------------
-(defn get-field [this field]
+(defn get-field [^macho.ui.swing.UndoManager this ^clojure.lang.Keyword field]
   (let [state (.state this)]
     (field @state)))
 ;------------------------------------
-(defn get-component [this]
+(defn get-component [^macho.ui.swing.UndoManager this]
   (get-field this :component))
 ;------------------------------------
-(defn get-document [this]
+(defn get-document [^macho.ui.swing.UndoManager this]
   (get-field this :document))
 ;------------------------------------
-(defn get-edit [this]
+(defn get-edit [^macho.ui.swing.UndoManager this]
   (get-field this :edit))
 ;------------------------------------
-(defn set-edit [this value]
+(defn set-edit [^macho.ui.swing.UndoManager this value]
   (set-field this :edit value))
 ;------------------------------------
-(defn set-offset [this value]
+(defn set-offset [^macho.ui.swing.UndoManager this value]
   (set-field this :offset value))
 ;------------------------------------
-(defn get-offset [this]
+(defn get-offset [^macho.ui.swing.UndoManager this]
   (get-field this :offset))
 ;------------------------------------
-(defn set-length [this value]
+(defn set-length [^macho.ui.swing.UndoManager this value]
   (set-field this :length value))
 ;------------------------------------
-(defn get-length [this]
+(defn get-length [^macho.ui.swing.UndoManager this]
   (get-field this :length))
 ;------------------------------------
-(defn current-offset [this]
+(defn current-offset [^macho.ui.swing.UndoManager this]
   (let [cmpt (get-component this)]
     (.getCaretPosition cmpt)))
 ;------------------------------------
-(defn current-length [this]
+(defn current-length [^macho.ui.swing.UndoManager this]
   (let [doc (get-document this)]
     (.getLength doc)))
 ;------------------------------------
-(defn create-edit [mgr]
-  (proxy [CompoundEdit] []
-    (isInProgress [] false)
-    (undo []
-      (when-let [edit (get-edit mgr)]
-        (.end edit))
-      (proxy-super undo)
-      (set-edit mgr nil))))
-;------------------------------------
-(defn update-length [this]
-  (set-offset this (current-offset this))
+(defn update-length [^macho.ui.swing.UndoManager this]
+  ;(set-offset this (current-offset this))
   (set-length this (current-length this)))
 ;------------------------------------
-(defn start-edit [this ^UndoableEdit edit]
-  (update-length this)
-  (let [cmpnd-edit (create-edit this)]
-    (.addEdit cmpnd-edit edit)
-    (.addEdit this cmpnd-edit)
-    (set-edit this cmpnd-edit)))
-;------------------------------------
-(defn -undoableEditHappened [this ^UndoableEditEvent e]
+(defn -undoableEditHappened [^macho.ui.swing.UndoManager this ^UndoableEditEvent e]
   (let [edit      (.getEdit e)
-        evt-type  (.getType edit)
-        cmpd-edit (get-edit this)
-        offset    (- (current-offset this) (get-offset this))
         length    (- (current-length this) (get-length this))]
 ;    (when-not (.contains (.getPresentationName edit) "style")
 ;      (.addEdit this edit))
     (update-length this)
-    (cond (nil? cmpd-edit)
-            (start-edit this edit)
-          (zero? length)
-            (.addEdit cmpd-edit edit)
-          :else 
-            (do (.end cmpd-edit)
-                (start-edit this edit)))))
+    (when (pos? (Math/abs length))
+      (.addEdit this edit))))
 ;------------------------------------
 (defn -init [component doc]
   [[] (atom {:offset 0 
