@@ -2,7 +2,7 @@
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
             JTextField JButton JFileChooser UIManager JSplitPane JTree
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
-            JOptionPane]
+            JOptionPane JSeparator]
            [javax.swing.text StyleContext DefaultStyledDocument] 
            [javax.swing.event DocumentListener]
            [java.io OutputStream PrintStream File OutputStreamWriter]
@@ -294,6 +294,7 @@
     (.add menu-file item-open)
     (.add menu-file item-save)
     (.add menu-file item-close)
+    (.add menu-file (JSeparator.))
     (.add menu-file item-exit)
 
     (on-click item-eval #(eval-src tabs))
