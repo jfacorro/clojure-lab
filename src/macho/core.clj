@@ -206,9 +206,11 @@
       (undo/on-undoable doc undo-mgr)
 
       ;; Undo/redo key events
-      (on-keypress txt-code #(do % (when (.canUndo undo-mgr) (.undo undo-mgr)))
+      (on-keypress txt-code 
+                   #(do % (when (.canUndo undo-mgr) (.undo undo-mgr)))
                    KeyEvent/VK_Z KeyEvent/CTRL_MASK)
-      (on-keypress txt-code #(do % (when (.canRedo undo-mgr) (.redo undo-mgr)))
+      (on-keypress txt-code
+                   #(do % (when (.canRedo undo-mgr) (.redo undo-mgr)))
                    KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
       (on-keypress txt-code #(input-format txt-code %))
