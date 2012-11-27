@@ -4,12 +4,12 @@
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
             JOptionPane]
            [javax.swing.text StyleContext DefaultStyledDocument] 
-           [javax.swing.undo UndoManager]
            [javax.swing.event DocumentListener]
            [java.io OutputStream PrintStream File OutputStreamWriter]
            [java.awt BorderLayout FlowLayout Font Color]
            [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener]
-           [javax.swing.text DefaultHighlighter$DefaultHighlightPainter])
+           [javax.swing.text DefaultHighlighter$DefaultHighlightPainter]
+           [macho.ui.swing UndoManager])
   (:require [clojure.reflect :as r]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true])
@@ -20,7 +20,9 @@
 ;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
-(def icons-paths ["./resources/icon-16.png" "./resources/icon-32.png" "./resources/icon-64.png"])
+(def icons-paths ["./resources/icon-16.png"
+                  "./resources/icon-32.png"
+                  "./resources/icon-64.png"])
 (def icons (for [path icons-paths] (image path)))
 ;;------------------------------
 (def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
@@ -174,7 +176,7 @@
   ([tabs title src]
     (let [doc (DefaultStyledDocument.)
           txt-code (JTextPane. doc)
-          undo-mgr (UndoManager.)
+          undo-mgr (UndoManager. txt-code doc)
           pnl-code (JPanel.)
           pnl-scroll (JScrollPane. pnl-code)
           txt-lines (JTextArea.)]
@@ -385,7 +387,7 @@
       (.setVisible true))))
 ;;------------------------------
 (defn -main
-  "Program startup function"
+  "Program startup function."
   []
   (make-main app-name))
 ;;------------------------------
