@@ -1,7 +1,8 @@
 (ns macho.ui.swing.component
   (:import  [java.awt Component]
             [java.awt.event MouseWheelListener KeyAdapter ActionListener]
-            [javax.swing.event CaretListener DocumentListener])
+            [javax.swing.event CaretListener DocumentListener UndoableEditListener DocumentEvent$EventType]
+            [javax.swing.undo UndoManager])
     (:use   [macho.ui.protocols]
             [macho.ui.swing.util :as util]))
 
@@ -102,4 +103,12 @@
         (changedUpdate [e] nil)
         (insertUpdate [e] (queue-action #(f e)))
         (removeUpdate [e] (queue-action #(f e)))))))
+;;-----------------------------------------------------
+;; Multi method implementation for doc-change events.
+;;-----------------------------------------------------
+(defmethod on :undoable  [evt ctrl hdlr]
+  (let [f (process-event-handler hdlr)]
+    (.addUndoableEditListener ctrl
+      (proxy [UndoManager] []
+        (undoableEditHappened [e] (queue-action #(f e)))))))
 ;;-----------------------------------------------------

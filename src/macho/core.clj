@@ -6,7 +6,7 @@
            [javax.swing.text StyleContext DefaultStyledDocument] 
            [javax.swing.event DocumentListener]
            [java.io OutputStream PrintStream File OutputStreamWriter]
-           [java.awt BorderLayout FlowLayout Font Color]
+           [java.awt BorderLayout Font Color]
            [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener]
            [javax.swing.text DefaultHighlighter$DefaultHighlightPainter]
            [javax.swing.undo UndoManager])
@@ -202,7 +202,7 @@
 
       ; Add Undo manager
       (.setLimit undo-mgr -1)
-      (undo/on-undoable doc undo-mgr)
+      (ui/on :undoable doc #(undo/handle-edit undo-mgr %))
 
       ; Undo/redo key events
       (ui/on :key-press txt-code
@@ -250,7 +250,7 @@
         (hl/high-light txt-code)))))
 ;;------------------------------
 (defn close [tabs]
-  "Close the application."
+  "Close the current tab."
   (let [idx (.getSelectedIndex tabs)]
     (.removeTabAt tabs idx)))
 ;;------------------------------
@@ -322,7 +322,7 @@
     (.add menubar menu-code)
     menubar))
 ;;------------------------------
-(defn redirect-out 
+(defn redirect-out
   "Creates a PrintStream that writes to the
   JTextArea instance provided and then replaces
   System/out with this stream."
