@@ -1,6 +1,6 @@
 (ns macho.ui.swing.component
   (:import [java.awt Component]
-           [javax.swing JFrame])
+           [java.awt.event MouseWheelListener])
   (:use [macho.ui.protocols]))
 
 (defn comp-show! [w]
@@ -37,6 +37,15 @@
   "Sets the font of the component."
   (.setFont c f))
 
-(defn font< [c ]
+(defn font [c ]
   "Gets the font of the component."
   (.getFont c))
+
+;;-----------------------------------------------------
+;; Multi method implementation for mouse wheel events.
+;;-----------------------------------------------------
+(defmethod comp-on :mouse-wheel [ctrl evt hndlr]
+  (let [pxy (proxy [MouseWheelListener] []
+              (mouseWheelMoved [e] (hndlr e)))]
+    (.addMouseWheelListener ctrl pxy)))
+

@@ -50,7 +50,7 @@
             :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
   :keyword {:regex (wrap-blanks "\\^?:[\\w-!\\?]+")
             :style {:bold true :foreground {:r 153, :g 0, :b 115}}}
-  :namespace {:regex (wrap-blanks "(?s)(?:\\w+\\.|(?<=\\.)\\w+)+(?:/\\w+)?")
+  :namespace {:regex (wrap-blanks "(?s)(?:\\w+\\.|(?<=\\.)\\w+)+(?:/[\\w-_]+)?")
               :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
   :string {:regex "(?s)(?<!\\\\)\".*?(?<!\\\\)\""
            :desc  "Ignore '\\\"' as delimiters."

@@ -11,6 +11,9 @@
            [javax.swing.text DefaultHighlighter$DefaultHighlightPainter]
            [javax.swing.undo UndoManager])
   (:require [clojure.reflect :as r]
+            [clojure.repl :as repl]
+			[macho.ui.protocols :as ui :reload true]
+            [macho.ui.swing.component :as ui-cmpt :reload true]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true])
   (:use [clojure.java.io]
@@ -142,6 +145,14 @@
     (.removeAllHighlights hl)
     (doseq [[a b] lims]
       (.addHighlight hl a b patr))))
+;;------------------------------
+(defn find-doc 
+  "Uses the clojure.repl/find-doc function to
+  search for the selected text in the current docuement."
+  [tabs]
+  (let [txt  (current-txt tabs)
+        slct (.getSelectedText txt)]
+    (repl/find-doc slct)))
 ;;-------------------------------
 (defn update-line-numbers [doc lines]
   (let [pos (.getLength doc)
@@ -159,7 +170,7 @@
           pos (.getCaretPosition txt)]
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
-;;------------------------------()(898
+;;------------------------------
 (defn input-format [^JTextPane txt e]
   "Insert a closing parentesis."
   (let [c (.getKeyChar e)
@@ -174,6 +185,15 @@
             (do 
               (.consume e)
               (ui-action #(insert-text txt "  " false))))))
+;;------------------------------
+(defn change-font-size [txts e]
+  (when (check-key e nil KeyEvent/CTRL_MASK)
+    (.consume e)
+    (let [font *current-font*
+          op   (if (neg? (.getWheelRotation e)) inc #(if (> % 1) (dec %) %))
+          size (-> (.getSize font) op)]
+      (def ^:dynamic *current-font* (.deriveFont font (float size)))
+      (doseq [txt txts] (.setFont txt *current-font*)))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -208,11 +228,11 @@
       (on-keypress txt-code (fn [_] (eval-code (.getSelectedText txt-code)))
                    KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
-      ;; Add Undo manager
+      ; Add Undo manager
       (.setLimit undo-mgr -1)
       (undo/on-undoable doc undo-mgr)
 
-      ;; Undo/redo key events
+      ; Undo/redo key events
       (on-keypress txt-code 
                    (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
                    KeyEvent/VK_Z KeyEvent/CTRL_MASK)
@@ -222,10 +242,13 @@
 
       (on-keypress txt-code #(input-format txt-code %))
 
-      ;; High-light text after code edition.
+      ; High-light text after code edition.
       (on-changed txt-code #(do (hl/high-light txt-code) (update-line-numbers doc txt-lines)))
 
+      ; Set the increment for each vertical scroll
       (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
+
+      (ui/on pnl-scroll :mouse-wheel #(change-font-size [txt-code txt-lines] %))
 
       (doto tabs
         (.addTab title pnl-scroll)
@@ -279,6 +302,7 @@
         menu-code (JMenu. "Code")
         item-eval (JMenuItem. "Eval")
         item-find (JMenuItem. "Find")
+        item-find-doc (JMenuItem. "Find doc")
         item-clear (JMenuItem. "Clear Log")]
 
     (on-click item-new #(new-document tabs))
@@ -309,11 +333,15 @@
     (on-click item-find #(find-src tabs))
     (.setAccelerator item-find (KeyStroke/getKeyStroke KeyEvent/VK_F KeyEvent/CTRL_MASK))
 
+    (on-click item-find-doc #(find-doc tabs))
+    (.setAccelerator item-find-doc (KeyStroke/getKeyStroke KeyEvent/VK_F KeyEvent/ALT_MASK))
+
     (on-click item-clear #(.setText txt-repl ""))
     (.setAccelerator item-clear (KeyStroke/getKeyStroke KeyEvent/VK_L KeyEvent/CTRL_MASK))
 
     (.add menu-code item-eval)
     (.add menu-code item-find)
+    (.add menu-code item-find-doc)
     (.add menu-code item-clear)
 
     (.add menubar menu-file)
