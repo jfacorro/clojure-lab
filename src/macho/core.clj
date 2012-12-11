@@ -1,6 +1,6 @@
 (ns macho.core
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
-            JTextField JButton JFileChooser UIManager JSplitPane JTree
+            JTextField JButton JFileChooser JSplitPane JTree
             SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
             JOptionPane JSeparator]
            [javax.swing.text StyleContext DefaultStyledDocument] 
@@ -12,8 +12,7 @@
            [javax.swing.undo UndoManager])
   (:require [clojure.reflect :as r]
             [clojure.repl :as repl]
-			[macho.ui.protocols :as ui :reload true]
-            [macho.ui.swing.component :as ui-cmpt :reload true]
+            [macho.ui.swing.core :as ui :reload true]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true])
   (:use [clojure.java.io]
@@ -31,12 +30,6 @@
 (def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (atom (.getCanonicalPath (File. "."))))
 ;;------------------------------
-;; Set the application look & feel instead of Swings default.
-(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
-;; (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
-;; (UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
-;; (UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
-;;------------------------------
 (defn list-methods
   "Lists the methods for the supplied class."
   ([c] (list-methods c ""))
@@ -47,10 +40,7 @@
         #(or (.contains (str %) name) (empty? name))
         (sort (for [m methods] (:name m)))))))
 ;;------------------------------
-(defn ui-action [f]
-  (SwingUtilities/invokeLater f))
-;;------------------------------
-(defn eval-code 
+(defn eval-code
   "Evaluates the code in the string supplied."
   [^String code]
   (try
@@ -59,38 +49,11 @@
          (println e)
 	(println (.getMessage e)))))
 ;;------------------------------
-(defn on-click [cmpt f]
-  (.addActionListener cmpt
-    (proxy [ActionListener] []
-      (actionPerformed [e] (f)))))
-;;------------------------------
 (defn check-key [evt k m]
   "Checks if the key and the modifier match the event's values"
   (and 
     (or (nil? k) (= k (.getKeyCode evt)))
-    (or (nil? m) (= m (.getModifiers evt))))) 
-;;------------------------------
-(defn on-keypress
-  ([cmpt f] (on-keypress cmpt f nil nil))
-  ([cmpt f key mask]
-    (.addKeyListener cmpt
-      (proxy [KeyAdapter] []
-        (keyPressed [e] (when (check-key e key mask) (f e)))))))
-;;------------------------------
-(defn on-keyrelease
-  ([cmpt f] (on-keyrelease cmpt f nil nil)) 
-  ([cmpt f key mask]
-    (.addKeyListener cmpt
-      (proxy [KeyAdapter] []
-        (keyReleased [e] (when (check-key e key mask) (f e)))))))
-;;------------------------------
-(defn on-changed [cmpt f]
-  (let [doc (.getDocument cmpt)]
-    (.addDocumentListener doc
-      (proxy [DocumentListener] []
-        (changedUpdate [e] nil)
-        (insertUpdate [e] (ui-action f))
-        (removeUpdate [e] (ui-action f))))))
+    (or (nil? m) (= m (.getModifiers evt)))))
 ;;------------------------------
 (defn current-txt [tabs]
   (let [idx (.getSelectedIndex tabs)
@@ -176,15 +139,15 @@
   (let [c (.getKeyChar e)
         k (.getKeyCode e)]
     (cond (= \( c)
-            (ui-action #(insert-text txt ")"))
+            (ui/queue-action #(insert-text txt ")"))
           (= \{ c)
-            (ui-action #(insert-text txt "}"))
+            (ui/queue-action #(insert-text txt "}"))
           (= \[ c)
-            (ui-action #(insert-text txt "]"))
+            (ui/queue-action #(insert-text txt "]"))
           (= KeyEvent/VK_TAB k)
             (do 
               (.consume e)
-              (ui-action #(insert-text txt "  " false))))))
+              (ui/queue-action #(insert-text txt "  " false))))))
 ;;------------------------------
 (defn change-font-size [txts e]
   (when (check-key e nil KeyEvent/CTRL_MASK)
@@ -194,6 +157,14 @@
           size (-> (.getSize font) op)]
       (def ^:dynamic *current-font* (.deriveFont font (float size)))
       (doseq [txt txts] (.setFont txt *current-font*)))))
+;;------------------------------
+(defn check-paren [txt e]
+  (let [pos (.getDot e)
+        doc (.getDocument txt)
+        s   (.getText doc 0 (.getLength doc))
+        c   (when (< pos (count s)) (nth s pos))]
+    (when (#{\) \(} c)
+      (println c))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -225,30 +196,33 @@
       (update-line-numbers doc txt-lines)
 
       ;; Eval: CTRL + Enter
-      (on-keypress txt-code (fn [_] (eval-code (.getSelectedText txt-code)))
-                   KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
+      (ui/on :key-press txt-code
+             (fn [_] (eval-code (.getSelectedText txt-code)))
+               KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
       ; Add Undo manager
       (.setLimit undo-mgr -1)
       (undo/on-undoable doc undo-mgr)
 
       ; Undo/redo key events
-      (on-keypress txt-code 
-                   (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
-                   KeyEvent/VK_Z KeyEvent/CTRL_MASK)
-      (on-keypress txt-code
-                   (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
-                   KeyEvent/VK_Y KeyEvent/CTRL_MASK)
+      (ui/on :key-press txt-code
+             (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
+               KeyEvent/VK_Z KeyEvent/CTRL_MASK)
+      (ui/on :key-press txt-code
+             (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
+               KeyEvent/VK_Y KeyEvent/CTRL_MASK)
 
-      (on-keypress txt-code #(input-format txt-code %))
+      (ui/on :key-press txt-code #(input-format txt-code %))
+
+      (ui/on :caret-update txt-code #(check-paren txt-code %))
 
       ; High-light text after code edition.
-      (on-changed txt-code #(do (hl/high-light txt-code) (update-line-numbers doc txt-lines)))
+      (ui/on :change txt-code #(do (hl/high-light txt-code) (update-line-numbers doc txt-lines)))
 
       ; Set the increment for each vertical scroll
       (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
-      (ui/on pnl-scroll :mouse-wheel #(change-font-size [txt-code txt-lines] %))
+      (ui/on :mouse-wheel pnl-scroll #(change-font-size [txt-code txt-lines] %))
 
       (doto tabs
         (.addTab title pnl-scroll)
@@ -305,19 +279,19 @@
         item-find-doc (JMenuItem. "Find doc")
         item-clear (JMenuItem. "Clear Log")]
 
-    (on-click item-new #(new-document tabs))
+    (ui/on :click item-new #(new-document tabs))
     (.setAccelerator item-new (KeyStroke/getKeyStroke KeyEvent/VK_N KeyEvent/CTRL_MASK))
 
-    (on-click item-open #(open-src tabs))
+    (ui/on :click item-open #(open-src tabs))
     (.setAccelerator item-open (KeyStroke/getKeyStroke KeyEvent/VK_O KeyEvent/CTRL_MASK))
 
-    (on-click item-save #(save-src tabs))
+    (ui/on :click item-save #(save-src tabs))
     (.setAccelerator item-save (KeyStroke/getKeyStroke KeyEvent/VK_S KeyEvent/CTRL_MASK))
 
-    (on-click item-close #(close tabs))
+    (ui/on :click item-close #(close tabs))
     (.setAccelerator item-close (KeyStroke/getKeyStroke KeyEvent/VK_W KeyEvent/CTRL_MASK))
 
-    (on-click item-exit #(System/exit 0))
+    (ui/on :click item-exit #(System/exit 0))
     (.setAccelerator item-exit (KeyStroke/getKeyStroke KeyEvent/VK_X KeyEvent/ALT_MASK))
 
     (.add menu-file item-new)
@@ -327,16 +301,16 @@
     (.add menu-file (JSeparator.))
     (.add menu-file item-exit)
 
-    (on-click item-eval #(eval-src tabs))
+    (ui/on :click item-eval #(eval-src tabs))
     (.setAccelerator item-eval (KeyStroke/getKeyStroke KeyEvent/VK_E KeyEvent/CTRL_MASK))
 
-    (on-click item-find #(find-src tabs))
+    (ui/on :click item-find #(find-src tabs))
     (.setAccelerator item-find (KeyStroke/getKeyStroke KeyEvent/VK_F KeyEvent/CTRL_MASK))
 
-    (on-click item-find-doc #(find-doc tabs))
+    (ui/on :click item-find-doc #(find-doc tabs))
     (.setAccelerator item-find-doc (KeyStroke/getKeyStroke KeyEvent/VK_F KeyEvent/ALT_MASK))
 
-    (on-click item-clear #(.setText txt-repl ""))
+    (ui/on :click item-clear #(.setText txt-repl ""))
     (.setAccelerator item-clear (KeyStroke/getKeyStroke KeyEvent/VK_L KeyEvent/CTRL_MASK))
 
     (.add menu-code item-eval)
@@ -386,10 +360,6 @@
         pane-all (JSplitPane.)
         files-tree (JTree. (to-array []))]
 
-    ; Redirect std out
-    (redirect-out txt-repl)
-    (clojure.core/rebind-out (java.io.OutputStreamWriter. System/out))
-
     ; Set controls properties
     (doto txt-repl
       (.setEditable false)
@@ -415,6 +385,10 @@
     (.setDividerLocation pane-center-left 0.8)
 
     (.setDividerLocation pane-all 150)
+
+    ; Redirect std out
+    (redirect-out txt-repl)
+    (clojure.core/rebind-out (java.io.OutputStreamWriter. System/out))
 
     (doto main
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
