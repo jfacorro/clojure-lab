@@ -94,20 +94,31 @@
   (let [txt (current-txt tabs)]
     (eval-code (.getText txt))))
 ;;------------------------------
+(defn remove-highlights 
+  "Removes all highglights from the text control."
+  [txt]
+  (.. txt getHighlighter removeAllHighlights))
+;;------------------------------
+(defn highlight
+  "Add a single highglight in the text control."
+  ([txt pos len] (highlight txt pos len Color/YELLOW))
+  ([txt pos len color]
+    (let [doc  (.getDocument txt)
+          hl   (.getHighlighter txt)
+          pntr (DefaultHighlighter$DefaultHighlightPainter. color)]
+      (.addHighlight hl pos (+ len pos) pntr))))
+;;------------------------------
 (defn find-src 
   "Shows the dialog for searching the source
   in the current tabs."
   [tabs]
   (let [txt  (current-txt tabs)
         doc  (.getDocument txt)
-        hl   (.getHighlighter txt)
-        patr (DefaultHighlighter$DefaultHighlightPainter. Color/YELLOW)
         s    (.toLowerCase (.getText doc 0 (.getLength doc)))
         ptrn (JOptionPane/showInputDialog tabs "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
         lims (when ptrn (hl/limits (.toLowerCase ptrn) s))]
-    (.removeAllHighlights hl)
-    (doseq [[a b] lims]
-      (.addHighlight hl a b patr))))
+    (remove-highlights txt)
+    (doseq [[a b] lims] (highlight txt a (- b a)))))
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
@@ -158,13 +169,29 @@
       (def ^:dynamic *current-font* (.deriveFont font (float size)))
       (doseq [txt txts] (.setFont txt *current-font*)))))
 ;;------------------------------
+(defn match-paren [s pos end delta]
+  (loop [cur (+ pos delta) acum 0]
+    (cond (neg? cur) nil
+          (<= (.length s) cur) nil
+          (= (nth s pos) (nth s cur))
+            (recur (+ cur delta) (inc acum))
+          (= (nth s cur) end) 
+            (if (zero? acum) cur 
+              (recur (+ cur delta) (dec acum)))
+          :else (recur (+ cur delta) acum))))
+;;------------------------------
 (defn check-paren [txt e]
+  (remove-highlights txt)
   (let [pos (.getDot e)
         doc (.getDocument txt)
         s   (.getText doc 0 (.getLength doc))
-        c   (when (< pos (count s)) (nth s pos))]
-    (when (#{\) \(} c)
-      (println c))))
+        c   (when (< pos (count s)) (nth s pos))
+        delim {\( {:end \) :d 1}
+               \) {:end \( :d -1}}]
+    (when-let [{end :end dir :d} (delim c)]
+      (when-let [end (match-paren s pos end dir)]
+        (highlight txt pos 1)
+        (highlight txt end 1)))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
