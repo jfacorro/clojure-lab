@@ -181,15 +181,16 @@
           :else (recur (+ cur delta) acum))))
 ;;------------------------------
 (defn check-paren [txt e]
-  (remove-highlights txt)
   (let [pos (.getDot e)
         doc (.getDocument txt)
         s   (.getText doc 0 (.getLength doc))
         c   (when (< pos (count s)) (nth s pos))
-        delim {\( {:end \) :d 1}
-               \) {:end \( :d -1}}]
+        delim {\( {:end \) :d 1}, \) {:end \( :d -1}
+               \{ {:end \} :d 1}, \} {:end \{ :d -1}
+               \[ {:end \] :d 1}, \] {:end \[ :d -1}}]
     (when-let [{end :end dir :d} (delim c)]
       (when-let [end (match-paren s pos end dir)]
+        (remove-highlights txt)
         (highlight txt pos 1)
         (highlight txt end 1)))))
 ;;------------------------------
