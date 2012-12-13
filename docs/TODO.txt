@@ -8,10 +8,14 @@ TODO:
 		- Validate project file.
 	- Add tree file structure.
 - Code Editor:
+	- Indent code.
+	- Comment / Uncomment lines.
+DONE:
+-----
+- Code Editor:
 	- Add line number.
 	- Syntax high-lighting.
 		- Strings
 		- Comments
 	- Balance delimiters: ( [ {
 	- Mark corresponding delimiter.
-	- Indent code.

@@ -2,10 +2,10 @@
 ;;-----------------------------------------
 (defprotocol UIComponent
   "UI control abstraction"
-  (add! [ctrl child] "Add a child control to ctrl.")
-  (set-attr! [ctrl k v] "Sets the value for attr.")
-  (show! [ctrl] "Show the control.")
-  (hide! [ctrl] "Hides the control.")
+  (add! [this child] "Add a child control to ctrl.")
+  (set-attr! [this k v] "Sets the value for attr.")
+  (show! [this] "Show the control.")
+  (hide! [this] "Hides the control.")
   ;;(on [ctrl evt f] "Binds the fn to the event.")
 )
 ;;-----------------------------------------

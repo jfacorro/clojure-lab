@@ -94,10 +94,10 @@
   (let [txt (current-txt tabs)]
     (eval-code (.getText txt))))
 ;;------------------------------
-(defn remove-highlights 
+(defn remove-highlight 
   "Removes all highglights from the text control."
-  [txt]
-  (.. txt getHighlighter removeAllHighlights))
+  ([txt] (.. txt getHighlighter removeAllHighlights))
+  ([txt tag] (.. txt getHighlighter (removeHighlight tag))))
 ;;------------------------------
 (defn highlight
   "Add a single highglight in the text control."
@@ -117,7 +117,7 @@
         s    (.toLowerCase (.getText doc 0 (.getLength doc)))
         ptrn (JOptionPane/showInputDialog tabs "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
         lims (when ptrn (hl/limits (.toLowerCase ptrn) s))]
-    (remove-highlights txt)
+    (remove-highlight txt)
     (doseq [[a b] lims] (highlight txt a (- b a)))))
 ;;------------------------------
 (defn find-doc 
@@ -149,12 +149,10 @@
   "Insert a closing parentesis."
   (let [c (.getKeyChar e)
         k (.getKeyCode e)]
-    (cond (= \( c)
-            (ui/queue-action #(insert-text txt ")"))
-          (= \{ c)
-            (ui/queue-action #(insert-text txt "}"))
-          (= \[ c)
-            (ui/queue-action #(insert-text txt "]"))
+    (cond (= \( c) (ui/queue-action #(insert-text txt ")"))
+          (= \{ c) (ui/queue-action #(insert-text txt "}"))
+          (= \[ c) (ui/queue-action #(insert-text txt "]"))
+          (= \" c) (ui/queue-action #(insert-text txt "\""))
           (= KeyEvent/VK_TAB k)
             (do 
               (.consume e)
@@ -180,19 +178,27 @@
               (recur (+ cur delta) (dec acum)))
           :else (recur (+ cur delta) acum))))
 ;;------------------------------
-(defn check-paren [txt e]
-  (let [pos (.getDot e)
-        doc (.getDocument txt)
-        s   (.getText doc 0 (.getLength doc))
-        c   (when (< pos (count s)) (nth s pos))
-        delim {\( {:end \) :d 1}, \) {:end \( :d -1}
-               \{ {:end \} :d 1}, \} {:end \{ :d -1}
-               \[ {:end \] :d 1}, \] {:end \[ :d -1}}]
-    (when-let [{end :end dir :d} (delim c)]
-      (when-let [end (match-paren s pos end dir)]
-        (remove-highlights txt)
-        (highlight txt pos 1)
-        (highlight txt end 1)))))
+(defn check-paren
+  "Checks if the characters in the caret's current
+  position is a delimiter and looks for the closing/opening
+  delimiter."
+  [txt]
+  (let [tags (atom nil)]
+    (fn [e]
+      (when @tags
+        (doseq [tag @tags]
+          (remove-highlight txt tag)))
+      (let [pos (dec (.getDot e))
+            doc (.getDocument txt)
+            s   (.getText doc 0 (.getLength doc))
+            c   (get-in s [pos])
+            delim {\( {:end \) :d 1}, \) {:end \( :d -1}
+                   \{ {:end \} :d 1}, \} {:end \{ :d -1}
+                   \[ {:end \] :d 1}, \] {:end \[ :d -1}}]
+        (when-let [{end :end dir :d} (delim c)]
+          (when-let [end (match-paren s pos end dir)]
+            (reset! tags 
+                    (doall (map #(highlight txt % 1 Color/LIGHT_GRAY) [pos end])))))))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -242,7 +248,7 @@
 
       (ui/on :key-press txt-code #(input-format txt-code %))
 
-      (ui/on :caret-update txt-code #(check-paren txt-code %))
+      (ui/on :caret-update txt-code (check-paren txt-code))
 
       ; High-light text after code edition.
       (ui/on :change txt-code #(do (hl/high-light txt-code) (update-line-numbers doc txt-lines)))
