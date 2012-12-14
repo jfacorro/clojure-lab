@@ -370,17 +370,6 @@
     (System/setErr out)))
 ;------------------------------------------
 ;------------------------------------------
-(in-ns 'clojure.core)
-(use 'clojure.repl)
-;------------------------------------------
-(defn rebind-out "Allows standard *out* rebinding."
-  [out]
-  (def ^:dynamic *out-original* *out*)
-  (def ^:dynamic *out* out))
-;------------------------------------------
-;------------------------------------------
-(in-ns 'macho.core)
-;------------------------------------------
 (defn make-main 
   "Creates the main window and all
   its controls."
@@ -422,7 +411,8 @@
 
     ; Redirect std out
     (redirect-out txt-repl)
-    (clojure.core/rebind-out (java.io.OutputStreamWriter. System/out))
+    ; Modify the binding for the *out* var in clojure.core
+    (intern 'clojure.core '*out* (java.io.OutputStreamWriter. System/out))
 
     (doto main
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
