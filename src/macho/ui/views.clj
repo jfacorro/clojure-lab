@@ -1,14 +1,14 @@
 (ns macho.ui.views 
   (:import [javax.swing JFrame JPanel SwingUtilities]
            [java.awt Color RenderingHints])
-  (:require [macho.ui.protocols :as pr]
-            [macho.str-code :as sc]
+  (:require [macho.str-code :as sc]
             [macho.ui.swing.util :as ui]))
 ;;----------------------------------
 (defrecord Figure [x y w h ns])
 ;;----------------------------------
 (defn center [f]
-  (vector (+ (.x f) (/ (.w f) 2)) (+ (.y f) (/ (.h f) 2))))
+  (vector (-> f (.w) (/ 2) (+ (.x f)) int)
+          (-> f (.h) (/ 2) (+ (.y f)) int)))
 ;;----------------------------------
 (defn draw-line [g f1 f2]
   (apply #(.drawLine g %1 %2 %3 %4) (concat (center f1) (center f2))))
@@ -42,33 +42,40 @@
     (doto panel
       (.setBackground Color/LIGHT_GRAY))))
 ;;----------------------------------
-(defn make-figure [ns n fpos]
-  (let [[x y] (fpos n)]
-    (Figure. x y 20 20 ns)))
+(defn make-figure [ns n fpos fsize]
+  (let [[x y] (fpos n)
+        [w h] (fsize ns)]
+    (Figure. x y w h ns)))
 ;;----------------------------------
-(defn circle-position [x y r c]
+(defn circle-pos [x y r c]
   (let [pi (* 2 Math/PI)
         dt (/ pi c)]
     (fn [n]
       [(->> n (* dt) Math/cos (* r) (+ x) int)
        (->> n (* dt) Math/sin (* r) (+ y) int)])))
 ;;----------------------------------
+(defn weighted-size [mw mh dw dh]
+  (fn [ns]
+    (let [weight (+ (count (:uses ns)) (count (:requires ns)))
+          x      (-> weight (* dw) (+ mw) int)]
+      [x x])))
+;;----------------------------------
 (defn create-figures [nss mx my mw mh]
   (let [x0     (/ mw 2)
         y0     (/ mh 2)
         r      (min x0 y0)
-        fpos   (circle-position x0 y0 r (count nss))
-        fsize  (circle-position x0 y0 r (count nss))]
+        fpos   (circle-pos x0 y0 r (count nss))
+        fsize  (weighted-size 20 20 5 5)]
     (->> (vals nss) 
          (mapcat #(vector (.name %2) 
-                          (make-figure %2 %1 fpos)) (range (count nss)))
+                          (make-figure %2 %1 fpos fsize)) (range (count nss)))
          (apply assoc {}))))
 ;;----------------------------------
 (defn paint-ns [project-ns]
   (let [w        500
         h        500
         frame    (JFrame.)
-        figures  (atom (create-figures project-ns w h 500 500))
+        figures  (atom (create-figures project-ns w h))
         panel    (build-panel figures)]
     ;(clojure.pprint/pprint @figures)
     (ui/queue-action
