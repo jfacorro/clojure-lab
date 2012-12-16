@@ -34,13 +34,13 @@
   (wrap (interpose "|" (map re-escape coll)) "(" ")"))
 
 (defn class-regex [coll]
-  (wrap (interpose "" (map re-escape coll)) "[" "]"))  
+  (wrap (interpose "" (map re-escape coll)) "[" "]"))
 
 (defn wrap-blanks [s]
   (wrap s blanks-behind blanks-ahead))
 
 (def syntax {
-  :special-forms {:regex (wrap-blanks (alt-regex special-forms)) 
+  :special-forms {:regex (wrap-blanks (alt-regex special-forms))
                   :style {:bold true :foreground {:r 0, :g 0, :b 0}}}
   :symbols {:regex (wrap-blanks (alt-regex symbols))
             :style {:bold true :foreground {:r 0, :g 134, :b 179}}}
@@ -56,6 +56,6 @@
            :desc  "Ignore '\\\"' as delimiters."
            :style {:bold true :foreground {:r 223 :g 16, :b 67}}}
   :comment {:regex ";.*\\n"
-            :style {:bold true :foreground {:r 153, :g 153, :b 136}}}}) 
+            :style {:bold true :foreground {:r 153, :g 153, :b 136}}}})
 
 

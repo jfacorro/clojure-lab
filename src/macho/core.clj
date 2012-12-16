@@ -145,6 +145,22 @@
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
+(defn find-char [s cur f dt]
+  (cond (or (neg? cur) (<= (.length s) cur)) -1
+        (f (nth s cur)) cur
+        :else (recur s (+ cur dt) f dt)))
+;;------------------------------
+(defn insert-tabs [txt]
+  (let [pos  (-> (.getCaretPosition txt) dec)
+        doc  (.getDocument txt)
+        s    (.getText doc 0 (.getLength doc))
+        prev (find-char s pos #(= \newline %) -1)
+        end  (find-char s (inc prev) #(not= \space %) 1)
+        dt   (dec (- end prev))
+        t    (apply str (repeat dt " "))]
+    (println (count t))
+    (ui/queue-action #(insert-text txt t false))))
+;;------------------------------
 (defn input-format [^JTextPane txt e]
   "Insert a closing parentesis."
   (let [c (.getKeyChar e)
@@ -153,10 +169,10 @@
           (= \{ c) (ui/queue-action #(insert-text txt "}"))
           (= \[ c) (ui/queue-action #(insert-text txt "]"))
           (= \" c) (ui/queue-action #(insert-text txt "\""))
+          (= KeyEvent/VK_ENTER k) (insert-tabs txt)
           (= KeyEvent/VK_TAB k)
-            (do 
-              (.consume e)
-              (ui/queue-action #(insert-text txt "  " false))))))
+            (do (.consume e)
+                (ui/queue-action #(insert-text txt "  " false))))))
 ;;------------------------------
 (defn change-font-size [txts e]
   (when (check-key e nil KeyEvent/CTRL_MASK)
@@ -368,8 +384,7 @@
         out (PrintStream. stream true)]
     (System/setOut out)
     (System/setErr out)))
-;------------------------------------------
-;------------------------------------------
+;;------------------------------------------
 (defn make-main 
   "Creates the main window and all
   its controls."
