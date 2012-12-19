@@ -391,7 +391,7 @@ System/out with this stream."
 ;;------------------------------------------
 (defn make-main 
   "Creates the main window and all
-  its controls."
+its controls."
   [name]
   (let [main (JFrame. name)
         txt-repl (JTextArea.)

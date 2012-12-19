@@ -42,7 +42,7 @@
 (def syntax {
   :special-forms {:regex (wrap-blanks (alt-regex special-forms))
                   :style {:bold true :foreground {:r 0, :g 0, :b 0}}}
-  :symbols {:regex (wrap-blanks (alt-regex symbols))
+  :symbol {:regex (wrap-blanks (alt-regex symbols))
             :style {:bold true :foreground {:r 0, :g 134, :b 179}}}
   :delimiters {:regex (class-regex delimiters)
                :style {:bold true :foreground {:r 120, :g 120, :b 120}}}

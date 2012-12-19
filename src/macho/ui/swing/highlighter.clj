@@ -5,6 +5,7 @@
            [java.util.regex Matcher])
   (:require [macho.lang.clojure :as lang :reload true]
             [macho.ui.swing.util :as util]
+            [macho.ast :as ast]
             [clojure.set :as set]))
 
 (def style-constants {:bold StyleConstants/Bold,
@@ -39,7 +40,7 @@ attributes values."
     (->> stls (mapcat f) (apply assoc {}))))
 
 (def ^:dynamic *default* (make-style {:foreground {:r 0 :g 131 :b 131}}))
-(def ^:dynamic *syntax* (init-styles lang/syntax))
+(def ^:dynamic *syntax* (into (init-styles lang/syntax) {:default *default*}))
 (def ^:dynamic *higlighting* (atom false))
 
 (defn get-limits [^Matcher m]
@@ -68,7 +69,7 @@ enclosed between the strt and end positions."
   ([^JTextPane txt ^SimpleAttributeSet stl]
     (util/queue-action #(.setCharacterAttributes txt stl true))))
 
-(defn high-light [^JTextPane txt-pane]
+#_(defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks
 for matches in the text-pane content applying the 
 corresponding style to each match."
@@ -84,6 +85,27 @@ corresponding style to each match."
     (doseq [[[strt end] stl] @lims]
       (apply-style doc strt (- end strt) stl))
     (apply-style txt-pane *default*)))
+
+(defn high-light [^JTextPane txt-pane]
+  "Takes the syntax defined by regexes and looks 
+for matches in the text-pane content applying the 
+corresponding style to each match."
+  (let [doc  (.getDocument txt-pane)
+        len  (.getLength doc)
+        text (.getText doc 0 len)
+        zip  (ast/build-ast text)] 
+    ;(apply-style doc 0 len *default*)
+    ;(println (ast/get-limits zip))
+    (doseq [[strt end tag] (ast/get-limits zip)]
+      (apply-style doc strt end 
+                   (if (-> *syntax* tag)
+                     (-> *syntax* tag :style)
+                     (*syntax* :default)))))
+    ;(apply-style txt-pane *default*)
+    )
+
+
+
 
 
 
