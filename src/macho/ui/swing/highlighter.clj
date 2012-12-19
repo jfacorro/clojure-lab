@@ -4,6 +4,7 @@
            [java.awt Color]
            [java.util.regex Matcher])
   (:require [macho.lang.clojure :as lang :reload true]
+            [macho.ui.swing.util :as util]
             [clojure.set :as set]))
 
 (def style-constants {:bold StyleConstants/Bold,
@@ -11,17 +12,20 @@
 	             :foreground StyleConstants/Foreground})
 
 (defn rgb-to-int [rgb]
+  "Converts a RGB triple to a single int value."
   (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
 
 (defn parse-attrs [stl]
-  (let [color-attr #{:foreground :background}
-        to-color (fn [[k v]] [k (Color. (rgb-to-int v))])
-        attrs (mapcat to-color (filter (comp color-attr key) stl))]
+  "Parses the attribute definition, replacing RGB values
+with Color instances."
+  (let [color-attr?  #(-> % key #{:foreground :background})
+        rgb-to-color (fn [[k v]] [k (Color. (rgb-to-int v))])
+        attrs        (->> stl (filter color-attr?) (mapcat rgb-to-color))]
     (apply assoc stl attrs)))
 
 (defn make-style [attrs]
   "Creates a new style with the given
-   attributes values."
+attributes values."
   (let [style (SimpleAttributeSet.)
         att (parse-attrs attrs)]
     (doseq [[k v] att]
@@ -29,8 +33,10 @@
     style))
 
 (defn init-styles [stls]
-  (let [f (fn [[k v]] {k (assoc v :style (make-style (v :style)))})]
-    (reduce #(merge %1 (f %2)) stls stls)))
+  "Initializes the styles for all syntax elements defined."
+  (let [f (fn [[k {stl :style re :regex}]]
+            [k {:style (make-style stl) :regex re}])]
+    (->> stls (mapcat f) (apply assoc {}))))
 
 (def ^:dynamic *default* (make-style {:foreground {:r 0 :g 131 :b 131}}))
 (def ^:dynamic *syntax* (init-styles lang/syntax))
@@ -38,12 +44,15 @@
 
 (defn get-limits [^Matcher m]
   "Using the regex matcher provided returns the
-  start and end of the next match."
-  (when (. m find) 
-    [(. m start) (. m end)]))
+start and end of the next match."
+  (when (.find m)
+    [(.start m) (.end m)]))
 
 (defn limits
-  ([ptrn s]
+  "Returns a lazy sequence of vectors with the
+limits of the matches found in the string 
+by the regex or the Matcher provided."
+  ([^String ptrn ^String s]
     (let [m (re-matcher (re-pattern ptrn) s)]
       (limits m)))
   ([^Matcher m]
@@ -51,27 +60,30 @@
       (when-let [lim (get-limits m)]
         (cons lim (limits m))))))
 
-(defn remove-cr [^String s]
-  "Removes carriage returns from the string."
-  (.replace s "\r" ""))
-
 (defn apply-style
-  ([^JTextPane txt strt end stl]
-    (SwingUtilities/invokeLater #(.setCharacterAttributes txt strt end stl true)))
-  ([^JTextPane txt stl]
-    (SwingUtilities/invokeLater #(.setCharacterAttributes txt stl true))))
+  "Applies the given style to the text
+enclosed between the strt and end positions."
+  ([^JTextPane txt ^long strt ^long end ^SimpleAttributeSet stl]
+    (util/queue-action #(.setCharacterAttributes txt strt end stl true)))
+  ([^JTextPane txt ^SimpleAttributeSet stl]
+    (util/queue-action #(.setCharacterAttributes txt stl true))))
 
 (defn high-light [^JTextPane txt-pane]
-    (let [doc (.getDocument txt-pane)
-          len (.getLength doc)
-          text (.getText doc 0 len)]
-      (apply-style doc 0 len *default*)
-      (doseq [[k v] *syntax*]
-        (let [stl (v :style)
-              ptrn (v :regex)]
-          (doseq [[strt end] (limits ptrn text)]
-            (apply-style doc strt (- end strt) stl))))
-      (apply-style txt-pane *default*)))
+  "Takes the syntax defined by regexes and looks
+for matches in the text-pane content applying the 
+corresponding style to each match."
+  (let [doc  (.getDocument txt-pane)
+        len  (.getLength doc)
+        text (.getText doc 0 len)
+        lims (atom {})]
+    (apply-style doc 0 len *default*)
+    (doseq [[_ {stl :style ptrn :regex}] *syntax*]
+      (doseq [[strt end] (limits ptrn text)]
+        (when (not (@lims [strt end]))
+          (swap! lims into {[strt end] stl}))))
+    (doseq [[[strt end] stl] @lims]
+      (apply-style doc strt (- end strt) stl))
+    (apply-style txt-pane *default*)))
 
 
 

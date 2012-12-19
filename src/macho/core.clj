@@ -68,7 +68,7 @@
 ;;------------------------------
 (defn current-path 
   "Finds the current working tab and shows a 
-  file chooser window if it's a new file."
+file chooser window if it's a new file."
   [tabs]
   (let [idx (.getSelectedIndex tabs)
         path (.getTitleAt tabs idx)]
@@ -122,7 +122,7 @@
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
-  search for the selected text in the current docuement."
+search for the selected text in the current docuement."
   [tabs]
   (let [txt  (current-txt tabs)
         slct (.getSelectedText txt)]
@@ -132,9 +132,10 @@
   (let [pos (.getLength doc)
         root (.getDefaultRootElement doc)
         n (.getElementIndex root pos)]
-    (doto lines
-      (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
-      (.updateUI))))
+    (ui/queue-action
+      #(doto lines
+        (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
+        (.updateUI)))))
 ;;------------------------------
 (defn insert-text
   "Inserts the specified text in the document."
@@ -158,7 +159,6 @@
         end  (find-char s (inc prev) #(not= \space %) 1)
         dt   (dec (- end prev))
         t    (apply str (repeat dt " "))]
-    (println (count t))
     (ui/queue-action #(insert-text txt t false))))
 ;;------------------------------
 (defn input-format [^JTextPane txt e]
@@ -169,6 +169,7 @@
           (= \{ c) (ui/queue-action #(insert-text txt "}"))
           (= \[ c) (ui/queue-action #(insert-text txt "]"))
           (= \" c) (ui/queue-action #(insert-text txt "\""))
+
           (= KeyEvent/VK_ENTER k) (insert-tabs txt)
           (= KeyEvent/VK_TAB k)
             (do (.consume e)
@@ -196,8 +197,8 @@
 ;;------------------------------
 (defn check-paren
   "Checks if the characters in the caret's current
-  position is a delimiter and looks for the closing/opening
-  delimiter."
+position is a delimiter and looks for the closing/opening
+delimiter."
   [txt]
   (let [tags (atom nil)]
     (fn [e]
@@ -267,7 +268,10 @@
       (ui/on :caret-update txt-code (check-paren txt-code))
 
       ; High-light text after code edition.
-      (ui/on :change txt-code #(do (hl/high-light txt-code) (update-line-numbers doc txt-lines)))
+      (ui/on :change 
+             txt-code
+             #(do (hl/high-light txt-code)
+                  (update-line-numbers doc txt-lines)))
 
       ; Set the increment for each vertical scroll
       (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
@@ -314,7 +318,7 @@
 ;;------------------------------
 (defn build-menu
   "Builds the application's menu.
-  TODO: load from data."
+TODO: load from data."
   [tabs txt-repl]
   (let [menubar (JMenuBar.)
         menu-file (JMenu. "File")
@@ -374,8 +378,8 @@
 ;;------------------------------
 (defn redirect-out
   "Creates a PrintStream that writes to the
-  JTextArea instance provided and then replaces
-  System/out with this stream."
+JTextArea instance provided and then replaces
+System/out with this stream."
   [^JTextArea txt]
   (let [stream (proxy [OutputStream] []
                  (write
