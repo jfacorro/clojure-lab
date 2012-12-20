@@ -1,10 +1,12 @@
 Core:
 	- Lexer: 
-		- Crea los tokens
-		- Perece que definiendolos con regex
+		- Crea los tokens.
+		- Perece que definiendolos con regex.
 	- Parser:
-		- Analysis sintactico
-		- Expresiones validas, es decir, orden de los token que formen expresiones validas
+		- Analysis sintactico.
+		- Expresiones validas, es decir, orden de los token que formen expresiones validas.
+	- AST:
+		Analisis semantico.
 	- Symbol table
 		- Parse tree.
 	- Compilación o Interpretación:
@@ -14,3 +16,9 @@ UI:
 	- Syntax highlighting:
 		- Regex
 		- Estrcutura del código: parser, lexer.
+Libraries:
+	- parsley:
+		- Incremental parser
+	- sjacket:
+		- Structural code transformation for the mases
+	- 
