@@ -16,7 +16,7 @@
               :symbol #"[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_]*"
               :keyword #"::?[\w-_*+]+"
               :whitespace #"[ \t\r\n,]+"
-              :list #{["(" :expr* ")"]}
+              :list ["(" :expr* ")"]
               :vector ["[" :expr* "]"]
               :map ["{" :pair* "}"]
               :set ["#{" :expr* "}"]

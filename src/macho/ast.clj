@@ -14,16 +14,16 @@
   ([loc]
     (get-limits loc 0 []))
   ([loc offset limits]
-    (let [[node _ :as nxt] (z/next loc)
-          [parent _]       (z/up nxt)]
+    (let [[node _ :as nxt] (z/next loc)]
       (cond (string? node)
               (let [new-offset (+ offset (.length node))
-                    tag        (tag parent)
+                    tag        (-> nxt z/up first tag)
                     limits     (conj limits [offset new-offset tag])]
                 (recur nxt new-offset limits))
-            (not (z/end? nxt))
-              (recur nxt offset limits)
-            :else limits))))
+            (z/end? nxt)
+              limits
+            :else 
+              (recur nxt offset limits)))))
 
 (defn print-code-from-ast
   [loc]
@@ -35,7 +35,7 @@
         (recur nxt))))
 
 #_(let [code "(defn bla [] (println :bla))";(slurp ".\\src\\macho\\core.clj")
-      zip  (build-ast code)]
+        zip  (build-ast code)]
   ;(-> zip z/next z/next pp/pprint)
   ;(println "---------------") 
   (get-limits zip))

@@ -1,5 +1,5 @@
 (ns macho.ui.swing.highlighter
-  (:import [javax.swing.text StyleContext SimpleAttributeSet StyleConstants]
+  (:import [javax.swing.text StyleContext SimpleAttributeSet StyleConstants StyledDocument]
            [javax.swing JTextPane SwingUtilities]
            [java.awt Color]
            [java.util.regex Matcher])
@@ -41,6 +41,7 @@ attributes values."
 
 (def ^:dynamic *default* (make-style {:foreground {:r 0 :g 131 :b 131}}))
 (def ^:dynamic *syntax* (into (init-styles lang/syntax) {:default *default*}))
+;(def ^:dynamic *syntax* (init-styles lang/syntax))
 (def ^:dynamic *higlighting* (atom false))
 
 (defn get-limits [^Matcher m]
@@ -64,7 +65,7 @@ by the regex or the Matcher provided."
 (defn apply-style
   "Applies the given style to the text
 enclosed between the strt and end positions."
-  ([^JTextPane txt ^long strt ^long end ^SimpleAttributeSet stl]
+  ([^StyledDocument txt ^long strt ^long end ^SimpleAttributeSet stl]
     (util/queue-action #(.setCharacterAttributes txt strt end stl true)))
   ([^JTextPane txt ^SimpleAttributeSet stl]
     (util/queue-action #(.setCharacterAttributes txt stl true))))
@@ -94,19 +95,8 @@ corresponding style to each match."
         len  (.getLength doc)
         text (.getText doc 0 len)
         zip  (ast/build-ast text)] 
-    ;(apply-style doc 0 len *default*)
-    ;(println (ast/get-limits zip))
     (doseq [[strt end tag] (ast/get-limits zip)]
-      (apply-style doc strt end 
+      (apply-style doc strt (- end strt)
                    (if (-> *syntax* tag)
                      (-> *syntax* tag :style)
-                     (*syntax* :default)))))
-    ;(apply-style txt-pane *default*)
-    )
-
-
-
-
-
-
-
+                     (*syntax* :default))))))

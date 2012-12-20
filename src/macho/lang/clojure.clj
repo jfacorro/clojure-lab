@@ -1,3 +1,4 @@
+
 (ns macho.lang.clojure)
 
 ;-----------------------------------------------------------
@@ -48,6 +49,7 @@
                :style {:bold true :foreground {:r 120, :g 120, :b 120}}}
   :accesor {:regex "(?<=\\()\\.\\w+"
             :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
+  :regex   {:style {:bold true :foreground {:r 223 :g 100, :b 67}}}
   :keyword {:regex (wrap-blanks "\\^?:[\\w-!\\?]+")
             :style {:bold true :foreground {:r 153, :g 0, :b 115}}}
   :namespace {:regex (wrap-blanks "(?s)(?:\\w+\\.|(?<=\\.)\\w+)+(?:/[\\w-_]+)?")
