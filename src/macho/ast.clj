@@ -18,7 +18,9 @@
       (cond (string? node)
               (let [new-offset (+ offset (.length node))
                     tag        (-> nxt z/up first tag)
-                    limits     (conj limits [offset new-offset tag])]
+                    limits     (if (not= tag :whitespace)
+                                 (conj limits [offset new-offset tag])
+                                 limits)]
                 (recur nxt new-offset limits))
             (z/end? nxt)
               limits
