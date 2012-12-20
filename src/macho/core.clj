@@ -49,8 +49,9 @@
          (println e)
 	(println (.getMessage e)))))
 ;;------------------------------
-(defn check-key [evt k m]
+(defn check-key 
   "Checks if the key and the modifier match the event's values"
+  [evt k m]
   (and 
     (or (nil? k) (= k (.getKeyCode evt)))
     (or (nil? m) (= m (.getModifiers evt)))))
@@ -146,12 +147,19 @@ search for the selected text in the current docuement."
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
-(defn find-char [s cur f dt]
+(defn find-char 
+  "Finds the next char in s, starting to look from
+position cur, in the direction specified by dt (1 or -1)."
+  [s cur f dt]
+
   (cond (or (neg? cur) (<= (.length s) cur)) -1
         (f (nth s cur)) cur
         :else (recur s (+ cur dt) f dt)))
 ;;------------------------------
-(defn insert-tabs [txt]
+(defn insert-tabs 
+  "Looks for the first previous \\newline character 
+and copies the indenting for the new line."
+  [txt]
   (let [pos  (-> (.getCaretPosition txt) dec)
         doc  (.getDocument txt)
         s    (.getText doc 0 (.getLength doc))
@@ -161,15 +169,15 @@ search for the selected text in the current docuement."
         t    (apply str (repeat dt " "))]
     (ui/queue-action #(insert-text txt t false))))
 ;;------------------------------
-(defn input-format [^JTextPane txt e]
+(defn input-format 
   "Insert a closing parentesis."
+  [^JTextPane txt e]
   (let [c (.getKeyChar e)
         k (.getKeyCode e)]
     (cond (= \( c) (ui/queue-action #(insert-text txt ")"))
           (= \{ c) (ui/queue-action #(insert-text txt "}"))
           (= \[ c) (ui/queue-action #(insert-text txt "]"))
           (= \" c) (ui/queue-action #(insert-text txt "\""))
-
           (= KeyEvent/VK_ENTER k) (insert-tabs txt)
           (= KeyEvent/VK_TAB k)
             (do (.consume e)
@@ -219,8 +227,10 @@ delimiter."
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
-  ([tabs] (new-document tabs new-doc-title))
-  ([tabs title] (new-document tabs title nil))
+  ([tabs]
+    (new-document tabs new-doc-title))
+  ([tabs title] 
+    (new-document tabs title nil))
   ([tabs title src]
     (let [doc (DefaultStyledDocument.)
           txt-code (JTextPane. doc)
@@ -229,13 +239,10 @@ delimiter."
           pnl-scroll (JScrollPane. pnl-code)
           txt-lines (JTextArea.)]
 
-      ;; Load the text all at once
-      (when src (.setText txt-code src))
-
       (doto pnl-code
         (.setLayout (BorderLayout.))
         (.add txt-code BorderLayout/CENTER))
-
+        
       (doto pnl-scroll
          (.setRowHeaderView txt-lines))
 
@@ -243,17 +250,11 @@ delimiter."
         (.setFont *current-font*)
         (.setEditable false)
         (.setBackground Color/LIGHT_GRAY))
-
-      (update-line-numbers doc txt-lines)
-
+        
       ;; Eval: CTRL + Enter
       (ui/on :key-press txt-code
              (fn [_] (eval-code (.getSelectedText txt-code)))
                KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
-
-      ; Add Undo manager
-      (.setLimit undo-mgr -1)
-      (ui/on :undoable doc #(undo/handle-edit undo-mgr %))
 
       ; Undo/redo key events
       (ui/on :key-press txt-code
@@ -262,16 +263,26 @@ delimiter."
       (ui/on :key-press txt-code
              (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
                KeyEvent/VK_Y KeyEvent/CTRL_MASK)
-
+               
       (ui/on :key-press txt-code #(input-format txt-code %))
 
       (ui/on :caret-update txt-code (check-paren txt-code))
+      
+      ;; Load the text all at once
+      (when src (.setText txt-code src))
 
       ; High-light text after code edition.
       (ui/on :change 
              txt-code
              #(do (hl/high-light txt-code)
                   (update-line-numbers doc txt-lines)))
+                  
+      (ui/queue-action #(do (update-line-numbers doc txt-lines)
+                            (hl/high-light txt-code)))
+      
+      ; Add Undo manager
+      (.setLimit undo-mgr -1)
+      (ui/on :undoable doc #(undo/handle-edit undo-mgr %))
 
       ; Set the increment for each vertical scroll
       (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
@@ -284,27 +295,26 @@ delimiter."
 
       (doto txt-code
         (.setFont *current-font*)
-        (.setBackground Color/BLACK))
-
+        (.setBackground Color/BLACK)
+        (.setCaretPosition 0)
+        (.grabFocus))
+        
       txt-code)))
 ;;------------------------------
-(defn open-src [tabs]
+(defn open-src
   "Open source file."
+  [tabs]
   (let [dialog (JFileChooser. @default-dir)
         result (.showOpenDialog dialog nil)
         file (.getSelectedFile dialog)
         path (if file (.getPath file) nil)]
     (when path
       (reset! default-dir (.getCanonicalPath (File. path)))
-      (let [src (slurp path)
-            txt-code (new-document tabs path src)]
-        (doto txt-code
-          (.setCaretPosition 0)
-          (.grabFocus))
-        (hl/high-light txt-code)))))
+      (new-document tabs path (slurp path)))))
 ;;------------------------------
-(defn close [tabs]
+(defn close
   "Close the current tab."
+  [tabs]
   (let [idx (.getSelectedIndex tabs)]
     (.removeTabAt tabs idx)))
 ;;------------------------------

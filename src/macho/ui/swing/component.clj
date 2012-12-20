@@ -1,3 +1,4 @@
+
 (ns macho.ui.swing.component
   (:import  [java.awt Component]
             [java.awt.event MouseWheelListener KeyAdapter ActionListener]
@@ -51,6 +52,8 @@
     (or (nil? m) (= m (.getModifiers evt)))))
 ;;-----------------------------------------------------
 (defn process-event-handler [hdlr]
+  "If the handler is a no args function then 
+it wraps it in a single arg function."
   (let [n (-> hdlr class .getDeclaredMethods first .getParameterTypes alength)]
     (if (zero? n) 
       #(do % (hdlr)) 

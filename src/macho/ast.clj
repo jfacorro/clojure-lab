@@ -10,6 +10,9 @@
 (defn tag [node]
   (or (and (map? node) (node :tag)) :default))
 
+(defn ignore? [tag]
+  (#{:whitespace} tag))
+
 (defn get-limits
   ([loc]
     (get-limits loc 0 []))
@@ -18,9 +21,9 @@
       (cond (string? node)
               (let [new-offset (+ offset (.length node))
                     tag        (-> nxt z/up first tag)
-                    limits     (if (not= tag :whitespace)
-                                 (conj limits [offset new-offset tag])
-                                 limits)]
+                    limits     (if (ignore? tag)
+                                 limits
+                                 (conj limits [offset new-offset tag]))]
                 (recur nxt new-offset limits))
             (z/end? nxt)
               limits
@@ -39,5 +42,5 @@
 #_(let [code "(defn bla [] (println :bla))";(slurp ".\\src\\macho\\core.clj")
         zip  (build-ast code)]
   ;(-> zip z/next z/next pp/pprint)
-  ;(println "---------------") 
+  ;(println "---------------")
   (get-limits zip))
