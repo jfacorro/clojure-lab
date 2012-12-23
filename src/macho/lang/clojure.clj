@@ -1,5 +1,3 @@
-
-
 (ns macho.lang.clojure)
 
 ;-----------------------------------------------------------
@@ -8,7 +6,8 @@
 (def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
                      "try" "catch" "finally" "monitor-enter" "monitor-exit" "." "new" "set!"})
 
-(def symbols (keys (ns-refers *ns*)))
+;; Get all the vars from the current ns and get them in a set.
+(def vars (->> *ns* ns-refers keys (map str) set))
 
 (def delimiters #{"(" ")" "{" "}" "[" "]" "#" ","})
 (def delimiters-plus-space (conj delimiters " "))
@@ -42,23 +41,16 @@
   (wrap s blanks-behind blanks-ahead))
 
 (def syntax {
-  :special-forms {:regex (wrap-blanks (alt-regex special-forms))
-                  :style {:bold true :foreground {:r 0, :g 0, :b 0}}}
-  :symbol {:regex (wrap-blanks (alt-regex symbols))
-            :style {:bold true :foreground {:r 0, :g 134, :b 179}}}
-  :delimiters {:regex (class-regex delimiters)
-               :style {:bold true :foreground {:r 120, :g 120, :b 120}}}
-  :accesor {:regex "(?<=\\()\\.\\w+"
-            :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
-  :regex   {:style {:bold true :foreground {:r 223 :g 100, :b 67}}}
-  :keyword {:regex (wrap-blanks "\\^?:[\\w-!\\?]+")
-            :style {:bold true :foreground {:r 153, :g 0, :b 115}}}
-  :namespace {:regex (wrap-blanks "(?s)(?:\\w+\\.|(?<=\\.)\\w+)+(?:/[\\w-_]+)?")
-              :style {:bold true :foreground {:r 150, :g 0, :b 0}}}
-  :string {:regex "(?s)(?<!\\\\)\".*?(?<!\\\\)\""
-           :desc  "Ignore '\\\"' as delimiters."
-           :style {:bold true :foreground {:r 223 :g 16, :b 67}}}
-  :comment {:regex ";.*\\n"
-            :style {:bold true :foreground {:r 153, :g 153, :b 136}}}})
+  :special-form {:style {:bold true :foreground {:r 0, :g 0, :b 0}}}
+  :var        {:style {:bold true :foreground {:r 0, :g 0, :b 200}}}
+  :symbol     {:style {:bold true :foreground {:r 0, :g 134, :b 179}}}
+  :delimiters {:style {:bold true :foreground {:r 120, :g 120, :b 120}}}
+  :accesor    {:style {:bold true :foreground {:r 150, :g 0, :b 0}}}
+  :regex      {:style {:bold true :foreground {:r 223 :g 100, :b 67}}}
+  :keyword    {:style {:bold true :foreground {:r 153, :g 0, :b 115}}}
+  :namespace  {:style {:bold true :foreground {:r 150, :g 0, :b 0}}}
+  :string     {:style {:bold true :foreground {:r 223 :g 16, :b 67}}}
+  :number     {:style {:foreground {:r 0 :g 0, :b 0}}}
+  :comment    {:style {:bold true :foreground {:r 153, :g 153, :b 136}}}})
 
 

@@ -39,7 +39,7 @@ attributes values."
             [k {:style (make-style stl) :regex re}])]
     (->> stls (mapcat f) (apply assoc {}))))
 
-(def ^:dynamic *default* (make-style {:foreground {:r 0 :g 131 :b 131}}))
+(def ^:dynamic *default* (make-style {:foreground {:r 120, :g 120, :b 120}}))
 (def ^:dynamic *syntax* (into (init-styles lang/syntax) {:default *default*}))
 ;(def ^:dynamic *syntax* (init-styles lang/syntax))
 (def ^:dynamic *higlighting* (atom false))
@@ -70,23 +70,6 @@ enclosed between the strt and end positions."
   ([^JTextPane txt ^SimpleAttributeSet stl]
     (util/queue-action #(.setCharacterAttributes txt stl true))))
 
-#_(defn high-light [^JTextPane txt-pane]
-  "Takes the syntax defined by regexes and looks
-for matches in the text-pane content applying the 
-corresponding style to each match."
-  (let [doc  (.getDocument txt-pane)
-        len  (.getLength doc)
-        text (.getText doc 0 len)
-        lims (atom {})]
-    (apply-style doc 0 len *default*)
-    (doseq [[_ {stl :style ptrn :regex}] *syntax*]
-      (doseq [[strt end] (limits ptrn text)]
-        (when (not (@lims [strt end]))
-          (swap! lims into {[strt end] stl}))))
-    (doseq [[[strt end] stl] @lims]
-      (apply-style doc strt (- end strt) stl))
-    (apply-style txt-pane *default*)))
-
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
 for matches in the text-pane content applying the 
@@ -94,7 +77,7 @@ corresponding style to each match."
   (let [doc  (.getDocument txt-pane)
         len  (.getLength doc)
         text (.getText doc 0 len)
-        zip  (ast/build-ast text)] 
+        zip  (ast/build-ast text)]
     (doseq [[strt end tag] (ast/get-limits zip)]
       (apply-style doc strt (- end strt)
                    (if (-> *syntax* tag)

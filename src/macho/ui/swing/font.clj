@@ -5,6 +5,7 @@
              :bold Font/BOLD
              :italic Font/ITALIC})
 
-(defn font [{s :name ms :styles n :size}]
-  (let [style (reduce bit-and (map styles ms))]
+(defn font [& xs]
+  (let [{s :name ms :styles n :size} xs
+        style (reduce bit-and (map styles ms))]
     (Font. s style n)))

@@ -3,9 +3,9 @@
 (defprotocol UIComponent
   "UI control abstraction"
   (add! [this child] "Add a child control to ctrl.")
-  (set-attr! [this k v] "Sets the value for attr.")
+  (set-attr! [this attr value] "Sets the value for attr.")
   (show! [this] "Show the control.")
-  (hide! [this] "Hides the control.")
+  (hide! [this] "Hide the control.")
   ;;(on [ctrl evt f] "Binds the fn to the event.")
 )
 ;;-----------------------------------------
@@ -19,3 +19,12 @@
   "Multimethod for the binding of events."
   #(first %&) :default :none)
 ;;-----------------------------------------
+(defprotocol TextEdit
+  "Represents a text edit (insertion or removal)."
+  (insertion? [this] "Evaluates if e is an insertion.")
+  (offset [this] "Gets the offset at which the edit took place."))
+
+(defprotocol Text
+  "Represents a text edit (insertion or removal)."
+  (length [this] "Gets the length for the content.")
+  (text [this] "Gets the text content for this entity."))

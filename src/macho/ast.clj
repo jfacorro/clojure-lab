@@ -10,25 +10,26 @@
 (defn tag [node]
   (or (and (map? node) (node :tag)) :default))
 
-(defn ignore? [tag]
-  (#{:whitespace} tag))
-
 (defn get-limits
+  "Gets the limits for each string in the tree, ignoring
+the limits for the nodes with the tag specified by ignore?."
   ([loc]
-    (get-limits loc 0 []))
-  ([loc offset limits]
+    (get-limits loc 0 [] #{:whitespace}))
+  ([loc offset limits ignore?]
     (let [[node _ :as nxt] (z/next loc)]
       (cond (string? node)
               (let [new-offset (+ offset (.length node))
-                    tag        (-> nxt z/up first tag)
+                    parent     (-> nxt z/up first)
+                    tag        (tag parent)
+                    style      (:style (meta parent))
                     limits     (if (ignore? tag)
                                  limits
-                                 (conj limits [offset new-offset tag]))]
-                (recur nxt new-offset limits))
+                                 (conj limits [offset new-offset style]))]
+                (recur nxt new-offset limits ignore?))
             (z/end? nxt)
               limits
             :else 
-              (recur nxt offset limits)))))
+              (recur nxt offset limits ignore?)))))
 
 (defn print-code-from-ast
   [loc]

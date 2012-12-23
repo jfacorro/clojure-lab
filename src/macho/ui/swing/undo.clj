@@ -10,3 +10,7 @@
     (when (not= evtype DocumentEvent$EventType/CHANGE)
       (.addEdit undo-mgr edit))))
 ;;--------------------------------------
+(defn make-undo-mgr 
+  "Creates an undo manager."
+  []
+  (UndoManager.))

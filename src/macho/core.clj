@@ -1,22 +1,22 @@
 (ns macho.core
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
             JTextField JButton JFileChooser JSplitPane JTree
-            SwingUtilities JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
+            JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
             JOptionPane JSeparator]
-           [javax.swing.text StyleContext DefaultStyledDocument] 
-           [javax.swing.event DocumentListener]
+           [javax.swing.text DefaultStyledDocument DefaultHighlighter$DefaultHighlightPainter]
            [java.io OutputStream PrintStream File OutputStreamWriter]
            [java.awt BorderLayout Font Color]
-           [java.awt.event MouseAdapter KeyAdapter KeyEvent ActionListener]
-           [javax.swing.text DefaultHighlighter$DefaultHighlightPainter]
-           [javax.swing.undo UndoManager])
+           [java.awt.event KeyEvent])
   (:require [clojure.reflect :as r]
+            [clojure.string :as str]
             [clojure.repl :as repl]
+            [clojure.java.io :as io]
             [macho.ui.swing.core :as ui :reload true]
             [macho.ui.swing.highlighter :as hl :reload true]
-            [macho.ui.swing.undo :as undo :reload true])
-  (:use [clojure.java.io]
-        [macho.ui.swing image]))
+            [macho.ui.swing.undo :as undo :reload true]
+            [macho.ui.swing.text :as txt]
+            [macho.ui.protocols :as proto]
+            [macho.ui.swing.image :as img]))
 ;;------------------------------
 (declare main tabs docs tree repl menu)
 ;;------------------------------
@@ -25,7 +25,7 @@
 (def icons-paths ["./resources/icon-16.png"
                   "./resources/icon-32.png"
                   "./resources/icon-64.png"])
-(def icons (for [path icons-paths] (image path)))
+(def icons (for [path icons-paths] (img/image path)))
 ;;------------------------------
 (def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
 (def default-dir (atom (.getCanonicalPath (File. "."))))
@@ -49,7 +49,7 @@
          (println e)
 	(println (.getMessage e)))))
 ;;------------------------------
-(defn check-key 
+(defn check-key
   "Checks if the key and the modifier match the event's values"
   [evt k m]
   (and 
@@ -59,7 +59,7 @@
 (defn current-txt [tabs]
   (let [idx (.getSelectedIndex tabs)
         scroll (.getComponentAt tabs idx)
-        pnl (.. scroll getViewport getView) 
+        pnl (.. scroll getViewport getView)
         txt (.getComponent pnl 0)]
   txt))
 ;;------------------------------
@@ -85,7 +85,7 @@ file chooser window if it's a new file."
 (defn save-src [tabs]
   (let [txt-code (current-txt tabs)
         path (current-path tabs)
-        content (.getText txt-code)]
+        content (proto/text txt-code)]
     (when path
       (spit path content))))
 ;;------------------------------
@@ -93,16 +93,16 @@ file chooser window if it's a new file."
   "Evaluates source code."
   [tabs]
   (let [txt (current-txt tabs)]
-    (eval-code (.getText txt))))
+    (eval-code (proto/text txt))))
 ;;------------------------------
 (defn remove-highlight 
   "Removes all highglights from the text control."
   ([txt] (.. txt getHighlighter removeAllHighlights))
   ([txt tag] (.. txt getHighlighter (removeHighlight tag))))
 ;;------------------------------
-(defn highlight
+(defn add-highlight
   "Add a single highglight in the text control."
-  ([txt pos len] (highlight txt pos len Color/YELLOW))
+  ([txt pos len] (add-highlight txt pos len Color/YELLOW))
   ([txt pos len color]
     (let [doc  (.getDocument txt)
           hl   (.getHighlighter txt)
@@ -114,12 +114,11 @@ file chooser window if it's a new file."
   in the current tabs."
   [tabs]
   (let [txt  (current-txt tabs)
-        doc  (.getDocument txt)
-        s    (.toLowerCase (.getText doc 0 (.getLength doc)))
+        s    (str/lower-case (proto/text txt))
         ptrn (JOptionPane/showInputDialog tabs "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
-        lims (when ptrn (hl/limits (.toLowerCase ptrn) s))]
+        lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
     (remove-highlight txt)
-    (doseq [[a b] lims] (highlight txt a (- b a)))))
+    (doseq [[a b] lims] (add-highlight txt a (- b a)))))
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
@@ -161,8 +160,7 @@ position cur, in the direction specified by dt (1 or -1)."
 and copies the indenting for the new line."
   [txt]
   (let [pos  (-> (.getCaretPosition txt) dec)
-        doc  (.getDocument txt)
-        s    (.getText doc 0 (.getLength doc))
+        s    (proto/text txt)
         prev (find-char s pos #(= \newline %) -1)
         end  (find-char s (inc prev) #(not= \space %) 1)
         dt   (dec (- end prev))
@@ -193,7 +191,9 @@ and copies the indenting for the new line."
       (doseq [txt txts] (.setFont txt *current-font*)))))
 ;;------------------------------
 (defn match-paren [s pos end delta]
-  (loop [cur (+ pos delta) acum 0]
+  "Finds the matching endelimiter for"
+  (loop [cur  (+ pos delta) 
+         acum 0]
     (cond (neg? cur) nil
           (<= (.length s) cur) nil
           (= (nth s pos) (nth s cur))
@@ -211,19 +211,17 @@ delimiter."
   (let [tags (atom nil)]
     (fn [e]
       (when @tags
-        (doseq [tag @tags]
-          (remove-highlight txt tag)))
-      (let [pos (dec (.getDot e))
-            doc (.getDocument txt)
-            s   (.getText doc 0 (.getLength doc))
-            c   (get-in s [pos])
-            delim {\( {:end \) :d 1}, \) {:end \( :d -1}
-                   \{ {:end \} :d 1}, \} {:end \{ :d -1}
-                   \[ {:end \] :d 1}, \] {:end \[ :d -1}}]
+        (doseq [tag @tags] (remove-highlight txt tag)))
+      (let [pos   (dec (.getDot e))
+            s     (proto/text txt)
+            c     (get-in s [pos])
+            delim {\( {:end \), :d 1}, \) {:end \(, :d -1}
+                   \{ {:end \}, :d 1}, \} {:end \{, :d -1}
+                   \[ {:end \], :d 1}, \] {:end \[, :d -1}}]
         (when-let [{end :end dir :d} (delim c)]
           (when-let [end (match-paren s pos end dir)]
             (reset! tags 
-                    (doall (map #(highlight txt % 1 Color/LIGHT_GRAY) [pos end])))))))))
+                    (doall (map #(add-highlight txt % 1 Color/LIGHT_GRAY) [pos end])))))))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -234,7 +232,7 @@ delimiter."
   ([tabs title src]
     (let [doc (DefaultStyledDocument.)
           txt-code (JTextPane. doc)
-          undo-mgr (UndoManager.)
+          undo-mgr (undo/make-undo-mgr)
           pnl-code (JPanel.)
           pnl-scroll (JScrollPane. pnl-code)
           txt-lines (JTextArea.)]
@@ -277,7 +275,9 @@ delimiter."
              #(do (hl/high-light txt-code)
                   (update-line-numbers doc txt-lines)))
                   
-      (ui/queue-action #(do (update-line-numbers doc txt-lines)
+      ;(ui/on :change txt-code #(println (proto/insertion? %) (proto/text %) %))
+                  
+      (ui/queue-action #(do (update-line-numbers doc txt-lines) 
                             (hl/high-light txt-code)))
       
       ; Add Undo manager
@@ -404,9 +404,9 @@ System/out with this stream."
 its controls."
   [name]
   (let [main (JFrame. name)
-        txt-repl (JTextArea.)
+        txt-repl (txt/text-area)
         tabs (JTabbedPane.)
-        txt-in (JTextArea.)
+        txt-in (txt/text-area)
         pane-repl (JSplitPane.)
         pane-center-left (JSplitPane.)
         pane-all (JSplitPane.)

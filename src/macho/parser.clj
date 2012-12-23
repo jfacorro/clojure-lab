@@ -1,13 +1,29 @@
 (ns macho.parser 
   (:use clojure.pprint)
-  (:require [net.cgrand.parsley :as p]))
+  (:require [net.cgrand.parsley :as p]
+            [macho.lang.clojure :as lang]))
 ;;------------------------------
-(defn make-node [node content]
-  {:tag node :content content})
+(defn check-symbol [name] 
+  (cond (lang/special-forms name)
+          {:style :special-form}
+        (lang/vars name)
+          {:style :var}
+        :else
+          {:style :symbol}))
+;;------------------------------
+(defn process-node [tag content]
+  (case tag
+        :symbol (check-symbol (first content))
+        {:style tag}))
+;;------------------------------
+(defn make-node [tag content]
+  (with-meta {:tag tag :content content}
+             (process-node tag content)))
 ;;------------------------------
 ;; Giving the grammar a shot
 ;;---------------------------------
 (def options {:main :expr*
+              :root-tag ::root
               :space :whitespace*
               :make-node make-node})
 ;;---------------------------------
@@ -31,7 +47,10 @@
               :deref ["@" :expr]
               :fn ["#(" :expr* ")"]])
 ;;---------------------------------
-(def parse (apply p/parser options grammar))
+(def ^{:doc ""} parse (apply p/parser options grammar))
+;;---------------------------------
+(defn make-buffer [p]
+  (p/incremental-buffer p))
 ;;---------------------------------
 #_(let [code (slurp ".\\src\\macho\\parser.clj")
       ; code "(println #\"regex\" \"string\" #{})"
