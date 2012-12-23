@@ -3,4 +3,4 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [net.cgrand/parsley "0.9.1"]
                  [seesaw "1.4.2"]]
-  :main macho.core)
+  :main macho)

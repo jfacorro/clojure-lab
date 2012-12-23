@@ -1,4 +1,4 @@
-(ns macho.core
+(ns macho.ui
   (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
             JTextField JButton JFileChooser JSplitPane JTree
             JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
@@ -450,9 +450,4 @@ its controls."
       (.setJMenuBar (build-menu tabs txt-repl))
       (.add pane-center-left BorderLayout/CENTER)
       (.setVisible true))))
-;;------------------------------
-(defn -main
-  "Program startup function."
-  []
-  (def main (make-main app-name)))
 ;;------------------------------
