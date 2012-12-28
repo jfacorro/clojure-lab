@@ -3,18 +3,24 @@
   (:require [net.cgrand.parsley :as p]
             [macho.lang.clojure :as lang]))
 ;;------------------------------
-(defn check-symbol [name] 
+(defrecord Language [^String name 
+                     ^clojure.lang.IPersistentMap grammar 
+                     ^clojure.lang.IPersistentCollection exts])
+;;------------------------------
+(defrecord Document [name path buff lang])
+;;------------------------------
+(defn check-symbol [name]
   (cond (lang/special-forms name)
           {:style :special-form}
-        (lang/vars name)
+        (lang/core-vars name)
           {:style :var}
         :else
           {:style :symbol}))
 ;;------------------------------
 (defn process-node [tag content]
   (case tag
-        :symbol (check-symbol (first content))
-        {:style tag}))
+    :symbol (check-symbol (first content))
+    {:style tag}))
 ;;------------------------------
 (defn make-node [tag content]
   (with-meta {:tag tag :content content}

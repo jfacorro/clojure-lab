@@ -67,33 +67,36 @@
   (let [txt (current-txt tabs)]
     (.getDocument txt)))
 ;;------------------------------
+(defn show-save-dialog []
+  (let [dialog (JFileChooser. @default-dir)
+        result (.showSaveDialog dialog nil)
+        file   (.getSelectedFile dialog)]
+    (when file (.getPath file))))
+;;------------------------------
 (defn current-path 
   "Finds the current working tab and shows a 
 file chooser window if it's a new file."
   [tabs]
   (let [idx (.getSelectedIndex tabs)
         path (.getTitleAt tabs idx)]
-    (if (= path new-doc-title)
-      (let [dialog (JFileChooser. @default-dir)
-            result (.showSaveDialog dialog nil)
-            file (.getSelectedFile dialog)
-            path (if file (.getPath file) nil)]
-        (when path (.setTitleAt tabs idx path))
-        path)
-       path)))
+    (when (not= path new-doc-title)
+      path)))
 ;;------------------------------
 (defn save-src [tabs]
   (let [txt-code (current-txt tabs)
-        path (current-path tabs)
+        path (or (current-path tabs) (show-save-dialog))
         content (proto/text txt-code)]
-    (when path
+    (when path 
       (spit path content))))
 ;;------------------------------
 (defn eval-src
   "Evaluates source code."
   [tabs]
-  (let [txt (current-txt tabs)]
-    (eval-code (proto/text txt))))
+  (if-let [path (current-path tabs)]
+    (do (save-src tabs)
+        (println "Loaded file" path)
+        (println (load-file path)))
+    (-> tabs current-txt proto/text eval-code)))
 ;;------------------------------
 (defn remove-highlight 
   "Removes all highglights from the text control."

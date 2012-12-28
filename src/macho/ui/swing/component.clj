@@ -1,4 +1,3 @@
-
 (ns macho.ui.swing.component
   (:import  [java.awt Component]
             [java.awt.event MouseWheelListener KeyAdapter ActionListener]

@@ -7,7 +7,9 @@
                      "try" "catch" "finally" "monitor-enter" "monitor-exit" "." "new" "set!"})
 
 ;; Get all the vars from the current ns and get them in a set.
-(def vars (->> *ns* ns-refers keys (map str) set))
+(def core-vars 
+  "Gets all the names for the vars in the clojure.core namespace."
+  (->> *ns* ns-refers keys (map str) set))
 
 (def delimiters #{"(" ")" "{" "}" "[" "]" "#" ","})
 (def delimiters-plus-space (conj delimiters " "))
