@@ -1,5 +1,4 @@
 (ns macho.lang.clojure)
-
 ;-----------------------------------------------------------
 ; Special forms and characters collections definitions
 ;-----------------------------------------------------------
@@ -10,37 +9,6 @@
 (def core-vars 
   "Gets all the names for the vars in the clojure.core namespace."
   (->> *ns* ns-refers keys (map str) set))
-
-(def delimiters #{"(" ")" "{" "}" "[" "]" "#" ","})
-(def delimiters-plus-space (conj delimiters " "))
-
-(def escape-chars-map
-  (let [esc-chars "(){}[]*+.?"]
-      (zipmap esc-chars
-              (map #(str \\ %) esc-chars))))
-
-(defn re-escape [s] 
-  (->> (str s)
-       (replace escape-chars-map)
-       (reduce str)))
-
-(def blanks-behind (str "(?<=[" (apply str (map re-escape delimiters-plus-space)) "]|^)"))
-(def blanks-ahead (str "(?=[" (apply str (map re-escape delimiters-plus-space)) "]|$)"))
-
-(defn wrap
-  "Wraps a string s around the supplied delimiters" 
-  ([s delim] (wrap s delim delim))
-  ([s strt end]
-    (apply str (concat strt s end))))
-
-(defn alt-regex [coll]
-  (wrap (interpose "|" (map re-escape coll)) "(" ")"))
-
-(defn class-regex [coll]
-  (wrap (interpose "" (map re-escape coll)) "[" "]"))
-
-(defn wrap-blanks [s]
-  (wrap s blanks-behind blanks-ahead))
 
 (def syntax {
   :special-form {:style {:bold true :foreground {:r 0, :g 0, :b 0}}}

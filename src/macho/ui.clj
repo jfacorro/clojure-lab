@@ -18,8 +18,6 @@
             [macho.ui.protocols :as proto]
             [macho.ui.swing.image :as img]))
 ;;------------------------------
-(declare main tabs docs tree repl menu)
-;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
 (def icons-paths ["./resources/icon-16.png"
@@ -56,15 +54,16 @@
     (or (nil? k) (= k (.getKeyCode evt)))
     (or (nil? m) (= m (.getModifiers evt)))))
 ;;------------------------------
-(defn current-txt [tabs]
-  (let [idx (.getSelectedIndex tabs)
+(defn current-txt [main]
+  (let [tabs   (:tabs main)
+        idx    (.getSelectedIndex tabs)
         scroll (.getComponentAt tabs idx)
-        pnl (.. scroll getViewport getView)
-        txt (.getComponent pnl 0)]
+        pnl    (.. scroll getViewport getView)
+        txt    (.getComponent pnl 0)]
   txt))
 ;;------------------------------
-(defn current-doc [tabs]
-  (let [txt (current-txt tabs)]
+(defn current-doc [main]
+  (let [txt (current-txt main)]
     (.getDocument txt)))
 ;;------------------------------
 (defn show-save-dialog []
@@ -76,27 +75,28 @@
 (defn current-path 
   "Finds the current working tab and shows a 
 file chooser window if it's a new file."
-  [tabs]
-  (let [idx (.getSelectedIndex tabs)
+  [main]
+  (let [tabs (:tabs main)
+        idx  (.getSelectedIndex tabs)
         path (.getTitleAt tabs idx)]
     (when (not= path new-doc-title)
       path)))
 ;;------------------------------
-(defn save-src [tabs]
-  (let [txt-code (current-txt tabs)
-        path (or (current-path tabs) (show-save-dialog))
-        content (proto/text txt-code)]
+(defn save-src [main]
+  (let [txt-code (current-txt main)
+        path     (or (current-path main) (show-save-dialog))
+        content  (proto/text txt-code)]
     (when path 
       (spit path content))))
 ;;------------------------------
 (defn eval-src
   "Evaluates source code."
-  [tabs]
-  (if-let [path (current-path tabs)]
-    (do (save-src tabs)
+  [main]
+  (if-let [path (current-path main)]
+    (do (save-src main)
         (println "Loaded file" path)
         (println (load-file path)))
-    (-> tabs current-txt proto/text eval-code)))
+    (-> main current-txt proto/text eval-code)))
 ;;------------------------------
 (defn remove-highlight 
   "Removes all highglights from the text control."
@@ -115,10 +115,10 @@ file chooser window if it's a new file."
 (defn find-src 
   "Shows the dialog for searching the source
   in the current tabs."
-  [tabs]
-  (let [txt  (current-txt tabs)
+  [main]
+  (let [txt  (current-txt main)
         s    (str/lower-case (proto/text txt))
-        ptrn (JOptionPane/showInputDialog tabs "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
+        ptrn (JOptionPane/showInputDialog main "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
         lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
     (remove-highlight txt)
     (doseq [[a b] lims] (add-highlight txt a (- b a)))))
@@ -126,8 +126,8 @@ file chooser window if it's a new file."
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
 search for the selected text in the current docuement."
-  [tabs]
-  (let [txt  (current-txt tabs)
+  [main]
+  (let [txt  (current-txt main)
         slct (.getSelectedText txt)]
     (repl/find-doc slct)))
 ;;-------------------------------
@@ -228,17 +228,18 @@ delimiter."
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
-  ([tabs]
-    (new-document tabs new-doc-title))
-  ([tabs title] 
-    (new-document tabs title nil))
-  ([tabs title src]
-    (let [doc (DefaultStyledDocument.)
-          txt-code (JTextPane. doc)
-          undo-mgr (undo/make-undo-mgr)
-          pnl-code (JPanel.)
+  ([main]
+    (new-document main new-doc-title))
+  ([main title] 
+    (new-document main title nil))
+  ([main title src]
+    (let [tabs       (:tabs main)
+          doc        (DefaultStyledDocument.)
+          txt-code   (JTextPane. doc)
+          undo-mgr   (undo/make-undo-mgr)
+          pnl-code   (JPanel.)
           pnl-scroll (JScrollPane. pnl-code)
-          txt-lines (JTextArea.)]
+          txt-lines  (JTextArea.)]
 
       (doto pnl-code
         (.setLayout (BorderLayout.))
@@ -275,8 +276,9 @@ delimiter."
       ; High-light text after code edition.
       (ui/on :change 
              txt-code
-             #(do (hl/high-light txt-code)
-                  (update-line-numbers doc txt-lines)))
+             #(future (hl/high-light txt-code)
+                      (update-line-numbers doc txt-lines)
+                      ))
                   
       ;(ui/on :change txt-code #(println (proto/insertion? %) (proto/text %) %))
                   
@@ -306,14 +308,17 @@ delimiter."
 ;;------------------------------
 (defn open-src
   "Open source file."
-  [tabs]
+  [main]
   (let [dialog (JFileChooser. @default-dir)
         result (.showOpenDialog dialog nil)
         file (.getSelectedFile dialog)
         path (if file (.getPath file) nil)]
     (when path
       (reset! default-dir (.getCanonicalPath (File. path)))
-      (new-document tabs path (slurp path)))))
+      (new-document main path (slurp path)))))
+;;------------------------------
+(defn clear-repl [main]
+  (.setText (:repl main) nil))
 ;;------------------------------
 (defn close
   "Close the current tab."
@@ -322,71 +327,36 @@ delimiter."
     (.removeTabAt tabs idx)))
 ;;------------------------------
 (def menu-options
-  [{:name "File" 
-     :items [
-        {:name "New" :action #(print "New") :keys [KeyEvent/VK_N KeyEvent/CTRL_MASK]}
-      ]
-  }]
-)
+  [{:name "File"
+    :items [{:name "New" :action new-document :keys [KeyEvent/VK_N KeyEvent/CTRL_MASK]}
+            {:name "Open" :action open-src :keys [KeyEvent/VK_O KeyEvent/CTRL_MASK]}
+            {:name "Save" :action save-src :keys [KeyEvent/VK_S KeyEvent/CTRL_MASK]}
+            {:name "Close" :action close :keys [KeyEvent/VK_W KeyEvent/CTRL_MASK]}
+            {:separator true}
+            {:name "Exit" :action #(do % (System/exit 0)) :keys [KeyEvent/VK_X KeyEvent/ALT_MASK]}]}
+   {:name "Code"
+    :items [{:name "Eval" :action eval-src :keys [KeyEvent/VK_E KeyEvent/CTRL_MASK]}
+            {:name "Find" :action find-src :keys [KeyEvent/VK_F KeyEvent/CTRL_MASK]}
+            {:name "Find doc" :action find-doc :keys [KeyEvent/VK_F KeyEvent/ALT_MASK]}
+            {:name "Clear Log" :action clear-repl :keys [KeyEvent/VK_L KeyEvent/CTRL_MASK]}]}])
 ;;------------------------------
 (defn build-menu
-  "Builds the application's menu.
-TODO: load from data."
-  [tabs txt-repl]
-  (let [menubar (JMenuBar.)
-        menu-file (JMenu. "File")
-        item-new (JMenuItem. "New")
-        item-open (JMenuItem. "Open")
-        item-save (JMenuItem. "Save")
-        item-close (JMenuItem. "Close")
-        item-exit (JMenuItem. "Exit")
-        menu-code (JMenu. "Code")
-        item-eval (JMenuItem. "Eval")
-        item-find (JMenuItem. "Find")
-        item-find-doc (JMenuItem. "Find doc")
-        item-clear (JMenuItem. "Clear Log")]
-
-    (ui/on :click item-new #(new-document tabs))
-    (.setAccelerator item-new (KeyStroke/getKeyStroke KeyEvent/VK_N KeyEvent/CTRL_MASK))
-
-    (ui/on :click item-open #(open-src tabs))
-    (.setAccelerator item-open (KeyStroke/getKeyStroke KeyEvent/VK_O KeyEvent/CTRL_MASK))
-
-    (ui/on :click item-save #(save-src tabs))
-    (.setAccelerator item-save (KeyStroke/getKeyStroke KeyEvent/VK_S KeyEvent/CTRL_MASK))
-
-    (ui/on :click item-close #(close tabs))
-    (.setAccelerator item-close (KeyStroke/getKeyStroke KeyEvent/VK_W KeyEvent/CTRL_MASK))
-
-    (ui/on :click item-exit #(System/exit 0))
-    (.setAccelerator item-exit (KeyStroke/getKeyStroke KeyEvent/VK_X KeyEvent/ALT_MASK))
-
-    (.add menu-file item-new)
-    (.add menu-file item-open)
-    (.add menu-file item-save)
-    (.add menu-file item-close)
-    (.add menu-file (JSeparator.))
-    (.add menu-file item-exit)
-
-    (ui/on :click item-eval #(eval-src tabs))
-    (.setAccelerator item-eval (KeyStroke/getKeyStroke KeyEvent/VK_E KeyEvent/CTRL_MASK))
-
-    (ui/on :click item-find #(find-src tabs))
-    (.setAccelerator item-find (KeyStroke/getKeyStroke KeyEvent/VK_F KeyEvent/CTRL_MASK))
-
-    (ui/on :click item-find-doc #(find-doc tabs))
-    (.setAccelerator item-find-doc (KeyStroke/getKeyStroke KeyEvent/VK_F KeyEvent/ALT_MASK))
-
-    (ui/on :click item-clear #(.setText txt-repl ""))
-    (.setAccelerator item-clear (KeyStroke/getKeyStroke KeyEvent/VK_L KeyEvent/CTRL_MASK))
-
-    (.add menu-code item-eval)
-    (.add menu-code item-find)
-    (.add menu-code item-find-doc)
-    (.add menu-code item-clear)
-
-    (.add menubar menu-file)
-    (.add menubar menu-code)
+  "Builds the application's menu."
+  [main]
+  (let [menubar    (JMenuBar.)
+        key-stroke #(KeyStroke/getKeyStroke %1 %2)]
+    
+    (doseq [{name :name items :items} menu-options]
+      (let [menu (JMenu. name)]
+        (.add menubar menu)
+        (doseq [{item-name :name action :action kys :keys separator :separator} items]
+          (let [menu-item (if separator
+                            (JSeparator.)
+                            (JMenuItem. item-name))]
+            (when (not separator)
+              (ui/on :click menu-item #(action main))
+              (.setAccelerator menu-item (apply key-stroke kys)))
+            (.add menu menu-item)))))
     menubar))
 ;;------------------------------
 (defn redirect-out
@@ -413,7 +383,8 @@ its controls."
         pane-repl (JSplitPane.)
         pane-center-left (JSplitPane.)
         pane-all (JSplitPane.)
-        files-tree (JTree. (to-array []))]
+        files-tree (JTree. (to-array []))
+        ui-main {:main main :tabs tabs :repl txt-repl}]
 
     ; Set controls properties
     (doto txt-repl
@@ -430,7 +401,7 @@ its controls."
       (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
       (.setResizeWeight 0.8)
       (.setLeftComponent tabs)
-      (.setRightComponent pane-repl))
+      (.setRightComponent (JScrollPane. txt-repl)))
 
     (doto pane-all
       (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
@@ -450,7 +421,8 @@ its controls."
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
       (.setIconImages icons)
       (.setSize 800 600)
-      (.setJMenuBar (build-menu tabs txt-repl))
+      (.setJMenuBar (build-menu ui-main))
       (.add pane-center-left BorderLayout/CENTER)
-      (.setVisible true))))
+      (.setVisible true))
+    ui-main))
 ;;------------------------------
