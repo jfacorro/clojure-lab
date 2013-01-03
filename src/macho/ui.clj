@@ -83,11 +83,13 @@ file chooser window if it's a new file."
       path)))
 ;;------------------------------
 (defn save-src [main]
-  (let [txt-code (current-txt main)
+  (let [tabs     (:tabs main)
+        txt-code (current-txt main)
         path     (or (current-path main) (show-save-dialog))
         content  (proto/text txt-code)]
     (when path 
-      (spit path content))))
+      (spit path content)
+      (.setTitleAt tabs (.getSelectedIndex tabs) path))))
 ;;------------------------------
 (defn eval-src
   "Evaluates source code."
@@ -118,7 +120,7 @@ file chooser window if it's a new file."
   [main]
   (let [txt  (current-txt main)
         s    (str/lower-case (proto/text txt))
-        ptrn (JOptionPane/showInputDialog main "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
+        ptrn (JOptionPane/showInputDialog (:main main) "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
         lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
     (remove-highlight txt)
     (doseq [[a b] lims] (add-highlight txt a (- b a)))))
@@ -296,7 +298,7 @@ delimiter."
 
       (doto tabs
         (.addTab title pnl-scroll)
-        (.setSelectedIndex (- (.getTabCount tabs) 1)))
+        (.setSelectedIndex (dec (.getTabCount tabs))))
 
       (doto txt-code
         (.setFont *current-font*)
@@ -322,8 +324,9 @@ delimiter."
 ;;------------------------------
 (defn close
   "Close the current tab."
-  [tabs]
-  (let [idx (.getSelectedIndex tabs)]
+  [main]
+  (let [tabs (:tabs main)
+        idx (.getSelectedIndex tabs)]
     (.removeTabAt tabs idx)))
 ;;------------------------------
 (def menu-options
@@ -346,15 +349,15 @@ delimiter."
   (let [menubar    (JMenuBar.)
         key-stroke #(KeyStroke/getKeyStroke %1 %2)]
     
-    (doseq [{name :name items :items} menu-options]
-      (let [menu (JMenu. name)]
+    (doseq [{menu-name :name items :items} menu-options]
+      (let [menu (JMenu. menu-name)]
         (.add menubar menu)
-        (doseq [{item-name :name action :action kys :keys separator :separator} items]
+        (doseq [{item-name :name f :action kys :keys separator :separator} items]
           (let [menu-item (if separator
                             (JSeparator.)
                             (JMenuItem. item-name))]
             (when (not separator)
-              (ui/on :click menu-item #(action main))
+              (ui/on :click menu-item #(f main))
               (.setAccelerator menu-item (apply key-stroke kys)))
             (.add menu menu-item)))))
     menubar))
@@ -424,5 +427,6 @@ its controls."
       (.setJMenuBar (build-menu ui-main))
       (.add pane-center-left BorderLayout/CENTER)
       (.setVisible true))
+
     ui-main))
 ;;------------------------------
