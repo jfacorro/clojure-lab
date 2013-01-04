@@ -176,12 +176,18 @@ and copies the indenting for the new line."
   "Insert a closing parentesis."
   [^JTextPane txt e]
   (let [c (.getKeyChar e)
-        k (.getKeyCode e)]
-    (cond (= \( c) (ui/queue-action #(insert-text txt ")"))
-          (= \{ c) (ui/queue-action #(insert-text txt "}"))
-          (= \[ c) (ui/queue-action #(insert-text txt "]"))
-          (= \" c) (ui/queue-action #(insert-text txt "\""))
-          (= KeyEvent/VK_ENTER k) (insert-tabs txt)
+        k (.getKeyCode e)
+        m (.getModifiers e)]
+    (cond (= \( c)
+            (ui/queue-action #(insert-text txt ")"))
+          (= \{ c)
+            (ui/queue-action #(insert-text txt "}"))
+          (= \[ c)
+            (ui/queue-action #(insert-text txt "]"))
+          (= \" c)
+            (ui/queue-action #(insert-text txt "\""))
+          (and (zero? m) (= KeyEvent/VK_ENTER k))
+            (insert-tabs txt)
           (= KeyEvent/VK_TAB k)
             (do (.consume e)
                 (ui/queue-action #(insert-text txt "  " false))))))
