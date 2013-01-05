@@ -144,10 +144,12 @@ search for the selected text in the current docuement."
 ;;------------------------------
 (defn insert-text
   "Inserts the specified text in the document."
-  ([^JTextPane txt s] (insert-text txt s true))
+  ([^JTextPane txt s]
+    (insert-text txt s true))
   ([^JTextPane txt s restore]
-    (let [doc (.getDocument txt)
-          pos (.getCaretPosition txt)]
+    (insert-text txt s restore (.getCaretPosition txt)))
+  ([^JTextPane txt s restore pos]
+    (let [doc (.getDocument txt)]
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
@@ -172,6 +174,22 @@ and copies the indenting for the new line."
         t    (apply str (repeat dt " "))]
     (ui/queue-action #(insert-text txt t false))))
 ;;------------------------------
+(defn handle-tab [txt e]
+  (let [tab    "  "
+        pos    (.getCaretPosition txt)
+        text   (.getSelectedText txt)]
+    (.consume e)
+    (if-not text
+      (ui/queue-action #(insert-text txt tab false))
+      (let [start  (.getSelectionStart txt)
+            pos    (->> text (map-indexed #(when (= \newline %2) (inc %1)))
+                             (filter identity)
+                             (concat [0])
+                             sort
+                             reverse)]
+        (doseq [x pos] 
+          (insert-text txt tab false (+ start x)))))))
+;;------------------------------
 (defn input-format 
   "Insert a closing parentesis."
   [^JTextPane txt e]
@@ -189,8 +207,7 @@ and copies the indenting for the new line."
           (and (zero? m) (= KeyEvent/VK_ENTER k))
             (insert-tabs txt)
           (= KeyEvent/VK_TAB k)
-            (do (.consume e)
-                (ui/queue-action #(insert-text txt "  " false))))))
+            (handle-tab txt e))))
 ;;------------------------------
 (defn change-font-size [txts e]
   (when (check-key e nil KeyEvent/CTRL_MASK)
