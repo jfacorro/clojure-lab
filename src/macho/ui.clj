@@ -128,10 +128,16 @@ file chooser window if it's a new file."
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
 search for the selected text in the current docuement."
-  [main]
-  (let [txt  (current-txt main)
-        slct (.getSelectedText txt)]
-    (repl/find-doc slct)))
+  ([main]
+    (find-doc main false))
+  ([main find?]
+    (let [txt  (current-txt main)
+          slct (.getSelectedText txt)
+          sym  (when slct (symbol slct))]
+      (cond find?
+              (repl/find-doc slct)
+            sym 
+              (eval `(repl/doc ~sym))))))
 ;;-------------------------------
 (defn update-line-numbers [doc lines]
   (let [pos (.getLength doc)
@@ -372,14 +378,15 @@ delimiter."
    {:name "Code"
     :items [{:name "Eval" :action eval-src :keys [KeyEvent/VK_E KeyEvent/CTRL_MASK]}
             {:name "Find" :action find-src :keys [KeyEvent/VK_F KeyEvent/CTRL_MASK]}
-            {:name "Find doc" :action find-doc :keys [KeyEvent/VK_F KeyEvent/ALT_MASK]}
+            {:name "Find docs" :action #(find-doc % true) :keys [KeyEvent/VK_F KeyEvent/ALT_MASK KeyEvent/CTRL_MASK]}
+            {:name "Doc" :action find-doc :keys [KeyEvent/VK_F KeyEvent/ALT_MASK]}
             {:name "Clear Log" :action clear-repl :keys [KeyEvent/VK_L KeyEvent/CTRL_MASK]}]}])
 ;;------------------------------
 (defn build-menu
   "Builds the application's menu."
   [main]
   (let [menubar    (JMenuBar.)
-        key-stroke #(KeyStroke/getKeyStroke %1 %2)]
+        key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]
     
     (doseq [{menu-name :name items :items} menu-options]
       (let [menu (JMenu. menu-name)]
