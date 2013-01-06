@@ -174,7 +174,11 @@ and copies the indenting for the new line."
         t    (apply str (repeat dt " "))]
     (ui/queue-action #(insert-text txt t false))))
 ;;------------------------------
-(defn handle-tab [txt e]
+(defn handle-tab 
+  "Adds tabulating characters in place 
+or at the beggining of each line if there's 
+selected text."
+  [txt e]
   (let [tab    "  "
         pos    (.getCaretPosition txt)
         text   (.getSelectedText txt)]
@@ -182,13 +186,18 @@ and copies the indenting for the new line."
     (if-not text
       (ui/queue-action #(insert-text txt tab false))
       (let [start  (.getSelectionStart txt)
-            pos    (->> text (map-indexed #(when (= \newline %2) (inc %1)))
-                             (filter identity)
-                             (concat [0])
-                             sort
-                             reverse)]
-        (doseq [x pos] 
-          (insert-text txt tab false (+ start x)))))))
+            shift? (check-key e nil KeyEvent/SHIFT_MASK)
+            nl     "\n"
+            nltab  (str nl tab)
+            [match rplc f]
+                   (if shift?
+                     [nltab nl #(str/replace % #"^  " "")]
+                     [nl nltab #(str tab %)])
+            text   (f (str/replace text match rplc))
+            end    (+ start (count text))]
+        (ui/queue-action #(do (.replaceSelection txt text)
+                              (.setSelectionStart txt start)
+                              (.setSelectionEnd txt end)))))))
 ;;------------------------------
 (defn input-format 
   "Insert a closing parentesis."
