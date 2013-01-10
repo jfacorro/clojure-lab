@@ -46,7 +46,7 @@
               :meta ["^" :pair]
               :quote ["'" :expr]
               :regex #"#\"([^\"\\]*|(\\.))*\""
-              :string #"(?<!#)\".*\""
+              :string #"(?s)(?<!#)\".*?\""
               :char #"\\(.|newline|space|tab|backspace|formfeed|return|u([0-9a-fA-F]{4}|[0-7]{1,2}|[0-3][0-7]{2}))(?![a-zA-Z0-9!$%&*+\-\./:<=>?_#])"
               :number #"\d+\.?\d*M?"
               :comment #"(#!|;)[^\n\r]*"
