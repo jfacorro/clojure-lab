@@ -1,8 +1,6 @@
+(remove-ns 'macho.ui.main)
 (ns macho.ui.main
   (:require [macho.ui.swing [font :as f] 
-                            [image :as img]
-                            [window :as win]
-                            [label :as lbl]
                             [text :as txt]
                             [component :as cmpt]
                             [core :as ui]]
@@ -12,9 +10,9 @@
 (def height 500)
 (def app-name "macho - playground")
 (def icons-paths ["./resources/icon-16.png" "./resources/icon-32.png"])
-(def icons (for [path icons-paths] (img/image path)))
+(def icons (for [path icons-paths] (ui/image path)))
 (def app-icon "macho")
-(def default-font (f/font :name "Consolas" :styles [:plain] :size 14))
+(def default-font (ui/font :name "Consolas" :styles [:plain] :size 14))
 
 (declare 
   ;; Main window.

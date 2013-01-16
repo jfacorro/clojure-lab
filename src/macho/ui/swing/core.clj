@@ -1,18 +1,36 @@
 (ns macho.ui.swing.core 
   (:refer-clojure :exclude [set get])
-  (:import  [javax.swing UIManager JFrame 
-                         ;Text controls
+  (:import  [javax.swing ; Utils
+                         UIManager SwingUtilities
+                         ; Containers
+                         JFrame JPanel JScrollPane
+                         ; Text
                          JTextField JTextArea JTextPane JLabel]
-            [java.awt Container Color])
+            [java.awt Container Color Toolkit Font])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
             [macho.ui.swing.util :as util]
             [macho.ui.protocols :as proto]))
 ;;-------------------
-;; Expose API
+;; Expose Protocols
 ;;-------------------
-(def queue-action util/queue-action)
 (def on proto/on)
+(def add proto/add)
+
+(comment 
+
+  (defn intern-vars [from-ns]
+    (let [vars (->> from-ns ns-interns (map (comp meta second)))]
+      vars))
+      
+  (-> 'macho.ui.protocols the-ns intern-vars)
+
+)
+;;-------------------
+(defn queue-action
+  "Queues an action to the event queue."
+  [f]
+  (SwingUtilities/invokeLater f))
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
@@ -75,5 +93,28 @@
 (defn label [s]
   "Creates a new label."
   (JLabel. s))
+
+(def toolkit (Toolkit/getDefaultToolkit))
+(defn image 
+  "Creates a new image."
+  [path]
+  (.createImage toolkit path))
+;;-------------------
+;; Font
+;;-------------------
+(def font-styles {:plain Font/PLAIN
+                  :bold Font/BOLD
+                  :italic Font/ITALIC})
+
+(defn font
+  "Creates a new font using the values from the
+following keywords:
+  :name   string with font's name.
+  :styles sequence that contains a combination of 
+          values from the font-style map.
+  :size   font size."
+  [& {s :name ms :styles n :size}]
+  (let [style (reduce bit-and (map font-styles ms))]
+    (Font. s style n)))
 ;;-------------------
 (init)
