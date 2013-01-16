@@ -5,43 +5,6 @@
             [javax.swing.undo UndoManager])
     (:use   [macho.ui.protocols]
             [macho.ui.swing.util :as util]))
-
-(defn comp-show! [w]
-  (.setVisible w true))
-
-(defn comp-hide! [w]
-  (.setVisible w false))
-
-(defn comp-add! [w c]
-  (.add w c))
-
-(def base-component
-  {:add! comp-add!
-   :set-attr! (fn [& args] (apply comp-set-attr! args))
-   :show! comp-show!
-   :hide! comp-hide!})
-
-(extend Component
-  UIComponent base-component)
-
-(defn size! [c w h]
-  "Sets the size of the window."
-  (.setSize c w h))
-
-(defn size [c]
-  "Gets the size of the window."
-  (let [s (.getSize c)
-        w (.width s)
-        h (.height s)]
-    [w h]))
-
-(defn font! [c f]
-  "Sets the font of the component."
-  (.setFont c f))
-
-(defn font [c ]
-  "Gets the font of the component."
-  (.getFont c))
 ;;-----------------------------------------------------
 (defn check-key 
   "Checks if the key and the modifier match the event's values"
@@ -51,8 +14,8 @@
     (or (nil? m) (= m (.getModifiers evt)))))
 ;;-----------------------------------------------------
 (defn process-event-handler [hdlr]
-  "If the handler is a no args function then 
-it wraps it in a single arg function."
+  "If the handler is a function of arity 0 then
+it wraps it in a function of arity 1."
   (let [n (-> hdlr class .getDeclaredMethods first .getParameterTypes alength)]
     (if (zero? n) 
       #(do % (hdlr)) 

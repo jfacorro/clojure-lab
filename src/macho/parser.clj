@@ -34,22 +34,23 @@
               :make-node make-node})
 ;;---------------------------------
 (def grammar [:expr- #{:symbol :keyword :list :string :vector :set :map :regex
-                       :number :comment :meta :fn :deref :quote}
+                       :number :comment :meta :fn :deref :quote :char}
               :symbol #"[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_]*"
               :keyword #"::?[\w-_*+]+"
               :whitespace #"[ \t\r\n,]+"
-              :list ["(" :expr* ")"]
+              :list [#"(?<!\\)\(" :expr* #"(?<!\\)\)"]
               :vector ["[" :expr* "]"]
               :map ["{" :pair* "}"]
               :set ["#{" :expr* "}"]
               :pair- [:expr :expr]
               :meta ["^" :pair]
+              :char #"\\."
               :quote ["'" :expr]
               :regex #"#\"([^\"\\]*|(\\.))*\""
-              :string #"(?s)(?<!#)\".*?\""
+              :string #"(?s)(?<!#)\".*?(?<!\\)\""
               :char #"\\(.|newline|space|tab|backspace|formfeed|return|u([0-9a-fA-F]{4}|[0-7]{1,2}|[0-3][0-7]{2}))(?![a-zA-Z0-9!$%&*+\-\./:<=>?_#])"
               :number #"\d+\.?\d*M?"
-              :comment #"(#!|;)[^\n\r]*"
+              :comment #"(#!|;).*[^\n\r]*"
               :deref ["@" :expr]
               :fn ["#(" :expr* ")"]])
 ;;---------------------------------

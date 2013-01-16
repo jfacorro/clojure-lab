@@ -41,11 +41,12 @@
 (defn eval-code
   "Evaluates the code in the string supplied."
   [^String code]
-  (try
+  (println (load-string code))
+  #_(try
     (println (load-string code))
     (catch Exception e
-         (println e)
-	(println (.getMessage e)))))
+      (println (.getMessage e))
+      (println e))))
 ;;------------------------------
 (defn check-key
   "Checks if the key and the modifier match the event's values"
@@ -95,9 +96,13 @@ file chooser window if it's a new file."
   "Evaluates source code."
   [main]
   (if-let [path (current-path main)]
-    (do (save-src main)
-        (println "Loaded file" path)
-        (println (load-file path)))
+    (try
+      (save-src main)
+      (println "Loaded file" path)
+      (println (load-file path))
+      (catch Exception e
+        (println (.getMessage e))
+        (println e)))
     (-> main current-txt proto/text eval-code)))
 ;;------------------------------
 (defn remove-highlight 
@@ -135,7 +140,7 @@ search for the selected text in the current docuement."
           slct (.getSelectedText txt)
           sym  (when slct (symbol slct))]
       (cond find?
-              (repl/find-doc slct)
+              (repl/find-doc (symbol slct))
             sym 
               (eval `(repl/doc ~sym))))))
 ;;-------------------------------
@@ -419,9 +424,9 @@ System/out with this stream."
 its controls."
   [name]
   (let [main (JFrame. name)
-        txt-repl (txt/text-area)
+        txt-repl (ui/text-area)
         tabs (JTabbedPane.)
-        txt-in (txt/text-area)
+        txt-in (ui/text-area)
         pane-repl (JSplitPane.)
         pane-center-left (JSplitPane.)
         pane-all (JSplitPane.)
@@ -457,7 +462,9 @@ its controls."
     ; Redirect std out
     (redirect-out txt-repl)
     ; Modify the binding for the *out* var in clojure.core
-    (intern 'clojure.core '*out* (java.io.OutputStreamWriter. System/out))
+    (alter-var-root #'clojure.core/*out* #(do %1 %2) (java.io.OutputStreamWriter. System/out))
+    (alter-var-root #'clojure.core/*err* #(do %1 %2) (java.io.PrintWriter. System/err))
+    
 
     (doto main
       (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)

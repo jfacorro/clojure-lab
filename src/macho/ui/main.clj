@@ -4,7 +4,8 @@
                             [window :as win]
                             [label :as lbl]
                             [text :as txt]
-                            [component :as cmpt]]
+                            [component :as cmpt]
+                            [core :as ui]]
             [macho.ui.protocols :as p]))
 
 (def width 500)
@@ -24,19 +25,19 @@
 (println icons)
 
 (defn init [title]
-  (def main (win/window title))
-  (def lbl (lbl/label "Hello, macho!"))
-  (def txt (txt/text-pane))
+  (def main (ui/window title))
+  (def txt (ui/text-pane))
+  
+  (-> txt 
+      (ui/set :opaque false)
+      (ui/set :background (ui/color 0 0 0))
+      (ui/set :font default-font))
 
-  (cmpt/size! main width height)
-  (win/icons! main icons)
-  (cmpt/font! lbl default-font)
-  (cmpt/font! txt default-font)
-
-  (p/show! main)
-  (p/add! main lbl)
-  (p/add! main txt))
+  (-> main 
+      (ui/set :background (ui/color 0 0 0))
+      (ui/set :size width height)
+      (ui/set :icon-images icons)
+      (p/add  txt)
+      (ui/set :visible true)))
 
 (init app-name)
-
-(cmpt/size main)

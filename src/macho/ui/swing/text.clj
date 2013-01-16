@@ -4,20 +4,6 @@
            [javax.swing.event DocumentEvent DocumentEvent$EventType])
   (:require [macho.ui.protocols :as p]))
 
-(defn text-field
-  ([] (text-field nil))
-  ([s] (JTextField. s)))
-
-(defn text-area
-  ([] (text-area nil))
-  ([s] (JTextArea. s)))
-
-(defn text-pane
-  ([] (JTextPane.))
-  ([doc] (JTextPane. doc)))
-
-(text-pane)
-
 (defn insertion? 
   "Evaluates if e is an insertion event."
   [e]
