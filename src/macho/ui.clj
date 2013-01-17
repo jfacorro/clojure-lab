@@ -345,7 +345,7 @@ delimiter."
 
       (doto txt-code
         (.setFont *current-font*)
-        (.setBackground Color/BLACK)
+        (.setBackground Color/WHITE)
         (.setCaretPosition 0)
         (.grabFocus))
         
@@ -423,56 +423,36 @@ System/out with this stream."
   "Creates the main window and all
 its controls."
   [name]
-  (let [main (JFrame. name)
+  (let [main (ui/frame name)
         txt-repl (ui/text-area)
         tabs (JTabbedPane.)
         txt-in (ui/text-area)
-        pane-repl (JSplitPane.)
-        pane-center-left (JSplitPane.)
-        pane-all (JSplitPane.)
-        files-tree (JTree. (to-array []))
+        pane-center-left (ui/split tabs (ui/scroll txt-repl))
         ui-main {:main main :tabs tabs :repl txt-repl}]
 
     ; Set controls properties
-    (doto txt-repl
-      (.setEditable false)
-      (.setFont *current-font*))
+    (-> txt-repl
+      (ui/set :editable false)
+      (ui/set :font *current-font*))
 
-    (doto pane-repl
-      (.setOrientation JSplitPane/VERTICAL_SPLIT)
-      (.setResizeWeight 0.8)
-      (.setTopComponent (JScrollPane. txt-repl))
-      (.setBottomComponent txt-in))
+    (-> pane-center-left
+      (ui/set :resize-weight 0.8)
+      (ui/set :divider-location 0.8))
+      
+    (-> main
+      (ui/set :default-close-operation JFrame/EXIT_ON_CLOSE)
+      (ui/set :icon-images icons)
+      (ui/set :size 800 600)
+      (ui/set :j-menu-bar (build-menu ui-main))
+      (ui/set :visible true))
 
-    (doto pane-center-left
-      (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
-      (.setResizeWeight 0.8)
-      (.setLeftComponent tabs)
-      (.setRightComponent (JScrollPane. txt-repl)))
-
-    (doto pane-all
-      (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
-      (.setLeftComponent (JScrollPane. files-tree))
-      (.setRightComponent pane-center-left))
-
-    (.setDividerLocation pane-center-left 0.8)
-
-    (.setDividerLocation pane-all 150)
+    (.add main pane-center-left BorderLayout/CENTER)
 
     ; Redirect std out
     (redirect-out txt-repl)
     ; Modify the binding for the *out* var in clojure.core
     (alter-var-root #'clojure.core/*out* #(do %1 %2) (java.io.OutputStreamWriter. System/out))
     (alter-var-root #'clojure.core/*err* #(do %1 %2) (java.io.PrintWriter. System/err))
-    
-
-    (doto main
-      (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-      (.setIconImages icons)
-      (.setSize 800 600)
-      (.setJMenuBar (build-menu ui-main))
-      (.add pane-center-left BorderLayout/CENTER)
-      (.setVisible true))
 
     ui-main))
 ;;------------------------------

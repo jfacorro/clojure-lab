@@ -3,7 +3,7 @@
   (:import  [javax.swing ; Utils
                          UIManager SwingUtilities
                          ; Containers
-                         JFrame JPanel JScrollPane
+                         JFrame JPanel JScrollPane JSplitPane
                          ; Text
                          JTextField JTextArea JTextPane JLabel]
             [java.awt Container Color Toolkit Font])
@@ -54,22 +54,23 @@
 ;;-------------------
 ;; Component extension
 ;;-------------------
-(extend-type Container
+(extend-type java.awt.Container
   proto/Visible
-    (show [this] (set :visible this true))
-    (hide [this] (set :visible this false))
+    (show [this] (set :visible this true) this)
+    (hide [this] (set :visible this false) this)
   proto/Composite
-    (add [this child] (.add this child) this))
+    (add [this child] (.add this child) this)
+    (add [this child args] (.add this child args) this))
 ;;-------------------
 (defn- init []
   ;Set the application look & feel instead of Swings default.
-  (UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
-  ;(UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+  ;(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
+  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
   ;(UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
   ;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
 )
 ;;-------------------
-(defn window
+(defn frame
   "Creates a new frame."
   [title]
   (JFrame. title))
@@ -98,6 +99,27 @@
   "Creates a new image."
   [path]
   (.createImage toolkit path))
+
+(defn split
+  "Creates a new split container."
+  ([one two] 
+    (split one two :horizontal))
+  ([one two orientation]
+    (case 
+      :vertical
+        (doto (JSplitPane.)
+          (.setOrientation JSplitPane/VERTICAL_SPLIT)
+          (.setTopComponent one)
+          (.setBottomComponent two))
+      :horizontal
+        (doto (JSplitPane.)
+          (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
+          (.setLeftComponent one)
+          (.setRightComponent two)))))
+(defn scroll
+  "Wraps the control in a scrolling pane."
+  [ctrl]
+  (JScrollPane. ctrl))
 ;;-------------------
 ;; Font
 ;;-------------------

@@ -9,7 +9,8 @@
 ;;-----------------------------------------
 (defprotocol Composite
   "Control that can be built from the aggregation of other controls."
-  (add [this child] "Add a child control to ctrl."))
+  (add [this child] "Add a child control to ctrl.")
+  (add [this child args] "Add a child control to ctrl."))
 ;;-----------------------------------------
 (defprotocol TextEdit
   "Text edit (insertion or removal)."
@@ -20,10 +21,11 @@
   "Is a piece of text."
   (length [this] "Gets the length for the content.")
   (text [this] "Gets the text content for this entity."))
-(def ^"Gets the 2nd parameter from the args list." specified-key #(second %&))
 ;;-----------------------------------------
 ;; Multi-methods
 ;;-----------------------------------------
+(def specified-key "Gets the 2nd parameter from the args list." #(second %&))
+
 (defmulti on
   "Multimethod for the binding of events."
   #(first %&) :default :none)
