@@ -3,8 +3,7 @@
             [java.awt.event MouseWheelListener KeyAdapter ActionListener]
             [javax.swing.event CaretListener DocumentListener UndoableEditListener DocumentEvent$EventType]
             [javax.swing.undo UndoManager])
-    (:use   [macho.ui.protocols]
-            [macho.ui.swing.util :as util]))
+    (:use   [macho.ui.protocols]))
 ;;-----------------------------------------------------
 (defn check-key 
   "Checks if the key and the modifier match the event's values"
@@ -66,8 +65,8 @@ it wraps it in a function of arity 1."
     (.addDocumentListener doc
       (proxy [DocumentListener] []
         (changedUpdate [e] nil)
-        (insertUpdate [e] (queue-action #(f e)))
-        (removeUpdate [e] (queue-action #(f e)))))))
+        (insertUpdate [e] (f e))
+        (removeUpdate [e] (f e))))))
 ;;-----------------------------------------------------
 ;; Multi method implementation for doc-change events.
 ;;-----------------------------------------------------
@@ -75,5 +74,5 @@ it wraps it in a function of arity 1."
   (let [f (process-event-handler hdlr)]
     (.addUndoableEditListener ctrl
       (proxy [UndoManager] []
-        (undoableEditHappened [e] (queue-action #(f e)))))))
+        (undoableEditHappened [e] (f e))))))
 ;;-----------------------------------------------------

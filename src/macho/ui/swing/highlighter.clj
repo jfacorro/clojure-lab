@@ -4,7 +4,7 @@
            [java.awt Color]
            [java.util.regex Matcher])
   (:require [macho.lang.clojure :as lang :reload true]
-            [macho.ui.swing.util :as util]
+            [macho.ui.swing.core :as util]
             [macho.ast :as ast]
             [clojure.set :as set]))
 

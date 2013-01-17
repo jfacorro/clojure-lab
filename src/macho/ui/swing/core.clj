@@ -9,7 +9,6 @@
             [java.awt Container Color Toolkit Font])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
-            [macho.ui.swing.util :as util]
             [macho.ui.protocols :as proto]))
 ;;-------------------
 ;; Expose Protocols
