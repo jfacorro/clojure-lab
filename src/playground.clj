@@ -9,7 +9,7 @@
 ; Tree
 ;------------------------------------------
 (defn tree-test []
-  (def main com.cleasure.main/main)
+  (def main macho/main)
   (def tree (JTree. (array "one" "two")))
   (doto main
     (.add tree BorderLayout/WEST)
@@ -20,7 +20,7 @@
 ; Menu bar
 ;------------------------------------------
 (defn menu-test []
-  (def main com.cleasure.main/main)
+  (def main macho/main)
   (def menubar (JMenuBar.))
   (def menu (JMenu. "File"))
   (def item (JMenuItem. "Open"))
