@@ -9,8 +9,7 @@
 ;;-----------------------------------------
 (defprotocol Composite
   "Control that can be built from the aggregation of other controls."
-  (add [this child] "Add a child control to ctrl.")
-  (add [this child args] "Add a child control to ctrl."))
+  (add [this child] [this child args] "Add a child control to ctrl."))
 ;;-----------------------------------------
 (defprotocol TextEdit
   "Text edit (insertion or removal)."

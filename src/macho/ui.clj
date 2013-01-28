@@ -1,11 +1,8 @@
 (ns macho.ui
-  (:import [javax.swing JFrame JPanel JScrollPane JTextPane JTextArea 
-            JTextField JButton JFileChooser JSplitPane JTree
-            JTabbedPane JMenuBar JMenu JMenuItem KeyStroke
-            JOptionPane JSeparator]
+  (:import [javax.swing JFrame JTextPane JFileChooser KeyStroke JOptionPane]
            [javax.swing.text DefaultStyledDocument DefaultHighlighter$DefaultHighlightPainter]
            [java.io OutputStream PrintStream File OutputStreamWriter]
-           [java.awt BorderLayout Font Color]
+           [java.awt BorderLayout Color]
            [java.awt.event KeyEvent])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
@@ -15,17 +12,17 @@
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true]
             [macho.ui.swing.text :as txt]
-            [macho.ui.protocols :as proto]
-            [macho.ui.swing.image :as img]))
+            [macho.ui.protocols :as proto]))
 ;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
 (def icons-paths ["./resources/icon-16.png"
                   "./resources/icon-32.png"
                   "./resources/icon-64.png"])
-(def icons (for [path icons-paths] (img/image path)))
+(def icons (for [path icons-paths] (ui/image path)))
 ;;------------------------------
-(def ^:dynamic *current-font* (Font. "Consolas" Font/PLAIN 14))
+(def ^:dynamic *current-font* 
+  (ui/font :name "Consolas" :styles [:plain] :size 14))
 (def default-dir (atom (.getCanonicalPath (File. "."))))
 ;;------------------------------
 (defn list-methods
@@ -280,27 +277,28 @@ delimiter."
   ([main title src]
     (let [tabs       (:tabs main)
           doc        (DefaultStyledDocument.)
-          txt-code   (JTextPane. doc)
+          txt-code   (ui/text-pane doc)
           undo-mgr   (undo/make-undo-mgr)
-          pnl-code   (JPanel.)
-          pnl-scroll (JScrollPane. pnl-code)
-          txt-lines  (JTextArea.)]
+          pnl-code   (ui/panel)
+          pnl-scroll (ui/scroll pnl-code)
+          txt-lines  (ui/text-area)]
 
-      (doto pnl-code
-        (.setLayout (BorderLayout.))
-        (.add txt-code BorderLayout/CENTER))
-        
-      (doto pnl-scroll
-         (.setRowHeaderView txt-lines))
+      (-> pnl-code
+        (ui/set :layout (BorderLayout.))
+        (proto/add txt-code)
+		;(.add txt-code)
+		)
 
-      (doto txt-lines
-        (.setFont *current-font*)
-        (.setEditable false)
-        (.setBackground Color/LIGHT_GRAY))
+      (ui/set pnl-scroll :row-header-view txt-lines)
+
+      (-> txt-lines
+        (ui/set :font *current-font*)
+        (ui/set :editable false)
+        (ui/set :background Color/LIGHT_GRAY))
         
       ;; Eval: CTRL + Enter
       (ui/on :key-press txt-code
-             (fn [_] (eval-code (.getSelectedText txt-code)))
+             (fn [_] (-> txt-code (ui/get :selected-text) eval-code))
                KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
 
       ; Undo/redo key events
@@ -316,22 +314,20 @@ delimiter."
       (ui/on :caret-update txt-code (check-paren txt-code))
       
       ;; Load the text all at once
-      (when src (.setText txt-code src))
+      (when src (ui/set txt-code :text src))
 
       ; High-light text after code edition.
-      (ui/on :change 
+      #_(ui/on :change 
              txt-code
              #(future (hl/high-light txt-code)
                       (update-line-numbers doc txt-lines)
                       ))
                   
-      ;(ui/on :change txt-code #(println (proto/insertion? %) (proto/text %) %))
-                  
       (ui/queue-action #(do (update-line-numbers doc txt-lines) 
                             (hl/high-light txt-code)))
       
       ; Add Undo manager
-      (.setLimit undo-mgr -1)
+      (ui/set undo-mgr :limit -1)
       (ui/on :undoable doc #(undo/handle-edit undo-mgr %))
 
       ; Set the increment for each vertical scroll
@@ -359,7 +355,7 @@ delimiter."
         file (.getSelectedFile dialog)
         path (if file (.getPath file) nil)]
     (when path
-      (reset! default-dir (.getCanonicalPath (File. path)))
+      (reset! default-dir (ui/get (File. path) :canonical-path))
       (new-document main path (slurp path)))))
 ;;------------------------------
 (defn clear-repl [main]
@@ -369,7 +365,7 @@ delimiter."
   "Close the current tab."
   [main]
   (let [tabs (:tabs main)
-        idx (.getSelectedIndex tabs)]
+        idx  (ui/get tabs :selected-index)]
     (.removeTabAt tabs idx)))
 ;;------------------------------
 (def menu-options
@@ -390,27 +386,27 @@ delimiter."
 (defn build-menu
   "Builds the application's menu."
   [main]
-  (let [menubar    (JMenuBar.)
+  (let [menubar    (ui/menu-bar)
         key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]
     
     (doseq [{menu-name :name items :items} menu-options]
-      (let [menu (JMenu. menu-name)]
-        (.add menubar menu)
+      (let [menu (ui/menu menu-name)]
+        (proto/add menubar menu)
         (doseq [{item-name :name f :action kys :keys separator :separator} items]
           (let [menu-item (if separator
-                            (JSeparator.)
-                            (JMenuItem. item-name))]
+                            (ui/menu-separator)
+							(ui/menu-item item-name))]
             (when (not separator)
               (ui/on :click menu-item #(f main))
-              (.setAccelerator menu-item (apply key-stroke kys)))
-            (.add menu menu-item)))))
+              (ui/set menu-item :accelerator (apply key-stroke kys)))
+            (proto/add menu menu-item)))))
     menubar))
 ;;------------------------------
 (defn redirect-out
   "Creates a PrintStream that writes to the
-JTextArea instance provided and then replaces
+text field instance provided and then replaces
 System/out with this stream."
-  [^JTextArea txt]
+  [txt]
   (let [stream (proxy [OutputStream] []
                  (write
                    ([b off len] (.append txt (String. b off len)))
@@ -425,7 +421,7 @@ its controls."
   [name]
   (let [main (ui/frame name)
         txt-repl (ui/text-area)
-        tabs (JTabbedPane.)
+        tabs (ui/tabbed-pane)
         txt-in (ui/text-area)
         pane-center-left (ui/split tabs (ui/scroll txt-repl))
         ui-main {:main main :tabs tabs :repl txt-repl}]
@@ -444,9 +440,9 @@ its controls."
       (ui/set :icon-images icons)
       (ui/set :size 800 600)
       (ui/set :j-menu-bar (build-menu ui-main))
-      (ui/set :visible true))
+      (proto/show))
 
-    (.add main pane-center-left BorderLayout/CENTER)
+    (proto/add main pane-center-left)
 
     ; Redirect std out
     (redirect-out txt-repl)

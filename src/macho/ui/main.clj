@@ -1,10 +1,5 @@
-(remove-ns 'macho.ui.main)
 (ns macho.ui.main
-  (:require [macho.ui.swing [font :as f] 
-                            [text :as txt]
-                            [component :as cmpt]
-                            [core :as ui]]
-            [macho.ui.protocols :as p]))
+  (:require [macho.ui.swing.core :as ui]))
 
 (def width 500)
 (def height 500)
@@ -23,7 +18,7 @@
 (println icons)
 
 (defn init [title]
-  (def main (ui/window title))
+  (def main (ui/frame title))
   (def txt (ui/text-pane))
   
   (-> txt 
@@ -35,7 +30,7 @@
       (ui/set :background (ui/color 0 0 0))
       (ui/set :size width height)
       (ui/set :icon-images icons)
-      (p/add  txt)
+      (ui/add txt)
       (ui/set :visible true)))
 
 (init app-name)

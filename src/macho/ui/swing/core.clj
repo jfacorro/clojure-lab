@@ -1,11 +1,13 @@
-(ns macho.ui.swing.core 
+(ns macho.ui.swing.core
   (:refer-clojure :exclude [set get])
   (:import  [javax.swing ; Utils
                          UIManager SwingUtilities
                          ; Containers
-                         JFrame JPanel JScrollPane JSplitPane
+                         JFrame JPanel JScrollPane JSplitPane JTabbedPane
                          ; Text
-                         JTextField JTextArea JTextPane JLabel]
+                         JTextField JTextArea JTextPane JLabel
+                         ; Menu
+                         JMenuBar JMenu JSeparator JMenuItem]
             [java.awt Container Color Toolkit Font])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
@@ -15,6 +17,7 @@
 ;;-------------------
 (def on proto/on)
 (def add proto/add)
+(def show proto/show)
 
 (comment 
 
@@ -56,19 +59,16 @@
 ;;-------------------
 (extend-type java.awt.Container
   proto/Visible
-    (show [this] (set :visible this true) this)
-    (hide [this] (set :visible this false) this)
+    (show [this] (set this :visible true) this)
+    (hide [this] (set this :visible false) this)
   proto/Composite
-    (add [this child] (.add this child) this)
-    (add [this child args] (.add this child args) this))
-;;-------------------
-(defn- init []
-  ;Set the application look & feel instead of Swings default.
-  ;(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
-  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
-  ;(UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
-  ;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
-)
+    (add
+      ([this child]
+        (.add this child)
+        this)
+      ([this child args]
+        (.add this child args)
+        this)))
 ;;-------------------
 (defn frame
   "Creates a new frame."
@@ -116,10 +116,39 @@
           (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
           (.setLeftComponent one)
           (.setRightComponent two)))))
+
 (defn scroll
   "Wraps the control in a scrolling pane."
   [ctrl]
   (JScrollPane. ctrl))
+	
+(defn panel
+  "Creates a panel container."
+  []
+  (JPanel.))
+
+(defn tabbed-pane
+  "Creates a tabbed container."
+  []
+  (JTabbedPane.))
+;;-------------------
+;; Menu
+;;-------------------
+(defn menu-separator
+  []
+  (JSeparator.))
+
+(defn menu-item
+  [name]
+  (JMenuItem. name))
+
+(defn menu-bar
+  []
+  (JMenuBar.))
+
+(defn menu
+  [name]
+  (JMenu. name))
 ;;-------------------
 ;; Font
 ;;-------------------
@@ -137,5 +166,13 @@ following keywords:
   [& {s :name ms :styles n :size}]
   (let [style (reduce bit-and (map font-styles ms))]
     (Font. s style n)))
+;;-------------------
+(defn- init []
+  ;Set the application look & feel instead of Swings default.
+  ;(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
+  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+  ;(UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
+  ;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
+)
 ;;-------------------
 (init)
