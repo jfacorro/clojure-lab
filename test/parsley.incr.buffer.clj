@@ -1,4 +1,4 @@
-(ns test-bufferl
+(ns macho.parser
   (:require [macho.parser :as mp]
             [clojure.pprint :as pp]
             [clojure.zip :as zip]

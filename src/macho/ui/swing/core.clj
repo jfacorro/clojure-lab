@@ -15,9 +15,9 @@
 ;;-------------------
 ;; Expose Protocols
 ;;-------------------
-(def on proto/on)
-(def add proto/add)
-(def show proto/show)
+(def on #'proto/on)
+(def add #'proto/add)
+(def show #'proto/show)
 
 (comment 
 

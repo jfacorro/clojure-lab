@@ -1,5 +1,6 @@
+(remove-ns 'macho.ui.main)
 (ns macho.ui.main
-  (:require [macho.ui.swing.core :as ui]))
+  (:require [macho.ui.swing.core :as ui :reload true]))
 
 (def width 500)
 (def height 500)

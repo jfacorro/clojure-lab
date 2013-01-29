@@ -161,11 +161,10 @@ search for the selected text in the current docuement."
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
-(defn find-char 
+(defn find-char
   "Finds the next char in s, starting to look from
 position cur, in the direction specified by dt (1 or -1)."
   [s cur f dt]
-
   (cond (or (neg? cur) (<= (.length s) cur)) -1
         (f (nth s cur)) cur
         :else (recur s (+ cur dt) f dt)))
@@ -285,9 +284,7 @@ delimiter."
 
       (-> pnl-code
         (ui/set :layout (BorderLayout.))
-        (proto/add txt-code)
-		;(.add txt-code)
-		)
+        (proto/add txt-code))
 
       (ui/set pnl-scroll :row-header-view txt-lines)
 
@@ -395,7 +392,7 @@ delimiter."
         (doseq [{item-name :name f :action kys :keys separator :separator} items]
           (let [menu-item (if separator
                             (ui/menu-separator)
-							(ui/menu-item item-name))]
+                            (ui/menu-item item-name))]
             (when (not separator)
               (ui/on :click menu-item #(f main))
               (ui/set menu-item :accelerator (apply key-stroke kys)))
@@ -434,15 +431,14 @@ its controls."
     (-> pane-center-left
       (ui/set :resize-weight 0.8)
       (ui/set :divider-location 0.8))
-      
+
     (-> main
       (ui/set :default-close-operation JFrame/EXIT_ON_CLOSE)
       (ui/set :icon-images icons)
       (ui/set :size 800 600)
       (ui/set :j-menu-bar (build-menu ui-main))
-      (proto/show))
-
-    (proto/add main pane-center-left)
+      (ui/show)
+      (ui/add pane-center-left))
 
     ; Redirect std out
     (redirect-out txt-repl)

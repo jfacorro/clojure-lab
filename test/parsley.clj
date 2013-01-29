@@ -1,4 +1,4 @@
-(ns parsley
+(ns macho.parser
   (:use clojure.pprint)
   (:require [net.cgrand.parsley :as p]))
 ;;---------------------------------
@@ -66,7 +66,7 @@
 ;;---------------------------------
 ;; (pprint (parse "(ns macho.core) (defn- -is-this.valid&symbol? [] nil)"))
 ;;---------------------------------
-(let [code (slurp "D:\\Juan\\Dropbox\\Facultad\\2012.Trabajo.Profesional\\ide\\src\\macho\\core.clj")
+#_(let [code (slurp "../src/macho.clj")
       tree (time (parse code))]
   (pprint tree))
 
