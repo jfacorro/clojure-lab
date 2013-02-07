@@ -4,7 +4,7 @@
 ;;-----------------------------------------
 (defprotocol Visible
   "Control that can be shown or hidden."
-  (show [this] "Show the control.")
+  (show [this] [this args] "Show the control.")
   (hide [this] "Hide the control."))
 ;;-----------------------------------------
 (defprotocol Composite

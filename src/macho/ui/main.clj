@@ -22,8 +22,8 @@
   (def main (ui/frame title))
   (def txt (ui/text-pane))
   
-  (-> txt 
-      (ui/set :opaque false)
+  (-> txt
+      (ui/set :opaque true)
       (ui/set :background (ui/color 0 0 0))
       (ui/set :font default-font))
 

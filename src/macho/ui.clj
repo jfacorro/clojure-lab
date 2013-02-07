@@ -1,5 +1,5 @@
 (ns macho.ui
-  (:import [javax.swing JFrame JTextPane JFileChooser KeyStroke JOptionPane]
+  (:import [javax.swing JFrame KeyStroke JOptionPane]
            [javax.swing.text DefaultStyledDocument DefaultHighlighter$DefaultHighlightPainter]
            [java.io OutputStream PrintStream File OutputStreamWriter]
            [java.awt BorderLayout Color]
@@ -12,7 +12,7 @@
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true]
             [macho.ui.swing.text :as txt]
-            [macho.ui.protocols :as proto]))
+            [macho.ui.protocols :as proto :reload true]))
 ;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
@@ -38,12 +38,7 @@
 (defn eval-code
   "Evaluates the code in the string supplied."
   [^String code]
-  (println (load-string code))
-  #_(try
-    (println (load-string code))
-    (catch Exception e
-      (println (.getMessage e))
-      (println e))))
+  (println (load-string code)))
 ;;------------------------------
 (defn check-key
   "Checks if the key and the modifier match the event's values"
@@ -64,10 +59,9 @@
   (let [txt (current-txt main)]
     (.getDocument txt)))
 ;;------------------------------
-(defn show-save-dialog []
-  (let [dialog (JFileChooser. @default-dir)
-        result (.showSaveDialog dialog nil)
-        file   (.getSelectedFile dialog)]
+(defn file-path-from-user [title]
+  (let [dialog (ui/file-browser @default-dir)
+        file   (ui/show dialog title)]
     (when file (.getPath file))))
 ;;------------------------------
 (defn current-path 
@@ -83,7 +77,7 @@ file chooser window if it's a new file."
 (defn save-src [main]
   (let [tabs     (:tabs main)
         txt-code (current-txt main)
-        path     (or (current-path main) (show-save-dialog))
+        path     (or (current-path main) (file-path-from-user "Save"))
         content  (proto/text txt-code)]
     (when path 
       (spit path content)
@@ -152,11 +146,11 @@ search for the selected text in the current docuement."
 ;;------------------------------
 (defn insert-text
   "Inserts the specified text in the document."
-  ([^JTextPane txt s]
+  ([txt s]
     (insert-text txt s true))
-  ([^JTextPane txt s restore]
+  ([txt s restore]
     (insert-text txt s restore (.getCaretPosition txt)))
-  ([^JTextPane txt s restore pos]
+  ([txt s restore pos]
     (let [doc (.getDocument txt)]
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
@@ -207,8 +201,8 @@ selected text."
                               (.setSelectionEnd txt end)))))))
 ;;------------------------------
 (defn input-format 
-  "Insert a closing parentesis."
-  [^JTextPane txt e]
+  "Handle automatic insertion and format while typing."
+  [txt e]
   (let [c (.getKeyChar e)
         k (.getKeyCode e)
         m (.getModifiers e)]
@@ -284,8 +278,8 @@ delimiter."
 
       (-> pnl-code
         (ui/set :layout (BorderLayout.))
-        (proto/add txt-code))
-
+        (ui/add txt-code))
+      
       (ui/set pnl-scroll :row-header-view txt-lines)
 
       (-> txt-lines
@@ -347,10 +341,7 @@ delimiter."
 (defn open-src
   "Open source file."
   [main]
-  (let [dialog (JFileChooser. @default-dir)
-        result (.showOpenDialog dialog nil)
-        file (.getSelectedFile dialog)
-        path (if file (.getPath file) nil)]
+  (let [path (file-path-from-user "Open")]
     (when path
       (reset! default-dir (ui/get (File. path) :canonical-path))
       (new-document main path (slurp path)))))
@@ -388,7 +379,7 @@ delimiter."
     
     (doseq [{menu-name :name items :items} menu-options]
       (let [menu (ui/menu menu-name)]
-        (proto/add menubar menu)
+        (ui/add menubar menu)
         (doseq [{item-name :name f :action kys :keys separator :separator} items]
           (let [menu-item (if separator
                             (ui/menu-separator)
@@ -396,7 +387,7 @@ delimiter."
             (when (not separator)
               (ui/on :click menu-item #(f main))
               (ui/set menu-item :accelerator (apply key-stroke kys)))
-            (proto/add menu menu-item)))))
+            (ui/add menu menu-item)))))
     menubar))
 ;;------------------------------
 (defn redirect-out

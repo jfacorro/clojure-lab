@@ -4,6 +4,8 @@
                          UIManager SwingUtilities
                          ; Containers
                          JFrame JPanel JScrollPane JSplitPane JTabbedPane
+                         ; Dialogs
+                         JFileChooser
                          ; Text
                          JTextField JTextArea JTextPane JLabel
                          ; Menu
@@ -12,21 +14,21 @@
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
             [macho.ui.protocols :as proto]))
+;;------------------- 
+(def toolkit (Toolkit/getDefaultToolkit))
 ;;-------------------
 ;; Expose Protocols
 ;;-------------------
 (def on #'proto/on)
 (def add #'proto/add)
 (def show #'proto/show)
-
-(comment 
-
-  (defn intern-vars [from-ns]
+;;-------------------
+(comment
+  (defn interned-vars [from-ns]
     (let [vars (->> from-ns ns-interns (map (comp meta second)))]
       vars))
       
-  (-> 'macho.ui.protocols the-ns intern-vars)
-
+  (-> 'macho.ui.protocols the-ns interned-vars)
 )
 ;;-------------------
 (defn queue-action
@@ -79,27 +81,26 @@
   "Creates a new text field."
   ([] (text-field nil))
   ([s] (JTextField. s)))
-
+;;-------------------
 (defn text-area
   "Creates a new text area."
   ([] (text-area nil))
   ([s] (JTextArea. s)))
-
+;;-------------------
 (defn text-pane
   "Creates a new text pane."
   ([] (JTextPane.))
   ([doc] (JTextPane. doc)))
-  
+;;-------------------
 (defn label [s]
   "Creates a new label."
   (JLabel. s))
-
-(def toolkit (Toolkit/getDefaultToolkit))
+;;-------------------
 (defn image 
   "Creates a new image."
   [path]
   (.createImage toolkit path))
-
+;;-------------------
 (defn split
   "Creates a new split container."
   ([one two] 
@@ -116,36 +117,51 @@
           (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
           (.setLeftComponent one)
           (.setRightComponent two)))))
-
+;;-------------------
 (defn scroll
   "Wraps the control in a scrolling pane."
   [ctrl]
   (JScrollPane. ctrl))
-	
+;;-------------------
 (defn panel
   "Creates a panel container."
   []
   (JPanel.))
-
+;;-------------------
 (defn tabbed-pane
   "Creates a tabbed container."
   []
   (JTabbedPane.))
+;;-------------------
+(defn file-browser 
+  "Show a dialog box that allows to browse the file
+system and select a file."
+  ([] (JFileChooser.))
+  ([default-dir] (JFileChooser. default-dir)))
+;;-------------------
+(extend-type JFileChooser
+  proto/Visible
+  (show 
+    ([this]
+      (show this ""))
+    ([this title]
+      (.showDialog this nil title)
+      (.getSelectedFile this))))
 ;;-------------------
 ;; Menu
 ;;-------------------
 (defn menu-separator
   []
   (JSeparator.))
-
+;;-------------------
 (defn menu-item
   [name]
   (JMenuItem. name))
-
+;;-------------------
 (defn menu-bar
   []
   (JMenuBar.))
-
+;;-------------------
 (defn menu
   [name]
   (JMenu. name))
@@ -155,7 +171,7 @@
 (def font-styles {:plain Font/PLAIN
                   :bold Font/BOLD
                   :italic Font/ITALIC})
-
+;;-------------------
 (defn font
   "Creates a new font using the values from the
 following keywords:
@@ -163,7 +179,7 @@ following keywords:
   :styles sequence that contains a combination of 
           values from the font-style map.
   :size   font size."
-  [& {s :name ms :styles n :size}]
+  [& {s :name ms :styles n :size color :color}]
   (let [style (reduce bit-and (map font-styles ms))]
     (Font. s style n)))
 ;;-------------------

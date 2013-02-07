@@ -1,4 +1,4 @@
-(ns repl-proc
+(ns macho.repl
   (:import [javax.swing JFrame JTextArea JScrollPane]
            [java.awt BorderLayout])
   (:use [popen]
