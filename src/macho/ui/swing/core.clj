@@ -1,3 +1,4 @@
+(remove-ns 'macho.ui.swing.core)
 (ns macho.ui.swing.core
   (:refer-clojure :exclude [set get])
   (:import  [javax.swing ; Utils
@@ -13,23 +14,15 @@
             [java.awt Container Color Toolkit Font])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
-            [macho.ui.protocols :as proto]))
+            [macho.ui.protocols :as proto]
+            [macho.misc :as misc]))
 ;;------------------- 
 (def toolkit (Toolkit/getDefaultToolkit))
 ;;-------------------
-;; Expose Protocols
+;; Expose intern all Vars 
+;; in macho.ui.protocols
 ;;-------------------
-(def on #'proto/on)
-(def add #'proto/add)
-(def show #'proto/show)
-;;-------------------
-(comment
-  (defn interned-vars [from-ns]
-    (let [vars (->> from-ns ns-interns (map (comp meta second)))]
-      vars))
-      
-  (-> 'macho.ui.protocols the-ns interned-vars)
-)
+(macho.misc/intern-vars 'macho.ui.protocols *ns*)
 ;;-------------------
 (defn queue-action
   "Queues an action to the event queue."
