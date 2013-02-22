@@ -35,6 +35,8 @@
         #(or (.contains (str %) name) (empty? name))
         (sort (for [m methods] (:name m)))))))
 ;;------------------------------
+(declare current-path current-txt save-src)
+;;------------------------------
 (defn eval-code
   "Evaluates the code in the string supplied."
   [^String code]
@@ -42,6 +44,18 @@
     (println (load-string code))
     (catch Exception ex
       (repl/pst ex))))
+;;------------------------------
+(defn eval-src
+  "Evaluates source code."
+  [main]
+  (if-let [path (current-path main)]
+    (try
+      (save-src main)
+      (println "Loaded file" path)
+      (println (load-file path))
+      (catch Exception ex
+        (repl/pst ex)))
+    (-> main current-txt proto/text eval-code)))
 ;;------------------------------
 (defn check-key
   "Checks if the key and the modifier match the event's values"
@@ -76,18 +90,6 @@ file chooser window if it's a new file."
         path (.getTitleAt tabs idx)]
     (when (not= path new-doc-title)
       path)))
-;;------------------------------
-(defn eval-src
-  "Evaluates source code."
-  [main]
-  (if-let [path (current-path main)]
-    (try
-      (save-src main)
-      (println "Loaded file" path)
-      (println (load-file path))
-      (catch Exception ex
-        (repl/pst ex)))
-    (-> main current-txt proto/text eval-code)))
 ;;------------------------------
 (defn save-src [main]
   (let [tabs     (:tabs main)
