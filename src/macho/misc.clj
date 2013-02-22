@@ -19,9 +19,8 @@
     (let [{ns :ns name-sym :name protocol :protocol} metadata]
       (intern to-ns name-sym (intern from-ns name-sym)))))
 
-(comment 
+#_(do
   (print-vars *ns*)
   (println "------")
   (intern-vars 'macho.ui.protocols *ns*)
-  (print-vars *ns*)
-)
+  (print-vars *ns*))

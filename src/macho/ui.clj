@@ -38,7 +38,10 @@
 (defn eval-code
   "Evaluates the code in the string supplied."
   [^String code]
-  (println (load-string code)))
+  (try
+    (println (load-string code))
+    (catch Exception ex
+      (repl/pst ex))))
 ;;------------------------------
 (defn check-key
   "Checks if the key and the modifier match the event's values"
@@ -74,15 +77,6 @@ file chooser window if it's a new file."
     (when (not= path new-doc-title)
       path)))
 ;;------------------------------
-(defn save-src [main]
-  (let [tabs     (:tabs main)
-        txt-code (current-txt main)
-        path     (or (current-path main) (file-path-from-user "Save"))
-        content  (proto/text txt-code)]
-    (when path 
-      (spit path content)
-      (.setTitleAt tabs (.getSelectedIndex tabs) path))))
-;;------------------------------
 (defn eval-src
   "Evaluates source code."
   [main]
@@ -91,10 +85,18 @@ file chooser window if it's a new file."
       (save-src main)
       (println "Loaded file" path)
       (println (load-file path))
-      (catch Exception e
-        (println (.getMessage e))
-        (println e)))
+      (catch Exception ex
+        (repl/pst ex)))
     (-> main current-txt proto/text eval-code)))
+;;------------------------------
+(defn save-src [main]
+  (let [tabs     (:tabs main)
+        txt-code (current-txt main)
+        path     (or (current-path main) (file-path-from-user "Save"))
+        content  (proto/text txt-code)]
+    (when path 
+      (spit path content)
+      (.setTitleAt tabs (.getSelectedIndex tabs) path))))
 ;;------------------------------
 (defn remove-highlight 
   "Removes all highglights from the text control."
@@ -131,7 +133,7 @@ search for the selected text in the current docuement."
           slct (.getSelectedText txt)
           sym  (when slct (symbol slct))]
       (cond find?
-              (repl/find-doc (symbol slct))
+              (repl/find-doc slct)
             sym 
               (eval `(repl/doc ~sym))))))
 ;;-------------------------------
@@ -308,7 +310,7 @@ delimiter."
       (when src (ui/set txt-code :text src))
 
       ; High-light text after code edition.
-      #_(ui/on :change 
+      (ui/on :change 
              txt-code
              #(future (hl/high-light txt-code)
                       (update-line-numbers doc txt-lines)
@@ -407,6 +409,7 @@ System/out with this stream."
   "Creates the main window and all
 its controls."
   [name]
+  (ui/init)
   (let [main (ui/frame name)
         txt-repl (ui/text-area)
         tabs (ui/tabbed-pane)

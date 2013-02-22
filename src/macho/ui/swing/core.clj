@@ -1,4 +1,3 @@
-(remove-ns 'macho.ui.swing.core)
 (ns macho.ui.swing.core
   (:refer-clojure :exclude [set get])
   (:import  [javax.swing ; Utils
@@ -176,7 +175,7 @@ following keywords:
   (let [style (reduce bit-and (map font-styles ms))]
     (Font. s style n)))
 ;;-------------------
-(defn- init []
+(defn init []
   ;Set the application look & feel instead of Swings default.
   ;(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
   (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -184,4 +183,3 @@ following keywords:
   ;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
 )
 ;;-------------------
-(init)
