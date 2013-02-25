@@ -233,15 +233,15 @@ selected text."
       (doseq [txt txts] (.setFont txt *current-font*)))))
 ;;------------------------------
 (defn match-paren [s pos end delta]
-  "Finds the matching endelimiter for"
+  "Finds the matching end elimiter for the specified delimiter."
   (loop [cur  (+ pos delta) 
          acum 0]
     (cond (neg? cur) nil
           (<= (.length s) cur) nil
           (= (nth s pos) (nth s cur))
             (recur (+ cur delta) (inc acum))
-          (= (nth s cur) end) 
-            (if (zero? acum) cur 
+          (= (nth s cur) end)
+            (if (zero? acum) cur
               (recur (+ cur delta) (dec acum)))
           :else (recur (+ cur delta) acum))))
 ;;------------------------------
@@ -379,8 +379,7 @@ delimiter."
   "Builds the application's menu."
   [main]
   (let [menubar    (ui/menu-bar)
-        key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]
-    
+        key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]    
     (doseq [{menu-name :name items :items} menu-options]
       (let [menu (ui/menu menu-name)]
         (ui/add menubar menu)
