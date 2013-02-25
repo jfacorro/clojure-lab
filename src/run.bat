@@ -1,1 +1,0 @@
-java -cp ../target/macho-1.0.0-SNAPSHOT-standalone.jar clojure.main -i macho.clj -m macho
