@@ -16,10 +16,9 @@
 ;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
-(def icons-paths ["./resources/icon-16.png"
-                  "./resources/icon-32.png"
-                  "./resources/icon-64.png"])
-(def icons (for [path icons-paths] (ui/image path)))
+(def icons-paths ["icon-16.png"
+                  "icon-32.png"
+                  "icon-64.png"])
 ;;------------------------------
 (def ^:dynamic *current-font* 
   (ui/font :name "Consolas" :styles [:plain] :size 14))
@@ -411,12 +410,13 @@ System/out with this stream."
 its controls."
   [name]
   (ui/init)
-  (let [main (ui/frame name)
+  (let [main     (ui/frame name)
         txt-repl (ui/text-area)
-        tabs (ui/tabbed-pane)
-        txt-in (ui/text-area)
+        tabs     (ui/tabbed-pane)
+        txt-in   (ui/text-area)
         pane-center-left (ui/split tabs (ui/scroll txt-repl))
-        ui-main {:main main :tabs tabs :repl txt-repl}]
+        ui-main  {:main main :tabs tabs :repl txt-repl}
+        icons    (map (comp ui/image io/resource) icons-paths)]
 
     ; Set controls properties
     (-> txt-repl
