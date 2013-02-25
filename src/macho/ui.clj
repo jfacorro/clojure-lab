@@ -1,5 +1,5 @@
 (ns macho.ui
-  (:import [javax.swing JFrame KeyStroke JOptionPane]
+  (:import [javax.swing KeyStroke JOptionPane]
            [javax.swing.text DefaultStyledDocument DefaultHighlighter$DefaultHighlightPainter]
            [java.io OutputStream PrintStream File OutputStreamWriter]
            [java.awt BorderLayout Color]
@@ -63,15 +63,19 @@
     (or (nil? k) (= k (.getKeyCode evt)))
     (or (nil? m) (= m (.getModifiers evt)))))
 ;;------------------------------
-(defn current-txt [main]
+(defn current-txt 
+  "Gets the current active text control."
+  [main]
   (let [tabs   (:tabs main)
-        idx    (.getSelectedIndex tabs)
-        scroll (.getComponentAt tabs idx)
-        pnl    (.. scroll getViewport getView)
-        txt    (.getComponent pnl 0)]
-  txt))
+        idx    (.getSelectedIndex tabs)]
+    (when (<= 0 idx)
+      (let [scroll (.getComponentAt tabs idx)
+            pnl    (.. scroll getViewport getView)]
+        (.getComponent pnl 0)))))
 ;;------------------------------
-(defn current-doc [main]
+(defn current-doc
+  "Get the current document"
+  [main]
   (let [txt (current-txt main)]
     (.getDocument txt)))
 ;;------------------------------
@@ -85,18 +89,18 @@
 file chooser window if it's a new file."
   [main]
   (let [tabs (:tabs main)
-        idx  (.getSelectedIndex tabs)
-        path (.getTitleAt tabs idx)]
-    (when (not= path new-doc-title)
-      path)))
+        idx  (.getSelectedIndex tabs)]
+    (when (<= 0 idx)
+      (let [path (.getTitleAt tabs idx)]
+        (when (not= path new-doc-title)
+          path)))))
 ;;------------------------------
 (defn save-src [main]
   (let [tabs     (:tabs main)
         txt-code (current-txt main)
-        path     (or (current-path main) (file-path-from-user "Save"))
-        content  (proto/text txt-code)]
-    (when path 
-      (spit path content)
+        path     (or (current-path main) (file-path-from-user "Save"))]
+    (when (and txt-code path)
+      (spit path (proto/text txt-code))
       (.setTitleAt tabs (.getSelectedIndex tabs) path))))
 ;;------------------------------
 (defn remove-highlight 
@@ -139,9 +143,9 @@ search for the selected text in the current docuement."
               (eval `(repl/doc ~sym))))))
 ;;-------------------------------
 (defn update-line-numbers [doc lines]
-  (let [pos (.getLength doc)
+  (let [pos  (.getLength doc)
         root (.getDefaultRootElement doc)
-        n (.getElementIndex root pos)]
+        n    (.getElementIndex root pos)]
     (ui/queue-action
       #(doto lines
         (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
@@ -428,7 +432,6 @@ its controls."
       (ui/set :divider-location 0.8))
 
     (-> main
-      (ui/set :default-close-operation JFrame/EXIT_ON_CLOSE)
       (ui/set :icon-images icons)
       (ui/set :size 800 600)
       (ui/set :j-menu-bar (build-menu ui-main))
