@@ -58,7 +58,7 @@
 ;;------------------------------
 (defn check-key
   "Checks if the key and the modifier match the event's values"
-  [evt k m]
+  [^KeyEvent evt k m]
   (and 
     (or (nil? k) (= k (.getKeyCode evt)))
     (or (nil? m) (= m (.getModifiers evt)))))
@@ -442,7 +442,7 @@ its controls."
     (redirect-out txt-repl)
     ; Modify the binding for the *out* var in clojure.core
     (alter-var-root #'clojure.core/*out* #(do %1 %2) (java.io.OutputStreamWriter. System/out))
-    (alter-var-root #'clojure.core/*err* #(do %1 %2) (java.io.PrintWriter. System/err))
+    (alter-var-root #'clojure.core/*err* #(do %1 %2) (java.io.PrintWriter. System/err true))
 
     ui-main))
 ;;------------------------------
