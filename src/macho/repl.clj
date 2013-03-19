@@ -34,10 +34,10 @@
 (def trh-out (Thread. #(read-out out txt)))
 (.start trh-out)
 
-;(write-in in "*out*")
-;(write-in in "(def repl :repl)")
-;(write-in in "repl")
-(write-in in "(take 5 (iterate identity 1))")
-;(write-in in "(ns macho)")
+;(exec "*out*")
+;(exec "(def repl :repl)")
+;(exec "repl")
+(exec "(take 5 (iterate identity 1))")
+;(exec "(ns macho)")
 
 

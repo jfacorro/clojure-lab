@@ -1,8 +1,7 @@
 (ns macho.ui
   (:import [javax.swing KeyStroke JOptionPane]
-           [javax.swing.text DefaultStyledDocument DefaultHighlighter$DefaultHighlightPainter]
            [java.io OutputStream PrintStream File OutputStreamWriter]
-           [java.awt BorderLayout Color]
+           [java.awt Color]
            [java.awt.event KeyEvent])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
@@ -103,20 +102,6 @@ file chooser window if it's a new file."
       (spit path (proto/text txt-code))
       (.setTitleAt tabs (.getSelectedIndex tabs) path))))
 ;;------------------------------
-(defn remove-highlight 
-  "Removes all highglights from the text control."
-  ([txt] (.. txt getHighlighter removeAllHighlights))
-  ([txt tag] (.. txt getHighlighter (removeHighlight tag))))
-;;------------------------------
-(defn add-highlight
-  "Add a single highglight in the text control."
-  ([txt pos len] (add-highlight txt pos len Color/YELLOW))
-  ([txt pos len color]
-    (let [doc  (.getDocument txt)
-          hl   (.getHighlighter txt)
-          pntr (DefaultHighlighter$DefaultHighlightPainter. color)]
-      (.addHighlight hl pos (+ len pos) pntr))))
-;;------------------------------
 (defn find-src 
   "Shows the dialog for searching the source
   in the current tabs."
@@ -125,8 +110,8 @@ file chooser window if it's a new file."
         s    (str/lower-case (proto/text txt))
         ptrn (JOptionPane/showInputDialog (:main main) "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
         lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
-    (remove-highlight txt)
-    (doseq [[a b] lims] (add-highlight txt a (- b a)))))
+    (ui/remove-highlight txt)
+    (doseq [[a b] lims] (ui/add-highlight txt a (- b a)))))
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
@@ -163,12 +148,13 @@ search for the selected text in the current docuement."
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
 (defn find-char
-  "Finds the next char in s, starting to look from
-position cur, in the direction specified by dt (1 or -1)."
-  [s cur f dt]
+  "Finds the next char in s for which pred is true, 
+starting to look from position cur, in the direction 
+specified by dt (1 or -1)."
+  [s cur pred dt]
   (cond (or (neg? cur) (<= (.length s) cur)) -1
-        (f (nth s cur)) cur
-        :else (recur s (+ cur dt) f dt)))
+        (pred (nth s cur)) cur
+        :else (recur s (+ cur dt) pred dt)))
 ;;------------------------------
 (defn insert-tabs 
   "Looks for the first previous \\newline character 
@@ -256,7 +242,7 @@ delimiter."
   (let [tags (atom nil)]
     (fn [e]
       (when @tags
-        (doseq [tag @tags] (remove-highlight txt tag)))
+        (doseq [tag @tags] (ui/remove-highlight txt tag)))
       (let [pos   (dec (.getDot e))
             s     (proto/text txt)
             c     (get-in s [pos])
@@ -266,7 +252,7 @@ delimiter."
         (when-let [{end :end dir :d} (delim c)]
           (when-let [end (match-paren s pos end dir)]
             (reset! tags 
-                    (doall (map #(add-highlight txt % 1 Color/LIGHT_GRAY) [pos end])))))))))
+                    (doall (map #(ui/add-highlight txt % 1 Color/LIGHT_GRAY) [pos end])))))))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -276,7 +262,7 @@ delimiter."
     (new-document main title nil))
   ([main title src]
     (let [tabs       (:tabs main)
-          doc        (DefaultStyledDocument.)
+          doc        (ui/styled-document)
           txt-code   (ui/text-pane doc)
           undo-mgr   (undo/make-undo-mgr)
           pnl-code   (ui/panel)
@@ -284,7 +270,7 @@ delimiter."
           txt-lines  (ui/text-area)]
 
       (-> pnl-code
-        (ui/set :layout (BorderLayout.))
+        (ui/set :layout (ui/border-layout))
         (ui/add txt-code))
       
       (ui/set pnl-scroll :row-header-view txt-lines)
@@ -339,7 +325,7 @@ delimiter."
 
       (doto txt-code
         (.setFont *current-font*)
-        (.setBackground Color/WHITE)
+        (.setBackground Color/DARK_GRAY)
         (.setCaretPosition 0)
         (.grabFocus))
         
@@ -353,7 +339,9 @@ delimiter."
       (reset! default-dir (ui/get (File. path) :canonical-path))
       (new-document main path (slurp path)))))
 ;;------------------------------
-(defn clear-repl [main]
+(defn clear-repl 
+  "Deletes the text content in the current repl."
+  [main]
   (.setText (:repl main) nil))
 ;;------------------------------
 (defn close
@@ -382,7 +370,7 @@ delimiter."
   "Builds the application's menu."
   [main]
   (let [menubar    (ui/menu-bar)
-        key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]    
+        key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]
     (doseq [{menu-name :name items :items} menu-options]
       (let [menu (ui/menu menu-name)]
         (ui/add menubar menu)

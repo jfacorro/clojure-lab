@@ -23,8 +23,6 @@
 ;;-----------------------------------------
 ;; Multi-methods
 ;;-----------------------------------------
-(def specified-key "Gets the 2nd parameter from the args list." #(second %&))
-
 (defmulti on
   "Multimethod for the binding of events."
   #(first %&) :default :none)

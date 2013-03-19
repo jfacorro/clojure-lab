@@ -7,10 +7,11 @@
                          ; Dialogs
                          JFileChooser
                          ; Text
-                         JTextField JTextArea JTextPane JLabel
+                         JTextField JTextArea JTextPane JLabel JEditorPane
+                         text.DefaultStyledDocument text.DefaultHighlighter$DefaultHighlightPainter
                          ; Menu
                          JMenuBar JMenu JSeparator JMenuItem]
-            [java.awt Container Color Toolkit Font])
+            [java.awt Container Color Toolkit Font BorderLayout])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
             [macho.ui.protocols :as proto]
@@ -67,7 +68,8 @@
 (defn frame
   "Creates a new frame."
   [title]
-  (JFrame. title))
+  (doto (JFrame. title)
+        (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)))
 ;;-------------------
 (defn text-field
   "Creates a new text field."
@@ -83,6 +85,16 @@
   "Creates a new text pane."
   ([] (JTextPane.))
   ([doc] (JTextPane. doc)))
+;;-------------------
+(defn styled-document
+  "Creates a styled document."
+  []
+  (DefaultStyledDocument.))
+;;-------------------
+(defn editor-pane
+  "Creates a new editor pane."
+  ([] (JEditorPane.))
+  ([doc] (JEditorPane. doc)))
 ;;-------------------
 (defn label [s]
   "Creates a new label."
@@ -140,6 +152,12 @@ system and select a file."
       (.showDialog this nil title)
       (.getSelectedFile this))))
 ;;-------------------
+;; Layouts
+;;-------------------
+(defn border-layout 
+  []
+  (BorderLayout.))
+;;-------------------
 ;; Menu
 ;;-------------------
 (defn menu-separator
@@ -163,6 +181,20 @@ system and select a file."
 (def font-styles {:plain Font/PLAIN
                   :bold Font/BOLD
                   :italic Font/ITALIC})
+;;-------------------
+(defn add-highlight
+  "Add a single highglight in the text control."
+  ([txt pos len] (add-highlight txt pos len Color/YELLOW))
+  ([txt pos len color]
+    (let [doc  (.getDocument txt)
+          hl   (.getHighlighter txt)
+          pntr (DefaultHighlighter$DefaultHighlightPainter. color)]
+      (.addHighlight hl pos (+ len pos) pntr))))
+;;------------------------------
+(defn remove-highlight 
+  "Removes all highglights from the text control."
+  ([txt] (.. txt getHighlighter removeAllHighlights))
+  ([txt tag] (.. txt getHighlighter (removeHighlight tag))))
 ;;-------------------
 (defn font
   "Creates a new font using the values from the

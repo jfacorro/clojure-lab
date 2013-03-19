@@ -17,7 +17,10 @@
         :else
           {:style :symbol}))
 ;;------------------------------
-(defn process-node [tag content]
+(defn process-node 
+  "If the tag for the node is a symbol
+check if its one of the registered symbols."
+  [tag content]
   (case tag
     :symbol (check-symbol (first content))
     {:style tag}))
