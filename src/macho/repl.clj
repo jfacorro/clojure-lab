@@ -1,50 +1,27 @@
 (ns macho.repl
   (:import [javax.swing JFrame JTextArea JScrollPane WindowConstants]
            [java.awt BorderLayout]
-           [java.awt.event KeyEvent KeyAdapter])
+           [java.awt.event KeyEvent KeyAdapter WindowAdapter])
   (:require [popen :as p]
             [clojure.string :as string]
-            [leiningen.core.main :as main]
             [leiningen.core.eval :as eval]
-            [leiningen.core.project :as project]
-            [leiningen.trampoline :as trampoline]))
+            [leiningen.core.project :as project]))
 
 (def clojure-repl-cmd ["java" "-cp" "./lib/clojure-1.4.0.jar;./src" "clojure.main"])
   
-(defn trampoline-cmd-str [project forms profiles]
-  ;; each form is (do init & body)
-  (let [forms (map rest forms) ;; strip off do
-        inits (map first forms)
-        rests (mapcat rest forms)
-        ;; This won't pick up :jvm-args that come from profiles, but it
-        ;; at least gets us :dependencies.
-        project (project/set-profiles project profiles)
-        command (eval/shell-command project (concat '(do) inits rests))]
-  (conj (vec (butlast command)) 
-        (with-out-str
-          (println (last command))))))
-
-(defn trampoline-task-command-string
-  "Runs a project in a new child process and 
-returns that process."
-  [project task & args]
-  (binding [trampoline/*trampoline?* true]
-    (main/apply-task (main/lookup-alias task project)
-                     (-> (assoc project :eval-in :trampoline)
-                         (vary-meta update-in [:without-profiles] assoc
-                                    :eval-in :trampoline))
-                     args))
-  (trampoline-cmd-str
-    project 
-    @eval/trampoline-forms 
-    @eval/trampoline-profiles))
-
-(defn repl-process [project-path]
-  (let [project (project/init-project (assoc (project/read project-path) :eval-in :nrepl))
-        cmd     (trampoline-task-command-string project "repl")]
+(defn repl-process
+  "Read the project from the specified path, build the
+command string to launch a child process and then open the
+process."
+  [project-path]
+  (let [project (project/init-project (project/read project-path))
+        cmd     (eval/shell-command project '(do (require 'clojure.main) (clojure.main/main)))]
     (p/popen cmd :redirect true)))
 
-(defn bind-out-with-txt 
+;;----------------------------------------------
+;; Create repl UI
+;;----------------------------------------------
+(defn bind-out-with-txt
   "Binds the output from a stream to the text component."
   [out txt]
   (letfn [(read-out [out txt]
@@ -55,7 +32,9 @@ returns that process."
     (doto (Thread. #(read-out out txt))
           (.start))))
 
-(defn write-in 
+(defn write-in
+  "Write string to the input stream followed by a newline
+and ten flush it."
   [in s]
   (.write in s 0 (count s))
   (.newLine in)
@@ -69,13 +48,13 @@ returns that process."
     (or (nil? m) (= m (.getModifiers evt)))))
 
 (defn repl-ui [project-path]
-  (let [frame   (JFrame.)
-        txt-out (doto (JTextArea.) (.setEditable false))
-        txt-in  (doto (JTextArea.) (.setEditable true))
-        ;proc    (p/popen clojure-repl-cmd)
-        proc    (repl-process project-path)
-        out     (p/stdout proc)
-        in      (p/stdin proc)]
+  (let [frame    (JFrame. "repl")
+        txt-out  (doto (JTextArea.) (.setEditable false))
+        txt-in   (doto (JTextArea.) (.setEditable true))
+        proc     (repl-process project-path)
+        out      (p/stdout proc)
+        in       (p/stdin proc)
+        thrd-out (bind-out-with-txt out txt-out)]
     (.addKeyListener txt-in
         (proxy [KeyAdapter] []
           (keyPressed [e] 
@@ -83,14 +62,16 @@ returns that process."
               (.append txt-out (str (.getText txt-in) "\n"))
               (write-in in (.getText txt-in))
               (.setText txt-in "")))))
-    (bind-out-with-txt out txt-out)
     (doto frame
       (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE)
       (.add (JScrollPane. txt-out) BorderLayout/CENTER)
       (.add txt-in BorderLayout/SOUTH)
+      (.addWindowListener (proxy [WindowAdapter] [] 
+                            (windowClosed [e] 
+                              (.stop thrd-out)
+                              (p/kill proc))))
       (.setVisible true)
       (.setSize 400 400))))
 
 (repl-ui "D:/Juan/Dropbox/dev/Clojure/macanudo/project.clj")
-
 
