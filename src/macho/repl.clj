@@ -63,7 +63,7 @@ returns that process."
 
 (defn check-key 
   "Checks if the key and the modifier match the event's values"
-  [evt k m]  
+  [evt k m]
   (and 
     (or (nil? k) (= k (.getKeyCode evt)))
     (or (nil? m) (= m (.getModifiers evt)))))

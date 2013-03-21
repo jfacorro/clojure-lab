@@ -14,14 +14,14 @@
 (defn rgb-to-int [rgb]
   "Converts a RGB triple to a single int value."
   (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
-
+ 
 (defn parse-attrs [stl]
   "Parses the attribute definition, replacing RGB values
 with Color instances."
   (let [color-attr?  #(-> % key #{:foreground :background})
         rgb-to-color (fn [[k v]] [k (Color. (rgb-to-int v))])
         attrs        (->> stl (filter color-attr?) (mapcat rgb-to-color))]
-    (apply assoc stl attrs))) 
+    (apply assoc stl attrs)))
 
 (defn make-style [attrs]
   "Creates a new style with the given
