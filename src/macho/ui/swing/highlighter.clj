@@ -21,7 +21,7 @@ with Color instances."
   (let [color-attr?  #(-> % key #{:foreground :background})
         rgb-to-color (fn [[k v]] [k (Color. (rgb-to-int v))])
         attrs        (->> stl (filter color-attr?) (mapcat rgb-to-color))]
-    (apply assoc stl attrs)))
+    (apply assoc stl attrs))) 
 
 (defn make-style [attrs]
   "Creates a new style with the given
@@ -34,13 +34,11 @@ attributes values."
 
 (defn init-styles [stls]
   "Initializes the styles for all syntax elements defined."
-  (let [f (fn [[k {stl :style re :regex}]]
-            [k {:style (make-style stl) :regex re}])]
+  (let [f (fn [[k {stl :style}]]
+            [k {:style (make-style stl)}])]
     (->> stls (mapcat f) (apply assoc {}))))
 
-(def ^:dynamic *default* (make-style {:foreground {:r 120, :g 120, :b 120}}))
-(def ^:dynamic *syntax* (into (init-styles lang/syntax) {:default *default*}))
-;(def ^:dynamic *syntax* (init-styles lang/syntax))
+(def ^:dynamic *syntax* (init-styles lang/syntax))
 (def ^:dynamic *higlighting* (atom false))
 
 (defn get-limits [^Matcher m]
@@ -71,7 +69,7 @@ enclosed between the strt and end positions."
 
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
-for matches in the text-pane content applying the 
+for matches in the text-pane content applying the
 corresponding style to each match."
   (let [doc  (.getDocument txt-pane)
         len  (.getLength doc)
@@ -81,4 +79,4 @@ corresponding style to each match."
       (apply-style doc strt (- end strt)
                    (if (-> *syntax* tag)
                      (-> *syntax* tag :style)
-                     (*syntax* :default))))))
+                     (-> *syntax* :default :style))))))
