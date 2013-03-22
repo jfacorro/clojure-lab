@@ -1,7 +1,6 @@
 (ns macho.ui
   (:import [javax.swing JOptionPane]
-           [java.io OutputStream PrintStream File OutputStreamWriter]
-           [java.awt.event KeyEvent])
+           [java.io OutputStream PrintStream File OutputStreamWriter])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
             [clojure.repl :as repl]
@@ -165,7 +164,7 @@ and copies the indenting for the new line."
   "Adds tabulating characters in place 
 or at the beggining of each line if there's 
 selected text."
-  [txt e]
+  [txt e & shift?]
   (let [tab    "  "
         pos    (.getCaretPosition txt)
         text   (.getSelectedText txt)]
@@ -173,7 +172,6 @@ selected text."
     (if-not text
       (ui/queue-action #(insert-text txt tab false))
       (let [start  (.getSelectionStart txt)
-            shift? (ui/check-key e (ui/key-stroke "shift TAB"))
             nl     "\n"
             nltab  (str nl tab)
             [match rplc f]
@@ -186,27 +184,21 @@ selected text."
                               (.setSelectionStart txt start)
                               (.setSelectionEnd txt end)))))))
 ;;------------------------------
-(defn input-format 
+(defn input-format
   "Handle automatic insertion and format while typing."
   [txt e]
-  (let [c (.getKeyChar e)
-        k (.getKeyCode e)
-        m (.getModifiers e)]
-    (cond (= \( c)
-            (ui/queue-action #(insert-text txt ")"))
-          (= \{ c)
-            (ui/queue-action #(insert-text txt "}"))
-          (= \[ c)
-            (ui/queue-action #(insert-text txt "]"))
-          (= \" c)
-            (ui/queue-action #(insert-text txt "\""))
-          (and (zero? m) (= KeyEvent/VK_ENTER k))
-            (insert-tabs txt)
-          (= KeyEvent/VK_TAB k)
-            (handle-tab txt e))))
+  (let [actions {(ui/key-stroke \() #(insert-text txt ")")
+                 (ui/key-stroke \{) #(insert-text txt "}")
+                 (ui/key-stroke \[) #(insert-text txt "]")
+                 (ui/key-stroke \") #(insert-text txt "\"")
+                 (ui/key-stroke "ENTER") #(insert-tabs txt)
+                 (ui/key-stroke "TAB") #(handle-tab txt e)
+                 (ui/key-stroke "shift TAB") #(handle-tab txt e true)}]
+    (when-let [k (first (filter (partial ui/check-key e) (keys actions)))]
+      ((actions k)))))
 ;;------------------------------
 (defn change-font-size [txts e]
-  (when (ui/check-key e nil KeyEvent/CTRL_MASK)
+  (when (ui/check-key e (ui/key-stroke "control CONTROL"))
     (.consume e)
     (let [font *current-font*
           op   (if (neg? (ui/get e :wheel-rotation)) inc #(if (> % 1) (dec %) %))
@@ -276,16 +268,16 @@ delimiter."
       ;; Eval: CTRL + Enter
       (ui/on :key-press txt-code
              (fn [_] (-> txt-code (ui/get :selected-text) eval-code))
-               KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
+             (ui/key-stroke "ctrl ENTER"))
 
       ; Undo/redo key events
       (ui/on :key-press txt-code
              (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
-               KeyEvent/VK_Z KeyEvent/CTRL_MASK)
+             (ui/key-stroke "ctrl Z"))
       (ui/on :key-press txt-code
              (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
-               KeyEvent/VK_Y KeyEvent/CTRL_MASK)
-               
+             (ui/key-stroke "ctrl Y"))
+
       (ui/on :key-press txt-code #(input-format txt-code %))
 
       (ui/on :caret-update txt-code (check-paren txt-code))
@@ -347,24 +339,23 @@ delimiter."
 ;;------------------------------
 (def menu-options
   [{:name "File"
-    :items [{:name "New" :action new-document :keys [KeyEvent/VK_N KeyEvent/CTRL_MASK]}
-            {:name "Open" :action open-src :keys [KeyEvent/VK_O KeyEvent/CTRL_MASK]}
-            {:name "Save" :action save-src :keys [KeyEvent/VK_S KeyEvent/CTRL_MASK]}
-            {:name "Close" :action close :keys [KeyEvent/VK_W KeyEvent/CTRL_MASK]}
+    :items [{:name "New" :action new-document :keys "ctrl N"}
+            {:name "Open" :action open-src :keys "ctrl O"}
+            {:name "Save" :action save-src :keys "ctrl S"}
+            {:name "Close" :action close :keys "ctrl W"}
             {:separator true}
-            {:name "Exit" :action #(do % (System/exit 0)) :keys [KeyEvent/VK_X KeyEvent/ALT_MASK]}]}
+            {:name "Exit" :action #(do % (System/exit 0)) :keys "alt X"}]}
    {:name "Code"
-    :items [{:name "Eval" :action eval-src :keys [KeyEvent/VK_E KeyEvent/CTRL_MASK]}
-            {:name "Find" :action find-src :keys [KeyEvent/VK_F KeyEvent/CTRL_MASK]}
-            {:name "Find docs" :action #(find-doc % true) :keys [KeyEvent/VK_F KeyEvent/ALT_MASK KeyEvent/CTRL_MASK]}
-            {:name "Doc" :action find-doc :keys [KeyEvent/VK_F KeyEvent/ALT_MASK]}
-            {:name "Clear Log" :action clear-repl :keys [KeyEvent/VK_L KeyEvent/CTRL_MASK]}]}])
+    :items [{:name "Eval" :action eval-src :keys "ctrl E"}
+            {:name "Find" :action find-src :keys "ctrl F"}
+            {:name "Find docs" :action #(find-doc % true) :keys "ctrl alt F"}
+            {:name "Doc" :action find-doc :keys "alt F"}
+            {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}])
 ;;------------------------------
 (defn build-menu
   "Builds the application's menu."
   [main]
-  (let [menubar    (ui/menu-bar)
-        key-stroke #(ui/key-stroke %1 (apply + %&))]
+  (let [menubar (ui/menu-bar)]
     (doseq [{menu-name :name items :items} menu-options]
       (let [menu (ui/menu menu-name)]
         (ui/add menubar menu)
@@ -374,7 +365,7 @@ delimiter."
                             (ui/menu-item item-name))]
             (when (not separator)
               (ui/on :click menu-item #(f main))
-              (ui/set menu-item :accelerator (apply key-stroke ks)))
+              (ui/set menu-item :accelerator (ui/key-stroke ks)))
             (ui/add menu menu-item)))))
     menubar))
 ;;------------------------------

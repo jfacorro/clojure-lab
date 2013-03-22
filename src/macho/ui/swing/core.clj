@@ -11,7 +11,7 @@
                          text.DefaultStyledDocument text.DefaultHighlighter$DefaultHighlightPainter
                          ; Menu
                          JMenuBar JMenu JSeparator JMenuItem]
-            [java.awt Container Color Toolkit Font BorderLayout])
+            [java.awt Container Color Toolkit Font BorderLayout AWTEvent])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
             [macho.ui.protocols :as proto]
@@ -61,8 +61,10 @@
   "Retrieves the corresponding immutable key stroke object."
   ([k & modif]
     (KeyStroke/getKeyStroke k (apply + modif)))
-  ([s]
-    (KeyStroke/getKeyStroke s)))
+  ([x]
+    (if (instance? AWTEvent x)
+      (KeyStroke/getKeyStrokeForEvent x)
+      (KeyStroke/getKeyStroke x))))
 ;;-------------------
 ;; Component extension
 ;;-------------------

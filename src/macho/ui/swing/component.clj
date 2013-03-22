@@ -1,6 +1,6 @@
 (ns macho.ui.swing.component
   (:import  [java.awt Component]
-            [java.awt.event MouseWheelListener KeyAdapter ActionListener KeyEvent]
+            [java.awt.event MouseWheelListener KeyAdapter ActionListener KeyEvent InputEvent]
             [javax.swing KeyStroke]
             [javax.swing.event CaretListener DocumentListener UndoableEditListener DocumentEvent$EventType]
             [javax.swing.undo UndoManager])
@@ -8,12 +8,17 @@
 ;;-----------------------------------------------------
 (defn check-key 
   "Checks if the key and the modifier match the event's values"
-  ([^KeyEvent e k m]  
+  ([e k m]
     (and 
       (or (nil? k) (= k (.getKeyCode e)))
       (or (nil? m) (= m (.getModifiers e)))))
-  ([^KeyEvent e k-strk]
-    (= (KeyStroke/getKeyStrokeForEvent e) k-strk)))
+  ([^InputEvent e key-stroke]
+    (if (instance? KeyEvent e)
+      (or (= (KeyStroke/getKeyStrokeForEvent ^KeyEvent e) key-stroke)
+          (and (zero? (.getModifiers key-stroke))
+               (zero? (.getKeyCode key-stroke))
+               (= (.getKeyChar e) (.getKeyChar key-stroke))))
+      (pos? (bit-and (.getModifiers e) (.getModifiers key-stroke))))))
 ;;-----------------------------------------------------
 (defn process-event-handler [hdlr]
   "If the handler is a function of arity 0 then
@@ -32,21 +37,23 @@ it wraps it in a function of arity 1."
 ;;-----------------------------------------------------
 ;; Multi method implementation for key-press events.
 ;;-----------------------------------------------------
-(defmethod on :key-press [evt ctrl hdlr & [key mask]]
+(defmethod on :key-press [evt ctrl hdlr & [key-stroke]]
   (.addKeyListener ctrl
       (proxy [KeyAdapter] []
-        (keyPressed [e] (when (check-key e key mask) (hdlr e))))))
+        (keyPressed [e] 
+          (when (or (nil? key-stroke) (check-key e key-stroke))
+            (hdlr e))))))
 ;;-----------------------------------------------------
 ;; Multi method implementation for key-release events.
 ;;-----------------------------------------------------
-(defmethod on :key-release [evt ctrl hdlr & [key mask]]
+(defmethod on :key-release [evt ctrl hdlr & [key-stroke]]
   (.addKeyListener ctrl
     (proxy [KeyAdapter] []
-      (keyReleased [e] (when (check-key e key mask) (hdlr e))))))
+      (keyReleased [e] (when (check-key e key-stroke) (hdlr e))))))
 ;;-----------------------------------------------------
 ;; Multi method implementation for click events.
 ;;-----------------------------------------------------
-(defmethod on :click [evt ctrl hdlr & [key mask]]
+(defmethod on :click [evt ctrl hdlr & [key-stroke]]
   (let [f (process-event-handler hdlr)]
     (.addActionListener ctrl
       (proxy [ActionListener] []
