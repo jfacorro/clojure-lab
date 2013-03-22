@@ -1,7 +1,7 @@
 (ns macho.ui.swing.core
   (:refer-clojure :exclude [set get])
   (:import  [javax.swing ; Utils
-                         UIManager SwingUtilities
+                         UIManager SwingUtilities KeyStroke
                          ; Containers
                          JFrame JPanel JScrollPane JSplitPane JTabbedPane
                          ; Dialogs
@@ -19,10 +19,10 @@
 ;;------------------- 
 (def toolkit (Toolkit/getDefaultToolkit))
 ;;-------------------
-;; Expose intern all Vars 
-;; in macho.ui.protocols
+;; Expose all vars in macho.ui.protocols
 ;;-------------------
 (macho.misc/intern-vars 'macho.ui.protocols *ns*)
+(macho.misc/intern-vars 'macho.ui.swing.component *ns*)
 ;;-------------------
 (defn queue-action
   "Queues an action to the event queue."
@@ -33,6 +33,7 @@
 ;;-------------------
 (defn capitalize-word [[x & xs]]
   (apply str (str/upper-case x) xs))
+
 (defn capitalize [s]
   (->> (str/split s #"-")      
       (map capitalize-word)
@@ -46,9 +47,22 @@
 (defmacro get [obj prop & args]
   `(. ~obj ~(property-accesor :get prop) ~@args))
 ;;-------------------
-(defn color 
-  ([{r :r g :g b :b}] (color r g b))
+(defn color
+  ([x] 
+    (cond (map? x)
+            (let [{r :r g :g b :b} x] (color r g b))
+          (number? x)
+            (color x x x)
+          :else
+            (throw)))
   ([r g b] (Color. r g b)))
+;;-------------------
+(defn key-stroke
+  "Retrieves the corresponding immutable key stroke object."
+  ([k & modif]
+    (KeyStroke/getKeyStroke k (apply + modif)))
+  ([s]
+    (KeyStroke/getKeyStroke s)))
 ;;-------------------
 ;; Component extension
 ;;-------------------
@@ -203,15 +217,10 @@ following keywords:
   :styles sequence that contains a combination of 
           values from the font-style map.
   :size   font size."
-  [& {s :name ms :styles n :size color :color}]
+  [& {s :name ms :styles n :size}]
   (let [style (reduce bit-and (map font-styles ms))]
     (Font. s style n)))
 ;;-------------------
 (defn init []
-  ;Set the application look & feel instead of Swings default.
-  ;(UIManager/setLookAndFeel "javax.swing.plaf.nimbus.NimbusLookAndFeel")
-  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
-  ;(UIManager/setLookAndFeel (UIManager/getCrossPlatformLookAndFeelClassName))
-  ;(UIManager/setLookAndFeel "com.sun.java.swing.plaf.motif.MotifLookAndFeel")
-)
+  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName)))
 ;;-------------------

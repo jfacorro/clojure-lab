@@ -1,7 +1,6 @@
 (ns macho.ui
-  (:import [javax.swing KeyStroke JOptionPane]
+  (:import [javax.swing JOptionPane]
            [java.io OutputStream PrintStream File OutputStreamWriter]
-           [java.awt Color]
            [java.awt.event KeyEvent])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
@@ -14,13 +13,14 @@
             [macho.ui.protocols :as proto :reload true]))
 ;;------------------------------
 (def app-name "macho")
-(def new-doc-title "Untitled")
+(def new-doc-title "Untitled") 
 (def icons-paths ["icon-16.png"
                   "icon-32.png"
                   "icon-64.png"])
 ;;------------------------------
-(def ^:dynamic *current-font* 
+(def ^:dynamic *current-font*
   (ui/font :name "Consolas" :styles [:plain] :size 14))
+
 (def default-dir (atom (.getCanonicalPath (File. "."))))
 ;;------------------------------
 (defn list-methods
@@ -54,13 +54,6 @@
       (catch Exception ex
         (repl/pst ex)))
     (-> main current-txt proto/text eval-code)))
-;;------------------------------
-(defn check-key
-  "Checks if the key and the modifier match the event's values"
-  [^KeyEvent evt k m]
-  (and 
-    (or (nil? k) (= k (.getKeyCode evt)))
-    (or (nil? m) (= m (.getModifiers evt)))))
 ;;------------------------------
 (defn current-txt 
   "Gets the current active text control."
@@ -180,7 +173,7 @@ selected text."
     (if-not text
       (ui/queue-action #(insert-text txt tab false))
       (let [start  (.getSelectionStart txt)
-            shift? (check-key e nil KeyEvent/SHIFT_MASK)
+            shift? (ui/check-key e (ui/key-stroke "shift TAB"))
             nl     "\n"
             nltab  (str nl tab)
             [match rplc f]
@@ -213,13 +206,13 @@ selected text."
             (handle-tab txt e))))
 ;;------------------------------
 (defn change-font-size [txts e]
-  (when (check-key e nil KeyEvent/CTRL_MASK)
+  (when (ui/check-key e nil KeyEvent/CTRL_MASK)
     (.consume e)
     (let [font *current-font*
-          op   (if (neg? (.getWheelRotation e)) inc #(if (> % 1) (dec %) %))
-          size (-> (.getSize font) op)]
+          op   (if (neg? (ui/get e :wheel-rotation)) inc #(if (> % 1) (dec %) %))
+          size (-> (ui/get font :size) op)]
       (def ^:dynamic *current-font* (.deriveFont font (float size)))
-      (doseq [txt txts] (.setFont txt *current-font*)))))
+      (doseq [txt txts] (ui/set txt :font *current-font*)))))
 ;;------------------------------
 (defn match-paren [s pos end delta]
   "Finds the matching end elimiter for the specified delimiter."
@@ -252,7 +245,7 @@ delimiter."
         (when-let [{end :end dir :d} (delim c)]
           (when-let [end (match-paren s pos end dir)]
             (reset! tags 
-                    (doall (map #(ui/add-highlight txt % 1 Color/LIGHT_GRAY) [pos end])))))))))
+                    (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -278,7 +271,7 @@ delimiter."
       (-> txt-lines
         (ui/set :font *current-font*)
         (ui/set :editable false)
-        (ui/set :background Color/LIGHT_GRAY))
+        (ui/set :background (ui/color 192)))
         
       ;; Eval: CTRL + Enter
       (ui/on :key-press txt-code
@@ -304,8 +297,7 @@ delimiter."
       (ui/on :change 
              txt-code
              #(future (hl/high-light txt-code)
-                      (update-line-numbers doc txt-lines)
-                      ))
+                      (update-line-numbers doc txt-lines)))
                   
       (ui/queue-action #(do (update-line-numbers doc txt-lines) 
                             (hl/high-light txt-code)))
@@ -325,7 +317,9 @@ delimiter."
 
       (doto txt-code
         (.setFont *current-font*)
-        (.setBackground Color/DARK_GRAY)
+        (.setForeground (ui/color 255))
+        (.setCaretColor (ui/color 255))
+        (.setBackground (ui/color 64))
         (.setCaretPosition 0)
         (.grabFocus))
         
@@ -370,17 +364,17 @@ delimiter."
   "Builds the application's menu."
   [main]
   (let [menubar    (ui/menu-bar)
-        key-stroke #(KeyStroke/getKeyStroke %1 (apply + %&))]
+        key-stroke #(ui/key-stroke %1 (apply + %&))]
     (doseq [{menu-name :name items :items} menu-options]
       (let [menu (ui/menu menu-name)]
         (ui/add menubar menu)
-        (doseq [{item-name :name f :action kys :keys separator :separator} items]
+        (doseq [{item-name :name f :action ks :keys separator :separator} items]
           (let [menu-item (if separator
                             (ui/menu-separator)
                             (ui/menu-item item-name))]
             (when (not separator)
               (ui/on :click menu-item #(f main))
-              (ui/set menu-item :accelerator (apply key-stroke kys)))
+              (ui/set menu-item :accelerator (apply key-stroke ks)))
             (ui/add menu menu-item)))))
     menubar))
 ;;------------------------------

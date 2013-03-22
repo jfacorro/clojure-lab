@@ -1,16 +1,19 @@
 (ns macho.ui.swing.component
   (:import  [java.awt Component]
-            [java.awt.event MouseWheelListener KeyAdapter ActionListener]
+            [java.awt.event MouseWheelListener KeyAdapter ActionListener KeyEvent]
+            [javax.swing KeyStroke]
             [javax.swing.event CaretListener DocumentListener UndoableEditListener DocumentEvent$EventType]
             [javax.swing.undo UndoManager])
     (:use   [macho.ui.protocols]))
 ;;-----------------------------------------------------
 (defn check-key 
   "Checks if the key and the modifier match the event's values"
-  [evt k m]  
-  (and 
-    (or (nil? k) (= k (.getKeyCode evt)))
-    (or (nil? m) (= m (.getModifiers evt)))))
+  ([^KeyEvent e k m]  
+    (and 
+      (or (nil? k) (= k (.getKeyCode e)))
+      (or (nil? m) (= m (.getModifiers e)))))
+  ([^KeyEvent e k-strk]
+    (= (KeyStroke/getKeyStrokeForEvent e) k-strk)))
 ;;-----------------------------------------------------
 (defn process-event-handler [hdlr]
   "If the handler is a function of arity 0 then

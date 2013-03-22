@@ -1,9 +1,9 @@
 (ns macho.repl
   (:import [javax.swing JFrame JTextArea JScrollPane WindowConstants]
            [java.awt BorderLayout]
-           [java.awt.event KeyEvent KeyAdapter WindowAdapter])
+           [java.awt.event KeyEvent KeyAdapter WindowAdapter]
+           [bsh.util JConsole])
   (:require [popen :as p]
-            [clojure.string :as string]
             [leiningen.core.eval :as eval]
             [leiningen.core.project :as project]))
 
@@ -15,63 +15,29 @@ command string to launch a child process and then open the
 process."
   [project-path]
   (let [project (project/init-project (project/read project-path))
-        cmd     (eval/shell-command project '(do (require 'clojure.main) (clojure.main/main)))]
+        init    '((require 'clojure.main) (clojure.main/main))
+        main    (when-let [main (:main project)] 
+                  `((require '~main) (in-ns '~main)))
+        bla     (println init main (:main project))
+        cmd     (eval/shell-command project (concat '(do) main init))]
     (p/popen cmd :redirect true)))
 
-;;----------------------------------------------
-;; Create repl UI
-;;----------------------------------------------
-(defn bind-out-with-txt
-  "Binds the output from a stream to the text component."
-  [out txt]
-  (letfn [(read-out [out txt]
-            (while true
-              (let [c (.read out)]
-                (if (pos? c)
-                  (->> c char str (.append txt))))))]
-    (doto (Thread. #(read-out out txt))
-          (.start))))
-
-(defn write-in
-  "Write string to the input stream followed by a newline
-and ten flush it."
-  [in s]
-  (.write in s 0 (count s))
-  (.newLine in)
-  (.flush in))
-
-(defn check-key 
-  "Checks if the key and the modifier match the event's values"
-  [evt k m]
-  (and 
-    (or (nil? k) (= k (.getKeyCode evt)))
-    (or (nil? m) (= m (.getModifiers evt)))))
-
-(defn repl-ui [project-path]
-  (let [frame    (JFrame. "repl")
-        txt-out  (doto (JTextArea.) (.setEditable false))
-        txt-in   (doto (JTextArea.) (.setEditable true))
-        proc     (repl-process project-path)
-        out      (p/stdout proc)
-        in       (p/stdin proc)
-        thrd-out (bind-out-with-txt out txt-out)]
-    (.addKeyListener txt-in
-        (proxy [KeyAdapter] []
-          (keyPressed [e] 
-            (when (check-key e KeyEvent/VK_ENTER KeyEvent/CTRL_MASK)
-              (.append txt-out (str (.getText txt-in) "\n"))
-              (write-in in (.getText txt-in))
-              (.setText txt-in "")))))
+(defn repl-ui
+  "Creates a repl session for the leinigen project supplied."
+  [project-path]
+  (let [process (repl-process project-path)
+        cout    (p/stdout process)
+        cin     (p/stdin process)
+        frame   (JFrame.)
+        console (JConsole. cout cin)]
     (doto frame
       (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE)
-      (.add (JScrollPane. txt-out) BorderLayout/CENTER)
-      (.add txt-in BorderLayout/SOUTH)
       (.addWindowListener (proxy [WindowAdapter] [] 
-                            (windowClosed [e] 
-                              (.stop thrd-out)
-                              (p/kill proc))))
-      (.setVisible true)
-      (.setSize 400 400))))
+                            (windowClosed [e] (p/kill process))))
+      (.add console)
+      (.setSize 400 400)
+      (.setVisible true))))
 
-(repl-ui "D:/Juan/Dropbox/dev/Clojure/macanudo/project.clj")
+(repl-ui "./project.clj")
+
 
