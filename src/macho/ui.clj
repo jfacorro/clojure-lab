@@ -107,7 +107,8 @@ file chooser window if it's a new file."
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
-search for the selected text in the current docuement."
+search the documentation for the selected string 
+in the current document."
   ([main]
     (find-doc main false))
   ([main find?]
@@ -119,7 +120,10 @@ search for the selected text in the current docuement."
             sym 
               (eval `(repl/doc ~sym))))))
 ;;-------------------------------
-(defn update-line-numbers [doc lines]
+(defn update-line-numbers
+  "Updates the numbers in the text component
+that contains the line numbers."
+  [doc lines]
   (let [pos  (.getLength doc)
         root (.getDefaultRootElement doc)
         n    (.getElementIndex root pos)]
@@ -379,7 +383,7 @@ its controls."
   (let [main     (ui/frame name)
         tabs     (ui/tabbed-pane)
         txt-in   (ui/text-area)
-        repl     (repl-console "C:/Juan/Dropbox/Facultad/2012.Trabajo.Profesional/ide/project.clj")
+        repl     (repl-console "./project.clj")
         console  (:console repl)
         pane-center-left (ui/split tabs console)
         ui-main  {:main main :tabs tabs :repl repl}
