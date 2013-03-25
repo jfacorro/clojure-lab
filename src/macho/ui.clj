@@ -1,10 +1,9 @@
 (ns macho.ui
-  (:import [javax.swing JOptionPane]
-           [java.io OutputStream PrintStream File OutputStreamWriter])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
             [clojure.repl :as repl]
             [clojure.java.io :as io]
+            [macho.repl :as mrepl]
             [macho.ui.swing.core :as ui :reload true]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true]
@@ -12,7 +11,7 @@
             [macho.ui.protocols :as proto :reload true]))
 ;;------------------------------
 (def app-name "macho")
-(def new-doc-title "Untitled") 
+(def new-doc-title "Untitled")
 (def icons-paths ["icon-16.png"
                   "icon-32.png"
                   "icon-64.png"])
@@ -20,7 +19,7 @@
 (def ^:dynamic *current-font*
   (ui/font :name "Consolas" :styles [:plain] :size 14))
 
-(def default-dir (atom (.getCanonicalPath (File. "."))))
+(def default-dir (atom (.getCanonicalPath (io/file "."))))
 ;;------------------------------
 (defn list-methods
   "Lists the methods for the supplied class."
@@ -34,27 +33,31 @@
 ;;------------------------------
 (declare current-path current-txt save-src)
 ;;------------------------------
-(defn eval-code
-  "Evaluates the code in the string supplied."
-  [^String code]
-  (try
-    (println (load-string code))
-    (catch Exception ex
-      (repl/pst ex))))
+(defn eval-in-repl [main code]
+  (let [{{console :console repl :process} :repl} main
+        cin (:cin repl)]
+    (.println console code)
+    (.write cin (str code "\n"))
+    (.flush cin)))
 ;;------------------------------
 (defn eval-src
   "Evaluates source code."
   [main]
-  (if-let [path (current-path main)]
-    (try
-      (save-src main)
-      (println "Loaded file" path)
-      (println (load-file path))
-      (catch Exception ex
-        (repl/pst ex)))
-    (-> main current-txt proto/text eval-code)))
+  (let [path   (current-path main)
+        txt    (current-txt main)
+        code   (or (ui/get txt :selected-text) (proto/text txt))]
+    (if (nil? path)
+      (eval-in-repl main code)
+      (try
+        (save-src main)
+        (eval-in-repl main
+          `(do 
+            (println "Loaded file" ~path)
+            (println (load-file ~path))))
+        (catch Exception ex
+          (repl/pst ex))))))
 ;;------------------------------
-(defn current-txt 
+(defn current-txt
   "Gets the current active text control."
   [main]
   (let [tabs   (:tabs main)
@@ -63,12 +66,6 @@
       (let [scroll (.getComponentAt tabs idx)
             pnl    (.. scroll getViewport getView)]
         (.getComponent pnl 0)))))
-;;------------------------------
-(defn current-doc
-  "Get the current document"
-  [main]
-  (let [txt (current-txt main)]
-    (.getDocument txt)))
 ;;------------------------------
 (defn file-path-from-user [title]
   (let [dialog (ui/file-browser @default-dir)
@@ -100,7 +97,7 @@ file chooser window if it's a new file."
   [main]
   (let [txt  (current-txt main)
         s    (str/lower-case (proto/text txt))
-        ptrn (JOptionPane/showInputDialog (:main main) "Enter search string:" "Find" JOptionPane/QUESTION_MESSAGE)
+        ptrn (ui/input-dialog (:main main) "Find" "Enter search string:")
         lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
     (ui/remove-highlight txt)
     (doseq [[a b] lims] (ui/add-highlight txt a (- b a)))))
@@ -265,11 +262,6 @@ delimiter."
         (ui/set :editable false)
         (ui/set :background (ui/color 192)))
         
-      ;; Eval: CTRL + Enter
-      (ui/on :key-press txt-code
-             (fn [_] (-> txt-code (ui/get :selected-text) eval-code))
-             (ui/key-stroke "ctrl ENTER"))
-
       ; Undo/redo key events
       (ui/on :key-press txt-code
              (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
@@ -322,7 +314,7 @@ delimiter."
   [main]
   (let [path (file-path-from-user "Open")]
     (when path
-      (reset! default-dir (ui/get (File. path) :canonical-path))
+      (reset! default-dir (ui/get (io/file path) :canonical-path))
       (new-document main path (slurp path)))))
 ;;------------------------------
 (defn clear-repl 
@@ -346,7 +338,7 @@ delimiter."
             {:separator true}
             {:name "Exit" :action #(do % (System/exit 0)) :keys "alt X"}]}
    {:name "Code"
-    :items [{:name "Eval" :action eval-src :keys "ctrl E"}
+    :items [{:name "Eval" :action eval-src :keys "ctrl ENTER"}
             {:name "Find" :action find-src :keys "ctrl F"}
             {:name "Find docs" :action #(find-doc % true) :keys "ctrl alt F"}
             {:name "Doc" :action find-doc :keys "alt F"}
@@ -368,19 +360,14 @@ delimiter."
               (ui/set menu-item :accelerator (ui/key-stroke ks)))
             (ui/add menu menu-item)))))
     menubar))
-;;------------------------------
-(defn redirect-out
-  "Creates a PrintStream that writes to the
-text field instance provided and then replaces
-System/out with this stream."
-  [txt]
-  (let [stream (proxy [OutputStream] []
-                 (write
-                   ([b off len] (.append txt (String. b off len)))
-                   ([b] (.append txt (String. b)))))
-        out (PrintStream. stream true)]
-    (System/setOut out)
-    (System/setErr out)))
+;;------------------------------------------
+(defn repl-console
+  "Creates a repl process for the leinigen project supplied,
+attaches the stdin and stdout to a console and returns it."
+  [project-path]
+  (let [repl    (mrepl/create-repl project-path)
+        console (ui/console (:cout repl) (:cin repl) #(mrepl/close repl))]
+    {:console console :process repl}))
 ;;------------------------------------------
 (defn make-main 
   "Creates the main window and all
@@ -388,16 +375,16 @@ its controls."
   [name]
   (ui/init)
   (let [main     (ui/frame name)
-        txt-repl (ui/text-area)
         tabs     (ui/tabbed-pane)
         txt-in   (ui/text-area)
-        pane-center-left (ui/split tabs (ui/scroll txt-repl))
-        ui-main  {:main main :tabs tabs :repl txt-repl}
+        repl     (repl-console "C:/Juan/Dropbox/Facultad/2012.Trabajo.Profesional/ide/project.clj")
+        console  (:console repl)
+        pane-center-left (ui/split tabs console)
+        ui-main  {:main main :tabs tabs :repl repl}
         icons    (map (comp ui/image io/resource) icons-paths)]
 
     ; Set controls properties
-    (-> txt-repl
-      (ui/set :editable false)
+    (-> console
       (ui/set :font *current-font*))
 
     (-> pane-center-left
@@ -410,12 +397,6 @@ its controls."
       (ui/set :j-menu-bar (build-menu ui-main))
       (ui/show)
       (ui/add pane-center-left))
-
-    ; Redirect std out
-    (redirect-out txt-repl)
-    ; Modify the binding for the *out* var in clojure.core
-    (alter-var-root #'clojure.core/*out* #(do %1 %2) (java.io.OutputStreamWriter. System/out))
-    (alter-var-root #'clojure.core/*err* #(do %1 %2) (java.io.PrintWriter. System/err true))
 
     ui-main))
 ;;------------------------------

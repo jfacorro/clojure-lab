@@ -5,19 +5,23 @@
                          ; Containers
                          JFrame JPanel JScrollPane JSplitPane JTabbedPane
                          ; Dialogs
-                         JFileChooser
+                         JFileChooser JOptionPane
                          ; Text
                          JTextField JTextArea JTextPane JLabel JEditorPane
                          text.DefaultStyledDocument text.DefaultHighlighter$DefaultHighlightPainter
                          ; Menu
                          JMenuBar JMenu JSeparator JMenuItem]
-            [java.awt Container Color Toolkit Font BorderLayout AWTEvent])
+            [java.awt Container Color Toolkit Font BorderLayout AWTEvent]
+            [bsh.util JConsole])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
             [macho.ui.protocols :as proto]
             [macho.misc :as misc]))
 ;;------------------- 
 (def toolkit (Toolkit/getDefaultToolkit))
+;;-------------------
+(defn init []
+  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName)))
 ;;-------------------
 ;; Expose all vars in macho.ui.protocols
 ;;-------------------
@@ -86,6 +90,9 @@
   [title]
   (doto (JFrame. title)
         (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)))
+;;-------------------
+(defn input-dialog [parent title label]
+  (JOptionPane/showInputDialog parent label title JOptionPane/QUESTION_MESSAGE))
 ;;-------------------
 (defn text-field
   "Creates a new text field."
@@ -223,6 +230,10 @@ following keywords:
   (let [style (reduce bit-and (map font-styles ms))]
     (Font. s style n)))
 ;;-------------------
-(defn init []
-  (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName)))
+(defn console [cin cout & close-repl-fn]
+  (JConsole. )
+  (proxy [JConsole] [cin cout]
+    (dispose []
+      (when close-repl-fn
+        (close-repl-fn)))))
 ;;-------------------
