@@ -1,4 +1,3 @@
-
 (ns macho.lang.clojure)
 ;-----------------------------------------------------------
 ; Special forms and characters collections definitions

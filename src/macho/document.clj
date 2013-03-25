@@ -1,8 +1,5 @@
-(remove-ns 'test-watch)
-(ns test-watch
+(ns macho.document
   (:refer-clojure :exclude [replace find]))
-
-(set! *warn-on-reflection* true)
 
 (defprotocol Text
   (append [this s])
@@ -18,7 +15,7 @@
 (defrecord Document [path]
   Openable
   (open [this]
-    (let [text (if (:path this) 
+    (let [text (if (:path this)
                  (StringBuffer. ^String (slurp path))
                  (StringBuffer.))]
       (assoc this :text text)))
@@ -55,26 +52,27 @@ and alternate models provided."
          :path path
          :alternates alts))
 
-(defn on-append [k r old-val new-val]
-  (println :on-append ":" old-val "->" new-val " - Yo!:" r))
-
-(def doc (atom (with-meta (Document. nil) {:doc true}) :meta {:atom true}))
-(add-watch doc :on-append on-append)
-(println (meta doc) (meta @doc))
-
-(! open doc)
-(! append doc "bla")
-(! append doc " ")
-(! append doc "ble")
-
-(defn alternate [entity f]
-  (if (instance? clojure.lang.Atom entity)
-    nil))
+(comment 
+  (defn on-append [k r old-val new-val]
+    (println :on-append ":" old-val "->" new-val " - Yo!:" r))
   
-(alternate doc nil)
-
-(meta #'append)
-
+  (def doc (atom (with-meta (Document. nil) {:doc true}) :meta {:atom true}))
+  (add-watch doc :on-append on-append)
+  (println (meta doc) (meta @doc))
+  
+  (! open doc)
+  (! append doc "bla")
+  (! append doc " ")
+  (! append doc "ble")
+  
+  (defn alternate [entity f]
+    (if (instance? clojure.lang.Atom entity)
+      nil))
+    
+  (alternate doc nil)
+  
+  (meta #'append)
+)
 
 
 
