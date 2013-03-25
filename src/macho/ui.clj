@@ -33,10 +33,12 @@
 ;;------------------------------
 (declare current-path current-txt save-src)
 ;;------------------------------
-(defn eval-in-repl [main code]
+(defn eval-in-repl [main code & {:keys [echo] :or {echo true}}]
   (let [{{console :console repl :process} :repl} main
         cin (:cin repl)]
-    (.println console code)
+    (if echo
+      (.println console code)
+      (.println console ""))
     (.write cin (str code "\n"))
     (.flush cin)))
 ;;------------------------------
@@ -53,7 +55,8 @@
         (eval-in-repl main
           `(do 
             (println "Loaded file" ~path)
-            (println (load-file ~path))))
+            (println (load-file ~path)))
+          :echo false)
         (catch Exception ex
           (repl/pst ex))))))
 ;;------------------------------
@@ -204,7 +207,7 @@ selected text."
       (doseq [txt txts] (ui/set txt :font *current-font*)))))
 ;;------------------------------
 (defn match-paren [s pos end delta]
-  "Finds the matching end elimiter for the specified delimiter."
+  "Finds the matching delimiter for the specified delimiter."
   (loop [cur  (+ pos delta) 
          acum 0]
     (cond (neg? cur) nil
@@ -221,10 +224,9 @@ selected text."
 position is a delimiter and looks for the closing/opening
 delimiter."
   [txt]
-  (let [tags (atom nil)]
+  (let [tags (atom [])]
     (fn [e]
-      (when @tags
-        (doseq [tag @tags] (ui/remove-highlight txt tag)))
+      (doseq [tag @tags] (ui/remove-highlight txt tag))
       (let [pos   (dec (.getDot e))
             s     (proto/text txt)
             c     (get-in s [pos])
