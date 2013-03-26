@@ -1,26 +1,17 @@
 (ns macho.misc)
 
-(defn interned-vars [ns-name]
-  (->> ns-name ns-interns vals (map meta)))
+(defn interned-vars-meta
+  "Returns a seq with the metadata of the interned vars 
+in the supplied namespace. The argument can be either 
+the ns name as symbol or the ns itself."
+  [the-ns]
+  (->> the-ns ns-interns vals (map meta)))
 
-(defn print-vars [ns-name]
-  (let [iv (interned-vars ns-name)]
-    (doseq [{ns :ns name :name} iv] 
-      (println "--------------\n"
-               "name: "name "\n"
-               "ns: "ns "\n" 
-               "var: " (intern ns name) "\n"
-               "var value: " @(intern ns name) "\n"
-               "meta var: " (meta (intern ns name)) "\n"
-               "meta var value: " (meta @(intern ns name))))))
-
-(defn intern-vars [from-ns to-ns]
-  (doseq [metadata (interned-vars from-ns)]
-    (let [{ns :ns name-sym :name protocol :protocol} metadata]
-      (intern to-ns name-sym (intern from-ns name-sym)))))
-
-#_(do
-  (print-vars *ns*)
-  (println "------")
-  (intern-vars 'macho.ui.protocols *ns*)
-  (print-vars *ns*))
+(defn intern-vars
+  "Interns all vars present in the source ns to the target,
+taking the value from the var in the source ns."
+  [source target]
+  (doseq [metadata (interned-vars-meta source)]
+    (let [{name-sym :name} metadata]
+      (intern target name-sym (intern source name-sym))))
+  (the-ns target))

@@ -1,11 +1,13 @@
 (ns macho.ui-test
-  (:use clojure.test)
-  ;(:require [macho.ui.swing.core :as ui :reload true])
-)
+  (:refer-clojure :exclude [get set])
+  (:use [clojure.test :only [deftest is run-tests]]
+        macho.ui.swing.core))
 
 (defn add-to-panel []
-  (ui/add (ui/panel)
-          (ui/label "Label")))
+  (add (panel)
+          (label "Label")))
 
 (deftest container-protocol
   (is (add-to-panel)))
+
+(run-tests)
