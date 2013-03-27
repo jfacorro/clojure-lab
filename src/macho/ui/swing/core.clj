@@ -11,7 +11,7 @@
                          text.DefaultStyledDocument text.DefaultHighlighter$DefaultHighlightPainter
                          ; Menu
                          JMenuBar JMenu JSeparator JMenuItem]
-            [java.awt Container Color Toolkit Font BorderLayout AWTEvent]
+            [java.awt Container Color Toolkit Font BorderLayout AWTEvent Frame]
             [bsh.util JConsole])
   (:require [clojure.string :as str]
             [macho.ui.swing.component]
@@ -70,7 +70,7 @@
       (KeyStroke/getKeyStrokeForEvent x)
       (KeyStroke/getKeyStroke x))))
 ;;-------------------
-;; Component extension
+;; Container protocol implementation
 ;;-------------------
 (extend-type java.awt.Container
   proto/Visible
@@ -84,6 +84,17 @@
       ([this child args]
         (.add this child args)
         this)))
+;;-------------------
+;; Frame protocol implementation
+;;-------------------
+(extend-type java.awt.Frame
+  proto/Window
+  (maximize [this]
+    (.setExtendedState this Frame/MAXIMIZED_BOTH)
+    this)
+  (minize [this]
+    (.setState this Frame/ICONIFIED)
+    this))
 ;;-------------------
 (defn frame
   "Creates a new frame."

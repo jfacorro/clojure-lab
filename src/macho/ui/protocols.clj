@@ -20,6 +20,10 @@
   "Is a piece of text."
   (length [this] "Gets the length for the content.")
   (text [this] "Gets the text content for this entity."))
+
+(defprotocol Window
+  (maximize [this])
+  (minimize [this]))
 ;;-----------------------------------------
 ;; Multi-methods
 ;;-----------------------------------------
