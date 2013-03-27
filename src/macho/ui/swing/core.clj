@@ -87,9 +87,11 @@
 ;;-------------------
 (defn frame
   "Creates a new frame."
-  [title]
-  (doto (JFrame. title)
-        (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)))
+  [title & {:keys [exit-on-close] :or {exit-on-close true}}]
+  (let [frame (JFrame. title)]
+    (when exit-on-close
+      (.setDefaultCloseOperation frame JFrame/EXIT_ON_CLOSE))
+    frame))
 ;;-------------------
 (defn input-dialog [parent title label]
   (JOptionPane/showInputDialog parent label title JOptionPane/QUESTION_MESSAGE))
@@ -133,7 +135,7 @@
   ([one two] 
     (split one two :horizontal))
   ([one two orientation]
-    (case 
+    (case orientation
       :vertical
         (doto (JSplitPane.)
           (.setOrientation JSplitPane/VERTICAL_SPLIT)

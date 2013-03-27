@@ -44,15 +44,15 @@
 (defmacro ! [f at & args]
   `(swap! ~at ~f ~@args))
 
-(defn make-doc 
-  "Creates an with the document using the name, path 
+(defn make-doc
+  "Creates a new document using the name, path 
 and alternate models provided."
   [name & [path alts]]
   (assoc (Document. name)
          :path path
          :alternates alts))
 
-(comment 
+(comment
   (defn on-append [k r old-val new-val]
     (println :on-append ":" old-val "->" new-val " - Yo!:" r))
   
@@ -73,16 +73,3 @@ and alternate models provided."
   
   (meta #'append)
 )
-
-
-
-
-
-
-
-
-
-
-
-
-

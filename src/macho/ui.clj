@@ -33,27 +33,41 @@
 ;;------------------------------
 (declare current-path current-txt save-src)
 ;;------------------------------
-(defn eval-in-repl [main code & {:keys [echo] :or {echo true}}]
-  (let [{{console :console repl :process} :repl} main
-        cin (:cin repl)]
+(defn eval-in-repl
+  "Evaluates the code in the specified repl. Code
+can be a string or a list form.
+  args:
+    - repl:  the repl where to evaluate the code.
+    - code:  string or list with the code to evaluate.
+    - echo:  print the code to the repl."
+  [repl code & {:keys [echo] :or {echo true}}]
+  (let [{console :console repl :process} repl
+        cin   (:cin repl)
+        exec  (if (string? code)
+                `(do (load-string ~code))
+                code)]
     (if echo
       (.println console code)
       (.println console ""))
-    (.write cin (str code "\n"))
-    (.flush cin)))
+    (if cin
+      (doto cin
+        (.write (str exec "\n"))
+        (.flush))
+      (load-string code))))
 ;;------------------------------
 (defn eval-src
   "Evaluates source code."
   [main]
   (let [path   (current-path main)
         txt    (current-txt main)
-        code   (or (ui/get txt :selected-text) (proto/text txt))]
-    (if (nil? path)
-      (eval-in-repl main code)
+        sel?   (ui/get txt :selected-text)
+        code   (or sel? (proto/text txt))]
+    (if (or sel? (nil? path))
+      (eval-in-repl {:repl main} code)
       (try
         (save-src main)
-        (eval-in-repl main
-          `(do 
+        (eval-in-repl {:repl main}
+          `(do
             (println "Loaded file" ~path)
             (println (load-file ~path)))
           :echo false)
@@ -384,8 +398,13 @@ its controls."
         tabs     (ui/tabbed-pane)
         txt-in   (ui/text-area)
         repl     (repl-console "./project.clj")
+        #_(
+        in       (io/reader (System/in))
+        out      (io/writer (System/out))
+        repl     {:console (ui/console in out) :process {:cin out :cout in}}
+        )
         console  (:console repl)
-        pane-center-left (ui/split tabs console)
+        pane-center-left (ui/split tabs console :vertical)
         ui-main  {:main main :tabs tabs :repl repl}
         icons    (map (comp ui/image io/resource) icons-paths)]
 
