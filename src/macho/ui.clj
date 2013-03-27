@@ -1,14 +1,19 @@
 (ns macho.ui
+  (:refer-clojure :exclude [get set])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
             [clojure.repl :as repl]
             [clojure.java.io :as io]
             [macho.repl :as mrepl]
+            [macho.misc :as misc]
             [macho.ui.swing.core :as ui :reload true]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true]
             [macho.ui.swing.text :as txt]
             [macho.ui.protocols :as proto :reload true]))
+;;------------------------------
+;; TODO: ask if this is acceptable
+(misc/intern-vars 'macho.ui.swing.core)
 ;;------------------------------
 (def app-name "macho")
 (def new-doc-title "Untitled")
@@ -16,9 +21,9 @@
                   "icon-32.png"
                   "icon-64.png"])
 ;;------------------------------
-(def ^:dynamic *current-font*
-  (ui/font :name "Consolas" :styles [:plain] :size 14))
-
+(def current-font
+  (atom (ui/font :name "Consolas" :styles [:plain] :size 14)))
+;;------------------------------
 (def default-dir (atom (.getCanonicalPath (io/file "."))))
 ;;------------------------------
 (defn list-methods
@@ -35,23 +40,21 @@
 ;;------------------------------
 (defn eval-in-repl
   "Evaluates the code in the specified repl. Code
-can be a string or a list form.
+  can be a string or a list form.
+
   args:
     - repl:  the repl where to evaluate the code.
     - code:  string or list with the code to evaluate.
     - echo:  print the code to the repl."
   [repl code & {:keys [echo] :or {echo true}}]
   (let [{console :console repl :process} repl
-        cin   (:cin repl)
-        exec  (if (string? code)
-                `(do (load-string ~code))
-                code)]
+        cin   (:cin repl)]
     (if echo
       (.println console code)
       (.println console ""))
     (if cin
       (doto cin
-        (.write (str exec "\n"))
+        (.write (str code "\n"))
         (.flush))
       (load-string code))))
 ;;------------------------------
@@ -116,7 +119,7 @@ file chooser window if it's a new file."
         s    (str/lower-case (proto/text txt))
         ptrn (ui/input-dialog (:main main) "Find" "Enter search string:")
         lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
-    (ui/remove-highlight txt)
+    (remove-highlight txt)
     (doseq [[a b] lims] (ui/add-highlight txt a (- b a)))))
 ;;------------------------------
 (defn find-doc 
@@ -218,11 +221,11 @@ selected text."
 (defn change-font-size [txts e]
   (when (ui/check-key e (ui/key-stroke "control CONTROL"))
     (.consume e)
-    (let [font *current-font*
+    (let [font @current-font
           op   (if (neg? (ui/get e :wheel-rotation)) inc #(if (> % 1) (dec %) %))
           size (-> (ui/get font :size) op)]
-      (def ^:dynamic *current-font* (.deriveFont font (float size)))
-      (doseq [txt txts] (ui/set txt :font *current-font*)))))
+      (reset! current-font (.deriveFont font (float size)))
+      (doseq [txt txts] (ui/set txt :font @current-font)))))
 ;;------------------------------
 (defn match-paren [s pos end delta]
   "Finds the matching delimiter for the specified delimiter."
@@ -278,7 +281,7 @@ delimiter."
       (ui/set pnl-scroll :row-header-view txt-lines)
 
       (-> txt-lines
-        (ui/set :font *current-font*)
+        (ui/set :font @current-font)
         (ui/set :editable false)
         (ui/set :background (ui/color 192)))
         
@@ -303,7 +306,7 @@ delimiter."
              #(future (hl/high-light txt-code)
                       (update-line-numbers doc txt-lines)))
                   
-      (ui/queue-action #(do (update-line-numbers doc txt-lines) 
+      (ui/queue-action #(do (update-line-numbers doc txt-lines)
                             (hl/high-light txt-code)))
       
       ; Add Undo manager
@@ -320,7 +323,7 @@ delimiter."
         (.setSelectedIndex (dec (.getTabCount tabs))))
 
       (doto txt-code
-        (.setFont *current-font*)
+        (.setFont @current-font)
         (.setForeground (ui/color 255))
         (.setCaretColor (ui/color 255))
         (.setBackground (ui/color 64))
@@ -329,7 +332,7 @@ delimiter."
         
       txt-code)))
 ;;------------------------------
-(defn open-src
+(defn open-document
   "Open source file."
   [main]
   (let [path (file-path-from-user "Open")]
@@ -352,7 +355,7 @@ delimiter."
 (def menu-options
   [{:name "File"
     :items [{:name "New" :action new-document :keys "ctrl N"}
-            {:name "Open" :action open-src :keys "ctrl O"}
+            {:name "Open" :action open-document :keys "ctrl O"}
             {:name "Save" :action save-src :keys "ctrl S"}
             {:name "Close" :action close :keys "ctrl W"}
             {:separator true}
@@ -410,7 +413,7 @@ its controls."
 
     ; Set controls properties
     (-> console
-      (ui/set :font *current-font*))
+      (ui/set :font @current-font))
 
     (-> pane-center-left
       (ui/set :resize-weight 0.8)

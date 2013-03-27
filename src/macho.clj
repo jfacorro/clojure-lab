@@ -3,8 +3,16 @@
   (:gen-class [:name macho.main
                :main true]))
 ;;------------------------------
+(def documents
+  "Map with current opened documents."
+  (atom {}))
+;;------------------------------
+(def main
+  "Main UI window."
+  (atom nil))
+;;------------------------------
 (defn -main
   "Program startup function."
   []
-  (def main (ui/make-main ui/app-name)))
+  (reset! main (ui/make-main ui/app-name)))
 ;;------------------------------

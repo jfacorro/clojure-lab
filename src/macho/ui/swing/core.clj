@@ -25,8 +25,8 @@
 ;;-------------------
 ;; Expose all vars in macho.ui.protocols
 ;;-------------------
-(macho.misc/intern-vars 'macho.ui.protocols *ns*)
-(macho.misc/intern-vars 'macho.ui.swing.component *ns*)
+(macho.misc/intern-vars 'macho.ui.protocols)
+(macho.misc/intern-vars 'macho.ui.swing.component)
 ;;-------------------
 (defn queue-action
   "Queues an action to the event queue."
@@ -35,15 +35,15 @@
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
-(defn capitalize-word [[x & xs]]
+(defn- capitalize-word [[x & xs]]
   (apply str (str/upper-case x) xs))
-
-(defn capitalize [s]
+;;-------------------
+(defn- capitalize [s]
   (->> (str/split s #"-")      
       (map capitalize-word)
       (apply str)))
 ;;-------------------
-(defn property-accesor [op prop]
+(defn- property-accesor [op prop]
   (symbol (str (name op) (-> prop name capitalize))))
 ;;-------------------
 (defmacro set [obj prop & args]
@@ -227,7 +227,7 @@ system and select a file."
           pntr (DefaultHighlighter$DefaultHighlightPainter. color)]
       (.addHighlight hl pos (+ len pos) pntr))))
 ;;------------------------------
-(defn remove-highlight 
+(defn remove-highlight
   "Removes all highglights from the text control."
   ([txt] (.. txt getHighlighter removeAllHighlights))
   ([txt tag] (.. txt getHighlighter (removeHighlight tag))))
