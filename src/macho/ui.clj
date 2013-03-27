@@ -63,10 +63,10 @@ can be a string or a list form.
         sel?   (ui/get txt :selected-text)
         code   (or sel? (proto/text txt))]
     (if (or sel? (nil? path))
-      (eval-in-repl {:repl main} code)
+      (eval-in-repl (:repl main) code)
       (try
         (save-src main)
-        (eval-in-repl {:repl main}
+        (eval-in-repl (:repl main)
           `(do
             (println "Loaded file" ~path)
             (println (load-file ~path)))
@@ -420,6 +420,7 @@ its controls."
       (ui/set :icon-images icons)
       (ui/set :size 800 600)
       (ui/set :j-menu-bar (build-menu ui-main))
+      (ui/maximize)
       (ui/show)
       (ui/add pane-center-left))
 
