@@ -1,55 +1,25 @@
 (ns macho.document
   (:refer-clojure :exclude [replace]))
 
-(def documents
-  "Collection of currently working documents."
-  (atom {}))
+(defrecord Document [name])
 
-(def current-document 
-  "Current active document."
-  nil)
+(defn open [doc]
+  (let [text (if (:path doc)
+               (StringBuffer. ^String (slurp (:path doc)))
+               (StringBuffer.))]
+    (assoc doc :text text)))
 
-(defprotocol Text
-  "Protocol for things that might have the properties of text."
-  (append [this s])
-  (insert [this offset s])
-  (delete [this start end])
-  (length [this])
-  (search [this s])
-  (replace [this search repl]))
+(defn append [doc s]
+  (.append (:text doc) s)
+  doc)
 
-(defprotocol Openable
-  "Can be opened."
-  (open [this]))
+(defn insert [doc offset s]
+  (.insert (:text doc) offset s)
+  doc)
 
-(defrecord Document [name]
-  Openable
-  (open [this]
-    (let [text (if (:path this)
-                 (StringBuffer. ^String (slurp (:path this)))
-                 (StringBuffer.))]
-      (assoc this :text text)))
-  Text
-  (append [this s]
-    (println :append-doc)
-    (append (:text this) s)
-    this)
-  (insert [this offset s] 
-    (insert (:text this) offset s)
-    this)
-  (length [this]
-    (length (:text this))
-    this))
-
-(extend-type StringBuffer
-  Text
-  (append [this s]
-    (println :append-buffer)
-    (.append this s))
-  (insert [this offset s] 
-    (.insert ^:StringBuffer this ^int offset ^String s))
-  (length [this]
-    (.length this)))
+(defn length [doc]
+  (.length (:text doc))
+  doc)
 
 (defmacro ! [f at & args]
   `(swap! ~at ~f ~@args))
@@ -105,6 +75,4 @@
       nil))
     
   (alternate doc nil)
-  
-  (meta #'append)
 )
