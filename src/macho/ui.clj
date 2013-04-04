@@ -24,7 +24,7 @@
 (def current-font
   (atom (ui/font :name "Consolas" :styles [:plain] :size 14)))
 ;;------------------------------
-(def default-dir (atom (.getCanonicalPath (io/file "."))))
+(def default-dir (atom (ui/get (io/file ".") :canonical-path)))
 ;;------------------------------
 (defn list-methods
   "Lists the methods for the supplied class."
@@ -81,16 +81,16 @@
   "Gets the current active text control."
   [main]
   (let [tabs   (:tabs main)
-        idx    (.getSelectedIndex tabs)]
+        idx    (ui/get tabs :selected-index)]
     (when (<= 0 idx)
-      (let [scroll (.getComponentAt tabs idx)
-            pnl    (.. scroll getViewport getView)]
-        (.getComponent pnl 0)))))
+      (let [scroll (ui/get tabs :component-at idx)
+            pnl    (-> scroll (ui/get :viewport) (ui/get :view))]
+        (ui/get pnl :component 0)))))
 ;;------------------------------
 (defn file-path-from-user [title]
   (let [dialog (ui/file-browser @default-dir)
         file   (ui/show dialog title)]
-    (when file (.getPath file))))
+    (when file (ui/get file :path))))
 ;;------------------------------
 (defn current-path 
   "Finds the current working tab and shows a 
@@ -375,9 +375,8 @@ delimiter."
       (let [menu (ui/menu menu-name)]
         (ui/add menubar menu)
         (doseq [{item-name :name f :action ks :keys separator :separator} items]
-          (let [menu-item (if separator
-                            (ui/menu-separator)
-                            (ui/menu-item item-name))]
+          (let [menu-item (or (and separator (ui/menu-separator))
+                              (ui/menu-item item-name))]
             (when (not separator)
               (ui/on :click menu-item #(f main))
               (ui/set menu-item :accelerator (ui/key-stroke ks)))

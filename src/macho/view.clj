@@ -1,42 +1,41 @@
-(ns macho.view
-  (:require [macho.ui :as ui]))
+(ns macho.view)
 
-(defn validate-ops [ops]
-  (let [ops (->> ops (map first) set)]
-    (when (nil? ops)
-      (throw (Exception. "Must define at least the 'create' op.")))
-    (when (ops 'this)
-      ; Check there's no definition for a "this" operation.
-      (throw (Exception. "Can't define a 'this' op.")))
-      ; Check there's a definitino for the "create" operation.
-    (when-not (ops 'create)
-      (throw (Exception. "Must define a 'create' op.")))))
+(defn validate-ops [ops-map]
+  (let [ops (-> ops-map keys set)]
+    (when-let [msg (or (and (nil? ops) "Must define at least the 'create' op.")
+                       ; Check there's no definition for a "this" operation.
+                       (and (ops :this) "Can't define a 'this' op.")
+                       ; Check there's a definitino for the "create" operation.
+                       (and (not (ops :create)) "Must define a 'create' op."))]
+      (throw (Exception. msg)))))
 
 (defmacro defview
   "Defines a view with the operations defined in ops."
   [name & ops]
-    (validate-ops ops)
-    (let [create  (->> ops (filter #(= 'create (first %))) (drop 2))
-          ops     (->> ops
-                       (mapcat (juxt first #(concat '(fn) %)))
-                       (apply assoc {}))
-          create  (ops 'create)
-          ops     (dissoc ops 'create)
-          ops-map (reduce #(assoc %1 (keyword %2) %2) {} (keys ops))]
-      `(let [~'this (~create)
-             ~@(mapcat identity ops)
-             ops#  ~ops-map]
-        (def ~name
-          (fn [op# & args#]
-            (let [v# (ops# op#)]
-              (cond (nil? v#)
-                      (throw (Error. (str "No such operation: " (name op#))))
-                    (fn? v#)
-                      (apply v# args#)
-                    :else
-                      v#)))))))
+    (let [ops-map  (->> (or ops '())
+                        (reduce #(assoc %1 (-> %2 first keyword ) (concat '(fn) %2)) {}))]
+      `(let [create# ~(:create ops-map)
+             ~'this  (if (fn? create#) (create#) create#)]
+        (def ~name (defview* ~ops-map)))))
 
-(defview document-view
+(defn defview*
+  "Returns a view, that's actually a function which receives
+  a keyword operation from the map and the arguments. The view
+  contains a closure on a local var called 'this', whose value is
+  the return value from the :create function in the ops-map."
+  [ops-map]
+  (validate-ops ops-map)
+  (let [ops-map (dissoc ops-map :create)]
+    (fn [op & args]
+      (let [v (ops-map op)]
+        (cond (nil? v)
+          (throw (Error. (str "No such operation: " (name op))))
+        (fn? v)
+          (apply v args)
+        :else
+          v)))))
+
+#_(defview document-view
   (create []
     {:text (javax.swing.JTextPane.)
      :history-index 0})
@@ -46,7 +45,9 @@
           hst     (doc/history doc-ref idx)
           ; Get the history of operations on the :ast alternate model from idx onwards.
           ast-hst (doc/history (doc/alternate doc-ref :ast) idx)]
+      ; Update the text in the view based on the changes done to the document.
       (process-doc-history (:text this) hst)
+      ; Update syntax highlight using incremental differences from the ast.
       (process-ast-history (:text this) ast-hst))))
 
 (comment
@@ -68,5 +69,5 @@
         (let [v (ops op)]
           (if (fn? v)
             (apply v args)
-            v))))
-))
+            v)))))
+)

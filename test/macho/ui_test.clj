@@ -9,5 +9,3 @@
 
 (deftest container-protocol
   (is (add-to-panel)))
-
-(run-tests)

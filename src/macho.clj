@@ -3,10 +3,6 @@
   (:gen-class [:name macho.main
                :main true]))
 ;;------------------------------
-(def documents
-  "Map with current opened documents."
-  (atom {}))
-;;------------------------------
 (def main
   "Main UI window."
   (atom nil))
