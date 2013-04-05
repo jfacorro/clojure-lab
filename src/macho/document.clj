@@ -3,33 +3,79 @@
 
 (defrecord Document [name])
 
-(defn open [doc]
-  (let [text (if (:path doc)
-               (StringBuffer. ^String (slurp (:path doc)))
-               (StringBuffer.))]
-    (assoc doc :text text)))
+(defn bind
+  "Binds a document to a file."
+  [doc path]
+  (let [text   (slurp path)
+        props  {:text (StringBuffer. text)
+                :path path}]
+    (merge doc props)))
 
-(defn append [doc s]
-  (.append (:text doc) s)
-  doc)
+(defn length
+  "Returns the document content's length."
+  [doc]
+  (.length (:text doc)))
 
-(defn insert [doc offset s]
+(defn text
+  "Returns the document's content."
+  [doc]
+  (str (:text doc)))
+
+(defn path
+  "Returns the path for the binded file if any."
+  [doc]
+  (:pah doc))
+
+(defn append
+  "Appends s to the document's content.
+  Returns the document."
+  [doc s]
+  (insert doc (length doc) s))
+
+(defn insert
+  "Inserts s at the document's offset position.
+  Returns the document."
+  [doc offset s]
   (.insert (:text doc) offset s)
   doc)
 
-(defn length [doc]
-  (.length (:text doc))
+(defn delete
+  "Delete the document's content from start to end position. 
+  Returns the document."
+  [doc start end]
+  (.delete (:text doc) start end)
   doc)
 
-(defmacro ! [f at & args]
-  `(swap! ~at ~f ~@args))
+(defn add-alternate
+  "Adds an alternate model to the document."
+  [x alt-name alt]
+  {:pre [(map? x)
+         (-> x :alternates alt-name nil?)]}
+  (let [alts (-> x :alternates (assoc alt-name alt))]
+    (assoc x :alternates alts)))
+
+(defn alternate
+  [doc alt-name]
+  (-> doc :alternates alt-name))
+
+(defn all-alternatives
+  [doc alt-name]
+  (-> doc :alternates))
 
 (defn make-document
-  "Creates a new document using the name, path 
-  and alternate models provided."
-  [path & alts]
-  (let [doc (Document. (or path :new-document-title))]
-    (assoc doc :path path :alternates alts)))
+  "Creates a new document using the name and alternate models provided."
+  [doc-name & alts]
+  {:pre [(not (nil? doc-name))]}
+  (let [doc   (Document. (or doc-name :new-document-title))
+        props {:alternates alts
+               :text (StringBuffer.)}]
+    (merge doc props)))
+
+(defmacro !
+  "Applies f to the atom x using the supplied arguments.
+  Convenience macro."
+  [f x & args]
+  `(swap! ~x ~f ~@args))
 
 (defn attach-view
   "Attaches a view to the document. x should be 
@@ -38,7 +84,6 @@
   [x view]
   (view :init x)
   (add-watch x :update view))
-
 ;;---------------------------------
 ;; Wishful coding.
 ;;---------------------------------
