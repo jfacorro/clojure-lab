@@ -1,3 +1,4 @@
+(remove-ns 'macho.document)
 (ns macho.document
   (:refer-clojure :exclude [replace]))
 
@@ -26,18 +27,18 @@
   [doc]
   (:pah doc))
 
-(defn append
-  "Appends s to the document's content.
-  Returns the document."
-  [doc s]
-  (insert doc (length doc) s))
-
 (defn insert
   "Inserts s at the document's offset position.
   Returns the document."
   [doc offset s]
   (.insert (:text doc) offset s)
   doc)
+
+(defn append
+  "Appends s to the document's content.
+  Returns the document."
+  [doc s]
+  (insert doc (length doc) s))
 
 (defn delete
   "Delete the document's content from start to end position. 
@@ -66,9 +67,10 @@
   "Creates a new document using the name and alternate models provided."
   [doc-name & alts]
   {:pre [(not (nil? doc-name))]}
-  (let [doc   (Document. (or doc-name :new-document-title))
+  (let [doc   (Document. doc-name)
         props {:alternates alts
-               :text (StringBuffer.)}]
+               :modified   false
+               :text       (StringBuffer.)}]
     (merge doc props)))
 
 (defmacro !

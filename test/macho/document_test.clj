@@ -1,23 +1,24 @@
-(remove-ns 'macho.document-test)
 (ns macho.document-test
   (:use [clojure.test :only [deftest is run-tests]]
         macho.document)
   (:require [clojure.java.io :as io]))
 ;---------------------------
 (def ^:dynamic *untitled* "New document")
+(def tmp-file "./tmp")
+(defn new-document []
+  (make-document *untitled*))
 ;---------------------------
 (deftest document-creation
   (is (thrown? Error (make-document nil)))
-  (is (= "" (-> (make-document *untitled*) text))))
+  (is (= "" (text (new-document)))))
 ;---------------------------
 (deftest document-manipulation  
-  (let [tmp-file "./tmp"
-        content  "Temp file, should be deleted."
-        len      (count content)
+  (let [content  "Temp file, should be deleted."
         end      " Oh yes, it will!"
         middle   "Do you think so?"
+        len      (count content)
         _        (spit tmp-file content) ; create temp file
-        doc      (-> (make-document *untitled*) (bind tmp-file))]
+        doc      (bind (new-document) tmp-file)]
     (is (= content
            (text doc)))
     (is (= (str content end)
@@ -26,8 +27,10 @@
            (-> doc (insert len middle) text)))
     (is (= (str content end)
            (-> doc (delete len (+ len (count middle))) text)))
-
-    (io/delete-file tmp-file) ; delete temp file
-    (is (thrown? java.io.IOException (-> (make-document *untitled*) (bind tmp-file))))))
+    ; delete temp file
+    (io/delete-file tmp-file)))
+;---------------------------
+(deftest bind-non-existing-file
+    (is (thrown? java.io.IOException (bind (new-document) tmp-file))))
 ;---------------------------
 (run-tests)
