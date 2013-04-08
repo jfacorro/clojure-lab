@@ -1,8 +1,7 @@
 (ns macho.ui.swing.highlighter
   (:import [javax.swing.text StyleContext SimpleAttributeSet StyleConstants StyledDocument]
            [javax.swing JTextPane]
-           [java.awt Color]
-           [java.util.regex Matcher])
+           [java.awt Color])
   (:require [macho.lang.clojure :as lang :reload true]
             [macho.ui.swing.core :as util]
             [macho.ast :as ast]))
@@ -40,24 +39,6 @@ attributes values."
 
 (def ^:dynamic *syntax* (init-styles lang/syntax))
 (def ^:dynamic *higlighting* (atom false))
-
-(defn get-limits [^Matcher m]
-  "Using the regex matcher provided returns the
-start and end of the next match."
-  (when (.find m)
-    [(.start m) (.end m)]))
-
-(defn limits
-  "Returns a lazy sequence of vectors with the
-limits of the matches found in the string 
-by the regex or the Matcher provided."
-  ([^String ptrn ^String s]
-    (let [m (re-matcher (re-pattern ptrn) s)]
-      (limits m)))
-  ([^Matcher m]
-    (lazy-seq
-      (when-let [lim (get-limits m)]
-        (cons lim (limits m))))))
 
 (defn apply-style
   "Applies the given style to the text

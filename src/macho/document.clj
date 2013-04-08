@@ -1,17 +1,32 @@
-(remove-ns 'macho.document)
 (ns macho.document
-  (:refer-clojure :exclude [replace])
-  (:require [macho.buffer :as b]))
+  (:refer-clojure :exclude [replace name])
+  (:require [macho.buffer :as b]
+            [macho.misc :as util]
+            [clojure.java.io :as io]))
 
 (defrecord Document [name path modified text alternates])
 
+(defn- buffer
+  "Returns a buffer implementation."
+  [& xs]
+  (apply b/incremental-buffer xs))
+
+;-------IO operations--------
 (defn bind
   "Binds a document to a file."
   [doc path]
   (let [text   (slurp path)
-        props  {:text (b/incremental-buffer text)
-                :path path}]
+        name   (-> path io/file .getName)
+        props  {:text (buffer text)
+                :path path
+                :name name}]
     (merge doc props)))
+
+;-------Properties--------
+(defn name
+  "Returns the document's name."
+  [doc]
+  (:name doc))
 
 (defn length
   "Returns the document content's length."
@@ -28,6 +43,26 @@
   [doc]
   (:pah doc))
 
+(defn file
+  "If the document is bound to a file, then an instance
+  of this file is returned, otherwise returns nil."
+  [doc]
+  (io/file (path doc)))
+
+(defn modified?
+  "Returns true if the document was modified since 
+  it was created, opened or the last time it was saved."
+  [doc]
+  (:modified doc))
+
+(defn search
+  "Find the matches for the expression in the document
+  and returns the delimiters (index start and end) for each
+  match."
+  [doc s]
+  (util/find-limits s (text doc)))
+
+;-------Text operations--------
 (defn insert
   "Inserts s at the document's offset position.
   Returns the document."
@@ -48,18 +83,22 @@
   (into doc {:text (b/delete (:text doc) start end)
              :modified true}))
 
-(defn modified?
-  "Returns true if the document was modified since 
-  it was created, opened or the last time it was saved."
-  [doc]
-  (:modified doc))
+(defn replace
+  "Replaces all ocurrences of src with rpl."
+  [doc src rpl]
+  (let [limits (search doc src)
+        f      (fn [x [s e]]
+                 (-> x (delete s e) (insert s rpl)))]
+    (reduce f doc limits)))
 
+;----Document creation function----
 (defn document
   "Creates a new document using the name and alternate models provided."
   [doc-name & alts]
   {:pre [(not (nil? doc-name))]}
-  (Document. doc-name nil false (b/incremental-buffer) alts))
+  (Document. doc-name nil false (buffer) alts))
 
+;----Alternates----
 (defn add-alternate
   "Adds an alternate model to the document."
   [x alt-name alt]

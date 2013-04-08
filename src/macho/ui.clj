@@ -113,12 +113,12 @@ file chooser window if it's a new file."
 ;;------------------------------
 (defn find-src 
   "Shows the dialog for searching the source
-  in the current tabs."
+  in the current tab."
   [main]
   (let [txt  (current-txt main)
         s    (str/lower-case (proto/text txt))
         ptrn (ui/input-dialog (:main main) "Find" "Enter search string:")
-        lims (when ptrn (hl/limits (str/lower-case ptrn) s))]
+        lims (when ptrn (misc/find-limits (str/lower-case ptrn) s))]
     (remove-highlight txt)
     (doseq [[a b] lims] (ui/add-highlight txt a (- b a)))))
 ;;------------------------------

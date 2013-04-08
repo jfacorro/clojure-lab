@@ -17,3 +17,17 @@ taking the value from the var in the source ns."
       (let [{name-sym :name} metadata]
         (intern target name-sym (intern source name-sym))))
     (the-ns target)))
+
+;---------------------------------
+(defn find-limits
+  "Returns a lazy sequence of vectors with the
+limits of the matches found in the string 
+by the regex or the Matcher provided."
+  ([^String ptrn ^String s]
+    (let [m (re-matcher (re-pattern ptrn) s)]
+      (find-limits m)))
+  ([m]
+    (lazy-seq
+      (when-let [lim (when (.find m)
+                       [(.start m) (.end m)])]
+        (cons lim (find-limits m))))))
