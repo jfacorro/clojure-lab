@@ -1,4 +1,4 @@
-(ns macho.parser
+(ns macho.parser-test
   (:use clojure.pprint)
   (:require [net.cgrand.parsley :as p]))
 ;;---------------------------------

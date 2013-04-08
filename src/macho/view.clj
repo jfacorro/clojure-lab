@@ -10,7 +10,9 @@
       (throw (Exception. msg)))))
 
 (defmacro defview
-  "Defines a view with the operations defined in ops."
+  "Defines a view with the operations defined in ops using defview*.
+  The view contains a closure on a local binding called 'this', whose value is
+  the return value from the :create function in the ops-map."
   [name & ops]
     (let [ops-map  (->> (or ops '())
                         (reduce #(assoc %1 (-> %2 first keyword ) (concat '(fn) %2)) {}))]
@@ -20,9 +22,8 @@
 
 (defn defview*
   "Returns a view, that's actually a function which receives
-  a keyword operation from the map and the arguments. The view
-  contains a closure on a local var called 'this', whose value is
-  the return value from the :create function in the ops-map."
+  a keyword operation (from the operations map) and the arguments to
+  this operation."
   [ops-map]
   (validate-ops ops-map)
   (let [ops-map (dissoc ops-map :create)]
