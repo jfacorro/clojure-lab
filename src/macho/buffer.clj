@@ -6,7 +6,7 @@
 (defprotocol Buffer
   (insert [this offset s] "Inserts s in offset.")
   (delete [this start end] "Delete the contents of the buffer from positions start to end.")
-  (len [this] "Returns the length of the buffer.")
+  (length [this] "Returns the length of the buffer.")
   (text [this] "Returns the contents of the buffer as a string."))
 
 (defn to-string 
@@ -26,7 +26,7 @@
     (assoc this :buffer (t/edit buffer offset 0 s)))
   (delete [this start end]
     (assoc this :buffer (t/edit buffer start (- end start) "")))
-  (len [this]
+  (length [this]
     (t/len buffer))
   (text [this]
     (to-string buffer)))
@@ -52,7 +52,7 @@
     (.insert this offset s))
   (delete [this start end]
     (.delete this start end))
-  (len [this]
+  (length [this]
     (.length this))
   (text [this]
     (.toString this)))

@@ -1,6 +1,7 @@
+(remove-ns 'macho.document-test)
 (ns macho.document-test
   (:use [clojure.test :only [deftest is run-tests]]
-        macho.document)
+        [macho.document :reload true])
   (:require [clojure.java.io :as io]))
 ;---------------------------
 (defmacro ->is [x binop v & f]
@@ -12,9 +13,12 @@
   "Threading test macro that allows to use is assert expressions
   in a threading style using the ->is macro."
   [& body]
-  (let [[ops [[is-expr & args]] & more] (partition-by #(and (seq? %) (= '->is (first %))) body)
-        more (mapcat identity more)]
-    (if (= is-expr '->is)
+  (let [->is? (fn [x]
+                (and (seq? x) (= '->is (first x))))
+        ops   (take-while (complement ->is?) body)
+        [[_ & args] & more]
+              (drop-while (complement ->is?) body)]
+    (if args
       `(let [x# (-> ~@ops)]
          (->is x# ~@args)
          (->test x# ~@(when (seq more) more)))
@@ -36,18 +40,23 @@
         len      (count content)]
     (spit tmp-file content) ; create temp file
     (->test
+        ; Check new document properties
         (new-document)
-        (bind tmp-file)
-        (->is = content text)
         (->is = false modified?)
-
+        (->is = "" text)
+        (->is = 0 length)
+        ; Bind the document to a file
+        (bind tmp-file)
+        (->is = false modified?)
+        (->is = content text)
+        ; Append text to the document
         (append end)
         (->is = true modified?)
         (->is = (str content end) text)
-
+        ; Insert text in the middle
         (insert len middle)
         (->is = (str content middle end) text)
-
+        ; Delete text from the middle
         (delete len (+ len (count middle)))
         (->is = (str content end) text))
     ; delete temp file

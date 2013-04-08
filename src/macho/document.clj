@@ -13,10 +13,10 @@
                 :path path}]
     (merge doc props)))
 
-(defn len
+(defn length
   "Returns the document content's length."
   [doc]
-  (b/len (:text doc)))
+  (b/length (:text doc)))
 
 (defn text
   "Returns the document's content."
@@ -39,7 +39,7 @@
   "Appends s to the document's content.
   Returns the document."
   [doc s]
-  (insert doc (len doc) s))
+  (insert doc (length doc) s))
 
 (defn delete
   "Delete the document's content from start to end position.
