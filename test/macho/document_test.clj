@@ -69,16 +69,15 @@
     (is (thrown? java.io.IOException (bind (new-document) tmp-file))))
 ;---------------------------
 (deftest search-and-replace
-  ; Search
-  (->test
-    (new-document)
-    (append "abc\nabc\nd")
-    (search "b")
-    (->is = [[1 2] [5 6]]))
-  ; Replace
-  (->test
-    (new-document)
-    (append "abc\nabc\nd")
-    (replace "b" "1")
-    (->is = "a1c\na1c\nd" text)))
+  (let [d (append (new-document) "abc\nabc\nd")]
+    ; Search
+    (->test
+      d
+      (search "b")
+      (->is = [[1 2] [5 6]]))
+    ; Replace
+    (->test
+      d
+      (replace "b" "1")
+      (->is = "a1c\na1c\nd" text))))
 ;---------------------------

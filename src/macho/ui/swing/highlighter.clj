@@ -16,7 +16,7 @@
  
 (defn parse-attrs [stl]
   "Parses the attribute definition, replacing RGB values
-with Color instances."
+  with Color instances."
   (let [color-attr?  #(-> % key #{:foreground :background})
         rgb-to-color (fn [[k v]] [k (Color. (rgb-to-int v))])
         attrs        (->> stl (filter color-attr?) (mapcat rgb-to-color))]
@@ -24,7 +24,7 @@ with Color instances."
 
 (defn make-style [attrs]
   "Creates a new style with the given
-attributes values."
+  attributes values."
   (let [style (SimpleAttributeSet.)
         att (parse-attrs attrs)]
     (doseq [[k v] att]
@@ -42,7 +42,7 @@ attributes values."
 
 (defn apply-style
   "Applies the given style to the text
-enclosed between the strt and end positions."
+  enclosed between the strt and end positions."
   ([^StyledDocument txt ^long strt ^long end ^SimpleAttributeSet stl]
     (util/queue-action #(.setCharacterAttributes txt strt end stl true)))
   ([^JTextPane txt ^SimpleAttributeSet stl]
@@ -50,8 +50,8 @@ enclosed between the strt and end positions."
 
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
-for matches in the text-pane content applying the
-corresponding style to each match."
+  for matches in the text-pane content applying the
+  corresponding style to each match."
   (let [doc  (.getDocument txt-pane)
         len  (.getLength doc)
         text (.getText doc 0 len)
