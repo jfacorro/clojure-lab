@@ -2,7 +2,7 @@
   (:use [clojure.test :only [deftest is run-tests]]
         [macho.view]))
 ;----------------------------------------
-; defview* macro
+; defview* function
 ;----------------------------------------
 (defn create-with-defview* []
   (defview*
@@ -20,7 +20,9 @@
 
 (deftest nonexisting-op-error
   (is (thrown? Error ((create-with-defview*) :no-op))))
-
+;----------------------------------------
+; defview macro
+;----------------------------------------
 (deftest defview-fail
   (is (thrown? Exception (defview view)))
   (is (thrown? Exception (defview view
@@ -28,9 +30,7 @@
                            (this [] nil))))
   (is (thrown? Exception (defview view
                            (no-create [] 1)))))
-;----------------------------------------
-; defview macro
-;----------------------------------------
+
 (defview a-view
   (create [] 1)
   (to-str [] (str this)))

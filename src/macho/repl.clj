@@ -1,5 +1,5 @@
 (ns macho.repl
-  (:require [popen :as p]
+  (:require popen
             [leiningen.core.eval :as eval]
             [leiningen.core.project :as project]))
 
@@ -16,8 +16,8 @@ command string to launch a child process and then open it."
         main    (when-let [main (:main project)] 
                   `((require '~main) (clojure.main/repl :init #(in-ns '~main))))
         cmd     (eval/shell-command project (concat '(do) init main))
-        proc    (p/popen cmd :redirect true)]
-    (Repl. proc (p/stdin proc) (p/stdout proc))))
+        proc    (popen/popen cmd :redirect true)]
+    (Repl. proc (popen/stdin proc) (popen/stdout proc))))
 
 (defn close [repl]
-  (p/kill (:process repl)))
+  (popen/kill (:process repl)))
