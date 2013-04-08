@@ -1,26 +1,27 @@
 (remove-ns 'macho.document)
 (ns macho.document
-  (:refer-clojure :exclude [replace]))
+  (:refer-clojure :exclude [replace])
+  (:require [macho.buffer :as b]))
 
-(defrecord Document [name])
+(defrecord Document [name path modified text alternates])
 
 (defn bind
   "Binds a document to a file."
   [doc path]
   (let [text   (slurp path)
-        props  {:text (StringBuffer. text)
+        props  {:text (b/incremental-buffer text)
                 :path path}]
     (merge doc props)))
 
-(defn length
+(defn len
   "Returns the document content's length."
   [doc]
-  (.length (:text doc)))
+  (b/len (:text doc)))
 
 (defn text
   "Returns the document's content."
   [doc]
-  (str (:text doc)))
+  (b/text (:text doc)))
 
 (defn path
   "Returns the path for the binded file if any."
@@ -31,21 +32,33 @@
   "Inserts s at the document's offset position.
   Returns the document."
   [doc offset s]
-  (.insert (:text doc) offset s)
-  doc)
+  (into doc {:text (b/insert (:text doc) offset s)
+             :modified true}))
 
 (defn append
   "Appends s to the document's content.
   Returns the document."
   [doc s]
-  (insert doc (length doc) s))
+  (insert doc (len doc) s))
 
 (defn delete
-  "Delete the document's content from start to end position. 
+  "Delete the document's content from start to end position.
   Returns the document."
   [doc start end]
-  (.delete (:text doc) start end)
-  doc)
+  (into doc {:text (b/delete (:text doc) start end)
+             :modified true}))
+
+(defn modified?
+  "Returns true if the document was modified since 
+  it was created, opened or the last time it was saved."
+  [doc]
+  (:modified doc))
+
+(defn document
+  "Creates a new document using the name and alternate models provided."
+  [doc-name & alts]
+  {:pre [(not (nil? doc-name))]}
+  (Document. doc-name nil false (b/incremental-buffer) alts))
 
 (defn add-alternate
   "Adds an alternate model to the document."
@@ -59,19 +72,9 @@
   [doc alt-name]
   (-> doc :alternates alt-name))
 
-(defn all-alternatives
+(defn all-alternates
   [doc alt-name]
   (-> doc :alternates))
-
-(defn make-document
-  "Creates a new document using the name and alternate models provided."
-  [doc-name & alts]
-  {:pre [(not (nil? doc-name))]}
-  (let [doc   (Document. doc-name)
-        props {:alternates alts
-               :modified   false
-               :text       (StringBuffer.)}]
-    (merge doc props)))
 
 (defmacro !
   "Applies f to the atom x using the supplied arguments.
@@ -81,8 +84,8 @@
 
 (defn attach-view
   "Attaches a view to the document. x should be 
-  an agent/atom/var/ref reference. (Maybe it should
-  be declared in macho.view)"
+  an agent/atom/var/ref reference.
+  (Maybe it should be declared in macho.view)"
   [x view]
   (view :init x)
   (add-watch x :update view))

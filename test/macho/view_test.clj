@@ -39,4 +39,3 @@
   (is (intern 'macho.view-test 'a-view)
   (is (= "1" (a-view :to-str)))))
 ;----------------------------------------
-(run-tests)

@@ -25,5 +25,3 @@
   (is (ns-resolve (intern-vars 'macho.misc-test.ns1var 'macho.misc-test.ns2var)
                   'var-one))
   (is (= :one (deref (ns-resolve 'macho.misc-test.ns2var 'var-one)))))
-
-(run-tests)

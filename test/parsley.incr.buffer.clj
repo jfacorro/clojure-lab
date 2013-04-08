@@ -45,11 +45,10 @@
                   (r/fold cf rf (:content y)))))]
     (r/fold cf rf (:content node))))
 
-(future
   (let [file   "./src/macho/ui.clj"
         code   (slurp file)
         result (with-out-str
-                (doseq [i (range 1 100)]
+                (doseq [i (range 1)]
                   (println "#" i)
                   (let [code   (apply str (repeat i code))
                         parser (apply p/parser (assoc mp/options :make-node make-node) mp/grammar)
@@ -65,4 +64,4 @@
       (println result)
       (spit "./bla.csv" result)
     )
-)
+
