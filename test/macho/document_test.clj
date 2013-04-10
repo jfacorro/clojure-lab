@@ -66,7 +66,7 @@
     (io/delete-file tmp-file)))
 ;---------------------------
 (deftest bind-non-existing-file
-    (is (thrown? java.io.IOException (bind (new-document) tmp-file))))
+    (is (thrown? java.io.FileNotFoundException (bind (new-document) tmp-file))))
 ;---------------------------
 (deftest search-and-replace
   (let [d (append (new-document) "abc\nabc\nd")]
