@@ -15,7 +15,7 @@
 ;; TODO: ask if this is acceptable
 (misc/intern-vars 'macho.ui.swing.core)
 ;;------------------------------
-(def app-name "macho")
+(def app-name "Clojure LAB")
 (def new-doc-title "Untitled")
 (def icons-paths ["icon-16.png"
                   "icon-32.png"
@@ -399,13 +399,8 @@ its controls."
   (let [main     (ui/frame name)
         tabs     (ui/tabbed-pane)
         txt-in   (ui/text-area)
-        repl     (repl-console "./project.clj")
-        #_(
-        in       (io/reader (System/in))
-        out      (io/writer (System/out))
-        repl     {:console (ui/console in out) :process {:cin out :cout in}}
-        )
-        console  (:console repl)
+        {:keys [console] :as repl}
+                 (repl-console "./project.clj")
         pane-center-left (ui/split tabs console :vertical)
         ui-main  {:main main :tabs tabs :repl repl}
         icons    (map (comp ui/image io/resource) icons-paths)]

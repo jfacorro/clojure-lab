@@ -44,9 +44,17 @@
   "Applies the given style to the text
   enclosed between the strt and end positions."
   ([^StyledDocument txt ^long strt ^long end ^SimpleAttributeSet stl]
-    (util/queue-action #(.setCharacterAttributes txt strt end stl true)))
+    (.setCharacterAttributes txt strt end stl true))
   ([^JTextPane txt ^SimpleAttributeSet stl]
-    (util/queue-action #(.setCharacterAttributes txt stl true))))
+    (.setCharacterAttributes txt stl true)))
+
+(defn style
+  "Looks for the tag in the syntax map and extracts
+  the value for the :style key. If there's no tag element
+  then it returns the :style from :default."
+  [syntax tag]
+  (or (-> *syntax* tag :style)
+      (-> *syntax* :default :style)))
 
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
@@ -55,9 +63,11 @@
   (let [doc  (.getDocument txt-pane)
         len  (.getLength doc)
         text (.getText doc 0 len)
-        zip  (ast/build-ast text)]
-    (doseq [[strt end tag] (ast/get-limits zip)]
-      (apply-style doc strt (- end strt)
-                   (if (-> *syntax* tag)
-                     (-> *syntax* tag :style)
-                     (-> *syntax* :default :style))))))
+        zip  (ast/build-ast text)
+        limits (ast/get-limits zip)]
+    (loop [[[strt end tag] & xs] limits
+           fs []]
+      (if xs
+        (recur xs 
+               (conj fs #(apply-style doc strt (- end strt) (style *syntax* tag))))
+        (util/queue-action #(doseq[f fs] (f)))))))
