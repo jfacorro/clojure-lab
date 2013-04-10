@@ -53,8 +53,8 @@
   the value for the :style key. If there's no tag element
   then it returns the :style from :default."
   [syntax tag]
-  (or (-> *syntax* tag :style)
-      (-> *syntax* :default :style)))
+  (or (-> syntax tag :style)
+      (-> syntax :default :style)))
 
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
@@ -65,9 +65,5 @@
         text (.getText doc 0 len)
         zip  (ast/build-ast text)
         limits (ast/get-limits zip)]
-    (loop [[[strt end tag] & xs] limits
-           fs []]
-      (if xs
-        (recur xs 
-               (conj fs #(apply-style doc strt (- end strt) (style *syntax* tag))))
-        (util/queue-action #(doseq[f fs] (f)))))))
+    (doseq [[strt end tag] limits]
+      (util/queue-action #(apply-style doc strt (- end strt) (style *syntax* tag))))))
