@@ -83,7 +83,9 @@
         this)
       ([this child args]
         (.add this child args)
-        this)))
+        this))
+    (remove-all [this]
+      (.removeAll this)))
 ;;-------------------
 ;; Frame protocol implementation
 ;;-------------------
@@ -94,7 +96,24 @@
     this)
   (minize [this]
     (.setState this Frame/ICONIFIED)
-    this))
+    this)
+  proto/Composite
+    (add
+      ([this child]
+        (.add this child)
+        (.revalidate this)
+        (.repaint this)
+        this)
+      ([this child args]
+        (.add this child args)
+        (.revalidate this)
+        (.repaint this)
+        this))
+    (remove-all [this]
+      (-> this .getContentPane .removeAll)
+      (.revalidate this)
+      (.repaint this)
+      this))
 ;;-------------------
 (defn frame
   "Creates a new frame."
