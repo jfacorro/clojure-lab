@@ -94,7 +94,7 @@
 ;;------------------------------
 (defn current-path 
   "Finds the current working tab and shows a 
-file chooser window if it's a new file."
+  file chooser window if it's a new file."
   [main]
   (let [tabs (:tabs main)
         idx  (.getSelectedIndex tabs)]
@@ -124,8 +124,8 @@ file chooser window if it's a new file."
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
-search the documentation for the selected string 
-in the current document."
+  search the documentation for the selected string 
+  in the current document."
   ([main]
     (find-doc main false))
   ([main find?]
@@ -139,7 +139,7 @@ in the current document."
 ;;-------------------------------
 (defn update-line-numbers
   "Updates the numbers in the text component
-that contains the line numbers."
+  that contains the line numbers."
   [doc lines]
   (let [pos  (.getLength doc)
         root (.getDefaultRootElement doc)
@@ -162,8 +162,8 @@ that contains the line numbers."
 ;;------------------------------
 (defn find-char
   "Finds the next char in s for which pred is true, 
-starting to look from position cur, in the direction 
-specified by dt (1 or -1)."
+  starting to look from position cur, in the direction 
+  specified by dt (1 or -1)."
   [s cur pred dt]
   (cond (or (neg? cur) (<= (.length s) cur)) -1
         (pred (nth s cur)) cur
@@ -183,8 +183,8 @@ and copies the indenting for the new line."
 ;;------------------------------
 (defn handle-tab 
   "Adds tabulating characters in place 
-or at the beggining of each line if there's 
-selected text."
+  or at the beggining of each line if there's 
+  selected text."
   [txt e & shift?]
   (let [tab    "  "
         pos    (.getCaretPosition txt)
@@ -242,8 +242,8 @@ selected text."
 ;;------------------------------
 (defn check-paren
   "Checks if the characters in the caret's current
-position is a delimiter and looks for the closing/opening
-delimiter."
+  position is a delimiter and looks for the closing/opening
+  delimiter."
   [txt]
   (let [tags (atom [])]
     (fn [e]
@@ -352,6 +352,32 @@ delimiter."
         idx  (ui/get tabs :selected-index)]
     (.removeTabAt tabs idx)))
 ;;------------------------------
+(defn repl-console
+  "Creates a repl process for the leinigen project supplied,
+  attaches the stdin and stdout to a console and returns it."
+  [project-path]
+  (let [repl    (mrepl/create-repl project-path)
+        console (ui/console (:cout repl) (:cin repl) #(mrepl/close repl))]
+    {:console console :process repl}))
+;;------------------------------
+(defn file-exists [path]
+  (-> path io/file .exists))
+;;------------------------------
+(defn load-repl [ui-main]
+  (when-let [project-path (file-path-from-user "Project File")]
+    (let [{:keys [main tabs]} ui-main
+          {:keys [console] :as repl} (repl-console project-path)
+          pane                (ui/split tabs console :vertical)]
+
+      (ui/set console :font @current-font)
+
+      (-> pane
+        (ui/set :resize-weight 0.8)
+        (ui/set :divider-location 0.8))
+
+      (ui/remove-all main)
+      (ui/add main pane))))
+;;------------------------------
 (def menu-options
   [{:name "File"
     :items [{:name "New" :action new-document :keys "ctrl N"}
@@ -365,7 +391,9 @@ delimiter."
             {:name "Find" :action find-src :keys "ctrl F"}
             {:name "Find docs" :action #(find-doc % true) :keys "ctrl alt F"}
             {:name "Doc" :action find-doc :keys "alt F"}
-            {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}])
+            {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}
+   {:name "REPL"
+    :items [{:name "Load for Project" :action load-repl :keys "ctrl R"}]}])
 ;;------------------------------
 (defn build-menu
   "Builds the application's menu."
@@ -383,43 +411,23 @@ delimiter."
             (ui/add menu menu-item)))))
     menubar))
 ;;------------------------------------------
-(defn repl-console
-  "Creates a repl process for the leinigen project supplied,
-attaches the stdin and stdout to a console and returns it."
-  [project-path]
-  (let [repl    (mrepl/create-repl project-path)
-        console (ui/console (:cout repl) (:cin repl) #(mrepl/close repl))]
-    {:console console :process repl}))
-;;------------------------------------------
-(defn make-main 
+(defn make-main
   "Creates the main window and all
-its controls."
+  its controls."
   [name]
   (ui/init)
   (let [main     (ui/frame name)
         tabs     (ui/tabbed-pane)
-        txt-in   (ui/text-area)
-        {:keys [console] :as repl}
-                 (repl-console "./project.clj")
-        pane-center-left (ui/split tabs console :vertical)
-        ui-main  {:main main :tabs tabs :repl repl}
+        ui-main  {:main main :tabs tabs :repl nil}
         icons    (map (comp ui/image io/resource) icons-paths)]
-
-    ; Set controls properties
-    (-> console
-      (ui/set :font @current-font))
-
-    (-> pane-center-left
-      (ui/set :resize-weight 0.8)
-      (ui/set :divider-location 0.8))
-
+        
     (-> main
       (ui/set :icon-images icons)
-      (ui/set :size 800 600)
       (ui/set :j-menu-bar (build-menu ui-main))
+      (ui/set :size 800 600)
       (ui/maximize)
       (ui/show)
-      (ui/add pane-center-left))
+      (ui/add tabs))
 
     ui-main))
 ;;------------------------------
