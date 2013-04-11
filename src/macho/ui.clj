@@ -363,20 +363,22 @@ and copies the indenting for the new line."
 (defn file-exists [path]
   (-> path io/file .exists))
 ;;------------------------------
-(defn load-repl [ui-main]
+(defn load-repl [ui]
   (when-let [project-path (file-path-from-user "Project File")]
-    (let [{:keys [main tabs]} ui-main
+    (let [{:keys [main tabs]} ui
           {:keys [console] :as repl} (repl-console project-path)
           pane                (ui/split tabs console :vertical)]
-
       (ui/set console :font @current-font)
 
       (-> pane
         (ui/set :resize-weight 0.8)
         (ui/set :divider-location 0.8))
 
-      (ui/remove-all main)
-      (ui/add main pane))))
+      (-> main
+        ui/remove-all
+        (ui/add pane)))
+
+      (assoc ui :repl repl)))
 ;;------------------------------
 (def menu-options
   [{:name "File"
@@ -418,7 +420,7 @@ and copies the indenting for the new line."
   (ui/init)
   (let [main     (ui/frame name)
         tabs     (ui/tabbed-pane)
-        ui-main  {:main main :tabs tabs :repl nil}
+        ui-main  {:main main :tabs tabs}
         icons    (map (comp ui/image io/resource) icons-paths)]
         
     (-> main
