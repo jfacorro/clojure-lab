@@ -90,7 +90,9 @@
 (defn file-path-from-user [title]
   (let [dialog (ui/file-browser @default-dir)
         file   (ui/show dialog title)]
-    (when file (ui/get file :path))))
+    (when file 
+      (reset! default-dir (ui/get file :canonical-path))
+      (ui/get file :path))))
 ;;------------------------------
 (defn current-path 
   "Finds the current working tab and shows a 
@@ -337,7 +339,6 @@ and copies the indenting for the new line."
   [main]
   (let [path (file-path-from-user "Open")]
     (when path
-      (reset! default-dir (ui/get (io/file path) :canonical-path))
       (new-document main path (slurp path)))))
 ;;------------------------------
 (defn clear-repl 
@@ -376,9 +377,8 @@ and copies the indenting for the new line."
 
       (-> main
         ui/remove-all
-        (ui/add pane)))
-
-      (assoc ui :repl repl)))
+        (ui/add pane))
+      (assoc ui :repl repl))))
 ;;------------------------------
 (def menu-options
   [{:name "File"

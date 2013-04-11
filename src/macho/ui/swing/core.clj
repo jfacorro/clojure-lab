@@ -204,8 +204,8 @@ system and select a file."
     ([this]
       (show this ""))
     ([this title]
-      (.showDialog this nil title)
-      (.getSelectedFile this))))
+      (when (= (.showDialog this nil title) JFileChooser/APPROVE_OPTION)
+        (.getSelectedFile this)))))
 ;;-------------------
 ;; Layouts
 ;;-------------------
