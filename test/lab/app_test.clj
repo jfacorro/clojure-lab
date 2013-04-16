@@ -1,39 +1,42 @@
 (remove-ns 'lab.app-test)
 (ns lab.app-test
   (:use [lab.app :reload true]
-        [lab.util :only [!]]
+        [lab.test :only [->test ->is]]
         [clojure.test :only [deftest is run-tests]]))
 
-(defn create-app []
-  (-> {} init atom))
+(def config {})
 
 (deftest init-app
-  (let [app (create-app)]
-    (is @app)
-    (is (:workspace @app))
-    (is (:documents @app))
-    (is (nil? (:current-document @app)))))
+  (->test
+    (init config)
+
+    (->is not= nil)
+    (->is not= nil :workspace)
+    (->is not= nil :documents)
+    (->is = nil :current-document)))
 
 (deftest document-operations
-  (let [app (create-app)]
-    (! open-document app "1")
-    (is (= 1 (-> app deref :documents count)))
-    (is (:current-document @app))
-    (is (= "1" (-> app deref :current-document deref :path)))
+  (->test
+    (init config)
 
-    (! open-document app "2")
-    (is (= 2 (-> app deref :documents count)))
-    (is (= "2" (-> app deref :current-document deref :path)))
+    (open-document "1")
+    (->is = 1 (comp count :documents))
+    (->is not= nil :current-document)
+    (->is = "1" (comp :path deref :current-document))
     
-    (! switch-document app (hash "1"))
-    (is (= "1" (-> app deref :current-document deref :path)))
+    (open-document "2")
+    (->is = 2 (comp count :documents))
+    (->is = "2" (comp :path deref :current-document))
     
-    (! close-document app (hash "1"))
-    (is (= 1 (-> app deref :documents count)))
-    (is (= nil (-> app deref :current-document)))
+    (switch-document (hash "1"))
+    (->is = "1" (comp :path deref :current-document))
     
-    (! switch-document app (hash "2"))
-    (is (instance? clojure.lang.Atom (current-document app)))))
+    (close-document (hash "1"))
+    (->is = 1 (comp count :documents))
+    (->is = nil (comp :current-document))
+    
+    (switch-document (hash "2"))
+    (is (instance? clojure.lang.Atom :current-document))))
 
 (deftest project-operations
   (is false))
@@ -41,3 +44,4 @@
 (deftest workspace-operations
   (is false))
 
+(run-tests)

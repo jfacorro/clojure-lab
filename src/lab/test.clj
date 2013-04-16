@@ -1,10 +1,11 @@
-(ns lab.test)
+(ns lab.test
+  (:use [clojure.test :only [is]]))
 ;---------------------------
 (defmacro ->is
   "Rearranges its arguments in order to be
   able to use it in a ->test threading macro."
   [x binop v & f]
-  `(is (~binop ~v (-> ~x ~(or f `identity)))))
+  `(clojure.test/is (~binop ~v (-> ~x ~(or f `identity)))))
 ;---------------------------
 (defmacro ->test
   "Threading test macro that allows to use is assert expressions
