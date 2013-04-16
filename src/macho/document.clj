@@ -6,8 +6,6 @@
 
 (defrecord Document [name path modified text alternates])
 
-(defrecord ClojureDoc [name path modified text alternates])
-
 (defn- buffer
   "Returns a buffer implementation."
   [& xs]
