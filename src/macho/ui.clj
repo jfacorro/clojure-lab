@@ -36,7 +36,7 @@
         #(or (.contains (str %) name) (empty? name))
         (sort (for [m methods] (:name m)))))))
 ;;------------------------------
-(declare current-path current-txt save-src)
+(declare current-path current-txt save-document)
 ;;------------------------------
 (defn eval-in-repl
   "Evaluates the code in the specified repl. Code
@@ -68,7 +68,7 @@
     (if (or sel? (nil? path))
       (eval-in-repl (:repl main) code)
       (try
-        (save-src main)
+        (save-document main)
         (eval-in-repl (:repl main)
           `(do
             (println "Loaded file" ~path)
@@ -105,7 +105,7 @@
         (when (not= path new-doc-title)
           path)))))
 ;;------------------------------
-(defn save-src [main]
+(defn save-document [main]
   (let [tabs     (:tabs main)
         txt-code (current-txt main)
         path     (or (current-path main) (file-path-from-user "Save"))]
@@ -346,7 +346,7 @@ and copies the indenting for the new line."
   [main]
   (.setText (:repl main) nil))
 ;;------------------------------
-(defn close
+(defn close-document
   "Close the current tab."
   [main]
   (let [tabs (:tabs main)
@@ -384,8 +384,8 @@ and copies the indenting for the new line."
   [{:name "File"
     :items [{:name "New" :action new-document :keys "ctrl N"}
             {:name "Open" :action open-document :keys "ctrl O"}
-            {:name "Save" :action save-src :keys "ctrl S"}
-            {:name "Close" :action close :keys "ctrl W"}
+            {:name "Save" :action save-document :keys "ctrl S"}
+            {:name "Close" :action close-document :keys "ctrl W"}
             {:separator true}
             {:name "Exit" :action #(do % (System/exit 0)) :keys "alt X"}]}
    {:name "Code"
