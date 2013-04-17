@@ -57,13 +57,8 @@ check if its one of the registered symbols."
               :deref ["@" :expr]
               :fn ["#(" :expr* ")"]])
 ;;---------------------------------
-(def ^{:doc ""} parse (apply p/parser options grammar))
+(def parse (apply p/parser options grammar))
 ;;---------------------------------
 (defn make-buffer [p]
   (p/incremental-buffer p))
-;;---------------------------------
-#_(let [code (slurp ".\\src\\macho\\parser.clj")
-      ; code "(println #\"regex\" \"string\" #{})"
-      tree (time (parse code))]
-  (pprint tree))
 ;;---------------------------------
