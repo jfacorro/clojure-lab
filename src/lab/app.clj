@@ -63,10 +63,19 @@
     (pj/save p))
   app)
 
-(defn load-extensions [{config :config :as app}]
+(defn load-extensions
+  "Loads all files from the extension path specified in 
+  the config map."
+  [{config :config :as app}]
   app)
 
-(defn load-languages [{config :config :as app}]
+(defn load-languages
+  "Loads languages from the path specified in the config map.
+  Returns a map with the name of the languages as the keys and 
+  the definitions as the values. Each language should define a 
+  parsley grammar, a default file extension association and some
+  other details."
+  [{config :config :as app}]
   app)
 
 (defn init
