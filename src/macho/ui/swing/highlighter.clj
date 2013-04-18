@@ -56,6 +56,17 @@
   (or (-> syntax tag :style)
       (-> syntax :default :style)))
 
+(defn visible-region [txt]
+  (let [view-port (.. txt getParent getParent)
+        rect      (. view-port getViewRect)
+        p         (. rect getLocation)
+        start     (. txt viewToModel p)
+        w         (. rect width)
+        h         (. rect height)
+        _         (. p setLocation (+ w (.x p)) (+ h (.y p)))
+        end       (. txt viewToModel p)]
+    [start end]))
+
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
   for matches in the text-pane content applying the
@@ -64,6 +75,10 @@
         len  (.getLength doc)
         text (.getText doc 0 len)
         zip  (ast/build-ast text)
-        limits (ast/get-limits zip)]
-    (doseq [[strt end tag] limits]
-      (util/queue-action #(apply-style doc strt (- end strt) (style *syntax* tag))))))
+        [start end] (visible-region txt-pane)
+        f      (fn [[x y _]]
+                 (and (< start x) (< y end)))
+        limits (filter f (ast/get-limits zip))]
+    (util/queue-action 
+      #(doseq [[strt end tag] limits]
+        (apply-style doc strt (- end strt) (style *syntax* tag))))))
