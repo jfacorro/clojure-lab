@@ -12,7 +12,7 @@
 
 (defn rgb-to-int [rgb]
   "Converts a RGB triple to a single int value."
-  (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
+  (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb)))) 
  
 (defn parse-attrs [stl]
   "Parses the attribute definition, replacing RGB values
@@ -56,7 +56,10 @@
   (or (-> syntax tag :style)
       (-> syntax :default :style)))
 
-(defn visible-region [txt]
+(defn visible-region
+  "Determines the lines that are currently visible
+  in the text component."
+  [txt]
   (let [view-port (.. txt getParent getParent)
         rect      (. view-port getViewRect)
         p         (. rect getLocation)
@@ -75,10 +78,7 @@
         len  (.getLength doc)
         text (.getText doc 0 len)
         zip  (ast/build-ast text)
-        [start end] (visible-region txt-pane)
-        f      (fn [[x y _]]
-                 (and (< start x) (< y end)))
-        limits (filter f (ast/get-limits zip))]
+        limits (ast/get-limits zip)]
     (util/queue-action 
       #(doseq [[strt end tag] limits]
         (apply-style doc strt (- end strt) (style *syntax* tag))))))
