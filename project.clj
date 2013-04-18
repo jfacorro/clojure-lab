@@ -1,6 +1,6 @@
-(defproject macho "1.0.0-SNAPSHOT"
+(defproject macho "0.0.1-SNAPSHOT"
   :description "macho (minimal advanced clojure hacking optimizer)"
-  :dependencies [[org.clojure/clojure "1.5.0"]
+  :dependencies [[org.clojure/clojure "1.5.1"]
                  [net.cgrand/parsley "0.9.1"]
                  [popen "0.2.0"]
                  [leiningen "2.0.0"]
