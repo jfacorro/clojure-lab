@@ -1,27 +1,17 @@
 (ns poc.ui
   "Trying to define a DSL to abstract the UI
   components with Clojure data structures."
-  (:require [poc.ui.protocols :as ui]
-            [poc.ui.swing]))
+  (:require [poc.ui.protocols :as ui :reload true]
+            [poc.ui.swing :reload true]))
 
 (def menu
-  {:tag     :menu-bar
-   :content [{:tag :menu
-              :title "File"
-              :content [{:tag :menu-item :title "New" }
-                        {:tag :menu-item :title "Open"}]}]})
-       
-(def text {:tag  :text-editor
-           :text "Bla"})
-           
-(def tabs {:tag     :tabs
-           :content [text]})
-
-(def main {:tag     :window
-           :title   "UI DSL"
-           :size    [500 500]
-           :menu    menu
-           :content [tabs]})
+  (ui/menu-bar [(ui/menu {:text "File"} 
+                         [(ui/menu-item {:text "New"}) 
+                          (ui/menu-item {:text "Open"})])]))
+(def text (ui/text-editor {:text "Some text in the text editor. Oh yeah!"}))
+(def tabs (ui/tabs [text]))
+(def main (ui/window {:title "Clojure Lab" :size [500 300] :menu menu :visible true}
+                     [tabs]))
 
 (defn init []
-  (-> main ui/create-component))
+  (ui/init main))
