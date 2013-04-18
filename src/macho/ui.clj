@@ -404,7 +404,7 @@ and copies the indenting for the new line."
             {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}
    {:name "REPL"
     :items [{:name "Clojure" :action load-repl :keys "ctrl R"}
-            {:name "Load for Project" :action load-project-repl :keys "ctrl shift R"}]}])
+            {:name "Project" :action load-project-repl :keys "ctrl shift R"}]}])
 ;;------------------------------
 (defn build-menu
   "Builds the application's menu."
