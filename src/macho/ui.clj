@@ -356,29 +356,37 @@ and copies the indenting for the new line."
 (defn repl-console
   "Creates a repl process for the leinigen project supplied,
   attaches the stdin and stdout to a console and returns it."
-  [project-path]
-  (let [repl    (mrepl/create-repl project-path)
-        console (ui/console (:cout repl) (:cin repl) #(mrepl/close repl))]
-    {:console console :process repl}))
+  [{:keys [cout cin] :as repl-proc}]
+  (let [console (ui/console cout cin #(mrepl/close repl-proc))]
+    {:console console :process repl-proc}))
 ;;------------------------------
-(defn file-exists [path]
-  (-> path io/file .exists))
+(defn add-repl
+  "Adds a repl console to the bottom half."
+  [{:keys [main tabs] :as ui} 
+   {:keys [console] :as repl}]
+  (let [pane (ui/split tabs console :vertical)]
+    (ui/set console :font @current-font)
+    (-> pane
+      (ui/set :resize-weight 0.8)
+      (ui/set :divider-location 0.8))
+    (-> main
+      ui/remove-all
+      (ui/add pane))
+    (assoc ui :repl repl)))
 ;;------------------------------
-(defn load-repl [ui]
+(defn load-project-repl
+  [ui]
   (when-let [project-path (file-path-from-user "Project File")]
-    (let [{:keys [main tabs]} ui
-          {:keys [console] :as repl} (repl-console project-path)
-          pane                (ui/split tabs console :vertical)]
-      (ui/set console :font @current-font)
-
-      (-> pane
-        (ui/set :resize-weight 0.8)
-        (ui/set :divider-location 0.8))
-
-      (-> main
-        ui/remove-all
-        (ui/add pane))
-      (assoc ui :repl repl))))
+    (->> project-path 
+      mrepl/create-project-repl 
+      repl-console 
+      (add-repl ui))))
+;;------------------------------
+(defn load-repl
+  [ui]
+  (->> (mrepl/create-repl)
+    repl-console 
+    (add-repl ui)))
 ;;------------------------------
 (def menu-options
   [{:name "File"
@@ -395,7 +403,8 @@ and copies the indenting for the new line."
             {:name "Doc" :action find-doc :keys "alt F"}
             {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}
    {:name "REPL"
-    :items [{:name "Load for Project" :action load-repl :keys "ctrl R"}]}])
+    :items [{:name "Clojure" :action load-repl :keys "ctrl R"}
+            {:name "Load for Project" :action load-project-repl :keys "ctrl shift R"}]}])
 ;;------------------------------
 (defn build-menu
   "Builds the application's menu."
