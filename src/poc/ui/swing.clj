@@ -6,10 +6,41 @@
 (extend-protocol Component
   java.awt.Container
   (add [this child]
-    (.add this child))
+    (.add this child)
+    this)
   javax.swing.JTabbedPane
   (add [this child]
-    (.add this child)))
+    (.addTab this (str child) child)
+    this)
+  javax.swing.JScrollPane
+  (add [this child]
+    (.. this getViewport (add child nil))
+    this))
+
+;;-------------------
+;; Implementation create map
+;;-------------------
+(def create-map
+ {:window      javax.swing.JFrame
+  :menu-bar    javax.swing.JMenuBar
+  :menu        javax.swing.JMenu
+  :menu-item   javax.swing.JMenuItem
+  :tabs        javax.swing.JTabbedPane
+  :tab         javax.swing.JScrollPane
+  :scroll      javax.swing.JScrollPane
+  :text-editor javax.swing.JTextPane})
+
+(defmacro create-all-implementations []
+  `(do
+    ~@(for [[k c] create-map]
+      (if (class? c)
+        `(defmethod create ~k [~'_] (new ~c))
+        `(defmethod create ~k [~'_] (~c))))))
+
+(create-all-implementations)
+
+(defn border-layout []
+  (java.awt.BorderLayout.))
 
 ;;-------------------
 ;; Setter & Getters
@@ -25,44 +56,27 @@
 (defn- property-accesor [op prop]
   (symbol (str (name op) (-> prop name capitalize))))
 ;;-------------------
-(defn setter [prop n]
+(defn setter
+  "Generate a setter interop function that takes n arguments."
+  [prop n]
   (let [args (take n (repeatedly gensym))]
     (eval `(fn [x# ~@args] (. x# ~(property-accesor :set prop) ~@args)))))
 
-(defmacro getter [prop]
+(defmacro getter
+  "Generate a getter interop function."
+  [prop]
   (eval `(fn [x#] (. x# ~(property-accesor :get prop)))))
-
 
 (defmethod set-attr :default
   [c k args]
-  (let [ctrl  (impl c)
-        args  (if (sequential? args) args [args])
-        n     (count args)]
-    (apply (setter k n) ctrl args)))
+  (let [ctrl     (impl c)
+        args-seq (if (sequential? args) args [args])
+        n        (count args-seq)]
+    (apply (setter k n) ctrl args-seq)
+    (assoc-in c [:attrs k] args)))
 
 ;; Window
-(defmethod create :window
-  [component]
-  (javax.swing.JFrame.))
-
 (defmethod set-attr [:window :menu]
   [c _ menu]
-  (set-attr c :j-menu-bar (impl menu)))
-
-;; Menu Components
-(defmethod create :menu-bar [component]
-  (javax.swing.JMenuBar.))
-  
-(defmethod create :menu [component]
-  (javax.swing.JMenu.))
-
-(defmethod create :menu-item [component]
-  (javax.swing.JMenuItem.))
-  
-;; Tabbed Component
-(defmethod create :tabs [component]
-  (javax.swing.JTabbedPane.))
-
-;; Text Editor
-(defmethod create :text-editor [component]
-  (javax.swing.JTextPane.))
+  (.setJMenuBar (impl c) (impl menu))
+  (assoc-in c [:attrs :menu] menu))
