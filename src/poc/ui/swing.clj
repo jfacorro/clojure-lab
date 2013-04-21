@@ -45,10 +45,6 @@
   [component]
   (javax.swing.JFrame.))
 
-#_(defmethod set-attr [:window :size]
-  [c _ [width height]]
-  (.setSize (impl c) width height))
-
 (defmethod set-attr [:window :menu]
   [c _ menu]
   (set-attr c :j-menu-bar (impl menu)))

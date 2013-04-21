@@ -10,7 +10,10 @@
                           (ui/menu-item {:text "Open"})])]))
 (def text (ui/text-editor {:text "Some text in the text editor. Oh yeah!"}))
 (def tabs (ui/tabs [text]))
-(def main (ui/window {:title "Clojure Lab" :size [500 300] :menu menu :visible true}
+(def main (ui/window {:title   "Clojure Lab" 
+                      :size    [500 300]
+                      :menu    menu
+                      :visible true}
                      [tabs]))
 
 (defn init []
