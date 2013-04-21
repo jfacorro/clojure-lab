@@ -43,5 +43,3 @@
 
 (deftest workspace-operations
   (is false))
-
-(run-tests)
