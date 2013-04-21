@@ -75,7 +75,8 @@
             (println (load-file ~path)))
           :echo false)
         (catch Exception ex
-          (repl/pst ex))))))
+          (repl/pst ex)))))
+  main)
 ;;------------------------------
 (defn current-txt
   "Gets the current active text control."
@@ -111,7 +112,8 @@
         path     (or (current-path main) (file-path-from-user "Save"))]
     (when (and txt-code path)
       (spit path (proto/text txt-code))
-      (.setTitleAt tabs (.getSelectedIndex tabs) path))))
+      (.setTitleAt tabs (.getSelectedIndex tabs) path)))
+  main)
 ;;------------------------------
 (defn find-src 
   "Shows the dialog for searching the source
@@ -122,7 +124,8 @@
         ptrn (ui/input-dialog (:main main) "Find" "Enter search string:")
         lims (when ptrn (misc/find-limits (str/lower-case ptrn) s))]
     (remove-highlight txt)
-    (doseq [[a b] lims] (ui/add-highlight txt a (- b a)))))
+    (doseq [[a b] lims] (ui/add-highlight txt a (- b a))))
+  main)
 ;;------------------------------
 (defn find-doc 
   "Uses the clojure.repl/find-doc function to
@@ -331,27 +334,30 @@ and copies the indenting for the new line."
         (.setBackground (ui/color 64))
         (.setCaretPosition 0)
         (.grabFocus))
-        
-      txt-code)))
+
+      main)))
 ;;------------------------------
 (defn open-document
   "Open source file."
   [main]
   (let [path (file-path-from-user "Open")]
-    (when path
-      (new-document main path (slurp path)))))
+    (if path
+      (new-document main path (slurp path))
+      main)))
 ;;------------------------------
 (defn clear-repl 
   "Deletes the text content in the current repl."
   [main]
-  (.setText (:repl main) nil))
+  (.setText (:repl main) nil)
+  main)
 ;;------------------------------
 (defn close-document
   "Close the current tab."
   [main]
   (let [tabs (:tabs main)
         idx  (ui/get tabs :selected-index)]
-    (.removeTabAt tabs idx)))
+    (.removeTabAt tabs idx)
+    main))
 ;;------------------------------
 (defn repl-console
   "Creates a repl process for the leinigen project supplied,
@@ -362,8 +368,10 @@ and copies the indenting for the new line."
 ;;------------------------------
 (defn add-repl
   "Adds a repl console to the bottom half."
-  [{:keys [main tabs] :as ui} 
-   {:keys [console] :as repl}]
+  [{:keys [main tabs repl] :as ui} 
+   {:keys [console] :as new-repl}]
+  (when repl
+    (mrepl/close (:process repl)))
   (let [pane (ui/split tabs console :vertical)]
     (ui/set console :font @current-font)
     (-> pane
@@ -372,7 +380,7 @@ and copies the indenting for the new line."
     (-> main
       ui/remove-all
       (ui/add pane))
-    (assoc ui :repl repl)))
+    (assoc ui :repl new-repl)))
 ;;------------------------------
 (defn load-project-repl
   [ui]
@@ -406,6 +414,14 @@ and copies the indenting for the new line."
     :items [{:name "Clojure" :action load-repl :keys "ctrl R"}
             {:name "Project" :action load-project-repl :keys "ctrl shift R"}]}])
 ;;------------------------------
+(defn ui-process
+  "Returns a function that calls (f main) and
+  returns the value of this call only if it is not nil,
+  otherwise returns main."
+  [f]
+  (fn [main]
+    (or (f main) main)))
+;;------------------------------
 (defn build-menu
   "Builds the application's menu."
   [main]
@@ -417,7 +433,7 @@ and copies the indenting for the new line."
           (let [menu-item (or (and separator (ui/menu-separator))
                               (ui/menu-item item-name))]
             (when (not separator)
-              (ui/on :click menu-item #(f main))
+              (ui/on :click menu-item #(swap! main (ui-process f)))
               (ui/set menu-item :accelerator (ui/key-stroke ks)))
             (ui/add menu menu-item)))))
     menubar))
@@ -429,7 +445,7 @@ and copies the indenting for the new line."
   (ui/init)
   (let [main     (ui/frame name)
         tabs     (ui/tabbed-pane)
-        ui-main  {:main main :tabs tabs}
+        ui-main  (atom {:main main :tabs tabs})
         icons    (map (comp ui/image io/resource) icons-paths)]
         
     (-> main
