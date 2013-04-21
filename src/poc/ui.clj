@@ -23,9 +23,5 @@
                       :visible true}
                      [tabs]))
 
-;(ui/init (ui/window :visible true :size [500 300] :content [(ui/scroll [(ui/text-editor)])]))
-
 (defn init []
   (ui/init main))
-  
-(init)
