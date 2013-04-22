@@ -1,7 +1,7 @@
-(ns lab.app
-  (:require [lab.workspace :as ws])
-  (:require [lab.project :as pj])
-  (:require [lab.document :as doc]))
+(ns lab.model.app
+  (:require [lab.model.workspace :as ws])
+  (:require [lab.model.project :as pj])
+  (:require [lab.model.document :as doc]))
 
 (defrecord App [config workspace documents current-document])
 

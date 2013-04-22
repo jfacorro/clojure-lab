@@ -1,4 +1,4 @@
-(ns lab.project)
+(ns lab.model.project)
 
 (defn save [p]
   p)
