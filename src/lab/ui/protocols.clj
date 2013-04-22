@@ -1,4 +1,4 @@
-(ns poc.ui.protocols)
+(ns lab.ui.protocols)
 
 (defprotocol Component
   (add [this child] "Add a child to a component. Must return the parent wuth the child added."))

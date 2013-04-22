@@ -1,5 +1,5 @@
-(ns poc.ui.core
-  (:use [poc.ui.protocols :only [Component Abstract add set-attr create impl]]))
+(ns lab.ui.core
+  (:use [lab.ui.protocols :only [Component Abstract add set-attr create impl]]))
 
 (extend-type clojure.lang.IPersistentMap
   Component ; Extend Clojure maps so that adding children is transparent.

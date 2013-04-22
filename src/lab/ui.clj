@@ -1,8 +1,8 @@
-(ns poc.ui
+(ns lab.ui
   "Trying to define a DSL to abstract the UI
   components with Clojure data structures."
-  (:require [poc.ui.core :as ui]
-            [poc.ui.swing :as swing]))
+  (:require [lab.ui.core :as ui]
+            [lab.ui.swing :as swing]))
 
 (def menu
   (ui/menu-bar [(ui/menu {:text "File"}
