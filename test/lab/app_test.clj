@@ -22,20 +22,20 @@
     (open-document "1")
     (->is = 1 (comp count :documents))
     (->is not= nil :current-document)
-    (->is = "1" (comp :path deref :current-document))
+    (->is = "1" (comp :name deref :current-document))
     
     (open-document "2")
     (->is = 2 (comp count :documents))
-    (->is = "2" (comp :path deref :current-document))
+    (->is = "2" (comp :name deref :current-document))
     
-    (switch-document (hash "1"))
-    (->is = "1" (comp :path deref :current-document))
+    (switch-document "1")
+    (->is = "1" (comp :name deref :current-document))
     
-    (close-document (hash "1"))
+    (close-document "1")
     (->is = 1 (comp count :documents))
     (->is = nil (comp :current-document))
     
-    (switch-document (hash "2"))
+    (switch-document "2")
     (is (instance? clojure.lang.Atom :current-document))))
 
 (deftest project-operations

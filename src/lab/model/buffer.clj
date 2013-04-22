@@ -1,4 +1,4 @@
-(ns macho.buffer
+(ns lab.model.buffer
   "Provides a protocol interface for different text buffer 
   implementations."
   (:require [net.cgrand.parsley.tree :as t]))

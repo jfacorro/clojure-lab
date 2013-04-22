@@ -1,7 +1,7 @@
-(ns macho.document-test
+(ns lab.document-test
   (:refer-clojure :exclude [name replace])
   (:use [clojure.test :only [deftest is run-tests]]
-        macho.document)
+        lab.model.document)
   (:require [clojure.java.io :as io]))
 ;---------------------------
 (defmacro ->is

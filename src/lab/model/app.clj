@@ -1,4 +1,5 @@
 (ns lab.model.app
+  (:refer-clojure :exclude [name])
   (:require [lab.model.workspace :as ws])
   (:require [lab.model.project :as pj])
   (:require [lab.model.document :as doc]))
@@ -16,27 +17,27 @@
   and adds it to the openened documents map."
   [{documents :documents :as app} path]
   (let [doc (atom (doc/document path))
-        id  (:id @doc)]
-    (if (documents id)
+        name   (:name @doc)]
+    (if (documents name)
       app
-      (assoc app :documents (assoc documents id doc)
+      (assoc app :documents (assoc documents name doc)
                  :current-document doc))))
 
 (defn close-document
   "Closes a document and removes it from the opened
   documents collection."
-  [{documents :documents current :current-document :as app} id]
-  (let [doc     (documents id)
+  [{documents :documents current :current-document :as app} name]
+  (let [doc     (documents name)
         current (when (not= current doc) current)]
     (when doc
       (doc/close doc))
-    (assoc app :documents (dissoc documents id)
+    (assoc app :documents (dissoc documents name)
                :current-document current)))
 
 (defn save-document
   "Saves a document to a file."
-  [{documents :documents :as app} id]
-  (let [doc (documents id)]
+  [{documents :documents :as app} name]
+  (let [doc (documents name)]
     (when doc
       (doc/save doc)))
   app)
@@ -44,8 +45,8 @@
 (defn switch-document
   "Changes the current document to the one with the
   specified id."
-  [{documents :documents :as app} id]
-  (let [doc (documents id)]
+  [{documents :documents :as app} name]
+  (let [doc (documents name)]
     (or (and doc (assoc app :current-document doc))
         app)))
 
@@ -58,8 +59,8 @@
 
 (defn save-project
   "Saves the project to its associated file."
-  [{ws :workspace :as app} id]
-  (let [p (ws/get-project ws id)]
+  [{ws :workspace :as app} name]
+  (let [p (ws/get-project ws name)]
     (pj/save p))
   app)
 
