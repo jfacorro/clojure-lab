@@ -1,18 +1,17 @@
-(remove-ns 'poc.ui)
 (ns poc.ui
   "Trying to define a DSL to abstract the UI
   components with Clojure data structures."
-  (:require [poc.ui.protocols :as ui :reload true]
-            [poc.ui.swing :as swing :reload true]))
+  (:require [poc.ui.core :as ui]
+            [poc.ui.swing :as swing]))
 
 (def menu
   (ui/menu-bar [(ui/menu {:text "File"}
                          [(ui/menu-item :text "New!")
                           (ui/menu-item :text "Open")])]))
 
-(def text (ui/text-editor :text "Some text in the text editor. Oh yeah!"))
+(def text (ui/text-editor))
 
-(def tab (ui/tab [text]))
+(def tab (ui/tab :content [text]))
 
 (def tabs (ui/tabs [tab]))
 

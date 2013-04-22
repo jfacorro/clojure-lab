@@ -1,6 +1,7 @@
 (remove-ns 'poc.ui.swing)
 (ns poc.ui.swing
-  (:use [poc.ui.protocols :only [Component create set-attr impl]])
+  (:use [poc.ui.protocols :only [Component create set-attr impl]]
+        poc.ui.core)
   (:require [clojure.string :as str]))
 
 (extend-protocol Component
