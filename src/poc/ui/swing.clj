@@ -10,7 +10,7 @@
     this)
   javax.swing.JTabbedPane
   (add [this child]
-    (.addTab this (str child) child)
+    (.addTab this "" child)
     this)
   javax.swing.JScrollPane
   (add [this child]
@@ -27,7 +27,6 @@
   :menu-item   javax.swing.JMenuItem
   :tabs        javax.swing.JTabbedPane
   :tab         javax.swing.JScrollPane
-  :scroll      javax.swing.JScrollPane
   :text-editor javax.swing.JTextPane})
 
 (defmacro create-all-implementations []
@@ -38,9 +37,6 @@
         `(defmethod create ~k [~'_] (~c))))))
 
 (create-all-implementations)
-
-(defn border-layout []
-  (java.awt.BorderLayout.))
 
 ;;-------------------
 ;; Setter & Getters
@@ -75,7 +71,9 @@
     (apply (setter k n) ctrl args-seq)
     (assoc-in c [:attrs k] args)))
 
-;; Window
+;;-------------------
+;; window attributes
+;;-------------------
 (defmethod set-attr [:window :menu]
   [c _ menu]
   (.setJMenuBar (impl c) (impl menu))
