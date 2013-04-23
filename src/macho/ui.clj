@@ -386,14 +386,20 @@ and copies the indenting for the new line."
   [ui]
   (when-let [project-path (file-path-from-user "Project File")]
     (->> project-path 
-      mrepl/create-project-repl 
+      mrepl/create
       repl-console 
       (add-repl ui))))
 ;;------------------------------
 (defn load-repl
   [ui]
-  (->> (mrepl/create-repl)
+  (->> (mrepl/create)
     repl-console 
+    (add-repl ui)))
+;;------------------------------
+(defn load-lab-repl
+  [ui]
+  (->> (mrepl/lab-repl)
+    repl-console
     (add-repl ui)))
 ;;------------------------------
 (def menu-options
@@ -411,7 +417,8 @@ and copies the indenting for the new line."
             {:name "Doc" :action find-doc :keys "alt F"}
             {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}
    {:name "REPL"
-    :items [{:name "Clojure" :action load-repl :keys "ctrl R"}
+    :items [{:name "Lab" :action load-lab-repl :keys "ctrl alt shift R"}
+            {:name "Clojure" :action load-repl :keys "ctrl R"}
             {:name "Project" :action load-project-repl :keys "ctrl shift R"}]}])
 ;;------------------------------
 (defn ui-process
