@@ -1,7 +1,9 @@
 (ns macho.repl
   (:require popen
             [leiningen.core.eval :as eval]
-            [leiningen.core.project :as project]))
+            [leiningen.core.project :as project]
+            [clojure.java.io :as io])
+  (:import  [java.io PipedOutputStream PipedInputStream ByteArrayOutputStream]))
 
 (defrecord Repl [process cin cout])
 
@@ -30,12 +32,22 @@
     (let [proc (popen/popen clojure-repl-cmd :redirect true)]
       (Repl. proc (popen/stdin proc) (popen/stdout proc)))))
 
-(defn lab-repl []
-  (let [thrd (Thread. clojure.main/repl)]
+(defn lab-repl 
+  "Creates a new thread that fires up a thread
+  that calls clojure.main/repl, with new bindings
+  for *out* an *in*."
+  []
+  (print "lab-repl")
+  (let [cout (-> (ByteArrayOutputStream.) io/writer)
+        cin  (-> (PipedOutputStream.) PipedInputStream. io/reader)
+        thrd (binding [*out* cout *in* cin]
+               (Thread. (bound-fn [] (println "bla") (clojure.main/repl))))]
     (.start thrd)
-    (Repl. thrd *out* *in*)))
+    (Repl. thrd cout cin)))
 
-(defn close [{proc :process :as repl}]
+(defn close
+  "Terminates a REPL process or thread."
+  [{proc :process :as repl}]
   (cond (instance? Thread proc)
           (.stop proc)
         :else

@@ -262,8 +262,9 @@ following keywords:
   (let [style (reduce bit-and (map font-styles ms))]
     (Font. s style n)))
 ;;-------------------
-(defn console [cin cout & close-repl-fn]
-  (JConsole. )
+(defn console
+  "Creates an instance of a console control."
+  [cin cout & close-repl-fn]
   (proxy [JConsole] [cin cout]
     (dispose []
       (when close-repl-fn
