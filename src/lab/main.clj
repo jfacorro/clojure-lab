@@ -5,7 +5,7 @@
   (:gen-class [:name lab.main
                :main true]))
 ;;------------------------------
-(def default-configuration 
+(def default-configuration
   {:name "Clojure Lab"
    :extension-folder "extensions"
    :languages-folder "languages"})

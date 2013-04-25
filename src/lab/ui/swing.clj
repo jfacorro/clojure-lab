@@ -52,7 +52,7 @@
 (defn- property-accesor [op prop]
   (symbol (str (name op) (-> prop name capitalize))))
 ;;-------------------
-(defn setter
+(defn setter!
   "Generate a setter interop function that takes n arguments."
   [prop n]
   (let [args (take n (repeatedly gensym))]
@@ -62,15 +62,14 @@
   "Generate a getter interop function."
   [prop]
   (eval `(fn [x#] (. x# ~(property-accesor :get prop)))))
-
+;;-------------------
 (defmethod set-attr :default
   [c k args]
   (let [ctrl     (impl c)
         args-seq (if (sequential? args) args [args])
         n        (count args-seq)]
-    (apply (setter k n) ctrl args-seq)
+    (apply (setter! k n) ctrl args-seq)
     (assoc-in c [:attrs k] args)))
-
 ;;-------------------
 ;; window attributes
 ;;-------------------

@@ -21,7 +21,5 @@
                       :visible true}
                      [tabs]))
 
-(defn init []
+(defn init [app]
   (ui/init main))
-
-(init)

@@ -1,4 +1,4 @@
-(ns lab.model.app
+(ns lab.app
   (:refer-clojure :exclude [name])
   (:require [lab.model.workspace :as ws])
   (:require [lab.model.project :as pj])
