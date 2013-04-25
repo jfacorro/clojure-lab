@@ -1,43 +1,45 @@
 (ns lab.ui.swing
+  (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane JScrollPane JTextPane])
   (:use [lab.ui.protocols :only [Component create set-attr impl]]
         lab.ui.core)
   (:require [clojure.string :as str]))
-
+;;------------------- 
+(UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+;;-------------------
 (extend-protocol Component
   java.awt.Container
   (add [this child]
     (.add this child)
     this)
-  javax.swing.JTabbedPane
+  JTabbedPane
   (add [this child]
     (.addTab this "" child)
     this)
-  javax.swing.JScrollPane
+  JScrollPane
   (add [this child]
     (.. this getViewport (add child nil))
     this))
-
 ;;-------------------
-;; Implementation create map
+;; create - multimethod
 ;;-------------------
-(def create-map
- {:window      javax.swing.JFrame
-  :menu-bar    javax.swing.JMenuBar
-  :menu        javax.swing.JMenu
-  :menu-item   javax.swing.JMenuItem
-  :tabs        javax.swing.JTabbedPane
-  :tab         javax.swing.JScrollPane
-  :text-editor javax.swing.JTextPane})
-
-(defmacro create-all-implementations []
+(defmacro defmethods-create
+  "Generates all the multimethod implementations
+  for each of the entries in the map m."
+  [& {:as m}]
   `(do
-    ~@(for [[k c] create-map]
-      (if (class? c)
+    ~@(for [[k c] m]
+      (if (-> c resolve class?)
         `(defmethod create ~k [~'_] (new ~c))
         `(defmethod create ~k [~'_] (~c))))))
 
-(create-all-implementations)
-
+(defmethods-create
+  :window      JFrame
+  :menu-bar    JMenuBar
+  :menu        JMenu
+  :menu-item   JMenuItem
+  :tabs        JTabbedPane
+  :tab         JScrollPane
+  :text-editor JTextPane)
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
