@@ -3,7 +3,8 @@
             [leiningen.core.eval :as eval]
             [leiningen.core.project :as project]
             [clojure.java.io :as io])
-  (:import  [java.io PipedOutputStream PipedInputStream ByteArrayOutputStream]))
+  (:import  [java.io PipedOutputStream PipedInputStream]
+            [clojure.lang LineNumberingPushbackReader]))
 
 (defrecord Repl [process cin cout])
 
@@ -38,10 +39,14 @@
   for *out* an *in*."
   []
   (print "lab-repl")
-  (let [cout (-> (ByteArrayOutputStream.) io/writer)
-        cin  (-> (PipedOutputStream.) PipedInputStream. io/reader)
-        thrd (binding [*out* cout *in* cin]
-               (Thread. (bound-fn [] (println "bla") (clojure.main/repl))))]
+  (let [thrd-out  (PipedOutputStream.)
+        aux-out   (PipedOutputStream.)
+        out       (io/writer thrd-out)
+        in        (-> aux-out PipedInputStream. io/reader LineNumberingPushbackReader.)
+        cout      (io/writer aux-out)
+        cin       (-> thrd-out PipedInputStream. io/reader)
+        thrd (binding [*out* out *in* in *err* out]
+               (Thread. (bound-fn [] (clojure.main/repl))))]
     (.start thrd)
     (Repl. thrd cout cin)))
 
