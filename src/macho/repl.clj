@@ -38,15 +38,16 @@
   that calls clojure.main/repl, with new bindings
   for *out* an *in*."
   []
-  (print "lab-repl")
   (let [thrd-out  (PipedOutputStream.)
         aux-out   (PipedOutputStream.)
         out       (io/writer thrd-out)
         in        (-> aux-out PipedInputStream. io/reader LineNumberingPushbackReader.)
         cout      (io/writer aux-out)
         cin       (-> thrd-out PipedInputStream. io/reader)
-        thrd (binding [*out* out *in* in *err* out]
-               (Thread. (bound-fn [] (clojure.main/repl))))]
+        thrd      (binding [*out* out *in* in *err* out]
+                    (Thread. (bound-fn [] 
+                               (require 'clojure.main)
+                               (clojure.main/repl))))]
     (.start thrd)
     (Repl. thrd cout cin)))
 
