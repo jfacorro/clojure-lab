@@ -1,6 +1,6 @@
 (remove-ns 'lab.app-test)
 (ns lab.app-test
-  (:use [lab.model.app :reload true]
+  (:use [lab.app :reload true]
         [lab.test :only [->test ->is]]
         [clojure.test :only [deftest is run-tests]]))
 
