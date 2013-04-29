@@ -1,8 +1,11 @@
 (ns lab.ui.swing
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton]
-           [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel])
-  (:use    [lab.ui.protocols :only [Component create set-attr impl]]
+           [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
+           [javax.swing.event TreeSelectionListener]
+           [java.awt.event MouseAdapter])
+  (:use    [lab.ui.protocols :only [Component create set-attr impl 
+                                    Selected get-selected]]
            lab.ui.core)
   (:require [clojure.string :as str]))
 ;;------------------- 
@@ -100,18 +103,45 @@
   [c _ menu]
   (.setJMenuBar (impl c) (impl menu))
   (assoc-in c [:attrs :menu] menu))
+;;-------------------
+;; tree attributes
+;;-------------------
+(extend-type JTree
+  Selected
+  (get-selected [this]
+    (when-let [node (-> this .getLastSelectedPathComponent)]
+      (.getUserObject node))))
 
 (defmethod set-attr [:tree :root]
-  [c _ root]
+  [c attr root]
   (let [model (DefaultTreeModel. (impl root))]
     (.setModel (impl c) model)
-    (assoc-in c [:attrs :root] root)))
+    (assoc-in c [:attrs attr] root)))
+    
+(defmethod set-attr [:tree :on-selected]
+  [c attr handler]
+  (let [listener (proxy [TreeSelectionListener] []
+                   (valueChanged [e]
+                     (handler (get-selected c))))]
+    (.addTreeSelectionListener (impl c) listener)
+    (assoc-in c [:attrs attr] handler)))
+
+(defmethod set-attr [:tree :on-dbl-click]
+  [c attr handler]
+  (let [listener (proxy [MouseAdapter] []
+                   (mousePressed [e]
+                     (when (= 2 (.getClickCount e))
+                       (handler (get-selected c)))))]
+    (.addMouseListener (impl c) listener)
+    (assoc-in c [:attrs attr] handler)))
 
 (defmethod set-attr [:tree-node :item]
-  [c _ item]
+  [c attr item]
   (.setUserObject (impl c) item)
-  (assoc-in c [:attrs :text] item))
-
+  (assoc-in c [:attrs attr] item))
+;;-------------------
+;; split attributes
+;;-------------------
 (def ^:private split-orientations
   "Split pane possible orientations."
   {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})

@@ -16,6 +16,7 @@
 (def tabs (ui/tabs [tab]))
 
 (def tree (ui/tree
+            :on-dbl-click #(println "dbl-click" %)
             :root (ui/tree-node
                     :item "Project" 
                     :content [(ui/tree-node :item "macho.clj")

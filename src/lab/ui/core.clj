@@ -1,5 +1,5 @@
 (ns lab.ui.core
-  (:use [lab.ui.protocols :only [Component Abstract add set-attr create impl]]))
+  (:use [lab.ui.protocols :only [Component Abstract Selected set-selected get-selected add set-attr create impl]]))
 
 (declare init initialized?)
 
@@ -16,7 +16,12 @@
     ([component]
       (:impl component))
     ([component implementation]
-      (assoc component :impl implementation))))
+      (assoc component :impl implementation)))
+  Selected
+  (get-selected [this]
+    (-> this impl get-selected))
+  (set-selected [this selected]
+    (-> this impl (set-selected (impl selected)))))
 
 (def component? "Returns true if x is a ui component." :tag)
 (def ^:private initialized?
