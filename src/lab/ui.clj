@@ -15,19 +15,20 @@
 
 (def tabs (ui/tabs [tab]))
 
-(def tree (ui/tree 
+(def tree (ui/tree
             :root (ui/tree-node
-                    :text "Project" 
-                    :content [(ui/tree-node :text "macho.clj")
+                    :item "Project" 
+                    :content [(ui/tree-node :item "macho.clj")
                               (ui/tree-node
-                                :text "lab"
-                                :content [(ui/tree-node :text "ui.clj")])])))
+                                :item "lab"
+                                :content [(ui/tree-node :item "ui.clj")])])))
 
 (def main (ui/window :title   "Clojure Lab"
                      :size    [500 300]
                      :menu    menu
                      :visible true
-                     :content [(ui/split [tree tabs])]))
+                     :content [(ui/split :orientation :horizontal
+                                         :content [tree tabs])]))
 
 (defn init [app]
   (ui/init main))

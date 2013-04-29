@@ -1,7 +1,7 @@
 (ns lab.ui.swing
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton]
-           [javax.swing.tree DefaultMutableTreeNode DefaultTreeModel])
+           [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel])
   (:use    [lab.ui.protocols :only [Component create set-attr impl]]
            lab.ui.core)
   (:require [clojure.string :as str]))
@@ -113,14 +113,22 @@
   (.setJMenuBar (impl c) (impl menu))
   (assoc-in c [:attrs :menu] menu))
 
-
 (defmethod set-attr [:tree :root]
   [c _ root]
   (let [model (DefaultTreeModel. (impl root))]
     (.setModel (impl c) model)
     (assoc-in c [:attrs :root] root)))
 
-(defmethod set-attr [:tree-node :text]
-  [c _ text]
-  (.setUserObject (impl c) text)
-  (assoc-in c [:attrs :text] text))
+(defmethod set-attr [:tree-node :item]
+  [c _ item]
+  (.setUserObject (impl c) item)
+  (assoc-in c [:attrs :text] item))
+
+(def ^:private split-orientations
+  "Split pane possible orientations."
+  {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
+
+(defmethod set-attr [:split :orientation]
+  [c _ orientation]
+  (.setOrientation (impl c) (split-orientations orientation))
+  (assoc-in c [:attrs :orientation] orientation))
