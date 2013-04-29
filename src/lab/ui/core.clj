@@ -1,12 +1,16 @@
 (ns lab.ui.core
   (:use [lab.ui.protocols :only [Component Abstract add set-attr create impl]]))
 
+(declare init initialized?)
+
 (extend-type clojure.lang.IPersistentMap
   Component ; Extend Clojure maps so that adding children is transparent.
   (add [this child]
-    (-> this
-      (impl (add (impl this) (impl child)))
-      (update-in [:content] conj child)))
+    (let [this  (init this)
+          child (init child)]
+      (-> this
+        (impl (add (impl this) (impl child)))
+        (update-in [:content] conj child))))
   Abstract
   (impl
     ([component]
@@ -15,8 +19,9 @@
       (assoc component :impl implementation))))
 
 (def component? "Returns true if x is a ui component." :tag)
-
-(declare init)
+(def ^:private initialized?
+  "Checks if the component is initialized."
+  (comp not nil? impl))
 
 (defn- init-content
   "Initialize all content (children) for this component."
@@ -38,11 +43,6 @@
   [{attrs :attrs :as component}]
   (reduce attr-reducer component attrs))
 
-(def ^:private initialized?
-  "Checks if the component is initialized."
-  impl)
-
-
 (defn init
   "Initializes a component, creating the implementation for 
   each child and the attributes that have a component as a value."
@@ -59,12 +59,11 @@
   "Used by constructor functions to build a component with keys :tag, 
   :attrs and :content.
   
-  Possible syntaxes are:
-  
-    (build :some-tag attr-map content-vector)
-    (build :some-tag attr-map)
-    (build :some-tag content-vector)
-    (build :some-tag :attr-1 val-1 :attr-2 val-2 ... :content content-vector)"
+  Usage:  
+    (build tag attr-map content-vector)
+    (build tag attr-map)
+    (build tag content-vector)
+    (build tag key val & kvs)"
   ([tag]
     (build tag {} []))
   ([tag & [x y & _ :as xs]]
@@ -89,4 +88,7 @@
 (def tabs (partial build :tabs))
 (def tab (partial build :tab))
 (def scroll (partial build :scroll))
+(def tree (partial build :tree))
+(def tree-node (partial build :tree-node))
+(def split (partial build :split))
 

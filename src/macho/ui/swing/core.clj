@@ -3,7 +3,7 @@
   (:import  [javax.swing ; Utils
                          UIManager SwingUtilities KeyStroke
                          ; Containers
-                         JFrame JPanel JScrollPane JSplitPane JTabbedPane
+                         JFrame JPanel JScrollPane JSplitPane JTabbedPane JTree
                          ; Dialogs
                          JFileChooser JOptionPane
                          ; Text
@@ -270,3 +270,5 @@ following keywords:
       (when close-repl-fn
         (close-repl-fn)))))
 ;;-------------------
+(defn tree []
+  (JTree.))

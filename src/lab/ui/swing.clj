@@ -1,7 +1,9 @@
 (ns lab.ui.swing
-  (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane JScrollPane JTextPane])
-  (:use [lab.ui.protocols :only [Component create set-attr impl]]
-        lab.ui.core)
+  (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
+                        JScrollPane JTextPane JTree JSplitPane JButton]
+           [javax.swing.tree DefaultMutableTreeNode DefaultTreeModel])
+  (:use    [lab.ui.protocols :only [Component create set-attr impl]]
+           lab.ui.core)
   (:require [clojure.string :as str]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -15,9 +17,20 @@
   (add [this child]
     (.addTab this "" child)
     this)
+  JSplitPane
+  (add [this child]
+    (println "split ->" (.getTopComponent this))
+    (if (instance? JButton (.getTopComponent this))
+      (.setTopComponent this child)
+      (.setBottomComponent this child))
+    this)
   JScrollPane
   (add [this child]
     (.. this getViewport (add child nil))
+    this)
+  DefaultMutableTreeNode
+  (add [this child]
+    (.add this child)
     this))
 ;;-------------------
 ;; create - multimethod
@@ -30,8 +43,25 @@
     ~@(for [[k c] m]
       (if (-> c resolve class?)
         `(defmethod create ~k [~'_] (new ~c))
-        `(defmethod create ~k [~'_] (~c))))))
+        `(defmethod create ~k [x#] (~c x#))))))
 
+(defn create-tree-node
+  "Creates a TreeNode proxy for the component"
+  [component]
+  (proxy [TreeNode] []
+    (children []
+      (->> component :content))
+    (getAllowsChildren [] true)
+    (getChildAt [i]
+      (-> component :content (nth i)))
+    (getChildCount [] 
+      (-> component :content count))
+    (getIndex [node] nil)
+    (getParent [] nil)
+    (isLeaf []
+      (-> component :content count zero?))))
+
+;; Call the macro that generates all create multimethod implementations
 (defmethods-create
   :window      JFrame
   :menu-bar    JMenuBar
@@ -39,7 +69,10 @@
   :menu-item   JMenuItem
   :tabs        JTabbedPane
   :tab         JScrollPane
-  :text-editor JTextPane)
+  :text-editor JTextPane
+  :tree        JTree
+  :tree-node   DefaultMutableTreeNode
+  :split       JSplitPane)
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
@@ -79,3 +112,15 @@
   [c _ menu]
   (.setJMenuBar (impl c) (impl menu))
   (assoc-in c [:attrs :menu] menu))
+
+
+(defmethod set-attr [:tree :root]
+  [c _ root]
+  (let [model (DefaultTreeModel. (impl root))]
+    (.setModel (impl c) model)
+    (assoc-in c [:attrs :root] root)))
+
+(defmethod set-attr [:tree-node :text]
+  [c _ text]
+  (.setUserObject (impl c) text)
+  (assoc-in c [:attrs :text] text))
