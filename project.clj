@@ -5,4 +5,5 @@
                  [popen "0.2.0"]
                  [leiningen "2.0.0"]
                  [swingrepl "1.3.0" :exclusions [org.clojure/clojure org.clojure/clojure-contrib]]]
-  :main macho)
+  :main macho
+  :manifest {"SplashScreen-Image" "icon.png"})

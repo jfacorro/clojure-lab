@@ -45,34 +45,22 @@
         `(defmethod create ~k [~'_] (new ~c))
         `(defmethod create ~k [x#] (~c x#))))))
 
-(defn create-tree-node
-  "Creates a TreeNode proxy for the component"
-  [component]
-  (proxy [TreeNode] []
-    (children []
-      (->> component :content))
-    (getAllowsChildren [] true)
-    (getChildAt [i]
-      (-> component :content (nth i)))
-    (getChildCount [] 
-      (-> component :content count))
-    (getIndex [node] nil)
-    (getParent [] nil)
-    (isLeaf []
-      (-> component :content count zero?))))
-
 ;; Call the macro that generates all create multimethod implementations
 (defmethods-create
+  ;; Frame
   :window      JFrame
+  ;; Menu
   :menu-bar    JMenuBar
   :menu        JMenu
   :menu-item   JMenuItem
+  ;; Panels
   :tabs        JTabbedPane
   :tab         JScrollPane
   :text-editor JTextPane
+  :split       JSplitPane
+  ;; Tree
   :tree        JTree
-  :tree-node   DefaultMutableTreeNode
-  :split       JSplitPane)
+  :tree-node   DefaultMutableTreeNode)
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
