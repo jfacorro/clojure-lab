@@ -9,9 +9,9 @@
                          [(ui/menu-item :text "New!")
                           (ui/menu-item :text "Open")])]))
 
-(def text (ui/text-editor))
+(def text (ui/text-editor #_:font #_(ui/font :name "Consolas" :size 14)))
 
-(def tab (ui/tab :content [text]))
+(def tab (ui/tab :title "Tab 1" :content [text]))
 
 (def tabs (ui/tabs [tab]))
 
@@ -34,4 +34,4 @@
 (defn init [app]
   (ui/init main))
   
-(init nil)
+(do (init nil) nil)

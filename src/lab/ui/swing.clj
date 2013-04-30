@@ -1,10 +1,11 @@
 (ns lab.ui.swing
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton]
-           [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
+           [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
+           [java.awt Font]
            [java.awt.event MouseAdapter])
-  (:use    [lab.ui.protocols :only [Component create set-attr impl 
+  (:use    [lab.ui.protocols :only [Component initialize set-attr impl 
                                     Selected get-selected]]
            lab.ui.core)
   (:require [clojure.string :as str]))
@@ -15,14 +16,14 @@
   java.awt.Container
   (add [this child]
     (.add this child)
+    (.validate this)
     this)
   JTabbedPane
   (add [this child]
-    (.addTab this "" child)
+    (.addTab this (.getTitle child) child)
     this)
   JSplitPane
   (add [this child]
-    (println "split ->" (.getTopComponent this))
     (if (instance? JButton (.getTopComponent this))
       (.setTopComponent this child)
       (.setBottomComponent this child))
@@ -36,20 +37,23 @@
     (.add this child)
     this))
 ;;-------------------
-;; create - multimethod
+;; initialize - multimethod
 ;;-------------------
-(defmacro defmethods-create
+(defmacro defmethods-initialize
   "Generates all the multimethod implementations
   for each of the entries in the map m."
   [& {:as m}]
   `(do
     ~@(for [[k c] m]
       (if (-> c resolve class?)
-        `(defmethod create ~k [~'_] (new ~c))
-        `(defmethod create ~k [x#] (~c x#))))))
+        `(defmethod initialize ~k [~'_] (new ~c))
+        `(defmethod initialize ~k [x#] (~c x#))))))
 
-;; Call the macro that generates all create multimethod implementations
-(defmethods-create
+(defn initialize-font [component]
+  (Font. "Consolas" 14 0))
+
+;; Call the macro that generates all initialize multimethod implementations
+(defmethods-initialize
   ;; Frame
   :window      JFrame
   ;; Menu
@@ -58,8 +62,11 @@
   :menu-item   JMenuItem
   ;; Panels
   :tabs        JTabbedPane
-  :tab         JScrollPane
+  :tab         lab.ui.swing.Tab
+  ;; Text
   :text-editor JTextPane
+  :font        initialize-font
+  ;; Layout
   :split       JSplitPane
   ;; Tree
   :tree        JTree
@@ -100,9 +107,18 @@
 ;; window attributes
 ;;-------------------
 (defmethod set-attr [:window :menu]
-  [c _ menu]
+  [c attr menu]
   (.setJMenuBar (impl c) (impl menu))
-  (assoc-in c [:attrs :menu] menu))
+  (assoc-in c [:attrs attr] menu))
+;;-------------------
+;; tabs attributes
+;;-------------------
+(defmethod set-attr [:tabs :scroll]
+  [c attr value]
+  (.setTabLayoutPolicy (impl c)
+                       (or (and value JTabbedPane/SCROLL_TAB_LAYOUT)
+                           JTabbedPane/WRAP_TAB_LAYOUT))
+  (assoc-in c [:attrs attr] value))
 ;;-------------------
 ;; tree attributes
 ;;-------------------
@@ -150,3 +166,12 @@
   [c _ orientation]
   (.setOrientation (impl c) (split-orientations orientation))
   (assoc-in c [:attrs :orientation] orientation))
+;;-------------------
+;; font attributes
+;;-------------------
+(defmethod set-attr [:font :name]
+  [c attr item]
+  c)
+(defmethod set-attr [:font :size]
+  [c attr item]
+  c)

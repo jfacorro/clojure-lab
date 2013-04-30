@@ -190,7 +190,8 @@
 (defn tabbed-pane
   "Creates a tabbed container."
   []
-  (JTabbedPane.))
+  (doto (JTabbedPane.)
+    (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)))
 ;;-------------------
 (defn file-browser 
   "Show a dialog box that allows to browse the file

@@ -21,7 +21,7 @@
   (get-selected [this])
   (set-selected [this selected]))
 
-(defmulti create
+(defmulti initialize
   "Creates a component instance based on its :tag."
   :tag)
 

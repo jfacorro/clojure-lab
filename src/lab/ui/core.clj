@@ -1,5 +1,5 @@
 (ns lab.ui.core
-  (:use [lab.ui.protocols :only [Component Abstract Selected set-selected get-selected add set-attr create impl]]))
+  (:use [lab.ui.protocols :only [Component Abstract Selected set-selected get-selected add set-attr initialize impl]]))
 
 (declare init initialized?)
 
@@ -23,7 +23,8 @@
   (set-selected [this selected]
     (-> this impl (set-selected (impl selected)))))
 
-(def component? "Returns true if x is a ui component." :tag)
+(def component? "Returns true if its single arg is an ui component." :tag)
+
 (def ^:private initialized?
   "Checks if the component is initialized."
   (comp not nil? impl))
@@ -55,10 +56,10 @@
   {:pre [(component? component)]}
   (if (initialized? component) ; do nothing if it's already initiliazed
     component
-    (->> (create component)
+    (->> (initialize component)
       (impl component)
-      init-content
-      set-attrs)))
+      set-attrs
+      init-content)))
 
 (defn- build
   "Used by constructor functions to build a component with keys :tag, 
@@ -86,13 +87,18 @@
 ;; Constructor functions
 ;;-----------------------
 (def window (partial build :window))
+
+(def split (partial build :split))
+
 (def menu-bar (partial build :menu-bar))
 (def menu (partial build :menu))
 (def menu-item (partial build :menu-item))
+
 (def text-editor (partial build :text-editor))
+(def font (partial build :font))
+
 (def tabs (partial build :tabs))
 (def tab (partial build :tab))
-(def scroll (partial build :scroll))
+
 (def tree (partial build :tree))
 (def tree-node (partial build :tree-node))
-(def split (partial build :split))
