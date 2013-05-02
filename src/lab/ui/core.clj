@@ -1,11 +1,11 @@
 (ns lab.ui.core
-  (:require [lab.util :as util])
+  (:require [lab.util :as util]
+            [lab.ui.protocols :as p])
   (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
                                  Visible visible? hide show
                                  Selected get-selected set-selected
-                                 initialize
-                                 set-attr]]))
+                                 initialize]]))
 
 (declare init initialized?)
 
@@ -50,6 +50,12 @@
   (let [content   (map init content)
         component (assoc component :content [])]
     (reduce add component content)))
+
+(defn set-attr
+  [c k v]
+  (let [c (or (and (namespace k) c)
+              (p/set-attr c k v))]
+    (assoc-in c [:attrs k] v)))
 
 (defn- attr-reducer
   "Used by set-attrs to reduce all attrs when initializing

@@ -1,3 +1,4 @@
+(remove-ns 'lab.ui)
 (ns lab.ui
   "Trying to define a DSL to abstract the UI
   components with Clojure data structures."

@@ -8,9 +8,9 @@
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component initialize set-attr impl 
                                     Visible visible? hide show
-                                    Selected get-selected]]
-           lab.ui.core)
-  (:require [lab.util :as util]))
+                                    Selected get-selected]])
+  (:require [lab.util :as util]
+            [lab.ui.core :as ui]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
@@ -106,92 +106,67 @@
         args-seq (if (sequential? args) args [args])
         n        (count args-seq)]
     (apply (setter! k n) ctrl args-seq)
-    (assoc-in c [:attrs k] args)))
+    c))
 ;;-------------------
-;; window attributes
+(defmacro defattributes [& body]
+  (let [comps (->> body (partition-by keyword?) (partition 2) (map #(apply concat %)))
+        f     (fn [tag & mthds]
+                (for [[attr [c _ _ :as args] & body] mthds]
+                  `(defmethod set-attr [~tag ~attr] ~args ~@body ~c)))]
+    `(do ~@(mapcat (partial apply f) comps))))
 ;;-------------------
-(defmethod set-attr [:window :menu]
-  [c attr menu]
-  (.setJMenuBar (impl c) (impl menu))
-  (assoc-in c [:attrs attr] menu))
+(def ^:private split-orientations
+  "Split pane possible orientations."
+  {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
 ;;-------------------
-;; tabs attributes
-;;-------------------
-(defmethod set-attr [:tabs :scroll]
-  [c attr value]
-  (.setTabLayoutPolicy (impl c)
-                       (or (and value JTabbedPane/SCROLL_TAB_LAYOUT)
-                           JTabbedPane/WRAP_TAB_LAYOUT))
-  (assoc-in c [:attrs attr] value))
-;;-------------------
-;; tree attributes
-;;-------------------
+(defattributes
+  :window
+  (:menu [c k v]
+    (.setJMenuBar (impl c) (impl v)))
+
+  :tabs
+  (:scroll [c k v]
+    (.setJMenuBar (impl c) (impl v)))
+
+  :tree
+  (:root [c k v]
+    (let [model (DefaultTreeModel. (impl v))]
+      (.setModel (impl c) model)))
+  (:on-selected [c attr handler]
+    (let [listener (proxy [TreeSelectionListener] []
+                     (valueChanged [e]
+                       (handler (get-selected c))))]
+      (.addTreeSelectionListener (impl c) listener)))
+  (:on-dbl-click [c attr handler]
+    (let [listener (proxy [MouseAdapter] []
+                     (mousePressed [e]
+                       (when (= 2 (.getClickCount e))
+                         (handler (get-selected c)))))]
+      (.addMouseListener (impl c) listener)))
+
+  :tree-node 
+  (:item [c attr item]
+    (.setUserObject (impl c) item))
+
+  :split
+  (:orientation [c attr value]
+    (.setOrientation (impl c) (split-orientations value)))
+
+  :text-editor 
+  (:font [c attr value]
+    (.setFont (impl c) (impl value)))
+  
+  :button 
+  (:preferred-size [c attr [w h :as value]]
+    (.setPreferredSize (impl c) (Dimension. w h)))
+  (:on-click [c attr value])
+
+  :font
+  (:name [c attr value])
+  (:size [c attr value]))
+;------------------------------
 (extend-type JTree
   Selected
   (get-selected [this]
     (when-let [node (-> this .getLastSelectedPathComponent)]
       (.getUserObject node))))
-
-(defmethod set-attr [:tree :root]
-  [c attr root]
-  (let [model (DefaultTreeModel. (impl root))]
-    (.setModel (impl c) model)
-    (assoc-in c [:attrs attr] root)))
-    
-(defmethod set-attr [:tree :on-selected]
-  [c attr handler]
-  (let [listener (proxy [TreeSelectionListener] []
-                   (valueChanged [e]
-                     (handler (get-selected c))))]
-    (.addTreeSelectionListener (impl c) listener)
-    (assoc-in c [:attrs attr] handler)))
-
-(defmethod set-attr [:tree :on-dbl-click]
-  [c attr handler]
-  (let [listener (proxy [MouseAdapter] []
-                   (mousePressed [e]
-                     (when (= 2 (.getClickCount e))
-                       (handler (get-selected c)))))]
-    (.addMouseListener (impl c) listener)
-    (assoc-in c [:attrs attr] handler)))
-
-(defmethod set-attr [:tree-node :item]
-  [c attr item]
-  (.setUserObject (impl c) item)
-  (assoc-in c [:attrs attr] item))
-;;-------------------
-;; split attributes
-;;-------------------
-(def ^:private split-orientations
-  "Split pane possible orientations."
-  {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
-
-(defmethod set-attr [:split :orientation]
-  [c attr value]
-  (.setOrientation (impl c) (split-orientations value))
-  (assoc-in c [:attrs attr] value))
-;;-------------------
-;; text attributes
-;;-------------------
-(defmethod set-attr [:text-editor :font]
-  [c attr value]
-  (.setFont (impl c) (impl value))
-  (assoc-in c [:attrs attr] value))
-;;-------------------
-(defmethod set-attr [:button :preferred-size]
-  [c attr [w h :as value]]
-  (.setPreferredSize (impl c) (Dimension. w h))
-  (assoc-in c [:attrs attr] value))
-(defmethod set-attr [:button :on-click]
-  [c attr value]
-  (assoc-in c [:attrs attr] value))
-;;-------------------
-;; font attributes
-;;-------------------
-(defmethod set-attr [:font :name]
-  [c attr value]
-  (assoc-in c [:attrs attr] value))
-
-(defmethod set-attr [:font :size]
-  [c attr value]
-  (assoc-in c [:attrs attr] value))
