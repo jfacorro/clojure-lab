@@ -12,16 +12,21 @@
     (toString []
       (.getName this))))
 
+(defn- hidden?
+  "Returns true for files or directories that begin with a dot."
+  [file]
+  (-> file .getName (.startsWith ".")))
+
 (defn- tree-node-from-file
   "Creates a tree node with the supplied file as its item.
-  If the arg is a directory, all its children are added 
+  If the arg is a directory, all its children are added
   recursively."
   [file]
   (if (.isDirectory file)
     (let [children (->> file .listFiles 
-                        (filter #(-> % .getName (.startsWith ".") not))
-                        (sort-by #(if (.isDirectory %) 0 1))
-                        (map file-proxy))]
+                     (filter (comp not hidden?))
+                     (sort-by #(if (.isDirectory %) 0 1))
+                     (map file-proxy))]
       (ui/tree-node :item file 
                     :content (->> children (map tree-node-from-file) vec)))
     (ui/tree-node :item file)))
@@ -30,7 +35,8 @@
   "Generates the tree for the given path. If its a file
   then the parent directory is considered the root of the 
   tree."
-  [ui root-path]
+  [root-path handler]
   (let [root  (io/file root-path)
         root  (if (.isDirectory root) root (.getParentFile root))]
-    (ui/tree :root (tree-node-from-file root))))
+    (ui/tree :on-dbl-click handler
+             :root (tree-node-from-file root))))

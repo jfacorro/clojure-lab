@@ -182,12 +182,16 @@
   [c attr [w h :as value]]
   (.setPreferredSize (impl c) (Dimension. w h))
   (assoc-in c [:attrs attr] value))
+(defmethod set-attr [:button :on-click]
+  [c attr value]
+  (assoc-in c [:attrs attr] value))
 ;;-------------------
 ;; font attributes
 ;;-------------------
 (defmethod set-attr [:font :name]
   [c attr value]
   (assoc-in c [:attrs attr] value))
+
 (defmethod set-attr [:font :size]
   [c attr value]
   (assoc-in c [:attrs attr] value))

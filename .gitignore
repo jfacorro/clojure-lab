@@ -1,9 +1,5 @@
-clojure/
-clojure-clr/
-lib/
 ~*.*
 .*
 *.jar
 target/
-classes/
 Clojure Lab.lnk

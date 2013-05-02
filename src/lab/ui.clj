@@ -8,15 +8,21 @@
 
 (def ui (atom nil))
 
-(defn create-text-editor []
-  (ui/text-editor :font (ui/font :name "Terminal" :size 10)))
+(defn create-text-editor [file]
+  (ui/text-editor :text (slurp file)
+                  :font (ui/font :name "Terminal" :size 10)))
+
+(defn close-tab [& _]
+  #_(let [tab (ui/find-by-id @ui :tab)]))
 
 (defn create-tab [item]
-  (ui/tab :header (ui/panel [(ui/label :text (str item))
-                             (ui/button :preferred-size [10 10])])
-          :content [(create-text-editor)]))
+  (ui/tab ;:ui/id  (keyword (gensym))
+          :header (ui/panel [(ui/label :text (str item))
+                             (ui/button :preferred-size [10 10]
+                                        :on-click close-tab)])
+          :content [(create-text-editor item)]))
 
-(defn add-tab [item]
+(defn open-file [item]
   (let [tabs (ui/find-by-tag @ui :tabs)]
     (uip/add tabs (create-tab item))))
 
@@ -25,23 +31,12 @@
                          [(ui/menu-item :text "New!")
                           (ui/menu-item :text "Open")])]))
 
-(def tree (ui/tree
-            :on-dbl-click add-tab
-            :root (ui/tree-node
-                    :item "Project"
-                    :content [(ui/tree-node :item "macho.clj")
-                              (ui/tree-node
-                                :item "lab"
-                                :content [(ui/tree-node :item "ui.clj")])])))
-
-(def path "C:/Juan/Dropbox/Facultad/2012.Trabajo.Profesional/ide/")
-
 (def main (ui/window :title   "Clojure Lab"
                      :size    [700 500]
                      :menu    menu
                      :visible true
                      :content [(ui/split :orientation :horizontal
-                                         :content [(tree/tree-from-path ui path) (ui/tabs)])]))
+                                         :content [(tree/tree-from-path ".." open-file) (ui/tabs)])]))
 
 (defn init [app]
   (reset! ui (ui/init main)))
