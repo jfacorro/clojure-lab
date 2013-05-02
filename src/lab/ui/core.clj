@@ -3,9 +3,9 @@
   (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
                                  Visible visible? hide show
+                                 Selected get-selected set-selected
                                  initialize
-                                 set-attr
-                                 Selected get-selected set-selected]]))
+                                 set-attr]]))
 
 (declare init initialized?)
 
@@ -26,16 +26,19 @@
     ([component implementation]
       (assoc component :impl implementation)))
   Visible
-  (visible? [this] (-> this impl visible?))
-  (hide [this] (-> this impl hide))
-  (show [this] (-> this impl show))
+  (visible? [this]
+    (-> this impl visible?))
+  (hide [this]
+    (-> this impl hide))
+  (show [this]
+    (-> this impl show))
   Selected
   (get-selected [this]
     (-> this impl get-selected))
   (set-selected [this selected]
     (-> this impl (set-selected (impl selected)))))
 
-(def component? "Returns true if its single arg is an ui component." :tag)
+(def component? "Returns true if its arg is a component." :tag)
 
 (def ^:private initialized?
   "Checks if the component is initialized."

@@ -4,7 +4,7 @@
                         JButton JLabel]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
-           [java.awt Font]
+           [java.awt Font Dimension]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component initialize set-attr impl 
                                     Visible visible? hide show
@@ -176,13 +176,18 @@
 (defmethod set-attr [:text-editor :font]
   [c attr value]
   (.setFont (impl c) (impl value))
-  c)
+  (assoc-in c [:attrs attr] value))
+;;-------------------
+(defmethod set-attr [:button :preferred-size]
+  [c attr [w h :as value]]
+  (.setPreferredSize (impl c) (Dimension. w h))
+  (assoc-in c [:attrs attr] value))
 ;;-------------------
 ;; font attributes
 ;;-------------------
 (defmethod set-attr [:font :name]
-  [c attr item]
-  c)
+  [c attr value]
+  (assoc-in c [:attrs attr] value))
 (defmethod set-attr [:font :size]
-  [c attr item]
-  c)
+  [c attr value]
+  (assoc-in c [:attrs attr] value))
