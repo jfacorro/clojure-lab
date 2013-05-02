@@ -402,6 +402,21 @@ and copies the indenting for the new line."
     repl-console
     (add-repl ui)))
 ;;------------------------------
+(defn next-document [{tabs :tabs :as ui}]
+  (println 'next-document)
+  (let [i (.getSelectedIndex tabs)
+        n (.getTabCount tabs)]
+    (if (< (inc i) n)
+      (.setSelectedIndex tabs (inc i)))
+  ui))
+;;------------------------------
+(defn prev-document [{tabs :tabs :as ui}]
+  (println 'prev-document)
+  (let [i (.getSelectedIndex tabs)]
+    (if (<= 0 (dec i))
+      (.setSelectedIndex tabs (dec i))))
+  ui)
+;;------------------------------
 (def menu-options
   [{:name "File"
     :items [{:name "New" :action new-document :keys "ctrl N"}
@@ -419,7 +434,10 @@ and copies the indenting for the new line."
    {:name "REPL"
     :items [{:name "Lab" :action load-lab-repl :keys "ctrl alt shift R"}
             {:name "Clojure" :action load-repl :keys "ctrl R"}
-            {:name "Project" :action load-project-repl :keys "ctrl shift R"}]}])
+            {:name "Project" :action load-project-repl :keys "ctrl shift R"}]}
+   {:name "View"
+    :items [{:name "Next Doc..." :action #'next-document :keys "ctrl TAB"}
+            {:name "Prev Doc..." :action #'prev-document :keys "ctrl shift TAB"}]}])
 ;;------------------------------
 (defn ui-process
   "Returns a function that calls (f main) and

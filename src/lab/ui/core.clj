@@ -1,5 +1,13 @@
 (ns lab.ui.core
-  (:use [lab.ui.protocols :only [Component Abstract Selected set-selected get-selected add set-attr initialize impl]]))
+  (:require [lab.util :as util])
+  (:use [lab.ui.protocols :only [Component add 
+                                 Abstract impl
+                                 Visible visible? hide show
+                                 initialize
+                                 set-attr
+                                 Selected get-selected set-selected]]))
+
+;(util/intern-vars 'lab.ui.protocols)
 
 (declare init initialized?)
 
@@ -17,6 +25,10 @@
       (:impl component))
     ([component implementation]
       (assoc component :impl implementation)))
+  Visible
+  (visible? [this] (-> this impl visible?))
+  (hide [this] (-> this impl hide))
+  (show [this] (-> this impl show))
   Selected
   (get-selected [this]
     (-> this impl get-selected))
@@ -87,7 +99,7 @@
 ;; Constructor functions
 ;;-----------------------
 (def window (partial build :window))
-
+(def panel (partial build :panel))
 (def split (partial build :split))
 
 (def menu-bar (partial build :menu-bar))
@@ -102,3 +114,6 @@
 
 (def tree (partial build :tree))
 (def tree-node (partial build :tree-node))
+
+(def label (partial build :label))
+(def button (partial build :button))

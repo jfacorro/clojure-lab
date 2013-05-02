@@ -1,17 +1,26 @@
 (ns lab.ui.swing
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
-                        JScrollPane JTextPane JTree JSplitPane JButton]
+                        JScrollPane JTextPane JTree JSplitPane JButton JPanel
+                        JButton JLabel]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
            [java.awt Font]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component initialize set-attr impl 
+                                    Visible visible? hide show
                                     Selected get-selected]]
            lab.ui.core)
   (:require [clojure.string :as str]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
+;;-------------------
+(extend-protocol Visible
+  java.awt.Container
+  (visible? [this] (.isVisible this))
+  (hide [this] (.setVisible this false))
+  (show [this] (.setVisible this true)))
+
 (extend-protocol Component
   java.awt.Container
   (add [this child]
@@ -19,8 +28,9 @@
     (.validate this)
     this)
   JTabbedPane
-  (add [this child]
+  (add [this ^lab.ui.swing.Tab child]
     (.addTab this (.getTitle child) child)
+    (.setTabComponentAt this (dec (.getTabCount this)) (impl (.getHeader child)))
     this)
   JSplitPane
   (add [this child]
@@ -44,13 +54,14 @@
   for each of the entries in the map m."
   [& {:as m}]
   `(do
+      (remove-all-methods initialize)
     ~@(for [[k c] m]
       (if (-> c resolve class?)
         `(defmethod initialize ~k [~'_] (new ~c))
         `(defmethod initialize ~k [x#] (~c x#))))))
 
 (defn initialize-font [component]
-  (Font. "Consolas" 14 0))
+  (Font. (-> component :attrs :name) 0 (-> component :attrs :size)))
 
 ;; Call the macro that generates all initialize multimethod implementations
 (defmethods-initialize
@@ -68,9 +79,13 @@
   :font        initialize-font
   ;; Layout
   :split       JSplitPane
+  :panel       JPanel
   ;; Tree
   :tree        JTree
-  :tree-node   DefaultMutableTreeNode)
+  :tree-node   DefaultMutableTreeNode
+  ;; Controls
+  :button      JButton
+  :label       JLabel)
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
@@ -163,9 +178,16 @@
   {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
 
 (defmethod set-attr [:split :orientation]
-  [c _ orientation]
-  (.setOrientation (impl c) (split-orientations orientation))
-  (assoc-in c [:attrs :orientation] orientation))
+  [c attr value]
+  (.setOrientation (impl c) (split-orientations value))
+  (assoc-in c [:attrs attr] value))
+;;-------------------
+;; text attributes
+;;-------------------
+(defmethod set-attr [:text-editor :font]
+  [c attr value]
+  (.setFont (impl c) (impl value))
+  c)
 ;;-------------------
 ;; font attributes
 ;;-------------------

@@ -170,12 +170,14 @@
         (doto (JSplitPane.)
           (.setOrientation JSplitPane/VERTICAL_SPLIT)
           (.setTopComponent one)
-          (.setBottomComponent two))
+          (.setBottomComponent two)
+          (.setBorder (javax.swing.BorderFactory/createEmptyBorder)))
       :horizontal
         (doto (JSplitPane.)
           (.setOrientation JSplitPane/HORIZONTAL_SPLIT)
           (.setLeftComponent one)
-          (.setRightComponent two)))))
+          (.setRightComponent two)
+          (.setBorder (javax.swing.BorderFactory/createEmptyBorder))))))
 ;;-------------------
 (defn scroll
   "Wraps the control in a scrolling pane."
@@ -191,7 +193,8 @@
   "Creates a tabbed container."
   []
   (doto (JTabbedPane.)
-    (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)))
+    (.setTabLayoutPolicy JTabbedPane/SCROLL_TAB_LAYOUT)
+    (.setBorder (javax.swing.BorderFactory/createEmptyBorder))))
 ;;-------------------
 (defn file-browser 
   "Show a dialog box that allows to browse the file

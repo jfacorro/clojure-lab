@@ -6,6 +6,7 @@
   (remove [this child] "Removes child from the children collection."))
 
 (defprotocol Visible
+  (visible? [this])
   (hide [this])
   (show [this]))
 
