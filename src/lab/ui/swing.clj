@@ -1,14 +1,14 @@
 (ns lab.ui.swing
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton JPanel
-                        JButton JLabel]
+                        JButton JLabel AbstractAction]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
            [java.awt Font Dimension]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component initialize set-attr impl 
                                     Visible visible? hide show
-                                    Selected get-selected]])
+                                    Selected get-selected set-selected]])
   (:require [lab.util :as util]
             [lab.ui.core :as ui]))
 ;;------------------- 
@@ -27,10 +27,17 @@
     (.add this child)
     (.validate this)
     this)
+  (remove [this child]
+    (.remove this child)
+    this)
   JTabbedPane
-  (add [this ^lab.ui.swing.Tab child]
+  (add [this child]
     (.addTab this (.getTitle child) child)
     (.setTabComponentAt this (dec (.getTabCount this)) (impl (.getHeader child)))
+    (set-selected this (dec (.getTabCount this)))
+    this)
+  (remove [this child]
+    (.remove this child)
     this)
   JSplitPane
   (add [this child]
@@ -47,9 +54,18 @@
     (.add this child)
     this))
 ;;-------------------
-;; initialize - multimethod
+(extend-protocol Selected
+  JTree 
+  (get-selected [this]
+    (when-let [node (-> this .getLastSelectedPathComponent)]
+      (.getUserObject node)))
+  JTabbedPane
+  (get-selected [this]
+    (.getSelectedIndex this))
+  (set-selected [this index]
+    (.setSelectedIndex this index)))
 ;;-------------------
-(defmacro defmethods-initialize
+(defmacro definitializations
   "Generates all the multimethod implementations
   for each of the entries in the map m."
   [& {:as m}]
@@ -59,12 +75,23 @@
       (if (-> c resolve class?)
         `(defmethod initialize ~k [~'_] (new ~c))
         `(defmethod initialize ~k [x#] (~c x#))))))
-
+;;-------------------
+(defmacro defattributes
+  "Convenience macro to define attribute setters for each
+  component type. The method implemented always returns the
+  first argument which is supposed to be the component itself."
+  [& body]
+  (let [comps (->> body (partition-by keyword?) (partition 2) (map #(apply concat %)))
+        f     (fn [tag & mthds]
+                (for [[attr [c _ _ :as args] & body] mthds]
+                  `(defmethod set-attr [~tag ~attr] ~args ~@body ~c)))]
+    `(do ~@(mapcat (partial apply f) comps))))
+;;-------------------
 (defn initialize-font [component]
   (Font. (-> component :attrs :name) 0 (-> component :attrs :size)))
 
 ;; Call the macro that generates all initialize multimethod implementations
-(defmethods-initialize
+(definitializations
   ;; Frame
   :window      JFrame
   ;; Menu
@@ -107,13 +134,6 @@
         n        (count args-seq)]
     (apply (setter! k n) ctrl args-seq)
     c))
-;;-------------------
-(defmacro defattributes [& body]
-  (let [comps (->> body (partition-by keyword?) (partition 2) (map #(apply concat %)))
-        f     (fn [tag & mthds]
-                (for [[attr [c _ _ :as args] & body] mthds]
-                  `(defmethod set-attr [~tag ~attr] ~args ~@body ~c)))]
-    `(do ~@(mapcat (partial apply f) comps))))
 ;;-------------------
 (def ^:private split-orientations
   "Split pane possible orientations."
@@ -159,14 +179,12 @@
   :button 
   (:preferred-size [c attr [w h :as value]]
     (.setPreferredSize (impl c) (Dimension. w h)))
-  (:on-click [c attr value])
+  (:on-click [c _ f]
+    (let [action (proxy [AbstractAction] []
+                    (actionPerformed [e] (f c)))]
+      (.setAction (impl c) action)))
 
   :font
   (:name [c attr value])
   (:size [c attr value]))
 ;------------------------------
-(extend-type JTree
-  Selected
-  (get-selected [this]
-    (when-let [node (-> this .getLastSelectedPathComponent)]
-      (.getUserObject node))))

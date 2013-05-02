@@ -19,6 +19,11 @@
       (-> this
         (impl (add (impl this) (impl child)))
         (update-in [:content] conj child))))
+  (p/remove [this child]
+    (let [i (.indexOf (children this) child)]
+      (-> this
+        (impl (p/remove (impl this) (impl child)))
+        (update-in [:content] util/remove-at i))))
   Abstract
   (impl
     ([component]
@@ -82,12 +87,49 @@
       set-attrs
       init-content)))
 
-(defn find-by-tag
+(defn find-path-by
+  "Returns the path to the child component that satisfies (= val (f com))."
+  [f component value]
+  (let [ch (children component)
+        y (->> ch (filter #(= value (f %))) first)]
+    (if y
+        [:content (.indexOf ch y)]
+        (when-let [res (->> ch (map-indexed #(vector %1 (find-path-by f %2 value)))
+                               (filter second)
+                               first)]
+          (-> [:content] (concat res) flatten vec)))))
+
+(def by-tag :tag)
+(def by-id #(-> % :attrs :ui/id))
+
+(def find-path-by-tag
   "Finds a child component with the given tag."
-  [root tag]
-  (let [x (children root)]
-    (or (->> x (filter #(= tag (:tag %))) first)
-        (->> x (map #(find-by-tag % tag)) (filter identity) first))))
+  (partial find-path-by by-tag))
+  
+(def find-path-by-id
+  "Finds a child component with the given id."
+  (partial find-path-by by-id))
+
+(defn find-by
+  "Finds a child component with the given value in the
+  specified attribute."
+  [f component value]
+  (when-let [path (find-path-by f component value)]
+    (get-in component path)))
+
+(def find-by-tag
+  "Finds a child component with the given tag."
+  (partial find-by by-tag))
+  
+(def find-by-id
+  "Finds a child component with the given id."
+  (partial find-by by-id))
+
+(defn update-by-id
+  "Updates the the component with the supplied id by calling
+  the function f with it as its sole argument."
+  [root id f]
+  (update-in root (find-path-by by-id root id) f))
 
 (defn- build
   "Used by constructor functions to build a component with keys :tag, 

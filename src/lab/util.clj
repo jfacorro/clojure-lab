@@ -49,3 +49,7 @@
 (defn property-accesor [op prop]
   (symbol (str (name op) (-> prop name capitalize))))
 ;;-------------------
+(defn remove-at
+  "Removes the element in the ith position from the given vector."
+  [v i]
+  (vec (concat (subvec v 0 i) (subvec v (inc i) (count v)))))
