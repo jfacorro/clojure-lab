@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [remove]))
 
 (defprotocol Component
+  (children [this] "Gets all the children for the component.")
   (add [this child] "Add a child to a component. Must return the parent with the child added.")
   (remove [this child] "Removes child from the children collection."))
 

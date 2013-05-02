@@ -10,7 +10,7 @@
                                     Visible visible? hide show
                                     Selected get-selected]]
            lab.ui.core)
-  (:require [clojure.string :as str]))
+  (:require [lab.util :as util]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
@@ -89,27 +89,16 @@
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
-(defn- capitalize-word [[x & xs]]
-  (apply str (str/upper-case x) xs))
-;;-------------------
-(defn- capitalize [s]
-  (->> (str/split s #"-")      
-      (map capitalize-word)
-      (apply str)))
-;;-------------------
-(defn- property-accesor [op prop]
-  (symbol (str (name op) (-> prop name capitalize))))
-;;-------------------
 (defn setter!
   "Generate a setter interop function that takes n arguments."
   [prop n]
   (let [args (take n (repeatedly gensym))]
-    (eval `(fn [x# ~@args] (. x# ~(property-accesor :set prop) ~@args)))))
+    (eval `(fn [x# ~@args] (. x# ~(util/property-accesor :set prop) ~@args)))))
 
 (defmacro getter
   "Generate a getter interop function."
   [prop]
-  (eval `(fn [x#] (. x# ~(property-accesor :get prop)))))
+  (eval `(fn [x#] (. x# ~(util/property-accesor :get prop)))))
 ;;-------------------
 (defmethod set-attr :default
   [c k args]

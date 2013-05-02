@@ -1,4 +1,5 @@
-(ns lab.util)
+(ns lab.util
+  (:require [clojure.string :as str]))
 
 (defmacro !
   "Applies f to the atom x using the supplied arguments.
@@ -35,3 +36,16 @@
     (lazy-seq
       (when-let [lim (when (.find m) [(.start m) (.end m)])]
         (cons lim (find-limits m))))))
+
+;;-------------------
+(defn capitalize-word [[x & xs]]
+  (apply str (str/upper-case x) xs))
+;;-------------------
+(defn capitalize [s]
+  (->> (str/split s #"-")      
+      (map capitalize-word)
+      (apply str)))
+;;-------------------
+(defn property-accesor [op prop]
+  (symbol (str (name op) (-> prop name capitalize))))
+;;-------------------

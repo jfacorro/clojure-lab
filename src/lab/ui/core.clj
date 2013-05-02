@@ -1,18 +1,18 @@
 (ns lab.ui.core
   (:require [lab.util :as util])
-  (:use [lab.ui.protocols :only [Component add 
+  (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
                                  Visible visible? hide show
                                  initialize
                                  set-attr
                                  Selected get-selected set-selected]]))
 
-;(util/intern-vars 'lab.ui.protocols)
-
 (declare init initialized?)
 
 (extend-type clojure.lang.IPersistentMap
   Component ; Extend Clojure maps so that adding children is transparent.
+  (children [this]
+    (:content this))
   (add [this child]
     (let [this  (init this)
           child (init child)]
@@ -72,6 +72,13 @@
       (impl component)
       set-attrs
       init-content)))
+
+(defn find-by-tag
+  "Finds a child component with the given tag."
+  [root tag]
+  (let [x (children root)]
+    (or (->> x (filter #(= tag (:tag %))) first)
+        (->> x (map #(find-by-tag % tag)) (filter identity) first))))
 
 (defn- build
   "Used by constructor functions to build a component with keys :tag, 

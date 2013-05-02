@@ -1,4 +1,3 @@
-(remove-ns 'lab.ui)
 (ns lab.ui
   "Trying to define a DSL to abstract the UI
   components with Clojure data structures."
@@ -11,12 +10,12 @@
   (ui/text-editor :font (ui/font :name "Terminal" :size 10)))
 
 (defn create-tab [item]
-  (ui/tab :header (ui/panel [(ui/label :text item)
+  (ui/tab :header (ui/panel [(ui/label :text (str item))
                              (ui/button :text "x" :size [10 10])])
           :content [(create-text-editor)]))
 
 (defn add-tab [item]
-  (let [tabs (-> @ui :content first :content second)]
+  (let [tabs (ui/find-by-tag @ui :tabs)]
     (lab.ui.protocols/add tabs (create-tab item))))
 
 (def menu
@@ -27,7 +26,7 @@
 (def tree (ui/tree
             :on-dbl-click add-tab
             :root (ui/tree-node
-                    :item "Project" 
+                    :item "Project"
                     :content [(ui/tree-node :item "macho.clj")
                               (ui/tree-node
                                 :item "lab"
