@@ -1,7 +1,7 @@
 (ns lab.ui.swing
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton JPanel
-                        JButton JLabel AbstractAction]
+                        JButton JLabel AbstractAction BorderFactory]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
            [java.awt Font Dimension]
@@ -117,10 +117,17 @@
 ;; Setter & Getters
 ;;-------------------
 (defn setter!
-  "Generate a setter interop function that takes n arguments."
-  [prop n]
-  (let [args (take n (repeatedly gensym))]
-    (eval `(fn [x# ~@args] (. x# ~(util/property-accesor :set prop) ~@args)))))
+  "Generate a setter interop function for the method whose name
+  starts with 'set' followed by prop keyword formatted in camel case
+  (e.g. :j-menu-bar turns into JMenuBar). The method takes n arguments
+  and the object is type hinted to class."
+  [^Class klass prop n]
+  (let [args  (take n (repeatedly gensym))
+        hint  (symbol (.getName klass))
+        mthd  (util/property-accesor :set prop)
+        f     `(fn [^{:tag ~hint} x# ~@args]
+                (. x# ~mthd ~@args))]
+    (eval f)))
 
 (defmacro getter
   "Generate a getter interop function."
@@ -129,10 +136,14 @@
 ;;-------------------
 (defmethod set-attr :default
   [c k args]
+  "docstring: fall-back method implementation
+  for properties not specified for the component.
+  Tries to set the property by building a function setter
+  and calling it with the supplied args."
   (let [ctrl     (impl c)
         args-seq (if (sequential? args) args [args])
         n        (count args-seq)]
-    (apply (setter! k n) ctrl args-seq)
+    (apply (setter! (class ctrl) k n) ctrl args-seq)
     c))
 ;;-------------------
 (def ^:private split-orientations
@@ -140,6 +151,10 @@
   {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
 ;;-------------------
 (defattributes
+  :component
+  (:border [c k v]
+    (.setBorder (impl c) (BorderFactory/createEmptyBorder)))
+  
   :window
   (:menu [c k v]
     (.setJMenuBar (impl c) (impl v)))

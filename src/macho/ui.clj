@@ -282,8 +282,10 @@ and copies the indenting for the new line."
       (-> pnl-code
         (ui/set :layout (ui/border-layout))
         (ui/add txt-code))
-      
-      (ui/set pnl-scroll :row-header-view txt-lines)
+
+      (-> pnl-scroll
+        (ui/set :row-header-view txt-lines)
+        (ui/set :border (ui/border :empty)))
 
       (-> txt-lines
         (ui/set :font @current-font)

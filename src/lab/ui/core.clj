@@ -9,6 +9,7 @@
 
 (declare init initialized?)
 
+;; Implementation dependent
 (extend-type clojure.lang.IPersistentMap
   Component ; Extend Clojure maps so that adding children is transparent.
   (children [this]
@@ -57,6 +58,9 @@
     (reduce add component content)))
 
 (defn set-attr
+  "Uses the set-attr multimethod to set the attribute value 
+  for the implementation and updates the abstract component
+  as well."
   [c k v]
   (let [c (or (and (namespace k) c)
               (p/set-attr c k v))]
@@ -99,8 +103,8 @@
                                first)]
           (-> [:content] (concat res) flatten vec)))))
 
-(def by-tag :tag)
-(def by-id #(-> % :attrs :ui/id))
+(def ^:private by-tag :tag)
+(def ^:private by-id #(-> % :attrs :ui/id))
 
 (def find-path-by-tag
   "Finds a child component with the given tag."

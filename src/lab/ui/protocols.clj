@@ -1,5 +1,6 @@
 (ns lab.ui.protocols
-  (:refer-clojure :exclude [remove]))
+  (:refer-clojure :exclude [remove])
+  (:require [lab.ui.hierarchy :as h]))
 
 (defprotocol Component
   (children [this] "Gets all the children for the component.")
@@ -25,11 +26,13 @@
 
 (defmulti initialize
   "Creates a component instance based on its :tag."
-  :tag)
+  :tag
+  :hierarchy #'h/hierarchy)
 
 (defmulti set-attr
   "Sets the attribute value for this component and returns the
   modified component."
   (fn [{tag :tag} k _]
-    [tag k]))
+    [tag k])
+  :hierarchy #'h/hierarchy)
 

@@ -10,7 +10,9 @@
                          JTextField JTextArea JTextPane JLabel JEditorPane
                          text.DefaultStyledDocument text.DefaultHighlighter$DefaultHighlightPainter
                          ; Menu
-                         JMenuBar JMenu JSeparator JMenuItem]
+                         JMenuBar JMenu JSeparator JMenuItem
+                         ; Border
+                         BorderFactory]
             [java.awt Container Color Toolkit Font BorderLayout AWTEvent Frame]
             [bsh.util JConsole])
   (:require [clojure.string :as str]
@@ -276,3 +278,8 @@ following keywords:
 ;;-------------------
 (defn tree []
   (JTree.))
+;;-------------------
+(defn border [style]
+  (case style
+    :empty (BorderFactory/createEmptyBorder)))
+;;-------------------
