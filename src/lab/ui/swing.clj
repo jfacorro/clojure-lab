@@ -10,7 +10,7 @@
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component add remove
                                     initialize set-attr
-                                    impl 
+                                    Abstract impl 
                                     Visible visible? hide show
                                     Implementation abstract
                                     Selected get-selected set-selected]])
@@ -56,9 +56,14 @@
     this)
   JTabbedPane
   (add [this child]
-    (.addTab this (.getTitle child) child)
-    (.setTabComponentAt this (dec (.getTabCount this)) (-> child abstract :attrs :-header impl))
-    (set-selected this (dec (.getTabCount this)))
+    (let [i         (.getTabCount this)
+          child-abs (abstract child)
+          header    (-> child-abs :attrs :-header impl)
+          title     (-> child-abs :attrs :-title)]
+      (.addTab this title child)
+      (when header
+        (.setTabComponentAt this i header))
+      (set-selected this i))
     this)
   (remove [this child]
     (.remove this child)
@@ -126,7 +131,7 @@
   :menu-item   JMenuItem
   ;; Panels
   :tabs        JTabbedPane
-  :tab         lab.ui.swing.Tab
+  :tab         JScrollPane
   ;; Text
   :text-editor JTextPane
   :font        initialize-font
