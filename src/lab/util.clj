@@ -37,18 +37,28 @@
       (when-let [lim (when (.find m) [(.start m) (.end m)])]
         (cons lim (find-limits m))))))
 
-;;-------------------
-(defn capitalize-word [[x & xs]]
+(defn capitalize-word
+  "Turns to upper case the first letter of the string."
+  [[x & xs :as s]]
+  {:pre [(string? s)]}
   (apply str (str/upper-case x) xs))
-;;-------------------
+
 (defn capitalize [s]
+  "Transforms a string with '-' as word delimiters into
+  a CamelCase string."
   (->> (str/split s #"-")      
       (map capitalize-word)
       (apply str)))
-;;-------------------
-(defn property-accesor [op prop]
+
+(defn property-accesor
+  "Returns the symbol whose name is composed of the
+  concatenation of the op keyword (:set or :get) and 
+  the name of the prop keyword transformed from :camel-case 
+  to CamelCase."
+  [op prop]
+  {:pre [(#{:set :get} op)]}
   (symbol (str (name op) (-> prop name capitalize))))
-;;-------------------
+
 (defn remove-at
   "Removes the element in the ith position from the given vector."
   [v i]
