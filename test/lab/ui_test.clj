@@ -2,8 +2,8 @@
   (:use lab.ui.core
         [clojure.test :only [deftest is are run-tests testing]]))
 
-(def ui-test (window [(tabs :ui/id :0 :content [(tab :ui/id 2) (tab :ui/id 5)])
-                      (tree :ui/id :1)]))
+(def ui-test (window [(tabs :-id :0 :content [(tab :-id 2) (tab :-id 5)])
+                      (tree :-id :1)]))
 
 (deftest find-functions
   (testing "Find path by id"
@@ -18,5 +18,3 @@
   (testing "Udpate by id"
     (is (= (assoc-in ui-test [:content 0 :content 1 :attrs :bla] 1)
            (update-by-id ui-test 5 #(assoc-in % [:attrs :bla] 1))))))
-
-(run-tests)
