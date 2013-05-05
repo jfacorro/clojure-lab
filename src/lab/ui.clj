@@ -42,7 +42,6 @@
                      :size    [700 500]
                      :menu    menu
                      :visible true
-                     :border  :none
                      :content [(ui/split :orientation :horizontal
                                          :border      :none
                                          :content [(tree/tree-from-path ".." #'open-file)
