@@ -1,13 +1,18 @@
 (ns lab.ui.swing
+  (:refer-clojure :exclude [remove])
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton JPanel
-                        JButton JLabel AbstractAction BorderFactory]
+                        JButton JLabel AbstractAction BorderFactory
+                        JComponent]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
-           [java.awt Font Dimension]
+           [java.awt Font Dimension Color]
            [java.awt.event MouseAdapter])
-  (:use    [lab.ui.protocols :only [Component initialize set-attr impl 
+  (:use    [lab.ui.protocols :only [Component add remove
+                                    initialize set-attr
+                                    impl 
                                     Visible visible? hide show
+                                    Implementation abstract
                                     Selected get-selected set-selected]])
   (:require [lab.util :as util]
             [lab.ui.core :as ui]))
@@ -20,6 +25,25 @@
   (visible? [this] (.isVisible this))
   (hide [this] (.setVisible this false))
   (show [this] (.setVisible this true)))
+  
+(extend-protocol Implementation
+  java.awt.Component
+  (abstract 
+    ([this] this)
+    ([this the-abstract] this))
+
+  JComponent
+  (abstract 
+    ([this]
+      (.getClientProperty this :abstract))
+    ([this the-abstract] 
+      (.putClientProperty this :abstract the-abstract)
+      this))
+
+  Object
+  (abstract 
+    ([this] this)
+    ([this the-abstract] this)))
 
 (extend-protocol Component
   java.awt.Container
@@ -33,7 +57,7 @@
   JTabbedPane
   (add [this child]
     (.addTab this (.getTitle child) child)
-    (.setTabComponentAt this (dec (.getTabCount this)) (impl (.getHeader child)))
+    (.setTabComponentAt this (dec (.getTabCount this)) (-> child abstract :attrs :-header impl))
     (set-selected this (dec (.getTabCount this)))
     this)
   (remove [this child]
@@ -73,8 +97,10 @@
       (remove-all-methods initialize)
     ~@(for [[k c] m]
       (if (-> c resolve class?)
-        `(defmethod initialize ~k [~'_] (new ~c))
-        `(defmethod initialize ~k [x#] (~c x#))))))
+        `(defmethod initialize ~k [c#]
+          (new ~c))
+        `(defmethod initialize ~k [x#]
+          (~c x#))))))
 ;;-------------------
 (defmacro defattributes
   "Convenience macro to define attribute setters for each
@@ -140,10 +166,11 @@
   for properties not specified for the component.
   Tries to set the property by building a function setter
   and calling it with the supplied args."
-  (let [ctrl     (impl c)
-        args-seq (if (sequential? args) args [args])
-        n        (count args-seq)]
-    (apply (setter! (class ctrl) k n) ctrl args-seq)
+  (let [ctrl  (impl c)
+        args  (if (sequential? args) args [args])
+        args  (map #(if (ui/component? %) (impl %) %) args)
+        n     (count args)]
+    (apply (setter! (class ctrl) k n) ctrl args)
     c))
 ;;-------------------
 (def ^:private split-orientations
@@ -153,14 +180,19 @@
 (defattributes
   :component
   (:border [c k v]
-    (.setBorder (impl c) (BorderFactory/createEmptyBorder)))
+    (assert (#{:none :line :matte :titled} v) "Invalid line type.")
+    (case v
+      :none
+        (.setBorder (impl c) (BorderFactory/createEmptyBorder))
+      :line
+        (.setBorder (impl c) (BorderFactory/createLineBorder (Color/black)))))
+  (:font [c attr value]
+    (.setFont (impl c) (impl value)))
+  (:preferred-size [c attr [w h :as value]]
+    (.setPreferredSize (impl c) (Dimension. w h)))
   
   :window
   (:menu [c k v]
-    (.setJMenuBar (impl c) (impl v)))
-
-  :tabs
-  (:scroll [c k v]
     (.setJMenuBar (impl c) (impl v)))
 
   :tree
@@ -179,7 +211,7 @@
                          (handler (get-selected c)))))]
       (.addMouseListener (impl c) listener)))
 
-  :tree-node 
+  :tree-node
   (:item [c attr item]
     (.setUserObject (impl c) item))
 
@@ -187,13 +219,7 @@
   (:orientation [c attr value]
     (.setOrientation (impl c) (split-orientations value)))
 
-  :text-editor 
-  (:font [c attr value]
-    (.setFont (impl c) (impl value)))
-  
   :button 
-  (:preferred-size [c attr [w h :as value]]
-    (.setPreferredSize (impl c) (Dimension. w h)))
   (:on-click [c _ f]
     (let [action (proxy [AbstractAction] []
                     (actionPerformed [e] (f c)))]

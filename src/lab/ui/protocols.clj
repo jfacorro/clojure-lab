@@ -20,6 +20,9 @@
 (defprotocol Abstract
   (impl [this] [this implementation] "Gets or sets the implementation for component."))
 
+(defprotocol Implementation
+  (abstract [this] [this the-abstract] "Gets or sets the asbtract component for the implementation."))
+
 (defprotocol Selected
   (get-selected [this])
   (set-selected [this selected]))

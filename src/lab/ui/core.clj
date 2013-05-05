@@ -3,6 +3,7 @@
             [lab.ui.protocols :as p])
   (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
+                                 Implementation abstract
                                  Visible visible? hide show
                                  Selected get-selected set-selected
                                  initialize]]))
@@ -25,12 +26,14 @@
       (-> this
         (impl (p/remove (impl this) (impl child)))
         (update-in [:content] util/remove-at i))))
+
   Abstract
   (impl
     ([component]
-      (:impl component))
+      (-> component meta :impl))
     ([component implementation]
-      (assoc component :impl implementation)))
+      (vary-meta component assoc :impl implementation)))
+
   Visible
   (visible? [this]
     (-> this impl visible?))
@@ -38,6 +41,7 @@
     (-> this impl hide))
   (show [this]
     (-> this impl show))
+
   Selected
   (get-selected [this]
     (-> this impl get-selected))
@@ -57,13 +61,17 @@
         component (assoc component :content [])]
     (reduce add component content)))
 
+(defn- abstract-attr? [k]
+  (.startsWith (name k) "-"))
+
 (defn set-attr
   "Uses the set-attr multimethod to set the attribute value 
   for the implementation and updates the abstract component
   as well."
   [c k v]
-  (let [c (or (and (namespace k) c)
-              (p/set-attr c k v))]
+  (let [c (if (abstract-attr? k)
+            c
+            (p/set-attr c k v))]
     (assoc-in c [:attrs k] v)))
 
 (defn- attr-reducer
@@ -86,10 +94,10 @@
   {:pre [(component? component)]}
   (if (initialized? component) ; do nothing if it's already initiliazed
     component
-    (->> (initialize component)
-      (impl component)
-      set-attrs
-      init-content)))
+    (let [ctrl       (initialize component)
+          component  (-> component (impl ctrl) set-attrs init-content)
+          ctrl       (abstract ctrl component)]
+      (impl component ctrl))))
 
 (defn find-path-by
   "Returns the path to the child component that satisfies (= val (f com))."
@@ -104,7 +112,7 @@
           (-> [:content] (concat res) flatten vec)))))
 
 (def ^:private by-tag :tag)
-(def ^:private by-id #(-> % :attrs :ui/id))
+(def ^:private by-id #(-> % :attrs :-id))
 
 (def find-path-by-tag
   "Finds a child component with the given tag."
