@@ -23,6 +23,6 @@
   of UI components. Must be built and rebound to the result
   of calling [build-hierarchy]."
   {:component [:window :panel :scroll :tabs :tab :tree :split
-               :tree-node :menu :menu-item :button :label]})
+               :tree-node :menu :menu-item :button :label :text-editor]})
 
 (def hierarchy (build-hierarchy hierarchy-description))

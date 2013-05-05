@@ -27,11 +27,6 @@
   (show [this] (.setVisible this true)))
   
 (extend-protocol Implementation
-  java.awt.Component
-  (abstract 
-    ([this] this)
-    ([this the-abstract] this))
-
   JComponent
   (abstract 
     ([this]
@@ -54,6 +49,7 @@
   (remove [this child]
     (.remove this child)
     this)
+
   JTabbedPane
   (add [this child]
     (let [i         (.getTabCount this)
@@ -68,16 +64,19 @@
   (remove [this child]
     (.remove this child)
     this)
+
   JSplitPane
   (add [this child]
     (if (instance? JButton (.getTopComponent this))
       (.setTopComponent this child)
       (.setBottomComponent this child))
     this)
+
   JScrollPane
   (add [this child]
     (.. this getViewport (add child nil))
     this)
+
   DefaultMutableTreeNode
   (add [this child]
     (.add this child)
