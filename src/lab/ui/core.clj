@@ -75,6 +75,11 @@
             (p/set-attr c k v))]
     (assoc-in c [:attrs k] v)))
 
+(defn get-attr
+  "Returns the attribute k from the component."
+  [c k]
+  (-> c :attrs k))
+
 (defn- set-attrs
   "Called when initializing a component. Gets all defined
   attributes and sets their corresponding values."

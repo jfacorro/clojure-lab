@@ -26,6 +26,9 @@
 (defprotocol Selected
   (get-selected [this])
   (set-selected [this selected]))
+  
+(defprotocol Event
+  (source [this] "Gets the compnent that generated the event."))
 
 (defmulti initialize
   "Creates a component instance based on its :tag."

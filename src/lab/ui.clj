@@ -30,8 +30,9 @@
             :border  :none
             :content (create-text-editor item))))
 
-(defn open-file [item]
-  (swap! *ui* ui/update-by-id :tabs #(uip/add % (create-tab item))))
+(defn open-file [evt]
+  (let [item (-> evt uip/source uip/get-selected)]
+    (swap! *ui* ui/update-by-id :tabs #(uip/add % (create-tab item)))))
 
 (def menu
   (ui/menu-bar [(ui/menu {:text "File"}
@@ -46,7 +47,8 @@
                      :content (ui/split :orientation :horizontal
                                         :border      :none
                                         :content [(tree/tree-from-path ".." #'open-file)
-                                                  (ui/tabs :-id :tabs :border :none)])))
+                                                  (ui/tabs :-id :tabs 
+                                                           :border :none)])))
 
 (defn init [app]
   (reset! *ui* (ui/init main)))

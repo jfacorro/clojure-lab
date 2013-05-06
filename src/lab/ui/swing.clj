@@ -13,6 +13,7 @@
                                     Abstract impl 
                                     Visible visible? hide show
                                     Implementation abstract
+                                    Event source
                                     Selected get-selected set-selected]])
   (:require [lab.util :as util]
             [lab.ui.core :as ui]
@@ -56,8 +57,8 @@
   (add [this child]
     (let [i         (.getTabCount this)
           child-abs (abstract child)
-          header    (-> child-abs :attrs :-header impl)
-          title     (-> child-abs :attrs :-title)]
+          header    (-> child-abs (ui/get-attr :-header) impl)
+          title     (ui/get-attr child-abs :-title)]
       (.addTab this title child)
       (when header
         (.setTabComponentAt this i header))
@@ -95,6 +96,11 @@
   (set-selected [this index]
     (.setSelectedIndex this index)))
 ;;-------------------
+(extend-protocol Event
+  java.util.EventObject
+  (source [this]
+    (.getSource this)))
+;;-------------------
 (defmacro definitializations
   "Generates all the multimethod implementations
   for each of the entries in the map m."
@@ -120,7 +126,8 @@
     `(do ~@(mapcat (partial apply f) comps))))
 ;;-------------------
 (defn initialize-font [component]
-  (Font. (-> component :attrs :name) 0 (-> component :attrs :size)))
+  (Font. (ui/get-attr component :name) 0
+         (ui/get-attr component :size)))
 
 ;; Call the macro that generates all initialize multimethod implementations
 (definitializations
@@ -157,8 +164,7 @@
   (let [args  (take n (repeatedly gensym))
         hint  (symbol (.getName klass))
         mthd  (util/property-accesor :set prop)
-        f     `(fn [^{:tag ~hint} x# ~@args]
-                (. x# ~mthd ~@args))]
+        f     `(fn [^{:tag ~hint} x# ~@args] (. x# ~mthd ~@args))]
     (eval f)))
 
 (defmacro getter
@@ -185,40 +191,44 @@
 ;;-------------------
 (defattributes
   :component
-  (:border [c k v]
+  (:border [c _ v]
     (assert (#{:none :line :matte :titled} v) "Invalid line type.")
     (case v
       :none
         (.setBorder (impl c) (BorderFactory/createEmptyBorder))
       :line
         (.setBorder (impl c) (BorderFactory/createLineBorder (Color/black)))))
-  (:font [c attr value]
+  (:font [c _ value]
     (.setFont (impl c) (impl value)))
   (:preferred-size [c attr [w h :as value]]
     (.setPreferredSize (impl c) (Dimension. w h)))
+  (:on-click [c _ handler]
+    (let [listener (proxy [MouseAdapter] []
+                     (mousePressed [e]
+                       (when (= 1 (.getClickCount e)) (handler e))))]
+      (.addMouseListener (impl c) listener)))
+  (:on-dbl-click [c _ handler]
+    (let [listener (proxy [MouseAdapter] []
+                     (mousePressed [e]
+                       (when (= 2 (.getClickCount e)) (handler e))))]
+      (.addMouseListener (impl c) listener)))
   
   :window
-  (:menu [c k v]
+  (:menu [c _ v]
     (.setJMenuBar (impl c) (impl v)))
-  (:icons [c k v]
+  (:icons [c _ v]
     (let [icons (map (comp #(.createImage toolkit %) io/resource) v)]
       (.setIconImages (impl c) icons)))
 
   :tree
-  (:root [c k v]
+  (:root [c _ v]
     (let [model (DefaultTreeModel. (impl v))]
       (.setModel (impl c) model)))
-  (:on-selected [c attr handler]
+  (:on-selected [c _ handler]
     (let [listener (proxy [TreeSelectionListener] []
                      (valueChanged [e]
                        (handler (get-selected c))))]
       (.addTreeSelectionListener (impl c) listener)))
-  (:on-dbl-click [c attr handler]
-    (let [listener (proxy [MouseAdapter] []
-                     (mousePressed [e]
-                       (when (= 2 (.getClickCount e))
-                         (handler (get-selected c)))))]
-      (.addMouseListener (impl c) listener)))
 
   :tree-node
   (:item [c attr item]
