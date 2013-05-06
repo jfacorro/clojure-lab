@@ -11,9 +11,12 @@
 (def ^:dynamic *ui* (atom nil))
 
 (defn- create-text-editor [file]
-  (ui/text-editor :text   (slurp file)
-                  :border :none
-                  :font   (ui/font :name "Consolas" :size 14)))
+  (ui/text-editor :text        (slurp file)
+                  :border      :none
+                  :background  0x333333
+                  :foreground  0xFFFFFF
+                  :caret-color 0xFFFFFF
+                  :font        [:name "Consolas" :size 14]))
 
 (defn close-tab [id & _]
   (let [tab  (ui/find-by-id @*ui* id)
@@ -27,7 +30,7 @@
                                :content [(ui/label :text (str item))
                                          (ui/button :preferred-size [10 10]
                                                     :on-click (partial #'close-tab id))])
-            :border  :none
+            :border     :none
             :content (create-text-editor item))))
 
 (defn open-file [evt]

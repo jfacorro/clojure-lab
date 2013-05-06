@@ -6,7 +6,7 @@
                         JComponent]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
-           [java.awt Font Dimension Color Toolkit]
+           [java.awt Dimension Color Toolkit]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component add remove
                                     initialize set-attr
@@ -17,6 +17,7 @@
                                     Selected get-selected set-selected]])
   (:require [lab.util :as util]
             [lab.ui.core :as ui]
+            [lab.ui.swing.util :as swutil]
             [clojure.java.io :as io]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
@@ -116,42 +117,31 @@
 ;;-------------------
 (defmacro defattributes
   "Convenience macro to define attribute setters for each
-  component type. The method implemented always returns the
-  first argument which is supposed to be the component itself."
+  component type.
+  The method implemented always returns the first argument which 
+  is supposed to be the component itself.
+
+  *attrs-declaration
+  
+  Where each attrs-declaration is:
+ 
+  component-keyword *attr-declaration
+    
+  And each attr-declaration is:
+
+ (attr-name [c k v] & body)"
   [& body]
-  (let [comps (->> body (partition-by keyword?) (partition 2) (map #(apply concat %)))
+  (let [comps (->> body 
+                (partition-by keyword?) 
+                (partition 2) 
+                (map #(apply concat %)))
         f     (fn [tag & mthds]
                 (for [[attr [c _ _ :as args] & body] mthds]
-                  `(defmethod set-attr [~tag ~attr] ~args ~@body ~c)))]
+                  `(defmethod set-attr [~tag ~attr] 
+                    ~args 
+                    ~@body 
+                    ~c)))]
     `(do ~@(mapcat (partial apply f) comps))))
-;;-------------------
-(defn initialize-font [component]
-  (Font. (ui/get-attr component :name) 0
-         (ui/get-attr component :size)))
-
-;; Call the macro that generates all initialize multimethod implementations
-(definitializations
-  ;; Frame
-  :window      JFrame
-  ;; Menu
-  :menu-bar    JMenuBar
-  :menu        JMenu
-  :menu-item   JMenuItem
-  ;; Panels
-  :tabs        JTabbedPane
-  :tab         JScrollPane
-  ;; Text
-  :text-editor JTextPane
-  :font        initialize-font
-  ;; Layout
-  :split       JSplitPane
-  :panel       JPanel
-  ;; Tree
-  :tree        JTree
-  :tree-node   DefaultMutableTreeNode
-  ;; Controls
-  :button      JButton
-  :label       JLabel)
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------
@@ -185,6 +175,29 @@
     (apply (setter! (class ctrl) k n) ctrl args)
     c))
 ;;-------------------
+;; Call the macro that generates all initialize multimethod implementations
+(definitializations
+  ;; Frame
+  :window      JFrame
+  ;; Menu
+  :menu-bar    JMenuBar
+  :menu        JMenu
+  :menu-item   JMenuItem
+  ;; Panels
+  :tabs        JTabbedPane
+  :tab         JScrollPane
+  ;; Text
+  :text-editor JTextPane
+  ;; Layout
+  :split       JSplitPane
+  :panel       JPanel
+  ;; Tree
+  :tree        JTree
+  :tree-node   DefaultMutableTreeNode
+  ;; Controls
+  :button      JButton
+  :label       JLabel)
+;;-------------------
 (def ^:private split-orientations
   "Split pane possible orientations."
   {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
@@ -198,10 +211,15 @@
         (.setBorder (impl c) (BorderFactory/createEmptyBorder))
       :line
         (.setBorder (impl c) (BorderFactory/createLineBorder (Color/black)))))
+  (:background [c _ v]
+    (.setBackground (impl c) (swutil/color v)))
+  (:foreground [c _ v]
+    (.setForeground (impl c) (swutil/color v)))
   (:font [c _ value]
-    (.setFont (impl c) (impl value)))
+    (.setFont (impl c) (swutil/font value)))
   (:preferred-size [c attr [w h :as value]]
     (.setPreferredSize (impl c) (Dimension. w h)))
+
   (:on-click [c _ handler]
     (let [listener (proxy [MouseAdapter] []
                      (mousePressed [e]
@@ -244,7 +262,7 @@
                     (actionPerformed [e] (f c)))]
       (.setAction (impl c) action)))
 
-  :font
-  (:name [c attr value])
-  (:size [c attr value]))
+  :text-editor
+  (:caret-color [c _ v]
+    (.setCaretColor (impl c) (swutil/color v))))
 ;------------------------------

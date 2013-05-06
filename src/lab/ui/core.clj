@@ -181,7 +181,6 @@
 (def menu-item (partial build :menu-item))
 
 (def text-editor (partial build :text-editor))
-(def font (partial build :font))
 
 (def tabs (partial build :tabs))
 (def tab (partial build :tab))

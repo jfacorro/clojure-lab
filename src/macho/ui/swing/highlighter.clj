@@ -12,7 +12,7 @@
 
 (defn rgb-to-int [rgb]
   "Converts a RGB triple to a single int value."
-  (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb)))) 
+  (int (+ (* (:r rgb) 65536) (* (:g rgb) 256) (:b rgb))))
  
 (defn parse-attrs [stl]
   "Parses the attribute definition, replacing RGB values

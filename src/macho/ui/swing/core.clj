@@ -56,7 +56,7 @@
 (defn color
   ([x] 
     (cond (map? x)
-            (let [{r :r g :g b :b} x] (color r g b))
+            (let [{:keys [r g b]} x] (color r g b))
           (number? x)
             (color x x x)
           :else
