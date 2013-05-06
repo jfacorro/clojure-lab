@@ -1,8 +1,12 @@
 (ns lab.ui.swing.util
-  (:import [java.awt Color Font]
+  (:import [java.awt Color Font Toolkit]
+           [javax.swing BorderFactory]
            [javax.swing.text StyleConstants])
   (:require [lab.ui.core :as ui]
-            [lab.ui.protocols :as uip]))
+            [lab.ui.protocols :as uip]
+            [clojure.java.io :as io]))
+
+(def toolkit (Toolkit/getDefaultToolkit))
 
 (defn- int-to-rgb
   "Converts a single int value int a RGB triple."
@@ -59,3 +63,25 @@
         :else
           (let [{:keys [name size style] :or {size 14 style :plain}} (apply hash-map args)]
             (Font. name (font-style style) size))))
+
+(defn image
+  "Load an image from a resource file."
+  [rsrc]
+  (->> rsrc io/resource (.createImage toolkit)))
+
+(defn border 
+  "Takes a style of border and additional arguments according
+  to the style:
+    :none
+    :line color width
+    :matte resource
+    :titled string"
+  [style & [x y & xs]]
+  (assert (#{:none :line :matte :titled} style) "Invalid line type.")
+  (case style
+    :none
+      (BorderFactory/createEmptyBorder)
+    :line
+      (BorderFactory/createLineBorder (color (or x 0)) (or y 1))
+    :titled
+      (BorderFactory/createTitledBorder x)))

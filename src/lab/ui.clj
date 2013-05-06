@@ -42,7 +42,7 @@
                          [(ui/menu-item :text "New!")
                           (ui/menu-item :text "Open")])]))
 
-(def main (ui/window :title   "Clojure Lab"
+(def main (ui/window :title   "Clojure Lab - UI"
                      :size    [700 500]
                      :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
                      :menu    menu
@@ -50,7 +50,7 @@
                      :content (ui/split :orientation :horizontal
                                         :border      :none
                                         :content [(tree/tree-from-path ".." #'open-file)
-                                                  (ui/tabs :-id :tabs 
+                                                  (ui/tabs :-id    :tabs 
                                                            :border :none)])))
 
 (defn init [app]

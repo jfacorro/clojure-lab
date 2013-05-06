@@ -2,11 +2,10 @@
   (:refer-clojure :exclude [remove])
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton JPanel
-                        JButton JLabel AbstractAction BorderFactory
-                        JComponent]
+                        JButton JLabel AbstractAction JComponent]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
-           [java.awt Dimension Color Toolkit]
+           [java.awt Dimension]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component add remove
                                     initialize set-attr
@@ -17,11 +16,9 @@
                                     Selected get-selected set-selected]])
   (:require [lab.util :as util]
             [lab.ui.core :as ui]
-            [lab.ui.swing.util :as swutil]
-            [clojure.java.io :as io]))
+            [lab.ui.swing.util :as swutil]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
-(def toolkit (Toolkit/getDefaultToolkit))
 ;;-------------------
 ;;-------------------
 (extend-protocol Visible
@@ -205,12 +202,8 @@
 (defattributes
   :component
   (:border [c _ v]
-    (assert (#{:none :line :matte :titled} v) "Invalid line type.")
-    (case v
-      :none
-        (.setBorder (impl c) (BorderFactory/createEmptyBorder))
-      :line
-        (.setBorder (impl c) (BorderFactory/createLineBorder (Color/black)))))
+    (let [v (if (sequential? v) v [v])]
+      (.setBorder (impl c) (apply swutil/border v))))
   (:background [c _ v]
     (.setBackground (impl c) (swutil/color v)))
   (:foreground [c _ v]
@@ -235,7 +228,7 @@
   (:menu [c _ v]
     (.setJMenuBar (impl c) (impl v)))
   (:icons [c _ v]
-    (let [icons (map (comp #(.createImage toolkit %) io/resource) v)]
+    (let [icons (map swutil/image v)]
       (.setIconImages (impl c) icons)))
 
   :tree
