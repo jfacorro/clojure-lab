@@ -28,7 +28,7 @@
                                          (ui/button :preferred-size [10 10]
                                                     :on-click (partial #'close-tab id))])
             :border  :none
-            :content [(create-text-editor item)])))
+            :content (create-text-editor item))))
 
 (defn open-file [item]
   (swap! *ui* ui/update-by-id :tabs #(uip/add % (create-tab item))))
@@ -43,10 +43,10 @@
                      :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
                      :menu    menu
                      :visible true
-                     :content [(ui/split :orientation :horizontal
-                                         :border      :none
-                                         :content [(tree/tree-from-path ".." #'open-file)
-                                                   (ui/tabs :-id :tabs :border :none)])]))
+                     :content (ui/split :orientation :horizontal
+                                        :border      :none
+                                        :content [(tree/tree-from-path ".." #'open-file)
+                                                  (ui/tabs :-id :tabs :border :none)])))
 
 (defn init [app]
   (reset! *ui* (ui/init main)))

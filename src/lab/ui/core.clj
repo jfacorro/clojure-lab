@@ -57,7 +57,8 @@
 (defn- init-content
   "Initialize all content (children) for this component."
   [{content :content :as component}]
-  (let [content   (map init content)
+  (let [content   (if (sequential? content) content [content])
+        content   (map init content)
         component (assoc component :content [])]
     (reduce add component content)))
 
@@ -74,18 +75,13 @@
             (p/set-attr c k v))]
     (assoc-in c [:attrs k] v)))
 
-(defn- attr-reducer
-  "Used by set-attrs to reduce all attrs when initializing
-  a component."
-  [c [k v]]
-  (let [v (if (component? v) (init v) v)]
-    (set-attr c k v)))
-
 (defn- set-attrs
   "Called when initializing a component. Gets all defined
   attributes and sets their corresponding values."
   [{attrs :attrs :as component}]
-  (reduce attr-reducer component attrs))
+  (let [f (fn [c [k v]]
+            (set-attr c k (if (component? v) (init v) v)))]
+    (reduce f component attrs)))
 
 (defn init
   "Initializes a component, creating the implementation for 
@@ -95,7 +91,10 @@
   (if (initialized? component) ; do nothing if it's already initiliazed
     component
     (let [ctrl       (initialize component)
-          component  (-> component (impl ctrl) set-attrs init-content)
+          component  (-> component
+                       (impl ctrl)
+                       set-attrs
+                       init-content)
           ctrl       (abstract ctrl component)]
       (impl component ctrl))))
 
