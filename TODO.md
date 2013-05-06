@@ -14,6 +14,17 @@ UI
   - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
 - The abstraction reference for the implementations should be updated with each modification to the abstraction.
 
+- Code Editor:
+  - Indent code.
+  - Line numbers (show/hide).
+  - Comment / Uncomment lines.
+  - Syntax high-lighting.
+    - Incremental.
+    - Strings
+    - Comments
+    - Balance delimiters: ( [ {
+    - Mark corresponding delimiter.
+
 Model
 -----
 
