@@ -34,18 +34,18 @@
     (Color. r g b)))
 
 (def ^:private font-styles 
-  {:bold       StyleConstants/Bold
-   :italic     StyleConstants/Italic
-   :background StyleConstants/Background
-   :foreground StyleConstants/Foreground})
+  {:bold    Font/BOLD
+   :italic  Font/ITALIC
+   :plain   Font/PLAIN})
 
 (defn- font-style
   "If style is a vector then a value for the combination of 
   the supplied styles is returned, otherwise a value for the
   single style is generated."
   [style]
+  (println style)
   (if (sequential? style)
-    (apply bit-and (map #(style % 0) font-styles))
+    (apply bit-or (map #(font-styles % 0) style))
     (font-styles style 0)))
 
 (defn font
@@ -56,7 +56,8 @@
   (cond (sequential? x)
           (apply font x)
         (string? x)
-          (font :name x :size 14 :style :plain)
+          (font :name x)
         :else
-          (let [{:keys [name size style]} (apply hash-map args)]
+          (let [{:keys [name size style] :or {size 14 style :plain}} (apply hash-map args)]
+            (println name size style (font-style style))
             (Font. name (font-style style) size))))
