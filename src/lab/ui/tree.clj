@@ -5,7 +5,7 @@
 
 (defn file-proxy
   "Creates a proxy that overrides the toString method
-  for the File class so that it returns the file/directory's
+  for the File class so that it returns the (file/directory)'s
   name."
   [file]
   (proxy [java.io.File] [(.getPath file)]
@@ -31,12 +31,12 @@
                     :content (->> children (map tree-node-from-file) vec)))
     (ui/tree-node :item file)))
 
-(defn tree-from-path
-  "Generates the tree for the given path. If its a file
+(defn load-dir
+  "Loads the directory tree for the given path. If its a file
   then the parent directory is considered the root of the 
-  tree."
-  [root-path handler]
+  tree.
+  Returns a tree node."
+  [root-path]
   (let [root  (io/file root-path)
         root  (if (.isDirectory root) root (.getParentFile root))]
-    (ui/tree :on-dbl-click handler
-             :root (tree-node-from-file root))))
+    (tree-node-from-file root)))

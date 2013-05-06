@@ -52,7 +52,7 @@
                      :visible true
                      :content (ui/split :orientation :horizontal
                                         :border      :none
-                                        :content [(tree/tree-from-path ".." #'open-file)
+                                        :content [(ui/tree :on-dbl-click #'open-file :root (tree/load-dir ".." ))
                                                   (ui/tabs :-id    :tabs 
                                                            :border :none)])))
 
