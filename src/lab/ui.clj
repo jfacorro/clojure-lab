@@ -16,7 +16,10 @@
                   :background  0x333333
                   :foreground  0xFFFFFF
                   :caret-color 0xFFFFFF
-                  :font        [:name "Consolas" :size 14]))
+                  :font        [:name "Consolas" :size 14]
+                  :on-insert   #(do % (println "insert"))
+                  :on-delete   #(do % (println "delete"))
+                  :on-change   #(do % (println "change"))))
 
 (defn close-tab [id & _]
   (let [tab  (ui/find-by-id @*ui* id)

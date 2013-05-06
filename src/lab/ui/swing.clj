@@ -4,7 +4,7 @@
                         JScrollPane JTextPane JTree JSplitPane JButton JPanel
                         JButton JLabel AbstractAction JComponent]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
-           [javax.swing.event TreeSelectionListener]
+           [javax.swing.event TreeSelectionListener DocumentListener]
            [java.awt Dimension]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component add remove
@@ -93,87 +93,14 @@
     (.getSelectedIndex this))
   (set-selected [this index]
     (.setSelectedIndex this index)))
-;;-------------------
+
 (extend-protocol Event
   java.util.EventObject
   (source [this]
     (.getSource this)))
-;;-------------------
-(defmacro definitializations
-  "Generates all the multimethod implementations
-  for each of the entries in the map m."
-  [& {:as m}]
-  `(do
-      (remove-all-methods initialize)
-    ~@(for [[k c] m]
-      (if (-> c resolve class?)
-        `(defmethod initialize ~k [c#]
-          (new ~c))
-        `(defmethod initialize ~k [x#]
-          (~c x#))))))
-;;-------------------
-(defmacro defattributes
-  "Convenience macro to define attribute setters for each
-  component type.
-  The method implemented always returns the first argument which 
-  is supposed to be the component itself.
 
-  *attrs-declaration
-  
-  Where each attrs-declaration is:
- 
-  component-keyword *attr-declaration
-    
-  And each attr-declaration is:
-
- (attr-name [c k v] & body)"
-  [& body]
-  (let [comps (->> body 
-                (partition-by keyword?) 
-                (partition 2) 
-                (map #(apply concat %)))
-        f     (fn [tag & mthds]
-                (for [[attr [c _ _ :as args] & body] mthds]
-                  `(defmethod set-attr [~tag ~attr] 
-                    ~args 
-                    ~@body 
-                    ~c)))]
-    `(do ~@(mapcat (partial apply f) comps))))
-;;-------------------
-;; Setter & Getters
-;;-------------------
-(defn setter!
-  "Generate a setter interop function for the method whose name
-  starts with 'set' followed by prop keyword formatted in camel case
-  (e.g. :j-menu-bar turns into JMenuBar). The method takes n arguments
-  and the object is type hinted to class."
-  [^Class klass prop n]
-  (let [args  (take n (repeatedly gensym))
-        hint  (symbol (.getName klass))
-        mthd  (util/property-accesor :set prop)
-        f     `(fn [^{:tag ~hint} x# ~@args] (. x# ~mthd ~@args))]
-    (eval f)))
-
-(defmacro getter
-  "Generate a getter interop function."
-  [prop]
-  (eval `(fn [x#] (. x# ~(util/property-accesor :get prop)))))
-;;-------------------
-(defmethod set-attr :default
-  [c k args]
-  "docstring: fall-back method implementation
-  for properties not specified for the component.
-  Tries to set the property by building a function setter
-  and calling it with the supplied args."
-  (let [ctrl  (impl c)
-        args  (if (sequential? args) args [args])
-        args  (map #(if (ui/component? %) (impl %) %) args)
-        n     (count args)]
-    (apply (setter! (class ctrl) k n) ctrl args)
-    c))
-;;-------------------
-;; Call the macro that generates all initialize multimethod implementations
-(definitializations
+;; Initialize multimethod implementations
+(swutil/definitializations
   ;; Frame
   :window      JFrame
   ;; Menu
@@ -194,68 +121,99 @@
   ;; Controls
   :button      JButton
   :label       JLabel)
-;;-------------------
-(def ^:private split-orientations
-  "Split pane possible orientations."
-  {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
-;;-------------------
-(defattributes
-  :component
-  (:border [c _ v]
-    (let [v (if (sequential? v) v [v])]
-      (.setBorder (impl c) (apply swutil/border v))))
-  (:background [c _ v]
-    (.setBackground (impl c) (swutil/color v)))
-  (:foreground [c _ v]
-    (.setForeground (impl c) (swutil/color v)))
-  (:font [c _ value]
-    (.setFont (impl c) (swutil/font value)))
-  (:preferred-size [c attr [w h :as value]]
-    (.setPreferredSize (impl c) (Dimension. w h)))
 
-  (:on-click [c _ handler]
-    (let [listener (proxy [MouseAdapter] []
-                     (mousePressed [e]
-                       (when (= 1 (.getClickCount e)) (handler e))))]
-      (.addMouseListener (impl c) listener)))
-  (:on-dbl-click [c _ handler]
-    (let [listener (proxy [MouseAdapter] []
-                     (mousePressed [e]
-                       (when (= 2 (.getClickCount e)) (handler e))))]
-      (.addMouseListener (impl c) listener)))
+;; Attributes
+
+(defmethod set-attr :default
+  [c k args]
+  "docstring: fall-back method implementation
+  for properties not specified for the component.
+  Tries to set the property by building a function setter
+  and calling it with the supplied args."
+  (let [ctrl  (impl c)
+        args  (if (sequential? args) args [args])
+        args  (map #(if (ui/component? %) (impl %) %) args)
+        n     (count args)]
+    (apply (swutil/setter! (class ctrl) k n) ctrl args)
+    c))
+
+(swutil/defattributes
+  :component
+    (:border [c _ v]
+      (let [v (if (sequential? v) v [v])]
+        (.setBorder (impl c) (apply swutil/border v))))
+    (:background [c _ v]
+      (.setBackground (impl c) (swutil/color v)))
+    (:foreground [c _ v]
+      (.setForeground (impl c) (swutil/color v)))
+    (:font [c _ value]
+      (.setFont (impl c) (swutil/font value)))
+    (:preferred-size [c attr [w h :as value]]
+      (.setPreferredSize (impl c) (Dimension. w h)))
+
+    (:on-click [c _ handler]
+      (let [listener (proxy [MouseAdapter] []
+                       (mousePressed [e]
+                         (when (= 1 (.getClickCount e)) (handler e))))]
+        (.addMouseListener (impl c) listener)))
+    (:on-dbl-click [c _ handler]
+      (let [listener (proxy [MouseAdapter] []
+                       (mousePressed [e]
+                         (when (= 2 (.getClickCount e)) (handler e))))]
+        (.addMouseListener (impl c) listener)))
   
   :window
-  (:menu [c _ v]
-    (.setJMenuBar (impl c) (impl v)))
-  (:icons [c _ v]
-    (let [icons (map swutil/image v)]
-      (.setIconImages (impl c) icons)))
+    (:menu [c _ v]
+      (.setJMenuBar (impl c) (impl v)))
+    (:icons [c _ v]
+      (let [icons (map swutil/image v)]
+        (.setIconImages (impl c) icons)))
 
   :tree
-  (:root [c _ v]
-    (let [model (DefaultTreeModel. (impl v))]
-      (.setModel (impl c) model)))
-  (:on-selected [c _ handler]
-    (let [listener (proxy [TreeSelectionListener] []
-                     (valueChanged [e]
-                       (handler (get-selected c))))]
-      (.addTreeSelectionListener (impl c) listener)))
+    (:root [c _ v]
+      (let [model (DefaultTreeModel. (impl v))]
+        (.setModel (impl c) model)))
+    (:on-selected [c _ handler]
+      (let [listener (proxy [TreeSelectionListener] []
+                       (valueChanged [e]
+                         (handler (get-selected c))))]
+        (.addTreeSelectionListener (impl c) listener)))
 
   :tree-node
-  (:item [c attr item]
-    (.setUserObject (impl c) item))
+    (:item [c attr item]
+      (.setUserObject (impl c) item))
 
   :split
-  (:orientation [c attr value]
-    (.setOrientation (impl c) (split-orientations value)))
+    (:orientation [c attr value]
+      (.setOrientation (impl c) (swutil/split-orientations value)))
 
   :button 
-  (:on-click [c _ f]
-    (let [action (proxy [AbstractAction] []
-                    (actionPerformed [e] (f c)))]
-      (.setAction (impl c) action)))
+    (:on-click [c _ f]
+      (let [action (proxy [AbstractAction] []
+                      (actionPerformed [e] (f c)))]
+        (.setAction (impl c) action)))
 
   :text-editor
-  (:caret-color [c _ v]
-    (.setCaretColor (impl c) (swutil/color v))))
-;------------------------------
+    (:caret-color [c _ v]
+      (.setCaretColor (impl c) (swutil/color v)))
+    (:on-insert [c _ handler]
+      (let [listener (proxy [DocumentListener] []
+                       (insertUpdate [e] (handler e))
+                       (removeUpdate [e])
+                       (changedUpdate [e]))
+            doc      (.getDocument (impl c))]
+        (.addDocumentListener doc listener)))
+    (:on-delete [c _ handler]
+      (let [listener (proxy [DocumentListener] []
+                       (insertUpdate [e])
+                       (removeUpdate [e] (handler e))
+                       (changedUpdate [e]))
+            doc      (.getDocument (impl c))]
+        (.addDocumentListener doc listener)))
+    (:on-change [c _ handler]
+      (let [listener (proxy [DocumentListener] []
+                       (insertUpdate [e])
+                       (removeUpdate [e])
+                       (changedUpdate [e] (handler e)))
+            doc      (.getDocument (impl c))]
+        (.addDocumentListener doc listener))))
