@@ -15,7 +15,7 @@
 ;; TODO: ask if this is acceptable
 (misc/intern-vars 'macho.ui.swing.core)
 ;;------------------------------
-(def app-name "Clojure LAB")
+(def app-name "Clojure Lab")
 (def new-doc-title "Untitled")
 (def icons-paths ["icon-16.png"
                   "icon-32.png"

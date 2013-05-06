@@ -11,9 +11,9 @@
 (def ^:dynamic *ui* (atom nil))
 
 (defn- create-text-editor [file]
-  (ui/text-editor :text (slurp file)
+  (ui/text-editor :text   (slurp file)
                   :border :none
-                  :font (ui/font :name "Consolas" :size 14)))
+                  :font   (ui/font :name "Consolas" :size 14)))
 
 (defn close-tab [id & _]
   (let [tab  (ui/find-by-id @*ui* id)
@@ -40,6 +40,7 @@
 
 (def main (ui/window :title   "Clojure Lab"
                      :size    [700 500]
+                     :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
                      :menu    menu
                      :visible true
                      :content [(ui/split :orientation :horizontal

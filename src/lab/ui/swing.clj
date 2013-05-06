@@ -6,7 +6,7 @@
                         JComponent]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener]
-           [java.awt Font Dimension Color]
+           [java.awt Font Dimension Color Toolkit]
            [java.awt.event MouseAdapter])
   (:use    [lab.ui.protocols :only [Component add remove
                                     initialize set-attr
@@ -15,9 +15,11 @@
                                     Implementation abstract
                                     Selected get-selected set-selected]])
   (:require [lab.util :as util]
-            [lab.ui.core :as ui]))
+            [lab.ui.core :as ui]
+            [clojure.java.io :as io]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+(def toolkit (Toolkit/getDefaultToolkit))
 ;;-------------------
 ;;-------------------
 (extend-protocol Visible
@@ -198,6 +200,9 @@
   :window
   (:menu [c k v]
     (.setJMenuBar (impl c) (impl v)))
+  (:icons [c k v]
+    (let [icons (map (comp #(.createImage toolkit %) io/resource) v)]
+      (.setIconImages (impl c) icons)))
 
   :tree
   (:root [c k v]
