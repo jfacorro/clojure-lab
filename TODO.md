@@ -4,6 +4,7 @@ TODO
 UI
 --
 
+- Implement Enlive selectors.
 - Create with-id macro or something similar for being able to avoid declaring explicit ids if it's not necessary.
 - Modify the global atom created for the ui.
 - Abstraction for events

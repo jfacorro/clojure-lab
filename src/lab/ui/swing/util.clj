@@ -43,7 +43,6 @@
   the supplied styles is returned, otherwise a value for the
   single style is generated."
   [style]
-  (println style)
   (if (sequential? style)
     (apply bit-or (map #(font-styles % 0) style))
     (font-styles style 0)))
@@ -59,5 +58,4 @@
           (font :name x)
         :else
           (let [{:keys [name size style] :or {size 14 style :plain}} (apply hash-map args)]
-            (println name size style (font-style style))
             (Font. name (font-style style) size))))

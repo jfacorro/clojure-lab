@@ -30,7 +30,7 @@
                                :content [(ui/label :text (str item))
                                          (ui/button :preferred-size [10 10]
                                                     :on-click (partial #'close-tab id))])
-            :border     :none
+            :border  :none
             :content (create-text-editor item))))
 
 (defn open-file [evt]
