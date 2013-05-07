@@ -27,18 +27,21 @@
     (uip/remove tabs tab)))
 
 (defn- create-tab [item]
-  (let [id (keyword (gensym))]
+  (let [id   (keyword (gensym))
+        path (.getCanonicalPath ^java.io.File item)]
     (ui/tab :-id  id
-            :-header (ui/panel :opaque false
-                               :content [(ui/label :text (str item))
-                                         (ui/button :preferred-size [10 10]
-                                                    :on-click (partial #'close-tab id))])
+            :-tool-tip path
+            :-header   (ui/panel :opaque false
+                                 :content [(ui/label :text (str item))
+                                           (ui/button :preferred-size [10 10]
+                                                      :on-click (partial #'close-tab id))])
             :border  :none
             :content (create-text-editor item))))
 
 (defn open-file [evt]
-  (let [item (-> evt uip/source uip/get-selected)]
-    (swap! *ui* ui/update-by-id :tabs #(uip/add % (create-tab item)))))
+  (let [^java.io.File file (-> evt uip/source uip/get-selected)]
+    (when (-> file .isDirectory not)
+      (swap! *ui* ui/update-by-id :tabs #(uip/add % (create-tab file))))))
 
 (def menu
   (ui/menu-bar [(ui/menu {:text "File"}

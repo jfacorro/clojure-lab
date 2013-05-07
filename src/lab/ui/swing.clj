@@ -56,10 +56,11 @@
     (let [i         (.getTabCount this)
           child-abs (abstract child)
           header    (-> child-abs (ui/get-attr :-header) impl)
+          tool-tip  (ui/get-attr child-abs :-tool-tip)
           title     (ui/get-attr child-abs :-title)]
       (.addTab this title child)
-      (when header
-        (.setTabComponentAt this i header))
+      (when header (.setTabComponentAt this i header))
+      (when tool-tip (.setToolTipTextAt this i tool-tip))
       (set-selected this i))
     this)
   (remove [this child]

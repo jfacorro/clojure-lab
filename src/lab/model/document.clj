@@ -12,7 +12,7 @@
 (defrecord InsertText [offset s])
 (defrecord RemoveText [start end s])
 
-(extend-protocol hist/Bijective
+(extend-protocol h/Bijective
   InsertText
   (inverse [this]
     (let [offset (:offset this)
@@ -138,7 +138,7 @@
                             :path nil
                             :modified false
                             :buffer (default-buffer)
-                            :history (hist/history)
+                            :history (h/history)
                             :alternates alternates})]
     (if path
       (bind doc path)
