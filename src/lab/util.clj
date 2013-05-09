@@ -1,6 +1,7 @@
 (ns lab.util
   (:require [clojure [string :as str]
-                     [reflect :as r]]))
+                     [reflect :as r]
+                     [pprint :as p]]))
 
 (defmacro !
   "Applies f to the atom x using the supplied arguments.
@@ -67,20 +68,8 @@
 
 ;; Reflection
 
-(defn- format-member [{:keys [return-type parameter-types flags] :as m}]
-  (let [str-interpose (fn [sep s] (->> s (interpose sep) (apply str)))
-        flags       (when flags (->> flags (map name) (str-interpose " ")))
-        return-type (when return-type (str return-type " "))
-        method-name (:name m)
-        parameter-types (str-interpose ", " parameter-types)]
-  (str method-name " - " flags " " return-type method-name "(" parameter-types ")")))
-
 (defn list-methods [x]
   (->> (r/reflect x) :members (sort-by :name)))
 
 (defn print-methods [x]
-  (clojure.pprint/print-table (list-methods x))
-
-  #_(doseq [m (list-methods x)]
-    (-> m format-member println)))
-
+  (p/print-table (list-methods x)))

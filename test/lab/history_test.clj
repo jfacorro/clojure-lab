@@ -26,5 +26,3 @@
     forward
     forward
     (->is = :d current)))
-
-;(run-tests)
