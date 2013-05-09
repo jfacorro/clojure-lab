@@ -16,8 +16,6 @@
   ;; Document tabs control
   tabs)
 
-(println icons)
-
 (defn init [title]
   (def main (ui/frame title))
   (def txt (ui/text-pane))
@@ -33,5 +31,3 @@
       (ui/set :icon-images icons)
       (ui/add txt)
       (ui/set :visible true)))
-
-(init app-name)

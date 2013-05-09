@@ -9,8 +9,6 @@
   (save [this] [this path])
   (close[this]))
 
-(defrecord Document)
-
 (defprotocol Project
   (add-file [this doc])
   (delete-file [this doc])
@@ -23,7 +21,3 @@
 (defprotocol Searchable
   (search [this pattern])
   (replace [this pattern replacement]))
-
-
-  
-

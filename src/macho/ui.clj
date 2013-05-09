@@ -405,18 +405,29 @@ and copies the indenting for the new line."
     (add-repl ui)))
 ;;------------------------------
 (defn next-document [{tabs :tabs :as ui}]
-  (println 'next-document)
   (let [i (.getSelectedIndex tabs)
         n (.getTabCount tabs)]
-    (if (< (inc i) n)
-      (.setSelectedIndex tabs (inc i)))
-  ui))
+    (when (< (inc i) n)
+      (.setSelectedIndex tabs (inc i))
+      (-> tabs (.getComponentAt (inc i))
+        .getViewport
+        .getView
+        .getComponents
+        first
+        .grabFocus)))
+  ui)
 ;;------------------------------
 (defn prev-document [{tabs :tabs :as ui}]
-  (println 'prev-document)
   (let [i (.getSelectedIndex tabs)]
-    (if (<= 0 (dec i))
-      (.setSelectedIndex tabs (dec i))))
+    (when (<= 0 (dec i))
+      (.setSelectedIndex tabs (dec i))
+      (-> tabs
+        (.getComponentAt (dec i)) 
+        .getViewport
+        .getView
+        .getComponents
+        first
+        .grabFocus)))
   ui)
 ;;------------------------------
 (def menu-options
