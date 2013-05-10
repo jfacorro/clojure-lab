@@ -407,6 +407,7 @@ and copies the indenting for the new line."
 (defn next-document [{tabs :tabs :as ui}]
   (let [i (.getSelectedIndex tabs)
         n (.getTabCount tabs)]
+    (println "next document")
     (when (< (inc i) n)
       (.setSelectedIndex tabs (inc i))
       (-> tabs (.getComponentAt (inc i))
@@ -419,6 +420,7 @@ and copies the indenting for the new line."
 ;;------------------------------
 (defn prev-document [{tabs :tabs :as ui}]
   (let [i (.getSelectedIndex tabs)]
+    (println "prev document")
     (when (<= 0 (dec i))
       (.setSelectedIndex tabs (dec i))
       (-> tabs
@@ -432,25 +434,25 @@ and copies the indenting for the new line."
 ;;------------------------------
 (def menu-options
   [{:name "File"
-    :items [{:name "New" :action new-document :keys "ctrl N"}
-            {:name "Open" :action open-document :keys "ctrl O"}
-            {:name "Save" :action save-document :keys "ctrl S"}
-            {:name "Close" :action close-document :keys "ctrl W"}
+    :items [{:name "New" :action #'new-document :keys "ctrl N"}
+            {:name "Open" :action #'open-document :keys "ctrl O"}
+            {:name "Save" :action #'save-document :keys "ctrl S"}
+            {:name "Close" :action #'close-document :keys "ctrl W"}
             {:separator true}
             {:name "Exit" :action #(do % (System/exit 0)) :keys "alt X"}]}
    {:name "Code"
-    :items [{:name "Eval" :action eval-src :keys "ctrl ENTER"}
-            {:name "Find" :action find-src :keys "ctrl F"}
+    :items [{:name "Eval" :action #'eval-src :keys "ctrl ENTER"}
+            {:name "Find" :action #'find-src :keys "ctrl F"}
             {:name "Find docs" :action #(find-doc % true) :keys "ctrl alt F"}
-            {:name "Doc" :action find-doc :keys "alt F"}
-            {:name "Clear Log" :action clear-repl :keys "ctrl L"}]}
+            {:name "Doc" :action #'find-doc :keys "alt F"}
+            {:name "Clear Log" :action #'clear-repl :keys "ctrl L"}]}
    {:name "REPL"
-    :items [{:name "Lab" :action load-lab-repl :keys "ctrl alt shift R"}
-            {:name "Clojure" :action load-repl :keys "ctrl R"}
-            {:name "Project" :action load-project-repl :keys "ctrl shift R"}]}
+    :items [{:name "Lab" :action #'load-lab-repl :keys "ctrl alt shift R"}
+            {:name "Clojure" :action #'load-repl :keys "ctrl R"}
+            {:name "Project" :action #'load-project-repl :keys "ctrl shift R"}]}
    {:name "View"
-    :items [{:name "Next Doc..." :action #'next-document :keys "ctrl TAB"}
-            {:name "Prev Doc..." :action #'prev-document :keys "ctrl shift TAB"}]}])
+    :items [{:name "Next Doc..." :action #'next-document :keys "ctrl PAGE_DOWN"}
+            {:name "Prev Doc..." :action #'prev-document :keys "ctrl PAGE_UP"}]}])
 ;;------------------------------
 (defn ui-process
   "Returns a function that calls (f main) and

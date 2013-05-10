@@ -7,5 +7,6 @@
                  [swingrepl "1.3.0" :exclusions [org.clojure/clojure org.clojure/clojure-contrib]]]
   :main macho
   :manifest {"SplashScreen-Image" "logo.png"}
-  :aliases  {"build" ["with-profile" "aot" "do" "clean," "uberjar"]}
+  :aliases  {"build" ["do" "clean," "uberjar"]
+             "build-aot" ["with-profile" "aot" "do" "clean," "uberjar"]}
   :profiles {:aot {:aot [#".*"]}})
