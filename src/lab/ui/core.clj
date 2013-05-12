@@ -69,6 +69,10 @@
   [k]
   (-> k name first #{\-}))
 
+(def gen-id
+  "Generates a unique id string."
+  #(name (gensym)))
+
 (defn set-attr
   "Uses the set-attr multimethod to set the attribute value 
   for the implementation and updates the abstract component

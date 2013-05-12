@@ -26,18 +26,25 @@
 
 ;; Parsing functions
 
+(defn- selector?
+  "Returns truthy (name x) if x is a string or a keyword.
+  Falsey otherwise."
+  [x]
+  (and (or (string? x) (keyword? x)) 
+       (name x)))
+
 (defn- id?
   "Returns true if the string begins with a
   hash (#) sign which indicated its an id selector."
   [s]
-  (when-let [[x & _] (and (keyword? s) (name s))]
+  (when-let [[x & _] (selector? s)]
     (= x \#)))
 
 (defn- tag?
   "Returns true if the string doesn't begin with a
   hash (#) and only has a single."
   [s]
-  (when-let [[x & _] (and (keyword? s) (name s))]
+  (when-let [[x & _] (selector? s)]
     (not= x \#)))
 
 (defn- parse

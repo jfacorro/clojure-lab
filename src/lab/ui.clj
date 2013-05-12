@@ -22,12 +22,12 @@
                   :on-change   #(do % (println "change"))))
 
 (defn close-tab [id & _]
-  (let [tab  (ui/find-by-id @*ui* id)
-        tabs (ui/find-by-id @*ui* :tabs)]
+  (let [tab  (ui/find @*ui* (str "#" id))
+        tabs (ui/find @*ui* :tabs)]
     (uip/remove tabs tab)))
 
 (defn- create-tab [item]
-  (let [id   (keyword (gensym))
+  (let [id   (ui/gen-id)
         path (.getCanonicalPath ^java.io.File item)]
     (ui/tab :-id  id
             :-tool-tip path
@@ -41,7 +41,7 @@
 (defn open-file [evt]
   (let [^java.io.File file (-> evt uip/source uip/get-selected)]
     (when (-> file .isDirectory not)
-      (swap! *ui* ui/update-by-id :tabs #(uip/add % (create-tab file))))))
+      (swap! *ui* ui/update :tabs uip/add (create-tab file)))))
 
 (def menu
   (ui/menu-bar [(ui/menu {:text "File"}
