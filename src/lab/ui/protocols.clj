@@ -12,11 +12,6 @@
   (hide [this])
   (show [this]))
 
-(defprotocol Window
-  (maximize [this])
-  (restore [this])
-  (minimze [this]))
-
 (defprotocol Abstract
   (impl [this] [this implementation] "Gets or sets the implementation for component."))
 
@@ -26,9 +21,17 @@
 (defprotocol Selected
   (get-selected [this])
   (set-selected [this selected]))
-  
+
+(defprotocol Window
+  (maximize [this])
+  (restore [this])
+  (minimze [this]))
+
 (defprotocol Event
-  (source [this] "Gets the compnent that generated the event."))
+  (event->map [this] "Serializes the event into a map.")
+  (source [this] "Gets the component that generated the event."))
+
+;; Multi methods
 
 (defmulti initialize
   "Creates a component instance based on its :tag."

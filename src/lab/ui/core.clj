@@ -10,7 +10,8 @@
 
 (declare init initialized?)
 
-;; Implementation dependent
+;; Every abstract component is represented by a Clojure map.
+
 (extend-type clojure.lang.IPersistentMap
   Component ; Extend Clojure maps so that adding children is transparent.
   (children [this]
@@ -62,8 +63,9 @@
         component (assoc component :content [])]
     (reduce add component content)))
 
-(defn- abstract-attr? [k]
-  (.startsWith (name k) "-"))
+(defn- abstract-attr?
+  [k]
+  (-> k name first #{\-}))
 
 (defn set-attr
   "Uses the set-attr multimethod to set the attribute value 
@@ -148,7 +150,7 @@
   (update-in root (find-path-by by-id root id) f))
 
 (defn- build
-  "Used by constructor functions to build a component with keys :tag, 
+  "Used by constructor functions to build a component with keys :tag,
   :attrs and :content.
   
   Usage:  

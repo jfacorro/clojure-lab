@@ -55,11 +55,11 @@
                      :visible true
                      :content (ui/split :orientation :horizontal
                                         :border      :none
-                                        :content [(ui/tree :on-dbl-click #'open-file :root (tree/load-dir ".." ))
+                                        :content [(ui/tree :on-dbl-click #'open-file :root (tree/load-dir ".."))
                                                   (ui/tabs :-id    :tabs
                                                            :border :none)])))
 
 (defn init [app]
   (reset! *ui* (ui/init main)))
   
-;(init nil)
+(do (init nil) nil)
