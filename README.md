@@ -20,7 +20,7 @@ Basic intialization and loading tasks are done in the control module. Environmen
 
 ##Features
 
-All features should be 
+All features should be implemented as extensions, but the ones that are closer to the core can be :aot compiled.
 
 Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment][1] by [Chas Emerick][2]:
 
@@ -60,6 +60,12 @@ Most of the features in the following list were extracted from the post [The Ide
 - Static analysis
     - Symbol navigation (i.e. "Go to declaration").
     - Find usages.
+
+License
+
+Copyright © 2013 Juan Facorro
+
+Distributed under the Eclipse Public License, the same as Clojure.
 
   [1]: http://cemerick.com/ideal-clojure-development-environment/
   [2]: http://cemerick.com/
