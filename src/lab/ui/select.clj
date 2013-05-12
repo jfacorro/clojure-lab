@@ -1,17 +1,28 @@
 (ns lab.ui.select
+  (:refer-clojure :exclude [compile])
   (:use [lab.ui.protocols :only [Component add children]]))
 
-;; Selector function generators
+;; Selector functions
 
-(defn- tag-selector
+(defn tag=
   "Returns a predicate that returns true if the
   component arg received has the specified tag."
   [tag]
-  #(= tag (:tag %)))
+  (with-meta #(= tag (:tag %)) {:tag tag}))
 
-(defn- id-selector 
+(defn id=
   [id]
-  #(= id (-> % :attrs :-id)))
+  (with-meta #(= id (-> % :attrs :-id)) {:id id}))
+
+(defn attr= [attr v]
+  (with-meta
+    #(-> % :attrs attr (= v))
+    {:attr attr :value v}))
+
+(defn attr? [attr]
+  (with-meta
+    #(-> % :attrs attr)
+    {:attr attr}))
 
 ;; Parsing functions
 
@@ -57,27 +68,23 @@
                     first)]
       (-> [:content] (concat path) flatten vec))))
 
-(defn- compile-selector
-  "Takes a selector and returns a single arg function 
-  that will build the path to use with functions like 
-  get-in and update-in."
+(defn- compile
+  "Takes a selector and returns a single arg predicate."
   [selector]
   (if (vector? selector)
-    (let [selectors (map compile-selector selector)]
+    (let [predicates (map compile selector)]
       (fn [x]
-        (reduce (fn [acc f] (and acc (find-path f x)))
-                true
-                selectors)))
+        (reduce #(and % (%2 x)) true predicates)))
     (let [[t v] (parse selector)]
       (condp = t
-        :id  (partial find-path (id-selector v))
-        :tag (partial find-path (tag-selector v))
-        :fn  (partial find-path v)))))
+        :id  (id= v)
+        :tag (tag= v)
+        :fn  v))))
 
 (defn- chain
   "Reducer function used for chaining selectors."
-  [[path root] f]
-  (let [path' (f root)
+  [[path root] pred]
+  (let [path' (find-path pred root)
         path  (when path' (concat path path'))
         root  (get-in root path)]
     [path root]))
@@ -86,6 +93,7 @@
   "Takes a selection expression and returns the path for the
   matching components from root."
   [root selector]
-  (if-let [selectors (and (vector? selector) (map compile-selector selector))]
-    (->> selectors (reduce chain [nil root]) first)
-    ((compile-selector selector) root)))
+  (let [selector   (if (vector? selector) selector [selector])
+        predicates (map compile selector)
+        [path _]   (reduce chain [nil root] predicates)]
+    path))
