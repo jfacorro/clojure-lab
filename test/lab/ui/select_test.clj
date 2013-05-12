@@ -41,5 +41,3 @@
       []           [[:window :#main]]
       nil          [[:window :label]]
       [:content 0] [[:label :label]])))
-
-(run-tests)

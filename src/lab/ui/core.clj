@@ -1,5 +1,7 @@
 (ns lab.ui.core
+  (:refer-clojure :exclude [find])
   (:require [lab.util :as util]
+            [lab.ui.select :as sel]
             [lab.ui.protocols :as p])
   (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
@@ -105,49 +107,19 @@
           ctrl       (abstract ctrl component)]
       (impl component ctrl))))
 
-(defn find-path-by
-  "Returns the path to the child component that satisfies (= val (f com))."
-  [f component value]
-  (let [ch (children component)
-        y (->> ch (filter #(= value (f %))) first)]
-    (if y
-        [:content (.indexOf ch y)]
-        (when-let [res (->> ch (map-indexed #(vector %1 (find-path-by f %2 value)))
-                               (filter second)
-                               first)]
-          (-> [:content] (concat res) flatten vec)))))
+(defn find
+  [root selector]
+  (when-let [path (sel/select root selector)]
+    (get-in root path)))
 
-(def ^:private by-tag :tag)
-(def ^:private by-id #(-> % :attrs :-id))
-
-(def find-path-by-tag
-  "Finds a child component with the given tag."
-  (partial find-path-by by-tag))
-  
-(def find-path-by-id
-  "Finds a child component with the given id."
-  (partial find-path-by by-id))
-
-(defn find-by
-  "Finds a child component with the given value in the
-  specified attribute."
-  [f component value]
-  (when-let [path (find-path-by f component value)]
-    (get-in component path)))
-
-(def find-by-tag
-  "Finds a child component with the given tag."
-  (partial find-by by-tag))
-  
-(def find-by-id
-  "Finds a child component with the given id."
-  (partial find-by by-id))
-
-(defn update-by-id
-  "Updates the the component with the supplied id by calling
-  the function f with it as its sole argument."
-  [root id f]
-  (update-in root (find-path-by by-id root id) f))
+(defn update
+  "Updates the component that matches the selector expression
+  using:
+    (update-in root (path-to-selector) f args)."
+  [root selector f & args]
+  (if-let [path (sel/select root selector)]
+    (apply update-in root path f args)
+    root))
 
 (defn- build
   "Used by constructor functions to build a component with keys :tag,
