@@ -35,39 +35,12 @@
          id="feComposite3070"
          in2="SourceAlpha"
          in="result2"
-         operator="in"
+         operator="out"
          result="result3"
          k1="0.50724637681159424"
          k2="-1.3043478260869568"
          k3="1.0869565217391308"
          k4="-0.14492753623188359" />
-    </filter>
-    <filter
-       y="-0.10000000000000001"
-       x="-0.10000000000000001"
-       height="1.2"
-       width="1.2"
-       inkscape:label="Shadow"
-       id="filter3061">
-      <feGaussianBlur
-         result="result2"
-         id="feGaussianBlur3063"
-         stdDeviation="5.5649999999999995" />
-      <feComposite
-         k4="-0.14492753623188359"
-         k3="1.0869565217391308"
-         k2="-1.3043478260869568"
-         k1="0.50724637681159424"
-         result="result3"
-         operator="out"
-         in="FillPaint"
-         in2="result2"
-         id="feComposite3065" />
-      <feComposite
-         id="feComposite3067"
-         in2="result3"
-         in="result2"
-         operator="out" />
     </filter>
   </defs>
   <sodipodi:namedview
@@ -77,14 +50,14 @@
      borderopacity="1"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="26.051368"
-     inkscape:cy="400.94593"
+     inkscape:zoom="2"
+     inkscape:cx="71.724549"
+     inkscape:cy="410.5356"
      inkscape:document-units="px"
      inkscape:current-layer="g3852"
      showgrid="false"
-     inkscape:window-width="1280"
-     inkscape:window-height="977"
+     inkscape:window-width="1366"
+     inkscape:window-height="721"
      inkscape:window-x="-4"
      inkscape:window-y="-4"
      inkscape:window-maximized="1"
@@ -113,15 +86,26 @@
        transform="matrix(0.69169129,0,0,0.69169129,30.751795,-32.151197)">
       <g
          id="g3852"
-         transform="matrix(1.5055898,0,0,1.5055898,-42.283628,12.491553)">
+         transform="matrix(1.5055898,0,0,1.5055898,-37.946433,-33.771863)">
         <rect
-           style="fill:#fffcfc;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:5.76145640000000010;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;filter:url(#filter3060)"
+           style="fill:#fffcfc;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:5.76145649;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;filter:url(#filter3060)"
            id="rect3955"
            width="242.99318"
            height="242.99318"
            x="-24.996572"
            y="-241.99658"
            ry="33.718307"
+           inkscape:export-filename="C:\Juan\Dropbox\Facultad\2012.Trabajo.Profesional\clojure-lab\resources\logo.png"
+           inkscape:export-xdpi="90"
+           inkscape:export-ydpi="90" />
+        <rect
+           style="fill:#fffcfc;fill-opacity:1;fill-rule:nonzero;stroke:none;display:inline"
+           id="rect3955-9"
+           width="248.87468"
+           height="248.75964"
+           x="-27.99733"
+           y="-244.8773"
+           ry="34.518475"
            inkscape:export-filename="D:\Juan\Dropbox\Facultad\2012.Trabajo.Profesional\ide\resources\logo.in.png"
            inkscape:export-xdpi="90"
            inkscape:export-ydpi="90" />

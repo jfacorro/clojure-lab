@@ -2,7 +2,7 @@
 
 **Clojure Lab** is a project that aims to build an IDE for Clojure in Clojure. Its main goals are **usability** and **extensibility**.
 
-This project is currently under development, most of the assertions that follow are more wishful thinking than anything else :).
+This project is currently under development, most of the assertions that follow are closer wishful thinking than reality :).
 
 ##Core
 
