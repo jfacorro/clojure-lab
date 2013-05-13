@@ -4,11 +4,9 @@
         [lab.test :only [->test ->is]]
         [clojure.test :only [deftest is run-tests]]))
 
-(def config {})
-
 (deftest init-app
   (->test
-    (init config)
+    (init nil)
 
     (->is not= nil)
     (->is not= nil :workspace)
@@ -17,7 +15,7 @@
 
 (deftest document-operations
   (->test
-    (init config)
+    (init nil)
 
     (open-document "1")
     (->is = 1 (comp count :documents))

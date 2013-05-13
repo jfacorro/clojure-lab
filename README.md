@@ -61,7 +61,7 @@ Most of the features in the following list were extracted from the post [The Ide
     - Symbol navigation (i.e. "Go to declaration").
     - Find usages.
 
-License
+#License
 
 Copyright © 2013 Juan Facorro
 

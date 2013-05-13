@@ -6,7 +6,7 @@
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener DocumentListener]
            [java.awt Dimension]
-           [java.awt.event MouseAdapter])
+           [java.awt.event MouseAdapter ActionListener])
   (:use    [lab.ui.protocols :only [Component add remove
                                     initialize set-attr
                                     Abstract impl 
@@ -208,6 +208,14 @@
                          (handler (get-selected c))))]
         (.addTreeSelectionListener (impl c) listener)))
 
+  :button
+    (:icon [c _ img]
+      (.setIcon (impl c) (swutil/icon img)))
+    (:on-click [c _ f]
+      (let [action (reify ActionListener
+                      (actionPerformed [this e] (f e)))]
+        (.addActionListener (impl c) action)))
+
   :tree-node
     (:item [c attr item]
       (.setUserObject (impl c) item))
@@ -215,12 +223,6 @@
   :split
     (:orientation [c attr value]
       (.setOrientation (impl c) (swutil/split-orientations value)))
-
-  :button 
-    (:on-click [c _ f]
-      (let [action (proxy [AbstractAction] []
-                      (actionPerformed [e] (f c)))]
-        (.setAction (impl c) action)))
 
   :text-editor
     (:caret-color [c _ v]

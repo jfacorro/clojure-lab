@@ -1,11 +1,25 @@
 (ns lab.app
   (:refer-clojure :exclude [name])
-  (:require [lab.model.workspace :as ws])
-  (:require [lab.model.project :as pj])
-  (:require [lab.model.document :as doc]))
+  (:require [lab.model [workspace :as ws]
+                       [project :as pj]
+                       [document :as doc]]
+            [lab.ui :as ui]
+            [clojure.java.io :as io]))
 
-(defrecord App [config workspace documents current-document])
+(def default-config
+  '{:name "Clojure Lab"
+   :core-plugins [lab.ui
+                  lab.core
+                  lab.clojure.project
+                  lab.clojure.document]
+   :plugins-dir "plugins"})
 
+(defn app []
+  {:config            default-config
+   :documents         {}
+   :current-document  nil
+   :workspace         (ws/workspace)})
+  
 (defn current-document
   "Returns the atom that contains the current document."
   [app-ref]
@@ -16,8 +30,8 @@
   "Opens a document from an  existing file 
   and adds it to the openened documents map."
   [{documents :documents :as app} path]
-  (let [doc (atom (doc/document path))
-        name   (:name @doc)]
+  (let [doc   (atom (doc/document path))
+        name  (:name @doc)]
     (if (documents name)
       app
       (assoc app :documents (assoc documents name doc)
@@ -64,24 +78,26 @@
     (pj/save p))
   app)
 
-(defn load-extensions
+(defn load-plugins
   "Loads all files from the extension path specified in 
   the config map."
   [{config :config :as app}]
   app)
 
-(defn load-languages
-  "Loads languages from the path specified in the config map.
-  Returns a map with the name of the languages as the keys and 
-  the definitions as the values. Each language should define a 
-  parsley grammar, a default file extension association and some
-  other details."
-  [{config :config :as app}]
-  app)
+(defn load-config
+  "Loads the configuration file form the specified path
+  or the default path if no path is given."
+  ([app]
+    (load-config app "./lab.config"))
+  ([app path]
+    (let [exists  (and path (-> (io/file path) .exists))
+          config  (when exists (load-string (slurp path)))]
+      (update-in app [:config] merge config))))
 
 (defn init
   "Initializes an instance of an application."
-  [config]
-  (-> (->App config (ws/workspace) {} nil)
-      load-extensions
-      load-languages))
+  [config-path]
+  (-> (app)
+      ui/init
+      (load-config config-path)
+      load-plugins))

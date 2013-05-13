@@ -1,6 +1,6 @@
 (ns lab.ui.swing.util
   (:import [java.awt Color Font Toolkit]
-           [javax.swing BorderFactory JSplitPane KeyStroke]
+           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon]
            [javax.swing.text StyleConstants])
   (:use    [lab.ui.protocols :only [initialize set-attr]])
   (:require [lab.ui.core :as ui]
@@ -139,7 +139,13 @@
   "Load an image from a resource file."
   [rsrc]
   (->> rsrc io/resource (.createImage toolkit)))
+
+(defn icon
+  "Load an image from a resource file."
+  [rsrc]
+  (->> rsrc image (ImageIcon.)))
   
+
 ;; Border
 
 (defn border 
