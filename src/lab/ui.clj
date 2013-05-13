@@ -1,6 +1,5 @@
 (ns lab.ui
-  "Trying to define a DSL to abstract the UI
-  components with Clojure data structures."
+  "DSL to abstract the UIcomponents with Clojure data structures."
   (:require [lab.ui.core :as ui :reload true]
             [lab.ui.tree :as tree]
             [lab.ui.protocols :as uip]
@@ -34,6 +33,8 @@
             :-header   (ui/panel :opaque false
                                  :content [(ui/label :text (str item))
                                            (ui/button :preferred-size [10 10]
+                                                      :icon "close-tab.png"
+                                                      :border :none
                                                       :on-click (partial #'close-tab ui id))])
             :border  :none
             :content text)))
@@ -43,31 +44,23 @@
     (when (-> file .isDirectory not)
       (swap! ui ui/update :tabs uip/add (new-tab ui file)))))
 
-(def menu
-  (ui/menu-bar [(ui/menu {:text "File"}
-                         [(ui/menu-item :text "New")
-                          (ui/menu-item :text "Open")])]))
-
-(defn build-main [ui]
+(defn build-main [{ui :ui name :name :as app}]
   (ui/window :title   "Clojure Lab - UI"
              :size    [700 500]
              :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
-             :menu    menu
+             :menu    (ui/menu-bar)
              :visible true
              :content (ui/split :orientation :horizontal
                                 :border      :none
-                                :content [(ui/tree :on-dbl-click (partial #'open-file ui) :root (tree/load-dir ".."))
-                                          (ui/tabs :-id    :tabs
-                                                   :border :none)])))
-
-(defn build-menu [app]
-  (let [bindings (:global-bindings app)]
-    
-    ))
+                                :content [(ui/tree :-id "file-tree" 
+                                                   :on-dbl-click (partial #'open-file ui)
+                                                   :root (tree/load-dir "."))
+                                          (ui/tabs :border :none)])))
 
 (defn init [app]
-  (let [ui   (atom nil)]
-    (reset! ui (-> ui build-main ui/init))
-    (assoc app :ui ui)))
+  (let [ui  (atom nil)
+        app (assoc app :ui ui)]
+    (reset! ui (-> app build-main ui/init))
+    app))
   
 (do (init nil) nil)
