@@ -50,6 +50,34 @@
   (remove [this child]
     (.remove this child)
     this)
+    
+  JComponent
+  (add [this child]
+    (.add this child)
+    (.validate this)
+    this)
+  (remove [this child]
+    (.remove this child)
+    this)
+  (add-binding [this ks f]
+    (let [im   (.getInputMap this)
+          am   (.getActionMap this)
+          ks   (swutil/key-stroke ks)
+          desc (or (-> f meta :name) (name (gensym "binding-")))
+          act  (proxy [AbstractAction] []
+                 (actionPerformed [e] (f e)))]
+      (.put im ks desc)
+      (.put am desc act)
+      this))
+  (remove-binding [this ks]
+    (let [im   (.getInputMap this)
+          am   (.getActionMap this)
+          ks   (swutil/key-stroke ks)
+          desc (.get im ks)]
+      (when desc
+        (.remove im ks)
+        (.remove am desc))
+      this))
 
   JTabbedPane
   (add [this child]

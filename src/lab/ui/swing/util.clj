@@ -1,6 +1,6 @@
 (ns lab.ui.swing.util
   (:import [java.awt Color Font Toolkit]
-           [javax.swing BorderFactory JSplitPane]
+           [javax.swing BorderFactory JSplitPane KeyStroke]
            [javax.swing.text StyleConstants])
   (:use    [lab.ui.protocols :only [initialize set-attr]])
   (:require [lab.ui.core :as ui]
@@ -158,3 +158,9 @@
       (BorderFactory/createLineBorder (color (or x 0)) (or y 1))
     :titled
       (BorderFactory/createTitledBorder x)))
+
+;; KeyStroke
+(defn key-stroke
+  "Returns a swing key stroke based on the string provided."
+  [s]
+  (KeyStroke/getKeyStroke s))

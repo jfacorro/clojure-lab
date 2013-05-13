@@ -5,7 +5,9 @@
 (defprotocol Component
   (children [this] "Gets all the children for the component.")
   (add [this child] "Add a child to a component. Must return the parent with the child added.")
-  (remove [this child] "Removes child from the children collection."))
+  (remove [this child] "Removes child from the children collection.")
+  (add-binding [this ks f] "Adds a key binding to this component.")
+  (remove-binding [this ks] "Removes a key binding from this component."))
 
 (defprotocol Visible
   (visible? [this])

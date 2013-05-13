@@ -8,58 +8,66 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:dynamic *ui* (atom nil))
-
-(defn- create-text-editor [file]
+(defn- new-text-editor [file]
   (ui/text-editor :text        (slurp file)
                   :border      :none
                   :background  0x333333
                   :foreground  0xFFFFFF
                   :caret-color 0xFFFFFF
                   :font        [:name "Consolas" :size 14]
-                  :on-insert   #(do % (println "insert"))
-                  :on-delete   #(do % (println "delete"))
+                  :on-insert   #(do (println %) (println "insert"))
+                  :on-delete   #(do (println %) (println "delete"))
                   :on-change   #(do % (println "change"))))
 
-(defn close-tab [id & _]
-  (let [tab  (ui/find @*ui* (str "#" id))
-        tabs (ui/find @*ui* :tabs)]
-    (uip/remove tabs tab)))
+(defn close-tab [ui id & _]
+  (let [tab  (ui/find @ui (str "#" id))]
+    (swap! ui ui/update :tabs uip/remove tab)))
 
-(defn- create-tab [item]
-  (let [id   (ui/gen-id)
-        path (.getCanonicalPath ^java.io.File item)]
+(defn- new-tab [ui item]
+  (let [id   (ui/genid)
+        path (.getCanonicalPath ^java.io.File item)
+        text (new-text-editor item)
+        text (ui/add-binding text "ctrl L" #(do % (println text)))
+        text (ui/remove-binding text "ctrl L")]
     (ui/tab :-id  id
             :-tool-tip path
             :-header   (ui/panel :opaque false
                                  :content [(ui/label :text (str item))
                                            (ui/button :preferred-size [10 10]
-                                                      :on-click (partial #'close-tab id))])
+                                                      :on-click (partial #'close-tab ui id))])
             :border  :none
-            :content (create-text-editor item))))
+            :content text)))
 
-(defn open-file [evt]
+(defn open-file [ui evt]
   (let [^java.io.File file (-> evt uip/source uip/get-selected)]
     (when (-> file .isDirectory not)
-      (swap! *ui* ui/update :tabs uip/add (create-tab file)))))
+      (swap! ui ui/update :tabs uip/add (new-tab ui file)))))
 
 (def menu
   (ui/menu-bar [(ui/menu {:text "File"}
-                         [(ui/menu-item :text "New!")
+                         [(ui/menu-item :text "New")
                           (ui/menu-item :text "Open")])]))
 
-(def main (ui/window :title   "Clojure Lab - UI"
-                     :size    [700 500]
-                     :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
-                     :menu    menu
-                     :visible true
-                     :content (ui/split :orientation :horizontal
-                                        :border      :none
-                                        :content [(ui/tree :on-dbl-click #'open-file :root (tree/load-dir ".."))
-                                                  (ui/tabs :-id    :tabs
-                                                           :border :none)])))
+(defn build-main [ui]
+  (ui/window :title   "Clojure Lab - UI"
+             :size    [700 500]
+             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
+             :menu    menu
+             :visible true
+             :content (ui/split :orientation :horizontal
+                                :border      :none
+                                :content [(ui/tree :on-dbl-click (partial #'open-file ui) :root (tree/load-dir ".."))
+                                          (ui/tabs :-id    :tabs
+                                                   :border :none)])))
+
+(defn build-menu [app]
+  (let [bindings (:global-bindings app)]
+    
+    ))
 
 (defn init [app]
-  (reset! *ui* (ui/init main)))
+  (let [ui   (atom nil)]
+    (reset! ui (-> ui build-main ui/init))
+    (assoc app :ui ui)))
   
 (do (init nil) nil)

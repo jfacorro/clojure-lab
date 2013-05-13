@@ -12,7 +12,7 @@
 ;;------------------------------
 (defn load-config
   ([]
-    (load-config "./config"))
+    (load-config "./lab.config"))
   ([path]
     (let [config-file (io/file path)]
       (merge default-configuration

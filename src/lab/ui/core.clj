@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [find])
   (:require [lab.util :as util]
             [lab.ui.select :as sel]
-            [lab.ui.protocols :as p])
+            [lab.ui.protocols :as p :reload true])
   (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
                                  Implementation abstract
@@ -69,7 +69,7 @@
   [k]
   (-> k name first #{\-}))
 
-(def gen-id
+(def genid
   "Generates a unique id string."
   #(name (gensym)))
 
@@ -124,6 +124,19 @@
   (if-let [path (sel/select root selector)]
     (apply update-in root path f args)
     root))
+
+(defn add-binding
+  "Adds a key binding to this component."
+  [c ks f]
+  (let [c (init c)
+        i (impl c)]
+    (impl c (p/add-binding i ks f))))
+
+(defn remove-binding
+  "Adds a key binding to this component."
+  [c ks]
+  (let [i (impl c)]
+    (impl c (p/remove-binding i ks))))
 
 (defn- build
   "Used by constructor functions to build a component with keys :tag,
