@@ -193,7 +193,8 @@
   
   :window
     (:menu [c _ v]
-      (.setJMenuBar (impl c) (impl v)))
+      (.setJMenuBar (impl c) (impl v))
+      (.revalidate (impl c)))
     (:icons [c _ v]
       (let [icons (map swutil/image v)]
         (.setIconImages (impl c) icons)))
@@ -211,6 +212,12 @@
   :button
     (:icon [c _ img]
       (.setIcon (impl c) (swutil/icon img)))
+    (:on-click [c _ f]
+      (let [action (reify ActionListener
+                      (actionPerformed [this e] (f e)))]
+        (.addActionListener (impl c) action)))
+
+  :menu-item
     (:on-click [c _ f]
       (let [action (reify ActionListener
                       (actionPerformed [this e] (f e)))]

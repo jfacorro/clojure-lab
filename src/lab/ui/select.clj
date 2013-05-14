@@ -78,7 +78,7 @@
 (defn- compile
   "Takes a selector and returns a single arg predicate."
   [selector]
-  (if (vector? selector)
+  (if (sequential? selector)
     (let [predicates (map compile selector)]
       (fn [x]
         (reduce #(and % (%2 x)) true predicates)))
@@ -98,9 +98,13 @@
 
 (defn select
   "Takes a selection expression and returns the path for the
-  matching components from root."
+  matching components from root, which must be a component."
   [root selector]
-  (let [selector   (if (vector? selector) selector [selector])
-        predicates (map compile selector)
-        [path _]   (reduce chain [nil root] predicates)]
-    path))
+  (when selector
+    (let [selector   (if (sequential? selector) selector [selector])
+          predicates (map compile selector)
+          [path _]   (if (-> predicates count pos?)
+                       (reduce chain [nil root] predicates)
+                       [[] nil])]
+      path)))
+  

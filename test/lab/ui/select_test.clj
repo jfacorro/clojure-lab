@@ -1,3 +1,4 @@
+
 (ns lab.ui.select-test
   (:use lab.ui.select
         [clojure.test :only [deftest is are run-tests testing]]))
@@ -31,6 +32,8 @@
       
   (testing "Chained"
     (are [x y] (= x (select root y))
+      nil          nil
+      []           []
       [:content 0] [:window :label]
       [:content 1] [:#main :#2]
       [:content 1 :content 0] [:button :combo]

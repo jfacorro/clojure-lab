@@ -122,7 +122,9 @@
     (update-in root (path-to-selector) f args)."
   [root selector f & args]
   (if-let [path (sel/select root selector)]
-    (apply update-in root path f args)
+    (if (empty? path)
+      (apply f root args)
+      (apply update-in root path f args))
     root))
 
 (defn add-binding

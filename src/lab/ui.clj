@@ -1,11 +1,10 @@
 (ns lab.ui
   "DSL to abstract the UIcomponents with Clojure data structures."
   (:require [lab.ui.core :as ui :reload true]
+            [lab.ui.select :as ui.sel :reload true]
             [lab.ui.tree :as tree]
             [lab.ui.protocols :as uip]
             [lab.ui.swing :as swing :reload true]))
-
-(set! *warn-on-reflection* true)
 
 (defn- new-text-editor [file]
   (ui/text-editor :text        (slurp file)
@@ -32,8 +31,7 @@
             :-tool-tip path
             :-header   (ui/panel :opaque false
                                  :content [(ui/label :text (str item))
-                                           (ui/button :preferred-size [10 10]
-                                                      :icon "close-tab.png"
+                                           (ui/button :icon "close-tab.png"
                                                       :border :none
                                                       :on-click (partial #'close-tab ui id))])
             :border  :none
@@ -45,7 +43,8 @@
       (swap! ui ui/update :tabs uip/add (new-tab ui file)))))
 
 (defn build-main [{ui :ui name :name :as app}]
-  (ui/window :title   "Clojure Lab - UI"
+  (ui/window :-id     "main"
+             :title   name
              :size    [700 500]
              :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
              :menu    (ui/menu-bar)
@@ -57,10 +56,50 @@
                                                    :root (tree/load-dir "."))
                                           (ui/tabs :border :none)])))
 
+;; Menu
+
+(defn- menu-path
+  "Deconstructs a menu path from a string with a '->' separator."
+  [^String s]
+  (when s
+    (->> (.split s "->") seq (map clojure.string/trim))))
+
+(defn- create-menu-path
+  "Searches the menu-bar children using the selector. If the
+  menu defined is not found it is created otherwise the menu-bar 
+  is returned unchanged."
+  [menu-bar selector]
+  (if (ui/find menu-bar selector)
+    menu-bar
+    (let [text     (-> selector last meta :value) ; The selector's meta has the name of the menu.
+          menu     (ui/menu :text text)
+          selector (or (butlast selector) [])]
+      (ui/update menu-bar selector uip/add menu))))
+
+(defn add-menu-option
+  "Takes a menu option and add it to the ui menu bar.
+  The menu option map must have the following keys:
+    :path :name :action."
+  [ui {:keys [path name action separator] :as option}]
+  (let [menu-bar  (ui/get-attr ui :menu)
+        path      (menu-path path)
+        selector  (map #(ui.sel/attr= :text %) path)
+        selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
+        item      (ui/menu-item :text name :on-click (partial action ui))
+        menu-bar  (reduce create-menu-path menu-bar selectors)
+        menu-bar  (ui/update menu-bar selector uip/add item)]
+     (ui/set-attr ui :menu menu-bar)))
+
+;; Init
+
 (defn init [app]
   (let [ui  (atom nil)
         app (assoc app :ui ui)]
-    (reset! ui (-> app build-main ui/init))
+    (reset! ui (ui/init (build-main app)))
+    (swap! ui add-menu-option {:path "File" :name "New" :action #(println "New" (class %2)) :separator true})
+    (swap! ui add-menu-option {:path "File" :name "Open" :action #(println "Open" (class %2))})
+    (swap! ui add-menu-option {:path "File -> Project" :name "New" :action #(println "New Project" (class %2))})
+    (swap! ui add-menu-option {:path "File" :name "Exit" :action #(println "Exit" (class %2))})
     app))
   
 (do (init nil) nil)
