@@ -18,19 +18,19 @@
 
 ## Rationale
 
-When I started using Clojure I bumped into the situation where I didn't quite know what to use for Clojure development. [Emacs][6 ] seemed too big a challenge to start playing with a new language, so while reading the [Joy of Clojure][7 ] and going through its examples, [Clooj][4 ] was a pretty good tool to explore the basics. Although Clooj has its shortcomings it provides a friendly, simple and familiar interface.
+When I started using Clojure I bumped into the situation where I didn't quite know what to use for Clojure development. [Emacs][6] seemed too big a challenge to start playing with a new language, so while reading the [Joy of Clojure][7] and going through its examples, [Clooj][4] was a pretty good tool to explore the basics. Although Clooj has its shortcomings it provides a friendly, simple and familiar interface.
 
 After some time of Clojure development three things happened that brought **Clojure Lab** into being:
 
 - Having to present a final project for me to graduate from school.
-- Reading [Chas Emerick][2 ]'s post [The Ideal Clojure Development Environment][1 ].
+- Reading [Chas Emerick][2]'s post [The Ideal Clojure Development Environment][1].
 - Thinking that I didn't have an accessible choice for a Clojure development environment that would scale for bigger projects.
 
-Even when I discovered [Counterclockwise][3 ] and [Light Table][5 ] was annouced , I still decided to try and build an IDE that could cover as many of the features mentioned in [The Ideal Clojure Development Environment][1 ] as possible. The final goal is to have a powerful extensible tool, yet simple and accessible, that provides a reactive user interface with discoverable features (a lot easier said than done, right?).
+Even when I discovered [Counterclockwise][3] and [Light Table][5] was annouced , I still decided to try and build an IDE that could cover as many of the features mentioned in [The Ideal Clojure Development Environment][1] as possible. The final goal is to have a powerful extensible tool, yet simple and accessible, that provides a reactive user interface with discoverable features (a lot easier said than done, right?).
 
 ## Features
 
-Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment][1 ]:
+Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment][1]:
 
 ### Code Editing
 
