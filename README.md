@@ -1,30 +1,29 @@
-<div align="center"><img src="https://raw.github.com/jfacorro/clojure-lab/master/resources/logo.png" width="200" /></div>
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/resources/logo.png" width="200" style="float:right" />
 
-**Clojure Lab** is a project that aims to build an IDE for Clojure in Clojure. Its main goals are **usability** and **extensibility**.
+# Clojure Lab
 
-This project is currently under development, most of the assertions that follow are closer wishful thinking than reality :).
+**Clojure Lab** is a project that aims to build a development environment for Clojure in Clojure. The main goals in **Clojure Lab** are *usability* and *extensibility*.
 
-##Core
+### Usability
+- When new to the environment you should feel comfortable while discovering and interacting with all the features available.
+- There should be no road blocks and work should flow naturally once you are familiarized with the way things work.
+- Enable the best possible use of the keyboard and mouse combination, both are useful tools for interaction and they each should have their place while working in the environment.
 
-###Model
+### Extensibility
+- There's a simple API you can use to create your own controls to use in the environment in case there's a tool the you are missing and you feel like scratching your own itch.
+- New types of projects and documents can be created with plugins.
+- Plugins will have access to every library in the core, to so that existing functionality can be enhanced and built upon.
 
-The core of the application handles the loading, representation and manipulation of Documents, Projects and the Environment.
+This project is currently under development so most of these assertions are closer to wishful thinking than reality for now :).
 
-###UI
+## Features
 
-The core also abstracts all UI components in order to be able to handle specific UI library implementations the same way.
+Features will be implemented as extensions or plugins, except for the ones that are closer to the core which should just be part of it, for performance reasons.
 
-###Control
+Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment](1) by [Chas Emerick](2):
 
-Basic intialization and loading tasks are done in the control module. Environment initialization, configuration and extensions/plugins loading are some of them.
+### Code Editing
 
-##Features
-
-All features should be implemented as extensions, but the ones that are closer to the core can be :aot compiled.
-
-Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment][1] by [Chas Emerick][2]:
-
-###Code Editing
 - Syntax highlighting
 - Brace, bracket, paren matching.
 - Paredit equivalency.
@@ -33,7 +32,8 @@ Most of the features in the following list were extracted from the post [The Ide
 - in-place popup macroexpansion
 - Auto completion.
 
-###Project Organization
+### Project Organization
+
 - File management.
 - Code compilation.
 - Dependencies resolution (maven & leiningen support).
@@ -42,7 +42,7 @@ Most of the features in the following list were extracted from the post [The Ide
     - Current file code outline.
     - Static namespace browser.
 
-###REPL
+### REPL
 - Multiple REPLs support (each running on a separate process).
 - Execution history:
     - Search.
@@ -51,7 +51,7 @@ Most of the features in the following list were extracted from the post [The Ide
 - Full editor capability in the REPL.
 - Automatic generation and configuration of the classpath for local REPLs.
 
-###Nice-to-have items
+### Nice-to-have
 - Full Java support Integrated (debugging, code completion, profiling, etc.).
 - Code generation (deftype/defrecord/extend-type/gen-class/proxy).
 - REPL
@@ -61,7 +61,7 @@ Most of the features in the following list were extracted from the post [The Ide
     - Symbol navigation (i.e. "Go to declaration").
     - Find usages.
 
-#License
+# License
 
 Copyright © 2013 Juan Facorro
 
