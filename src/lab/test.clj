@@ -22,3 +22,8 @@
          (->test x# ~@(when (seq more) more)))
       `(-> ~@body))))
 ;---------------------------
+(defn ->println [x & [f & args]]
+  (if f
+    (println (apply f x args))
+    (println x))
+  x)

@@ -1,25 +1,40 @@
 (ns lab.model.document
   (:refer-clojure :exclude [replace name])
-  (:require [lab.model.buffer :as b]
+  (:require [lab.model [buffer :as b]
+                       [history :as h]]
             [lab.util :as util]
-            [lab.model.history :as h]
             [clojure.java.io :as io]))
 
 (declare modified? delete insert)
 
+;; History
+
+(defn- record-operations
+  "Add a list of operations in the history."
+  [doc ops]
+  (update-in doc [:history] h/add ops))
+
 ;; Document operations
 
 (defrecord InsertText [offset s])
-(defrecord RemoveText [start end s])
+(defrecord DeleteText [start end s])
 
-(extend-protocol h/Bijective
+(extend-protocol h/Bijection
   InsertText
+  (direct [this]
+    (let [offset (:offset this)
+          s      (:s this)]
+      #(insert % offset s)))
   (inverse [this]
     (let [offset (:offset this)
           n      (-> this :s count)]
       #(delete % offset (+ offset n))))
 
-  RemoveText
+  DeleteText
+  (direct [this]
+    (let [start (:start this)
+          end   (:end this)]
+      #(delete % start end)))
   (inverse [this]
     (let [start (:start this)
           s     (:s this)]
@@ -94,7 +109,7 @@
 (defn search
   "Find the matches for the expression in the document
   and returns the delimiters (index start and end) for each
-  match."
+  match in ascending order."
   [doc s]
   (util/find-limits s (text doc)))
 
@@ -104,8 +119,11 @@
   "Inserts s at the document's offset position.
   Returns the document."
   [doc offset s]
-  (into doc {:buffer (b/insert (:buffer doc) offset s)
-             :modified true}))
+  (let [ops [(->InsertText offset s)]]
+    (-> doc
+      (update-in [:buffer] b/insert offset s)
+      (assoc-in [:modified] true)
+      (record-operations ops))))
 
 (defn append
   "Appends s to the document's content.
@@ -117,16 +135,23 @@
   "Deletes the document's content from start to end position.
   Returns the modified document."
   [doc start end]
-  (into doc {:buffer (b/delete (:buffer doc) start end)
-             :modified true}))
+  (let [s   (-> doc text (.substring start end))
+        ops [(->DeleteText start end s)]]
+    (-> doc
+      (record-operations ops)
+      (update-in [:buffer] b/delete start end)
+      (assoc-in [:modified] true))))
 
 (defn replace
   "Replaces all ocurrences of src with rpl."
   [doc src rpl]
-  (let [limits (search doc src)
+  (let [limits (->> (search doc src) (sort-by first >))
         f      (fn [x [s e]]
-                 (-> x (delete s e) (insert s rpl)))]
-    (reduce f doc limits)))
+                 (h/with-no-history (-> x (delete s e) (insert s rpl))))
+        g      (fn [[s e]] [(->DeleteText s e src) (->InsertText s rpl)])
+        ops    (mapcat g limits)]
+    (-> (reduce f doc limits)
+      (record-operations ops))))
 
 ;; Document creation function
 

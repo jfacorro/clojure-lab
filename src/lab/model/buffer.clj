@@ -7,7 +7,7 @@
   (insert [this offset s] "Inserts s in offset.")
   (delete [this start end] "Delete the contents of the buffer from positions start to end.")
   (length [this] "Returns the length of the buffer.")
-  (text [this] "Returns the contents of the buffer as a string."))
+  (text   [this] "Returns the contents of the buffer as a string."))
 
 (defn to-string 
   ([b] (to-string b (StringBuffer.)))
@@ -39,7 +39,7 @@
                     :cat str})
       
 (defn incremental-buffer
-  "Returns an incremental buffer, implemented with 2-3 trees."
+  "Returns an incremental buffer, implemented with 2-3 trees (net.cgrand.parsley.tree)."
   ([]
     (incremental-buffer ""))
   ([s] 

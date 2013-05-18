@@ -3,7 +3,8 @@
   (:use [clojure.test :only [deftest is run-tests]]
         [lab.test :onle [->test ->is]]
         lab.model.document)
-  (:require [clojure.java.io :as io]))
+  (:require [clojure.java.io :as io]
+            [lab.model.history :as h]))
 ;---------------------------
 (def ^:dynamic *untitled* "New document")
 (def tmp-file "./tmp")
@@ -49,15 +50,47 @@
     (is (thrown? java.io.FileNotFoundException (bind (new-document) tmp-file))))
 ;---------------------------
 (deftest search-and-replace
-  (let [d (append (new-document) "abc\nabc\nd")]
+  (let [doc (append (new-document) "abc\nabc\nd")]
     ; Search
     (->test
-      d
+      doc
       (search "b")
       (->is = [[1 2] [5 6]]))
     ; Replace
     (->test
-      d
+      doc
       (replace "b" "1")
-      (->is = "a1c\na1c\nd" text))))
+      (->is = "a1c\na1c\nd" text)
+      (replace "1" "bla")
+      (->is = "ablac\nablac\nd" text)
+      (replace "blac" "bc")
+      (->is = "abc\nabc\nd" text))))
 ;---------------------------
+(deftest undo-redo
+  (->test (new-document)
+    (append "abc\nabc\nd")
+    ; undo/redo replace
+    (replace "b" "1")
+    (replace "1" "bla")
+    (h/undo)
+    (->is = "a1c\na1c\nd" text)
+    (h/undo)
+    (->is = "abc\nabc\nd" text)
+    (h/redo)
+    (->is = "a1c\na1c\nd" text)
+    (h/redo)
+    (->is = "ablac\nablac\nd" text)
+    ; undo/redo delete
+    (delete 0 4)
+    (->is = "c\nablac\nd" text)
+    (h/undo)
+    (->is = "ablac\nablac\nd" text)
+    (h/redo)
+    (->is = "c\nablac\nd" text)
+    ; undo/redo insert
+    (insert 1 "ba")
+    (->is = "cba\nablac\nd" text)
+    (h/undo)
+    (->is = "c\nablac\nd" text)
+    (h/redo)
+    (->is = "cba\nablac\nd" text)))
