@@ -146,15 +146,19 @@
   
   Usage:  
     (build tag attr-map content-vector)
+    (build tag attr-map & content)
     (build tag attr-map)
     (build tag content-vector)
+    (build tag & content)
     (build tag key val & kvs)"
   ([tag]
     (build tag {} []))
-  ([tag & [x y & _ :as xs]]
+  ([tag & [x y & z :as xs]]
    {:pre [(keyword? tag)]}
    (cond (map? x)
-           {:tag tag :attrs x :content (or y [])}
+           {:tag tag :attrs x :content (or (if (component? y) (reduce conj [y] z) y) [])}
+         (component? x)
+           {:tag tag :attrs {} :content (reduce conj [x] z)}
          (vector? x)
            {:tag tag :attrs {} :content x}
          (keyword? x)

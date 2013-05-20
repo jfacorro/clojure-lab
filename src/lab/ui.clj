@@ -24,9 +24,7 @@
 (defn- new-tab [ui item]
   (let [id   (ui/genid)
         path (.getCanonicalPath ^java.io.File item)
-        text (new-text-editor item)
-        text (ui/add-binding text "ctrl L" #(do % (println text)))
-        text (ui/remove-binding text "ctrl L")]
+        text (new-text-editor item)]
     (ui/tab :-id  id
             :-tool-tip path
             :-header   (ui/panel :opaque false
@@ -48,7 +46,6 @@
              :size    [700 500]
              :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
              :menu    (ui/menu-bar)
-             :visible true
              :content (ui/split :orientation :horizontal
                                 :border      :none
                                 :content [(ui/tree :-id "file-tree" 
@@ -80,10 +77,11 @@
   "Takes a menu option and add it to the ui menu bar.
   The menu option map must have the following keys:
     :path :name :action."
-  [ui {:keys [path name action separator] :as option}]
+  [ui {:keys [menu name action separator] :as option}]
   (let [menu-bar  (ui/get-attr ui :menu)
-        path      (menu-path path)
-        selector  (map #(ui.sel/attr= :text %) path)
+                  ;; Explode the menu path and build a selector.
+        selector  (map (partial ui.sel/attr= :text) (menu-path menu))
+                  ;; Build selectors for each of the menu path levels.
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (ui/menu-item :text name :on-click (partial action ui))
         menu-bar  (reduce create-menu-path menu-bar selectors)
@@ -95,11 +93,12 @@
 (defn init [app]
   (let [ui  (atom nil)
         app (assoc app :ui ui)]
-    (reset! ui (ui/init (build-main app)))
-    (swap! ui add-menu-option {:path "File" :name "New" :action #(println "New" (class %2)) :separator true})
-    (swap! ui add-menu-option {:path "File" :name "Open" :action #(println "Open" (class %2))})
-    (swap! ui add-menu-option {:path "File -> Project" :name "New" :action #(println "New Project" (class %2))})
-    (swap! ui add-menu-option {:path "File" :name "Exit" :action #(println "Exit" (class %2))})
+    (reset! ui (-> app build-main ui/init))
+    #_(do
+      (swap! ui add-menu-option {:menu "File" :name "New" :action #(println "New" (class %2)) :separator true})
+      (swap! ui add-menu-option {:menu "File" :name "Open" :action #(println "Open" (class %2))})
+      (swap! ui add-menu-option {:menu "File -> Project" :name "New" :action #(println "New Project" (class %2))})
+      (swap! ui add-menu-option {:menu "File" :name "Exit" :action #(println "Exit" (class %2))}))
     app))
-  
-(do (init nil) nil)
+
+(do (-> {:name "Clojure Lab - UI dummy"} init :ui (swap! ui/init) uip/show) nil)
