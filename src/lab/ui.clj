@@ -50,7 +50,7 @@
                                 :border      :none
                                 :content [(ui/tree :-id "file-tree" 
                                                    :on-dbl-click (partial #'open-file ui)
-                                                   :root (tree/load-dir "."))
+                                                   :root (tree/load-dir ".."))
                                           (ui/tabs :border :none)])))
 
 ;; Menu

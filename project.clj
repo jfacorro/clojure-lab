@@ -1,5 +1,5 @@
 (defproject clojure-lab "0.0.1-SNAPSHOT"
-  :description "macho (minimal advanced clojure hacking optimizer)"
+  :description "Clojure Lab - A development environment for Clojure in Clojure."
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [net.cgrand/parsley "0.9.1"]
                  [popen "0.2.0"]
