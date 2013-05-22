@@ -77,13 +77,15 @@
   "Takes a menu option and add it to the ui menu bar.
   The menu option map must have the following keys:
     :path :name :action."
-  [ui {:keys [menu name action separator] :as option}]
+  [ui {:keys [menu name action separator key-stroke] :as option}]
   (let [menu-bar  (ui/get-attr ui :menu)
                   ;; Explode the menu path and build a selector.
         selector  (map (partial ui.sel/attr= :text) (menu-path menu))
                   ;; Build selectors for each of the menu path levels.
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
-        item      (ui/menu-item :text name :on-click (partial action ui))
+        item      (if separator
+                    (ui/menu-separator)
+                    (ui/menu-item :text name :on-click (partial action ui) :key-stroke key-stroke))
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector uip/add item)]
      (ui/set-attr ui :menu menu-bar)))
@@ -95,10 +97,18 @@
         app (assoc app :ui ui)]
     (reset! ui (-> app build-main ui/init))
     #_(do
-      (swap! ui add-menu-option {:menu "File" :name "New" :action #(println "New" (class %2)) :separator true})
-      (swap! ui add-menu-option {:menu "File" :name "Open" :action #(println "Open" (class %2))})
+      (swap! ui add-menu-option {:menu "File" :name "New" :action #(println "New" (class %2)) :key-stroke "ctrl N"})
+      (swap! ui add-menu-option {:menu "File" :name "Open" :action #(println "Open" (class %2)) :key-stroke "ctrl O"})
       (swap! ui add-menu-option {:menu "File -> Project" :name "New" :action #(println "New Project" (class %2))})
-      (swap! ui add-menu-option {:menu "File" :name "Exit" :action #(println "Exit" (class %2))}))
+      (swap! ui add-menu-option {:menu "File" :separator true})
+      (swap! ui add-menu-option {:menu "File" :name "Exit" :action #(println "Exit" (class %2))})
+      (swap! ui add-menu-option {:menu "Edit" :name "Copy" :action #(println "Copy" (class %2))}))
     app))
 
-(do (-> {:name "Clojure Lab - UI dummy"} init :ui (swap! ui/init) uip/show) nil)
+(do 
+  (-> {:name "Clojure Lab - UI dummy"} 
+    init 
+    :ui 
+    (swap! ui/init) 
+    uip/show) 
+  nil)

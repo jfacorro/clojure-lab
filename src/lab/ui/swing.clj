@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [remove])
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
                         JScrollPane JTextPane JTree JSplitPane JButton JPanel
-                        JButton JLabel AbstractAction JComponent]
+                        JButton JLabel AbstractAction JComponent JSeparator]
            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
            [javax.swing.event TreeSelectionListener DocumentListener]
            [java.awt Dimension]
@@ -136,6 +136,7 @@
   :menu-bar    JMenuBar
   :menu        JMenu
   :menu-item   JMenuItem
+  :menu-separator JSeparator
   ;; Panels
   :tabs        JTabbedPane
   :tab         JScrollPane
@@ -222,6 +223,8 @@
       (let [action (reify ActionListener
                       (actionPerformed [this e] (f e)))]
         (.addActionListener (impl c) action)))
+    (:key-stroke [c _ ks]
+      (.setAccelerator (impl c) (swutil/key-stroke ks)))
 
   :tree-node
     (:item [c attr item]

@@ -176,6 +176,7 @@
 (def menu-bar (partial build :menu-bar))
 (def menu (partial build :menu))
 (def menu-item (partial build :menu-item))
+(def menu-separator (partial build :menu-separator))
 
 (def text-editor (partial build :text-editor))
 
