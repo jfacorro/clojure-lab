@@ -24,11 +24,6 @@
   (get-selected [this])
   (set-selected [this selected]))
 
-(defprotocol Window
-  (maximize [this])
-  (restore [this])
-  (minimze [this]))
-
 (defprotocol Event
   (event->map [this] "Serializes the event into a map.")
   (source [this] "Gets the component that generated the event."))

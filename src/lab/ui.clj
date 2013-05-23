@@ -4,12 +4,12 @@
             [lab.ui.select :as ui.sel :reload true]
             [lab.ui.tree :as tree]
             [lab.ui.protocols :as uip]
-            [lab.ui.swing :as swing :reload true]))
+            [lab.ui.swing :reload true]))
 
 (defn- new-text-editor [file]
   (ui/text-editor :text        (slurp file)
                   :border      :none
-                  :background  0x333333
+                  :background  0x666666
                   :foreground  0xFFFFFF
                   :caret-color 0xFFFFFF
                   :font        [:name "Consolas" :size 14]
@@ -19,7 +19,7 @@
 
 (defn close-tab [ui id & _]
   (let [tab  (ui/find @ui (str "#" id))]
-    (swap! ui ui/update :tabs uip/remove tab)))
+    (swap! ui ui/update :#documents uip/remove tab)))
 
 (defn- new-tab [ui item]
   (let [id   (ui/genid)
@@ -51,7 +51,7 @@
                                 :content [(ui/tree :-id "file-tree" 
                                                    :on-dbl-click (partial #'open-file ui)
                                                    :root (tree/load-dir ".."))
-                                          (ui/tabs :border :none)])))
+                                          (ui/tabs :-id "documents" :border :none)])))
 
 ;; Menu
 
@@ -63,12 +63,12 @@
 
 (defn- create-menu-path
   "Searches the menu-bar children using the selector. If the
-  menu defined is not found it is created otherwise the menu-bar 
+  menu defined is not found it is created, otherwise the menu-bar 
   is returned unchanged."
   [menu-bar selector]
   (if (ui/find menu-bar selector)
     menu-bar
-    (let [text     (-> selector last meta :value) ; The selector's meta has the name of the menu.
+    (let [text     (-> selector last meta :value) ; The meta from the last selector's predicate has the name of the menu.
           menu     (ui/menu :text text)
           selector (or (butlast selector) [])]
       (ui/update menu-bar selector uip/add menu))))
@@ -76,7 +76,10 @@
 (defn add-menu-option
   "Takes a menu option and add it to the ui menu bar.
   The menu option map must have the following keys:
-    :path :name :action."
+    :menu      -> path in the menu.
+    :name      -> name of the option.
+    :action    -> var to a function with args [ui evt & args].
+    :separator -> true if the option should be followed by a separator."
   [ui {:keys [menu name action separator key-stroke] :as option}]
   (let [menu-bar  (ui/get-attr ui :menu)
                   ;; Explode the menu path and build a selector.
@@ -96,13 +99,13 @@
   (let [ui  (atom nil)
         app (assoc app :ui ui)]
     (reset! ui (-> app build-main ui/init))
-    #_(do
+    (do
       (swap! ui add-menu-option {:menu "File" :name "New" :action #(println "New" (class %2)) :key-stroke "ctrl N"})
       (swap! ui add-menu-option {:menu "File" :name "Open" :action #(println "Open" (class %2)) :key-stroke "ctrl O"})
       (swap! ui add-menu-option {:menu "File -> Project" :name "New" :action #(println "New Project" (class %2))})
       (swap! ui add-menu-option {:menu "File" :separator true})
-      (swap! ui add-menu-option {:menu "File" :name "Exit" :action #(println "Exit" (class %2))})
-      (swap! ui add-menu-option {:menu "Edit" :name "Copy" :action #(println "Copy" (class %2))}))
+      (swap! ui add-menu-option {:menu "File" :name "Exit" :action #(do %& (System/exit 0))})
+      (swap! ui add-menu-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
     app))
 
 (do 

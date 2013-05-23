@@ -128,6 +128,14 @@
   (source [this]
     (.getSource this)))
 
+(defn text-editor-init [c]
+  (proxy [JTextPane] []
+    (getScrollableTracksViewportWidth []
+      (if (ui/get-attr c :wrap)
+        true
+        (<= (.. this getUI (getPreferredSize this) width)
+            (.. this getParent getSize width))))))
+
 ;; Initialize multimethod implementations
 (swutil/definitializations
   ;; Frame
@@ -141,7 +149,7 @@
   :tabs        JTabbedPane
   :tab         JScrollPane
   ;; Text
-  :text-editor JTextPane
+  :text-editor text-editor-init
   ;; Layout
   :split       JSplitPane
   :panel       JPanel
@@ -194,7 +202,7 @@
   
   :window
     (:menu [c _ v]
-      (.setJMenuBar (impl c) (impl v))
+      (set-attr c :j-menu-bar v)
       (.revalidate (impl c)))
     (:icons [c _ v]
       (let [icons (map swutil/image v)]
