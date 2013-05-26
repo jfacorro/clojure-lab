@@ -5,7 +5,7 @@
             [lab.util :as util]
             [clojure.java.io :as io]))
 
-(declare modified? delete insert)
+(declare modified? delete insert text)
 
 ;; History
 
@@ -68,9 +68,13 @@
     (throw (Error.))))
 
 (defn save
-  "Saves the documento to a file, if bounded."
-  [doc]
-  (throw (UnsupportedOperationException. "save doc")))
+  "Saves the document to a file, if bounded."
+  [{:keys [path modified] :as doc}]
+  (if (and path modified)
+    (do
+      (spit path (text doc))
+      (assoc doc :modified false))
+    doc))
 
 ;; Properties
 
@@ -186,12 +190,6 @@
 (defn all-alternates
   [doc alt-name]
   (-> doc :alternates))
-
-(defmacro !
-  "Applies f to the atom x using the supplied arguments.
-  Convenience macro."
-  [f x & args]
-  `(swap! ~x ~f ~@args))
 
 (defn attach-view
   "Attaches a view to the document. x should be 

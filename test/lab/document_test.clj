@@ -42,7 +42,12 @@
         (->is = (str content middle end) text)
         ; Delete text from the middle
         (delete len (+ len (count middle)))
-        (->is = (str content end) text))
+        (->is = (str content end) text)
+        ; Save file, check content and modified
+        (->is not= (slurp tmp-file) text)
+        (save)
+        (->is = (slurp tmp-file) text)
+        (->is = false modified?))
     ; delete temp file
     (io/delete-file tmp-file)))
 ;---------------------------
@@ -94,3 +99,5 @@
     (->is = "c\nablac\nd" text)
     (h/redo)
     (->is = "cba\nablac\nd" text)))
+
+(run-tests)
