@@ -3,9 +3,12 @@
             [clojure.pprint :as pp]
             [clojure.zip :as z]))
 
+(defn code-zip [root]
+  (z/zipper map? :content p/make-node root))
+
 (defn build-ast [code]
   (let [root (p/parse code)]
-    (z/zipper map? :content p/make-node root)))
+    (code-zip root)))
 
 (defn tag [node]
   (or (and (map? node) (node :tag)) :default))
@@ -13,23 +16,23 @@
 (defn get-limits
   "Gets the limits for each string in the tree, ignoring
 the limits for the nodes with the tag specified by ignore?."
-  ([loc]
-    (get-limits loc 0 [] #{:whitespace}))
-  ([loc offset limits ignore?]
-    (let [[node _ :as nxt] (z/next loc)]
-      (cond (string? node)
-              (let [new-offset (+ offset (.length node))
-                    parent     (-> nxt z/up first)
-                    tag        (tag parent)
-                    style      (:style (meta parent))
-                    limits     (if (ignore? tag)
-                                 limits
-                                 (conj limits [offset new-offset style]))]
-                (recur nxt new-offset limits ignore?))
-            (z/end? nxt)
-              limits
-            :else 
-              (recur nxt offset limits ignore?)))))
+  ([loc node-group]
+    (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
+      (let [[node _ :as nxt] (z/next loc)]
+        (cond (string? node)
+                (let [new-offset (+ offset (.length node))
+                      parent     (-> nxt z/up first)
+                      tag        (tag parent)
+                      {:keys [style group]}
+                                 (meta parent)
+                      limits     (if (or (ignore? tag) (not (= group node-group)))
+                                   limits
+                                   (conj! limits [offset new-offset style]))]
+                  (recur nxt new-offset limits ignore?))
+              (z/end? nxt)
+                (persistent! limits)
+              :else 
+                (recur nxt offset limits ignore?))))))
 
 (defn print-code-from-ast
   [loc]

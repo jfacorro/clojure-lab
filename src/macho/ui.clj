@@ -6,6 +6,7 @@
             [clojure.java.io :as io]
             [macho.repl :as mrepl]
             [macho.misc :as misc]
+            [macho.parser :as parser :reload true]
             [macho.ui.swing.core :as ui :reload true]
             [macho.ui.swing.highlighter :as hl :reload true]
             [macho.ui.swing.undo :as undo :reload true]
@@ -264,6 +265,18 @@ and copies the indenting for the new line."
             (reset! tags 
                     (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))
 ;;------------------------------
+(defn incremental-highlight
+  ""
+  [txt-code txt-lines evt]
+  (let [buf      (.getClientProperty txt-code "buff")
+        offset   (proto/offset evt)
+        len      (if (proto/insertion? evt) 0 (proto/length evt))
+        txt      (proto/text evt)
+        buf      (parser/edit buf offset len txt)]
+    (.putClientProperty txt-code "buff" buf)
+    (hl/high-light txt-code)
+    (update-line-numbers (.getDocument txt-code) txt-lines)))
+;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
   ([main]
@@ -307,14 +320,18 @@ and copies the indenting for the new line."
       ;; Load the text all at once
       (when src (ui/set txt-code :text src))
 
+      (if src
+        (.putClientProperty txt-code "buff" (parser/make-buffer (.replaceAll src "\r" "")))
+        (.putClientProperty txt-code "buff" (parser/make-buffer "")))
+      
       ; High-light text after code edition.
       (ui/on :change 
              txt-code
-             #(future (hl/high-light txt-code)
-                      (update-line-numbers doc txt-lines)))
-                  
-      (ui/queue-action #(do (update-line-numbers doc txt-lines)
-                            (hl/high-light txt-code)))
+             #(future (incremental-highlight txt-code txt-lines %)))
+
+      (ui/queue-action
+        #(do (hl/high-light txt-code)
+             (update-line-numbers doc txt-lines)))
       
       ; Add Undo manager
       (ui/set undo-mgr :limit -1)
@@ -495,6 +512,5 @@ and copies the indenting for the new line."
       (ui/maximize)
       (ui/show)
       (ui/add tabs))
-
     ui-main))
 ;;------------------------------

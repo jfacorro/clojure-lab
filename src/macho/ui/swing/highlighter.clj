@@ -4,6 +4,7 @@
            [java.awt Color])
   (:require [macho.lang.clojure :as lang :reload true]
             [macho.ui.swing.core :as util]
+            [macho.parser :as parser]
             [macho.ast :as ast]))
 
 (def style-constants {:bold StyleConstants/Bold,
@@ -74,11 +75,12 @@
   "Takes the syntax defined by regexes and looks 
   for matches in the text-pane content applying the
   corresponding style to each match."
-  (let [doc  (.getDocument txt-pane)
-        len  (.getLength doc)
-        text (.getText doc 0 len)
-        zip  (ast/build-ast text)
-        limits (ast/get-limits zip)]
-    (util/queue-action 
+  (let [doc    (.getDocument txt-pane)
+        group  (gensym "node-group-")
+        buf    (.getClientProperty txt-pane "buff")
+        tree   (parser/parse-tree buf group)
+        zip    (ast/code-zip tree)
+        limits (ast/get-limits zip group)]
+    (util/queue-action
       #(doseq [[strt end tag] limits]
         (apply-style doc strt (- end strt) (style *syntax* tag))))))

@@ -22,7 +22,8 @@
       (if (insertion? this)
         (let [off (p/offset this)
               len (p/length this)]
-          (.. this getDocument (getText off len))))))
+          (.. this getDocument (getText off len)))
+        "")))
 
 (extend-type JTextPane
   p/Text
