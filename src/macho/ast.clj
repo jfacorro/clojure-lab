@@ -6,10 +6,6 @@
 (defn code-zip [root]
   (z/zipper map? :content p/make-node root))
 
-(defn build-ast [code]
-  (let [root (p/parse code)]
-    (code-zip root)))
-
 (defn tag [node]
   (or (and (map? node) (node :tag)) :default))
 

@@ -71,6 +71,8 @@
         end       (. txt viewToModel p)]
     [start end]))
 
+(require 'lab.model.buffer)
+
 (defn high-light [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
   for matches in the text-pane content applying the

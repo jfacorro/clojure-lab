@@ -60,13 +60,13 @@ check if its one of the registered symbols."
 ;;---------------------------------
 (def ^:private parse (apply p/parser options grammar))
 ;;---------------------------------
+(defn edit [buf offset len text]
+  (p/edit buf offset len text))
+;;---------------------------------
 (defn make-buffer [src]
   (-> parse p/incremental-buffer (edit 0 0 src)))
 ;;---------------------------------
 (defn parse-tree [buf node-group]
   (binding [*node-group* node-group]
     (p/parse-tree buf)))
-;;---------------------------------
-(defn edit [buf offset len text]
-  (p/edit buf offset len text))
 ;;---------------------------------

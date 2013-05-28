@@ -155,6 +155,12 @@
         (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
         (.updateUI)))))
 ;;------------------------------
+(defn document-buffer
+  ([txt]
+    (.getClientProperty txt "buff"))
+  ([txt buf]
+    (.putClientProperty txt "buff" buf)))
+;;------------------------------
 (defn insert-text
   "Inserts the specified text in the document."
   ([txt s]
@@ -162,7 +168,9 @@
   ([txt s restore]
     (insert-text txt s restore (.getCaretPosition txt)))
   ([txt s restore pos]
-    (let [doc (.getDocument txt)]
+    (let [doc  (.getDocument txt)
+          buf  (document-buffer txt)
+          buf  (parser/edit buf pos 0 s)]
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
@@ -206,7 +214,10 @@ and copies the indenting for the new line."
                      [nltab nl #(str/replace % #"^  " "")]
                      [nl nltab #(str tab %)])
             text   (f (str/replace text match rplc))
-            end    (+ start (count text))]
+            end    (+ start (count text))
+            buf    (document-buffer txt)
+            buf    (parser/edit buf start pos text)]
+        (document-buffer txt buf)
         (ui/queue-action #(do (.replaceSelection txt text)
                               (.setSelectionStart txt start)
                               (.setSelectionEnd txt end)))))))
@@ -268,12 +279,12 @@ and copies the indenting for the new line."
 (defn incremental-highlight
   ""
   [txt-code txt-lines evt]
-  (let [buf      (.getClientProperty txt-code "buff")
+  (let [buf      (document-buffer txt-code )
         offset   (proto/offset evt)
         len      (if (proto/insertion? evt) 0 (proto/length evt))
         txt      (proto/text evt)
         buf      (parser/edit buf offset len txt)]
-    (.putClientProperty txt-code "buff" buf)
+    (document-buffer txt-code buf)
     (hl/high-light txt-code)
     (update-line-numbers (.getDocument txt-code) txt-lines)))
 ;;------------------------------
@@ -320,14 +331,15 @@ and copies the indenting for the new line."
       ;; Load the text all at once
       (when src (ui/set txt-code :text src))
 
-      (if src
-        (.putClientProperty txt-code "buff" (parser/make-buffer (.replaceAll src "\r" "")))
-        (.putClientProperty txt-code "buff" (parser/make-buffer "")))
+      (document-buffer txt-code 
+                      (if src
+                        (parser/make-buffer (.replaceAll src "\r" ""))
+                        (parser/make-buffer "")))
       
       ; High-light text after code edition.
       (ui/on :change 
              txt-code
-             #(future (incremental-highlight txt-code txt-lines %)))
+             #(incremental-highlight txt-code txt-lines %))
 
       (ui/queue-action
         #(do (hl/high-light txt-code)
@@ -342,10 +354,6 @@ and copies the indenting for the new line."
 
       (ui/on :mouse-wheel pnl-scroll #(change-font-size [txt-code txt-lines] %))
 
-      (doto tabs
-        (.addTab title pnl-scroll)
-        (.setSelectedIndex (dec (.getTabCount tabs))))
-
       (doto txt-code
         (.setFont @current-font)
         (.setForeground (ui/color 255))
@@ -353,6 +361,10 @@ and copies the indenting for the new line."
         (.setBackground (ui/color 64))
         (.setCaretPosition 0)
         (.grabFocus))
+
+      (doto tabs
+        (.addTab title pnl-scroll)
+        (.setSelectedIndex (dec (.getTabCount tabs))))
 
       main)))
 ;;------------------------------
