@@ -30,10 +30,11 @@
 (macho.misc/intern-vars 'macho.ui.protocols)
 (macho.misc/intern-vars 'macho.ui.swing.component)
 ;;-------------------
-(defn queue-action
+(defmacro queue-action
   "Queues an action to the event queue."
-  [f]
-  (SwingUtilities/invokeLater f))
+  [& body]
+  `(SwingUtilities/invokeLater 
+    (fn [] ~@body)))
 ;;-------------------
 ;; Setter & Getters
 ;;-------------------

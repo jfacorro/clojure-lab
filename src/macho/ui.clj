@@ -150,10 +150,9 @@
   (let [pos  (.getLength doc)
         root (.getDefaultRootElement doc)
         n    (.getElementIndex root pos)]
-    (ui/queue-action
-      #(doto lines
-        (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
-        (.updateUI)))))
+    (doto lines
+      (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
+      (.updateUI))))
 ;;------------------------------
 (defn document-buffer
   ([txt]
@@ -168,14 +167,12 @@
   ([txt s restore]
     (insert-text txt s restore (.getCaretPosition txt)))
   ([txt s restore pos]
-    (let [doc  (.getDocument txt)
-          buf  (document-buffer txt)
-          buf  (parser/edit buf pos 0 s)]
+    (let [doc  (.getDocument txt)]
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
 (defn find-char
-  "Finds the next char in s for which pred is true, 
+  "Finds the next char in s for which pred is true,
   starting to look from position cur, in the direction 
   specified by dt (1 or -1)."
   [s cur pred dt]
@@ -193,7 +190,7 @@ and copies the indenting for the new line."
         end  (find-char s (inc prev) #(not= \space %) 1)
         dt   (dec (- end prev))
         t    (apply str (repeat dt " "))]
-    (ui/queue-action #(insert-text txt t false))))
+    (ui/queue-action (insert-text txt t false))))
 ;;------------------------------
 (defn handle-tab 
   "Adds tabulating characters in place 
@@ -204,8 +201,8 @@ and copies the indenting for the new line."
         pos    (.getCaretPosition txt)
         text   (.getSelectedText txt)]
     (.consume e)
-    (if-not text
-      (ui/queue-action #(insert-text txt tab false))
+    (if (empty? text)
+      (ui/queue-action (insert-text txt tab false))
       (let [start  (.getSelectionStart txt)
             nl     "\n"
             nltab  (str nl tab)
@@ -214,19 +211,18 @@ and copies the indenting for the new line."
                      [nltab nl #(str/replace % #"^  " "")]
                      [nl nltab #(str tab %)])
             text   (f (str/replace text match rplc))
-            end    (+ start (count text))
-            buf    (document-buffer txt)
-            buf    (parser/edit buf start pos text)]
-        (document-buffer txt buf)
-        (ui/queue-action #(do (.replaceSelection txt text)
-                              (.setSelectionStart txt start)
-                              (.setSelectionEnd txt end)))))))
+            end    (+ start (count text))]
+        (send-off (document-buffer txt) parser/edit start pos text)
+        (ui/queue-action 
+          (.replaceSelection txt text)
+          (.setSelectionStart txt start)
+          (.setSelectionEnd txt end))))))
 ;;------------------------------
 (defn input-format
   "Handle automatic insertion and format while typing."
   [txt e]
   (let [actions {(ui/key-stroke \() #(insert-text txt ")")
-                 (ui/key-stroke \{) #(insert-text txt "}")
+                 (ui/key-stroke \{) #(insert-text txt "}") 
                  (ui/key-stroke \[) #(insert-text txt "]")
                  (ui/key-stroke \") #(insert-text txt "\"")
                  (ui/key-stroke "ENTER") #(insert-tabs txt)
@@ -277,16 +273,15 @@ and copies the indenting for the new line."
                     (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))
 ;;------------------------------
 (defn incremental-highlight
-  ""
+  "Handles incremental highlighting."
   [txt-code txt-lines evt]
-  (let [buf      (document-buffer txt-code )
-        offset   (proto/offset evt)
+  (let [offset   (proto/offset evt)
         len      (if (proto/insertion? evt) 0 (proto/length evt))
-        txt      (proto/text evt)
-        buf      (parser/edit buf offset len txt)]
-    (document-buffer txt-code buf)
-    (hl/high-light txt-code)
-    (update-line-numbers (.getDocument txt-code) txt-lines)))
+        txt      (proto/text evt)]
+    (send-off (document-buffer txt-code) parser/edit offset len txt)
+    (ui/queue-action
+      (hl/high-light txt-code)
+      (update-line-numbers (.getDocument txt-code) txt-lines))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -301,7 +296,9 @@ and copies the indenting for the new line."
           undo-mgr   (undo/make-undo-mgr)
           pnl-code   (ui/panel)
           pnl-scroll (ui/scroll pnl-code)
-          txt-lines  (ui/text-area)]
+          txt-lines  (ui/text-area)
+          src        (.replaceAll (or src "") "\r" "")
+          buf        (agent (parser/make-buffer src))]
 
       (-> pnl-code
         (ui/set :layout (ui/border-layout))
@@ -329,21 +326,17 @@ and copies the indenting for the new line."
       (ui/on :caret-update txt-code (check-paren txt-code))
       
       ;; Load the text all at once
+      (document-buffer txt-code buf)
       (when src (ui/set txt-code :text src))
-
-      (document-buffer txt-code 
-                      (if src
-                        (parser/make-buffer (.replaceAll src "\r" ""))
-                        (parser/make-buffer "")))
       
       ; High-light text after code edition.
       (ui/on :change 
              txt-code
-             #(incremental-highlight txt-code txt-lines %))
+             #(future (incremental-highlight txt-code txt-lines %)))
 
       (ui/queue-action
-        #(do (hl/high-light txt-code)
-             (update-line-numbers doc txt-lines)))
+        (hl/high-light txt-code)
+        (update-line-numbers doc txt-lines))
       
       ; Add Undo manager
       (ui/set undo-mgr :limit -1)

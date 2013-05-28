@@ -80,9 +80,11 @@
   (let [doc    (.getDocument txt-pane)
         group  (gensym "node-group-")
         buf    (.getClientProperty txt-pane "buff")
-        tree   (parser/parse-tree buf group)
+        tree   (parser/parse-tree @buf group)
         zip    (ast/code-zip tree)
         limits (ast/get-limits zip group)]
+    ;; Wait until all edits thus far have been applied to the buffer
+    (await buf)
     (util/queue-action
-      #(doseq [[strt end tag] limits]
+      (doseq [[strt end tag] limits]
         (apply-style doc strt (- end strt) (style *syntax* tag))))))
