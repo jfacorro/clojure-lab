@@ -162,12 +162,13 @@
 ;;------------------------------
 (defn insert-text
   "Inserts the specified text in the document."
-  ([txt s]
-    (insert-text txt s true))
-  ([txt s restore]
-    (insert-text txt s restore (.getCaretPosition txt)))
-  ([txt s restore pos]
-    (let [doc  (.getDocument txt)]
+  ([main s]
+    (insert-text main s true))
+  ([main s restore]
+    (insert-text main s restore (-> main current-txt .getCaretPosition)))
+  ([main s restore pos]
+    (let [txt (current-txt main)
+          doc (.getDocument txt)]
       (.insertString doc pos s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
@@ -183,26 +184,27 @@
 (defn insert-tabs 
   "Looks for the first previous \\newline character 
 and copies the indenting for the new line."
-  [txt]
-  (let [pos  (-> (.getCaretPosition txt) dec)
+  [main]
+  (let [txt  (current-txt main)
+        pos  (-> (.getCaretPosition txt) dec)
         s    (proto/text txt)
         prev (find-char s pos #(= \newline %) -1)
         end  (find-char s (inc prev) #(not= \space %) 1)
         dt   (dec (- end prev))
-        t    (apply str (repeat dt " "))]
-    (ui/queue-action (insert-text txt t false))))
+        t    (apply str (conj (repeat dt " ") "\n"))]
+    (ui/queue-action (insert-text main t false))))
 ;;------------------------------
 (defn handle-tab 
   "Adds tabulating characters in place 
   or at the beggining of each line if there's 
   selected text."
-  [txt e & shift?]
-  (let [tab    "  "
+  [main & shift?]
+  (let [txt    (current-txt main)
+        tab    "  "
         pos    (.getCaretPosition txt)
         text   (.getSelectedText txt)]
-    (.consume e)
     (if (empty? text)
-      (ui/queue-action (insert-text txt tab false))
+      (ui/queue-action (insert-text main tab false))
       (let [start  (.getSelectionStart txt)
             nl     "\n"
             nltab  (str nl tab)
@@ -218,18 +220,27 @@ and copies the indenting for the new line."
           (.setSelectionStart txt start)
           (.setSelectionEnd txt end))))))
 ;;------------------------------
+(def key-map
+  (->>
+    {"("         #(insert-text % ")")
+     "{"         #(insert-text % "}")
+     "["         #(insert-text % "]")
+     "\""        #(insert-text % "\"")
+     "ENTER"     #(insert-tabs %)
+     "TAB"       #(handle-tab %)
+     "shift TAB" #(handle-tab % true)}
+    (map (juxt #(-> % first ui/key-stroke) second))
+    (into {})))
+;;------------------------------
 (defn input-format
   "Handle automatic insertion and format while typing."
-  [txt e]
-  (let [actions {(ui/key-stroke \() #(insert-text txt ")")
-                 (ui/key-stroke \{) #(insert-text txt "}") 
-                 (ui/key-stroke \[) #(insert-text txt "]")
-                 (ui/key-stroke \") #(insert-text txt "\"")
-                 (ui/key-stroke "ENTER") #(insert-tabs txt)
-                 (ui/key-stroke "TAB") #(handle-tab txt e)
-                 (ui/key-stroke "shift TAB") #(handle-tab txt e true)}]
-    (when-let [k (first (filter (partial ui/check-key e) (keys actions)))]
-      ((actions k)))))
+  [main e]
+  (let [ks      (ui/key-stroke e)
+        ksc     (ui/key-stroke (str (.getKeyChar e)))
+        action  (or (key-map ks) (key-map ksc))]
+    (when action
+      (.consume e)
+      (action main))))
 ;;------------------------------
 (defn change-font-size [txts e]
   (when (ui/check-key e (ui/key-stroke "control CONTROL"))
@@ -311,7 +322,7 @@ and copies the indenting for the new line."
       (-> txt-lines
         (ui/set :font @current-font)
         (ui/set :editable false)
-        (ui/set :background (ui/color 192)))
+        (ui/set :background (ui/color 0xC0)))
         
       ; Undo/redo key events
       (ui/on :key-press txt-code
@@ -321,7 +332,7 @@ and copies the indenting for the new line."
              (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
              (ui/key-stroke "ctrl Y"))
 
-      (ui/on :key-press txt-code #(input-format txt-code %))
+      (ui/on :key-press txt-code #(input-format main %))
 
       (ui/on :caret-update txt-code (check-paren txt-code))
       

@@ -71,7 +71,7 @@
   ([x]
     (if (instance? AWTEvent x)
       (KeyStroke/getKeyStrokeForEvent x)
-      (KeyStroke/getKeyStroke x))))
+      (KeyStroke/getKeyStroke (or (and (< 1 (count x)) x) (first x))))))
 ;;-------------------
 ;; Container protocol implementation
 ;;-------------------
