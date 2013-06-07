@@ -96,7 +96,7 @@
 (defn path
   "Returns the path for the binded file if any."
   [doc]
-  (:pah doc))
+  (:path doc))
 
 (defn file
   "If the document is bound to a file, then an instance
@@ -157,13 +157,20 @@
     (-> (reduce f doc limits)
       (record-operations ops))))
 
+(def ^:dynamic *untitled-count* (atom 0))
+
+(defn- untitled
+  "Returns a name for a new document."
+  []
+  (swap! *untitled-count* inc) 
+  (str "Untitled " @*untitled-count*))
+
 ;; Document creation function
 
 (defn document
   "Creates a new document using the name and alternate models provided."
-  [name & {:keys [path alternates] :or {path nil alternates []}}]
-  {:pre [(not (nil? name))]}
-  (let [doc (map->Document {:name name
+  [& {:keys [path alternates] :or {path nil alternates []}}]
+  (let [doc (map->Document {:name (untitled)
                             :path nil
                             :modified false
                             :buffer (default-buffer)

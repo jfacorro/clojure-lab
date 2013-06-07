@@ -6,25 +6,24 @@
   (:require [clojure.java.io :as io]
             [lab.model.history :as h]))
 ;---------------------------
-(def untitled-document "New document")
 (def file-content "Temp file, should be deleted.")
 (def tmp-file "./tmp")
-;---------------------------
-(defn new-document []
-  (document untitled-document))
 ;---------------------------
 (defn temp-document-config
   [f]
   (try
-    (spit tmp-file file-content) ; create temp file
-    (f)
-    (finally
-      (when (-> tmp-file io/file .exists)
-        (io/delete-file tmp-file)))))
+    (binding [*untitled-count* (atom 0)]
+      (spit tmp-file file-content) ; create temp file
+      (f))
+      (finally
+        (when (-> tmp-file io/file .exists)
+          (io/delete-file tmp-file)))))
+;---------------------------
+(use-fixtures :each temp-document-config)
 ;---------------------------
 (deftest document-creation
-  (is (thrown? Error (document nil)))
-  (is (= "" (text (new-document)))))
+  (is (= "Untitled 1" (name (document))))
+  (is (= "" (text (document)))))
 ;---------------------------
 (deftest document-manipulation
   (let [end      " Oh yes, it will!"
@@ -32,11 +31,11 @@
         len      (count file-content)]
     (->test
         ; Check new document properties
-        (new-document)
+        (document)
         (->is = false modified?)
         (->is = "" text)
         (->is = 0 length)
-        (->is = untitled-document name)
+        (->is = "Untitled 1" name)
         ; Bind the document to a file
         (bind tmp-file)
         (->is = false modified?)
@@ -59,10 +58,10 @@
         (->is = false modified?))))
 ;---------------------------
 (deftest bind-non-existing-file
-    (is (thrown? java.io.FileNotFoundException (bind (new-document) "./bla"))))
+    (is (thrown? java.io.FileNotFoundException (bind (document) "./bla"))))
 ;---------------------------
 (deftest search-and-replace
-  (let [doc (append (new-document) "abc\nabc\nd")]
+  (let [doc (append (document) "abc\nabc\nd")]
     ; Search
     (->test
       doc
@@ -79,7 +78,7 @@
       (->is = "abc\nabc\nd" text))))
 ;---------------------------
 (deftest undo-redo
-  (->test (new-document)
+  (->test (document)
     (append "abc\nabc\nd")
     ; undo/redo replace
     (replace "b" "1")
@@ -106,6 +105,4 @@
     (->is = "c\nablac\nd" text)
     (h/redo)
     (->is = "cba\nablac\nd" text)))
-;---------------------------
-(use-fixtures :once temp-document-config)
 ;---------------------------

@@ -16,7 +16,7 @@
 
 (defn app []
   {:config            default-config
-   :documents         {}
+   :documents         #{}
    :current-document  nil
    :workspace         (ws/workspace)})
   
@@ -29,54 +29,68 @@
 (defn switch-document
   "Changes the current document to the one with the
   specified id."
-  [{documents :documents :as app} name]
-  (let [doc (documents name)]
+  [{documents :documents :as app} doc]
     (or (and doc (assoc app :current-document doc))
-        app)))
+        app))
 
-(defn unique-document-name
-  "Returns a unique name to use as the key for the documents 
-  map. If path is nil, then it's a new document, if not the 
-  file's name is used."
-  [app path]
-  (let [x        (or (and path (-> path io/file .getName)) "Untitled")
-        names    (map (partial str x)
-                      (conj (map (partial str "-") (range)) ""))
-        existing (-> app :documents keys set)]
-    (->> names
-      (drop-while existing)
-      first)))
+(defn find-doc-by
+  "Returns the first document that satisfies pred."
+  [{docs :documents} pred]
+  (->> docs
+    (filter (comp pred deref))
+    first))
+
+(defn find-doc-by-name
+  "Returns the document that has the supplied name."
+  [app x]
+  (find-doc-by app #(-> % doc/name (= x))))
+
+(defn same-file?
+  "Checks if the two files supplied are the same."
+  [x y]
+  (when (and x y)
+    (= (.getCanonicalPath x) (.getCanonicalPath y))))
+
+(defn find-doc-by-path
+  "Returns the document that has the supplied path."
+  [app x]
+  (let [x (io/file x)]
+    (find-doc-by app #(-> % doc/file (same-file? x)))))
+
+(defn new-document 
+  "Creates a new document, adds it to the document
+  collection and sets it as the current-document."
+  [{documents :documents :as app}]
+  (let [doc (atom (doc/document))]
+    (assoc app :documents (conj documents doc)
+               :current-document doc)))
 
 (defn open-document
   "Opens a document from an existing file 
   and adds it to the openened documents map."
-  ([app] (open-document app nil))
-  ([{documents :documents :as app} path]
-    (let [name  (or path (unique-document-name app path))
-          doc   (atom (doc/document name :path path))
-          name  (:name @doc)]
-      (if (documents name)
-        (switch-document app name)
-        (assoc app :documents (assoc documents name doc)
-                   :current-document doc)))))
+  [{documents :documents :as app} path]
+  {:pre [path]}
+  (let [doc (atom (doc/document :path path))]
+    (if (find-doc-by-path app path)
+      (switch-document app doc)
+      (assoc app :documents (conj documents doc)
+                 :current-document doc))))
 
 (defn close-document
   "Closes a document and removes it from the opened
   documents collection."
-  [{documents :documents current :current-document :as app} name]
-  (let [doc     (documents name)
-        current (when (not= current doc) current)]
+  [{documents :documents current :current-document :as app} doc]
+  (let [current (when (not= current doc) current)]
     (when doc
       (doc/close doc))
-    (assoc app :documents (dissoc documents name)
+    (assoc app :documents (disj #{doc} documents)
                :current-document current)))
 
 (defn save-document
   "Saves a document to a file."
-  [{documents :documents :as app} name]
-  (let [doc (documents name)]
-    (when doc
-      (doc/save doc)))
+  [{documents :documents :as app} doc]
+  (when doc
+    (doc/save doc))
   app)
 
 (defn open-project
@@ -113,6 +127,6 @@
   "Initializes an instance of an application."
   [config-path]
   (-> (app)
-      ui/init
+      ;ui/init
       (load-config config-path)
       load-plugins))
