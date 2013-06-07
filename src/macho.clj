@@ -4,10 +4,11 @@
                :main true]))
 ;;------------------------------
 (def main
-  "Main UI window.")
+  "Main UI window."
+  (atom nil))
 ;;------------------------------
 (defn -main
   "Program startup function."
   []
-  (alter-var-root #'main #(do % (ui/make-main ui/app-name))))
+  (reset! main (ui/make-main ui/app-name)))
 ;;------------------------------

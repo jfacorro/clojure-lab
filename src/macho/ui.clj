@@ -232,7 +232,7 @@ and copies the indenting for the new line."
     (map (juxt #(-> % first ui/key-stroke) second))
     (into {})))
 ;;------------------------------
-(defn input-format
+(defn handle-input
   "Handle automatic insertion and format while typing."
   [main e]
   (let [ks      (ui/key-stroke e)
@@ -332,7 +332,7 @@ and copies the indenting for the new line."
              (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
              (ui/key-stroke "ctrl Y"))
 
-      (ui/on :key-press txt-code #(input-format main %))
+      (ui/on :key-press txt-code (partial handle-input main))
 
       (ui/on :caret-update txt-code (check-paren txt-code))
       
@@ -345,7 +345,7 @@ and copies the indenting for the new line."
              txt-code
              #(future (incremental-highlight txt-code txt-lines %)))
 
-      (ui/queue-action
+      (when (seq src)
         (hl/high-light txt-code)
         (update-line-numbers doc txt-lines))
       

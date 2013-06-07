@@ -99,7 +99,7 @@
   (let [ui  (atom nil)
         app (assoc app :ui ui)]
     (reset! ui (-> app build-main ui/init))
-    (do
+    #_(do
       (swap! ui add-menu-option {:menu "File" :name "New" :action #(println "New" (class %2)) :key-stroke "ctrl N"})
       (swap! ui add-menu-option {:menu "File" :name "Open" :action #(println "Open" (class %2)) :key-stroke "ctrl O"})
       (swap! ui add-menu-option {:menu "File -> Project" :name "New" :action #(println "New Project" (class %2))})
@@ -108,10 +108,10 @@
       (swap! ui add-menu-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
     app))
 
-(do 
-  (-> {:name "Clojure Lab - UI dummy"} 
-    init 
-    :ui 
-    (swap! ui/init) 
-    uip/show) 
+(do
+  (-> {:name "Clojure Lab - UI dummy"}
+    init
+    :ui
+    (swap! ui/init)
+    uip/show)
   nil)
