@@ -26,16 +26,32 @@
   {:pre [(instance? clojure.lang.Atom app-ref)]}
   (:current-document @app-ref))
 
+(defn unique-document-name
+  "Returns a unique name to use as the key for the documents 
+  map. If path is nil, then it's a new document, if not the 
+  file's name is used."
+  [app path]
+  (let [x        (or (and path (-> path io/file .getName)) "Untitled")
+        names    (map (partial str x)
+                      (conj (map (partial str "-") (range)) ""))
+        existing (-> app :documents keys set)]
+    (->> names
+      (drop-while existing)
+      first)))
+
 (defn open-document
-  "Opens a document from an  existing file 
+  "Opens a document from an existing file 
   and adds it to the openened documents map."
-  [{documents :documents :as app} path]
-  (let [doc   (atom (doc/document path))
-        name  (:name @doc)]
-    (if (documents name)
-      app
-      (assoc app :documents (assoc documents name doc)
-                 :current-document doc))))
+  ([app] (open-document app nil))
+  ([{documents :documents :as app} path]
+    (let [name  (or path (unique-document-name app path))
+          _     (println name)
+          doc   (atom (doc/document name :path path))
+          name  (:name @doc)]
+      (if (documents name)
+        app
+        (assoc app :documents (assoc documents name doc)
+                   :current-document doc)))))
 
 (defn close-document
   "Closes a document and removes it from the opened

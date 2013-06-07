@@ -22,16 +22,17 @@
     (swap! ui ui/update :#documents uip/remove tab)))
 
 (defn- new-tab [ui item]
-  (let [id   (ui/genid)
-        path (.getCanonicalPath ^java.io.File item)
-        text (new-text-editor item)]
+  (let [id    (ui/genid)
+        path  (.getCanonicalPath ^java.io.File item)
+        text  (new-text-editor item)
+        close (partial #'close-tab ui id)]
     (ui/tab :-id  id
             :-tool-tip path
             :-header   (ui/panel :opaque false
                                  :content [(ui/label :text (str item))
                                            (ui/button :icon "close-tab.png"
                                                       :border :none
-                                                      :on-click (partial #'close-tab ui id))])
+                                                      :on-click close)])
             :border  :none
             :content text)))
 
@@ -108,7 +109,7 @@
       (swap! ui add-menu-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
     app))
 
-(do
+#_(do
   (-> {:name "Clojure Lab - UI dummy"}
     init
     :ui

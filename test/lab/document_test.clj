@@ -99,5 +99,3 @@
     (->is = "c\nablac\nd" text)
     (h/redo)
     (->is = "cba\nablac\nd" text)))
-
-(run-tests)
