@@ -26,6 +26,14 @@
   {:pre [(instance? clojure.lang.Atom app-ref)]}
   (:current-document @app-ref))
 
+(defn switch-document
+  "Changes the current document to the one with the
+  specified id."
+  [{documents :documents :as app} name]
+  (let [doc (documents name)]
+    (or (and doc (assoc app :current-document doc))
+        app)))
+
 (defn unique-document-name
   "Returns a unique name to use as the key for the documents 
   map. If path is nil, then it's a new document, if not the 
@@ -45,11 +53,10 @@
   ([app] (open-document app nil))
   ([{documents :documents :as app} path]
     (let [name  (or path (unique-document-name app path))
-          _     (println name)
           doc   (atom (doc/document name :path path))
           name  (:name @doc)]
       (if (documents name)
-        app
+        (switch-document app name)
         (assoc app :documents (assoc documents name doc)
                    :current-document doc)))))
 
@@ -71,14 +78,6 @@
     (when doc
       (doc/save doc)))
   app)
-
-(defn switch-document
-  "Changes the current document to the one with the
-  specified id."
-  [{documents :documents :as app} name]
-  (let [doc (documents name)]
-    (or (and doc (assoc app :current-document doc))
-        app)))
 
 (defn open-project
   "Opens a project from an existing file

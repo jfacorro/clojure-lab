@@ -1,58 +1,65 @@
 (ns lab.document-test
   (:refer-clojure :exclude [name replace])
-  (:use [clojure.test :only [deftest is run-tests]]
+  (:use clojure.test
         [lab.test :onle [->test ->is]]
         lab.model.document)
   (:require [clojure.java.io :as io]
             [lab.model.history :as h]))
 ;---------------------------
-(def ^:dynamic *untitled* "New document")
+(def untitled-document "New document")
+(def file-content "Temp file, should be deleted.")
 (def tmp-file "./tmp")
+;---------------------------
 (defn new-document []
-  (document *untitled*))
+  (document untitled-document))
+;---------------------------
+(defn temp-document-config
+  [f]
+  (try
+    (spit tmp-file file-content) ; create temp file
+    (f)
+    (finally
+      (when (-> tmp-file io/file .exists)
+        (io/delete-file tmp-file)))))
 ;---------------------------
 (deftest document-creation
   (is (thrown? Error (document nil)))
   (is (= "" (text (new-document)))))
 ;---------------------------
-(deftest document-manipulation  
-  (let [content  "Temp file, should be deleted."
-        end      " Oh yes, it will!"
+(deftest document-manipulation
+  (let [end      " Oh yes, it will!"
         middle   "Do you think so?"
-        len      (count content)]
-    (spit tmp-file content) ; create temp file
+        len      (count file-content)]
     (->test
         ; Check new document properties
         (new-document)
         (->is = false modified?)
         (->is = "" text)
         (->is = 0 length)
-        (->is = *untitled* name)
+        (->is = untitled-document name)
         ; Bind the document to a file
         (bind tmp-file)
         (->is = false modified?)
-        (->is = content text)
+        (->is = file-content text)
         (->is = "tmp" name)
         ; Append text to the document
         (append end)
         (->is = true modified?)
-        (->is = (str content end) text)
+        (->is = (str file-content end) text)
         ; Insert text in the middle
         (insert len middle)
-        (->is = (str content middle end) text)
+        (->is = (str file-content middle end) text)
         ; Delete text from the middle
         (delete len (+ len (count middle)))
-        (->is = (str content end) text)
-        ; Save file, check content and modified
+        (->is = (str file-content end) text)
+        ; Save file, check file-content and modified
         (->is not= (slurp tmp-file) text)
         (save)
         (->is = (slurp tmp-file) text)
-        (->is = false modified?))
-    ; delete temp file
-    (io/delete-file tmp-file)))
+        (->is = false modified?))))
 ;---------------------------
 (deftest bind-non-existing-file
-    (is (thrown? java.io.FileNotFoundException (bind (new-document) tmp-file))))
+    (is (thrown? java.io.FileNotFoundException (bind (new-document) "./bla"))))
 ;---------------------------
 (deftest search-and-replace
   (let [doc (append (new-document) "abc\nabc\nd")]
@@ -99,3 +106,6 @@
     (->is = "c\nablac\nd" text)
     (h/redo)
     (->is = "cba\nablac\nd" text)))
+;---------------------------
+(use-fixtures :once temp-document-config)
+;---------------------------
