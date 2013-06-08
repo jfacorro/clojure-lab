@@ -1,4 +1,4 @@
-(ns macho.lang.clojure)
+(ns proto.lang.clojure)
 ;-----------------------------------------------------------
 ; Special forms and characters collections definitions
 ;-----------------------------------------------------------

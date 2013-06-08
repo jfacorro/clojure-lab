@@ -1,8 +1,8 @@
-(ns macho.ui.swing.text
+(ns proto.ui.swing.text
   (:import [javax.swing JTextField JTextPane JTextArea]
            [javax.swing.text DefaultStyledDocument StyledDocument]
            [javax.swing.event DocumentEvent DocumentEvent$EventType])
-  (:require [macho.ui.protocols :as p]))
+  (:require [proto.ui.protocols :as p]))
 
 (defn insertion? 
   "Evaluates if e is an insertion event."

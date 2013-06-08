@@ -1,5 +1,5 @@
-(ns macho.parser-test
-  (:require [macho.parser :as mp]
+(ns proto.parser-test
+  (:require [proto.parser :as mp]
             [clojure.pprint :as pp]
             [clojure.zip :as zip]
             [net.cgrand.parsley :as p]
@@ -45,7 +45,7 @@
                   (r/fold cf rf (:content y)))))]
     (r/fold cf rf (:content node))))
 
-  (let [file   "./src/macho/ui.clj"
+  (let [file   "./src/proto/ui.clj"
         code   (slurp file)
         result (with-out-str
                 (doseq [i (range 1)]

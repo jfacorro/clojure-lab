@@ -1,10 +1,10 @@
-(ns macho.ui.swing.component
+(ns proto.ui.swing.component
   (:import  [java.awt Component]
             [java.awt.event MouseWheelListener KeyAdapter ActionListener KeyEvent InputEvent]
             [javax.swing KeyStroke]
             [javax.swing.event CaretListener DocumentListener UndoableEditListener DocumentEvent$EventType]
             [javax.swing.undo UndoManager])
-    (:use   [macho.ui.protocols]))
+    (:use   [proto.ui.protocols]))
 ;;-----------------------------------------------------
 (defn check-key 
   "Checks if the key and the modifier match the event's values"

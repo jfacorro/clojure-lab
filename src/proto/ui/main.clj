@@ -1,13 +1,12 @@
-(remove-ns 'macho.ui.main)
-(ns macho.ui.main
-  (:require [macho.ui.swing.core :as ui :reload true]))
+(ns proto.ui.main
+  (:require [proto.ui.swing.core :as ui :reload true]))
 
 (def width 500)
 (def height 500)
-(def app-name "macho - playground")
+(def app-name "proto - playground")
 (def icons-paths ["./resources/icon-16.png" "./resources/icon-32.png"])
 (def icons (for [path icons-paths] (ui/image path)))
-(def app-icon "macho")
+(def app-icon "proto")
 (def default-font (ui/font :name "Consolas" :styles [:plain] :size 14))
 
 (declare 

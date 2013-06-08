@@ -1,11 +1,11 @@
-(ns macho.ui.swing.highlighter
+(ns proto.ui.swing.highlighter
   (:import [javax.swing.text StyleContext SimpleAttributeSet StyleConstants StyledDocument]
            [javax.swing JTextPane]
            [java.awt Color])
-  (:require [macho.lang.clojure :as lang :reload true]
-            [macho.ui.swing.core :as util]
-            [macho.parser :as parser]
-            [macho.ast :as ast]))
+  (:require [proto.lang.clojure :as lang :reload true]
+            [proto.ui.swing.core :as util]
+            [proto.parser :as parser]
+            [proto.ast :as ast]))
 
 (def style-constants {:bold StyleConstants/Bold,
                       :background StyleConstants/Background,

@@ -1,2 +1,2 @@
-(ns macho.parser-test
+(ns proto.parser-test
   (:use clojure.test))

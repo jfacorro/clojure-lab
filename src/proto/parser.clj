@@ -1,7 +1,7 @@
-(ns macho.parser 
+(ns proto.parser 
   (:use clojure.pprint)
   (:require [net.cgrand.parsley :as p]
-            [macho.lang.clojure :as lang]))
+            [proto.lang.clojure :as lang]))
 ;;------------------------------
 (defrecord Language [^String name 
                      ^clojure.lang.IPersistentMap grammar 

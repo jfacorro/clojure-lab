@@ -1,4 +1,4 @@
-(ns macho.ui.swing.undo
+(ns proto.ui.swing.undo
   (:import [javax.swing.undo UndoManager]
            [javax.swing.event UndoableEditListener DocumentEvent$EventType]))
 ;;--------------------------------------

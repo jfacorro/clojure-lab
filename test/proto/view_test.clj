@@ -1,6 +1,6 @@
-(ns macho.view-test
+(ns proto.view-test
   (:use [clojure.test :only [deftest is run-tests]]
-        [macho.view]))
+        [proto.view]))
 ;----------------------------------------
 ; defview* function
 ;----------------------------------------
@@ -36,6 +36,6 @@
   (to-str [] (str this)))
 
 (deftest defview-win
-  (is (intern 'macho.view-test 'a-view)
+  (is (intern 'proto.view-test 'a-view)
   (is (= "1" (a-view :to-str)))))
 ;----------------------------------------

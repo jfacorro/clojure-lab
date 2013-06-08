@@ -1,5 +1,5 @@
-(ns macho.ast 
-  (:require [macho.parser :as p]
+(ns proto.ast 
+  (:require [proto.parser :as p]
             [clojure.pprint :as pp]
             [clojure.zip :as z]))
 
@@ -39,7 +39,7 @@ the limits for the nodes with the tag specified by ignore?."
       (when-not (z/end? nxt)
         (recur nxt))))
 
-#_(let [code "(defn bla [] (println :bla))";(slurp ".\\src\\macho\\core.clj")
+#_(let [code "(defn bla [] (println :bla))";(slurp ".\\src\\proto\\core.clj")
         zip  (build-ast code)]
   ;(-> zip z/next z/next pp/pprint)
   ;(println "---------------")

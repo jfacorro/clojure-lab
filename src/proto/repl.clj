@@ -1,4 +1,4 @@
-(ns macho.repl
+(ns proto.repl
   (:require popen
             [leiningen.core.eval :as eval]
             [leiningen.core.project :as project]

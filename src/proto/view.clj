@@ -1,4 +1,4 @@
-(ns macho.view)
+(ns proto.view)
 
 (defn validate-ops [ops-map]
   (let [ops (-> ops-map keys set)]

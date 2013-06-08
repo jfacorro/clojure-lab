@@ -1,20 +1,20 @@
-(ns macho.ui
+(ns proto.ui
   (:refer-clojure :exclude [get set])
   (:require [clojure.reflect :as r]
             [clojure.string :as str]
             [clojure.repl :as repl]
             [clojure.java.io :as io]
-            [macho.repl :as mrepl]
-            [macho.misc :as misc]
-            [macho.parser :as parser :reload true]
-            [macho.ui.swing.core :as ui :reload true]
-            [macho.ui.swing.highlighter :as hl :reload true]
-            [macho.ui.swing.undo :as undo :reload true]
-            [macho.ui.swing.text :as txt]
-            [macho.ui.protocols :as proto :reload true]))
+            [proto.repl :as mrepl]
+            [proto.misc :as misc]
+            [proto.parser :as parser :reload true]
+            [proto.ui.swing.core :as ui :reload true]
+            [proto.ui.swing.highlighter :as hl :reload true]
+            [proto.ui.swing.undo :as undo :reload true]
+            [proto.ui.swing.text :as txt]
+            [proto.ui.protocols :as proto :reload true]))
 ;;------------------------------
 ;; TODO: ask if this is acceptable
-(misc/intern-vars 'macho.ui.swing.core)
+(misc/intern-vars 'proto.ui.swing.core)
 ;;------------------------------
 (def app-name "Clojure Lab")
 (def new-doc-title "Untitled")

@@ -1,4 +1,4 @@
-(ns macho.ui.swing.core
+(ns proto.ui.swing.core
   (:refer-clojure :exclude [set get])
   (:import  [javax.swing ; Utils
                          UIManager SwingUtilities KeyStroke
@@ -16,19 +16,19 @@
             [java.awt Container Color Toolkit Font BorderLayout AWTEvent Frame]
             [bsh.util JConsole])
   (:require [clojure.string :as str]
-            [macho.ui.swing.component]
-            [macho.ui.protocols :as proto]
-            [macho.misc :as misc]))
+            [proto.ui.swing.component]
+            [proto.ui.protocols :as proto]
+            [proto.misc :as misc]))
 ;;------------------- 
 (def toolkit (Toolkit/getDefaultToolkit))
 ;;-------------------
 (defn init []
   (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName)))
 ;;-------------------
-;; Expose all vars in macho.ui.protocols
+;; Expose all vars in proto.ui.protocols
 ;;-------------------
-(macho.misc/intern-vars 'macho.ui.protocols)
-(macho.misc/intern-vars 'macho.ui.swing.component)
+(proto.misc/intern-vars 'proto.ui.protocols)
+(proto.misc/intern-vars 'proto.ui.swing.component)
 ;;-------------------
 (defmacro queue-action
   "Queues an action to the event queue."

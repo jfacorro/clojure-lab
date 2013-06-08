@@ -1,4 +1,4 @@
-(ns macho.parser-test
+(ns proto.parser-test
   (:use clojure.pprint)
   (:require [net.cgrand.parsley :as p]))
 ;;---------------------------------
@@ -64,9 +64,9 @@
 ;;---------------------------------
 ;; (pprint (parse "(x :bla-* ::bla #{} \"vcdsdcsd\" \\space  [:a :b] (println) 123.2 100)"))
 ;;---------------------------------
-;; (pprint (parse "(ns macho.core) (defn- -is-this.valid&symbol? [] nil)"))
+;; (pprint (parse "(ns proto.core) (defn- -is-this.valid&symbol? [] nil)"))
 ;;---------------------------------
-#_(let [code (slurp "../src/macho.clj")
+#_(let [code (slurp "../src/proto/main.clj")
       tree (time (parse code))]
   (pprint tree))
 

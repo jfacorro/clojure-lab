@@ -1,4 +1,4 @@
-(ns macho.misc)
+(ns proto.misc)
 ;---------------------------------
 (defn interned-vars-meta
   "Returns a seq with the metadata of the interned vars 
