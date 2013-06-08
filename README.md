@@ -12,9 +12,9 @@
 
 ### Extensibility
 
-- Provide a simple API to create your own tools and controls that can be used in the environment, for example in case there's a tool the you are missing and you feel like scratching your own itch.
+- Provide a simple API to create your own tools and controls that can be used in the environment, for example in case there's a tool that you are missing and you feel like scratching your own itch.
 - New types of projects and documents can be created with plugins.
-- Plugins will have access to every library in the core, to so that existing functionality can be enhanced and built upon.
+- Plugins will have access to every core library, so that existing functionality can be enhanced and built upon.
 
 ## Rationale
 
@@ -66,14 +66,14 @@ Most of the features in the following list were extracted from the post [The Ide
 - Code generation (deftype/defrecord/extend-type/gen-class/proxy).
 - REPL
     - Configurable pretty-printing of output.
-    - Being able to “print” non-textual data, like images and such.
+    - Being able to ï¿½printï¿½ non-textual data, like images and such.
 - Static analysis
     - Symbol navigation (i.e. "Go to declaration").
     - Find usages.
 
 # License
 
-Copyright © 2013 Juan Facorro
+Copyright ï¿½ 2013 Juan Facorro
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
