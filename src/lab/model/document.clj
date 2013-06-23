@@ -201,7 +201,7 @@
 (defn attach-view
   "Attaches a view to the document. x should be 
   an agent/atom/var/ref reference.
-  (Maybe it should be declared in macho.view)"
+  (Maybe it should be declared in view)"
   [x view]
   (view :init x)
   (add-watch x :update view))
