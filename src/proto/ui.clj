@@ -23,7 +23,7 @@
                   "icon-64.png"])
 ;;------------------------------
 (def current-font
-  (atom (ui/font :name "Consolas" :styles [:plain] :size 14)))
+  (atom (ui/font :name "Monospaced.plain" :styles [:plain] :size 14)))
 ;;------------------------------
 (def default-dir (atom (ui/get (io/file ".") :canonical-path)))
 ;;------------------------------

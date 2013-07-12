@@ -13,7 +13,7 @@
                          JMenuBar JMenu JSeparator JMenuItem
                          ; Border
                          BorderFactory]
-            [java.awt Container Color Toolkit Font BorderLayout AWTEvent Frame]
+            [java.awt Container Color Toolkit Font BorderLayout AWTEvent Frame GraphicsEnvironment]
             [bsh.util JConsole])
   (:require [clojure.string :as str]
             [proto.ui.swing.component]
@@ -243,6 +243,10 @@ system and select a file."
 (def font-styles {:plain Font/PLAIN
                   :bold Font/BOLD
                   :italic Font/ITALIC})
+;;------------------------------
+(defn list-all-fonts []
+  (let [ge (GraphicsEnvironment/getLocalGraphicsEnvironment)]
+    (-> ge .getAllFonts seq)))
 ;;-------------------
 (defn add-highlight
   "Add a single highglight in the text control."
