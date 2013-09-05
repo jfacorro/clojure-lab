@@ -57,7 +57,7 @@
   (or (-> syntax tag :style)
       (-> syntax :default :style)))
 
-(defn visible-region
+#_(defn visible-region
   "Determines the lines that are currently visible
   in the text component."
   [txt]
@@ -71,20 +71,23 @@
         end       (. txt viewToModel p)]
     [start end]))
 
-(require 'lab.model.buffer)
-
-(defn high-light [^JTextPane txt-pane]
+(defn highlight [^JTextPane txt-pane last-edit]
   "Takes the syntax defined by regexes and looks 
   for matches in the text-pane content applying the
   corresponding style to each match."
-  (let [doc    (.getDocument txt-pane)
-        group  (gensym "node-group-")
-        buf    (.getClientProperty txt-pane "buff")
-        tree   (parser/parse-tree @buf group)
-        zip    (ast/code-zip tree)
-        limits (ast/get-limits zip group)]
-    ;; Wait until all edits thus far have been applied to the buffer
-    (await buf)
-    (util/queue-action
-      (doseq [[strt end tag] limits]
-        (apply-style doc strt (- end strt) (style *syntax* tag))))))
+  (let [prev  (.getTime @last-edit)
+        _     (Thread/sleep 500)
+        diff  (- (.getTime @last-edit) prev)]
+    (when (zero? diff)
+      (let [doc    (.getDocument txt-pane)
+            group  (gensym "node-group-")
+            buf    (.getClientProperty txt-pane "buff")
+            _      (await buf) ; Wait until all edits thus far have been applied to the buffer
+            tree   (parser/parse-tree @buf group)
+            limits (-> tree ast/code-zip (ast/get-limits group))
+            limits (map (fn [[x y z]] [x y (style *syntax* z)]) limits)]
+        (println "applying styles" diff)
+        (println (count limits))
+        (util/queue-action
+          (doseq [[strt end stl] limits]
+            (apply-style doc strt (- end strt) stl)))))))

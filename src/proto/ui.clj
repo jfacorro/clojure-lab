@@ -123,7 +123,7 @@
   (let [txt  (current-txt main)
         s    (str/lower-case (proto/text txt))
         ptrn (ui/input-dialog (:main main) "Find" "Enter search string:")
-        lims (when ptrn (misc/find-limits (str/lower-case ptrn) s))]
+        lims (when (seq ptrn) (misc/find-limits (str/lower-case ptrn) s))]
     (remove-highlight txt)
     (doseq [[a b] lims] (ui/add-highlight txt a (- b a))))
   main)
@@ -142,17 +142,6 @@
               (repl/find-doc slct)
             sym 
               (eval `(repl/doc ~sym))))))
-;;-------------------------------
-(defn update-line-numbers
-  "Updates the numbers in the text component
-  that contains the line numbers."
-  [doc lines]
-  (let [pos  (.getLength doc)
-        root (.getDefaultRootElement doc)
-        n    (.getElementIndex root pos)]
-    (doto lines
-      (.setText (apply str (interpose "\n" (range 1 (+ n 2)))))
-      (.updateUI))))
 ;;------------------------------
 (defn document-buffer
   ([txt]
@@ -229,7 +218,7 @@ and copies the indenting for the new line."
      "ENTER"     #(insert-tabs %)
      "TAB"       #(handle-tab %)
      "shift TAB" #(handle-tab % true)}
-    (map (juxt #(-> % first ui/key-stroke) second))
+    (map (juxt (comp ui/key-stroke first) second))
     (into {})))
 ;;------------------------------
 (defn handle-input
@@ -282,23 +271,40 @@ and copies the indenting for the new line."
           (when-let [end (match-paren s pos end dir)]
             (reset! tags 
                     (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))
+;;-------------------------------
+(defn update-line-numbers
+  "Updates the numbers in the text component
+  that contains the line numbers."
+  [doc lines]
+  (let [pos  (.getLength doc)
+        root (.getDefaultRootElement doc) 
+        n    (.getElementIndex root pos)
+        s    (apply str (interpose "\n" (range 1 (+ n 2))))]
+    (ui/queue-action
+      (doto lines
+        (.setText s)
+        (.updateUI)))))        
 ;;------------------------------
 (defn incremental-highlight
-  "Handles incremental highlighting."
-  [txt-code txt-lines evt]
+  "Handles incremental highlighting. Takes the control 
+  that displays the text, the one that contains the lines
+  and the event."
+  [txt-code txt-lines last-edit evt]
   (let [offset   (proto/offset evt)
         len      (if (proto/insertion? evt) 0 (proto/length evt))
-        txt      (proto/text evt)]
+        txt      (proto/text evt)
+        doc      (.getDocument txt-code)
+        buf      (document-buffer txt-code)]
+    (reset! last-edit (java.util.Date.))
     (send-off (document-buffer txt-code) parser/edit offset len txt)
-    (ui/queue-action
-      (hl/high-light txt-code)
-      (update-line-numbers (.getDocument txt-code) txt-lines))))
+    (future (hl/highlight txt-code last-edit))
+    #_(future (update-line-numbers doc txt-lines))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
   ([main]
     (new-document main new-doc-title))
-  ([main title] 
+  ([main title]
     (new-document main title nil))
   ([main title src]
     (let [tabs       (:tabs main)
@@ -309,7 +315,8 @@ and copies the indenting for the new line."
           pnl-scroll (ui/scroll pnl-code)
           txt-lines  (ui/text-area)
           src        (.replaceAll (or src "") "\r" "")
-          buf        (agent (parser/make-buffer src))]
+          buf        (agent (parser/make-buffer src))
+          last-edit  (atom (java.util.Date.))]
 
       (-> pnl-code
         (ui/set :layout (ui/border-layout))
@@ -339,15 +346,16 @@ and copies the indenting for the new line."
       ;; Load the text all at once
       (document-buffer txt-code buf)
       (when src (ui/set txt-code :text src))
-      
+
       ; High-light text after code edition.
-      (ui/on :change 
+      (ui/on :change
              txt-code
-             #(future (incremental-highlight txt-code txt-lines %)))
+             #(future (incremental-highlight txt-code txt-lines last-edit %)))
 
       (when (seq src)
-        (hl/high-light txt-code)
-        (update-line-numbers doc txt-lines))
+        (ui/queue-action
+        (hl/highlight txt-code last-edit)
+        (update-line-numbers doc txt-lines)))
       
       ; Add Undo manager
       (ui/set undo-mgr :limit -1)
@@ -420,9 +428,9 @@ and copies the indenting for the new line."
 (defn load-project-repl
   [ui]
   (when-let [project-path (file-path-from-user "Project File")]
-    (->> project-path 
+    (->> project-path
       mrepl/create
-      repl-console 
+      repl-console
       (add-repl ui))))
 ;;------------------------------
 (defn load-repl
@@ -512,8 +520,7 @@ and copies the indenting for the new line."
     menubar))
 ;;------------------------------------------
 (defn make-main
-  "Creates the main window and all
-  its controls."
+  "Builds the main window and its controls."
   [name]
   (ui/init)
   (let [main     (ui/frame name)
