@@ -19,6 +19,7 @@
 (def app-name "Clojure Lab")
 (def new-doc-title "Untitled")
 (def icons-paths ["icon-16.png"
+
                   "icon-32.png"
                   "icon-64.png"])
 ;;------------------------------
@@ -138,10 +139,10 @@
     (let [txt  (current-txt main)
           slct (.getSelectedText txt)
           sym  (when slct (symbol slct))]
-      (cond find?
-              (repl/find-doc slct)
-            sym 
-              (eval `(repl/doc ~sym))))))
+      (cond 
+        find? (eval-in-repl (:repl main) `(clojure.repl/find-doc ~slct))
+        sym   (eval-in-repl (:repl main) `(clojure.repl/doc ~sym)))
+      main)))
 ;;------------------------------
 (defn document-buffer
   ([txt]
@@ -268,22 +269,31 @@ and copies the indenting for the new line."
                    \{ {:end \}, :d 1}, \} {:end \{, :d -1}
                    \[ {:end \], :d 1}, \] {:end \[, :d -1}}]
         (when-let [{end :end dir :d} (delim c)]
-          (when-let [end (match-paren s pos end dir)]
-            (reset! tags 
-                    (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))
+          (future ; start the search in another thread
+            (when-let [end (match-paren s pos end dir)]
+              (ui/queue-action
+                (reset! tags
+                        (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))))
 ;;-------------------------------
 (defn update-line-numbers
   "Updates the numbers in the text component
   that contains the line numbers."
   [doc lines]
   (let [pos  (.getLength doc)
-        root (.getDefaultRootElement doc) 
+        root (.getDefaultRootElement doc)
         n    (.getElementIndex root pos)
         s    (apply str (interpose "\n" (range 1 (+ n 2))))]
     (ui/queue-action
       (doto lines
         (.setText s)
-        (.updateUI)))))        
+        (.updateUI)))))
+;;------------------------------
+(defmacro future-with-timeout [time-out last-time & body]
+  `(future
+    (let [prev#  (.getTime @~last-time)]
+      (Thread/sleep ~time-out)
+      (when (zero? (- (.getTime @~last-time) prev#))
+        ~@body))))
 ;;------------------------------
 (defn incremental-highlight
   "Handles incremental highlighting. Takes the control 
@@ -296,9 +306,10 @@ and copies the indenting for the new line."
         doc      (.getDocument txt-code)
         buf      (document-buffer txt-code)]
     (reset! last-edit (java.util.Date.))
-    (send-off (document-buffer txt-code) parser/edit offset len txt)
-    (future (hl/highlight txt-code last-edit))
-    #_(future (update-line-numbers doc txt-lines))))
+    (send-off buf parser/edit offset len txt)
+    (update-line-numbers doc txt-lines)
+    (future-with-timeout 500 last-edit
+      (hl/highlight txt-code))))
 ;;------------------------------
 (defn new-document
   "Adds a new tab to tabs and sets its title."
@@ -342,7 +353,7 @@ and copies the indenting for the new line."
       (ui/on :key-press txt-code (partial handle-input main))
 
       (ui/on :caret-update txt-code (check-paren txt-code))
-      
+
       ;; Load the text all at once
       (document-buffer txt-code buf)
       (when src (ui/set txt-code :text src))
@@ -354,7 +365,7 @@ and copies the indenting for the new line."
 
       (when (seq src)
         (ui/queue-action
-        (hl/highlight txt-code last-edit)
+        (hl/highlight txt-code)
         (update-line-numbers doc txt-lines)))
       
       ; Add Undo manager
