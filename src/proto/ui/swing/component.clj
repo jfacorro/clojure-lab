@@ -35,21 +35,26 @@ it wraps it in a function of arity 1."
               (mouseWheelMoved [e] (hdlr e)))]
     (.addMouseWheelListener ctrl pxy)))
 ;;-----------------------------------------------------
-;; Multi method implementation for key-press events.
+;; Multi method implementation for key events (press, typed and release).
 ;;-----------------------------------------------------
+(defn handle-key-stroke [f e key-stroke]
+  (when (or (nil? key-stroke) (check-key e key-stroke))
+    (f e)))
+
 (defmethod on :key-press [evt ctrl hdlr & [key-stroke]]
   (.addKeyListener ctrl
       (proxy [KeyAdapter] []
-        (keyPressed [e] 
-          (when (or (nil? key-stroke) (check-key e key-stroke))
-            (hdlr e))))))
-;;-----------------------------------------------------
-;; Multi method implementation for key-release events.
-;;-----------------------------------------------------
+        (keyPressed [e] (handle-key-stroke hdlr e key-stroke)))))
+
 (defmethod on :key-release [evt ctrl hdlr & [key-stroke]]
   (.addKeyListener ctrl
     (proxy [KeyAdapter] []
-      (keyReleased [e] (when (check-key e key-stroke) (hdlr e))))))
+      (keyReleased [e] (handle-key-stroke hdlr e key-stroke)))))
+
+(defmethod on :key-typed [evt ctrl hdlr & [key-stroke]]
+  (.addKeyListener ctrl
+      (proxy [KeyAdapter] []
+        (keyTyped [e] (handle-key-stroke hdlr e key-stroke)))))
 ;;-----------------------------------------------------
 ;; Multi method implementation for click events.
 ;;-----------------------------------------------------

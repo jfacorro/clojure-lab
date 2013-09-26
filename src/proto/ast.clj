@@ -1,15 +1,19 @@
 (ns proto.ast 
   (:require [proto.parser :as p]
-            [clojure.pprint :as pp]
             [clojure.zip :as z]))
 
-(defn code-zip [root]
-  (z/zipper map? :content p/make-node root))
+(declare get-limits* code-zip)
 
-(defn tag [node]
+(defn get-limits [buf node-group]
+  (-> buf code-zip (get-limits* node-group)))
+
+(defn- tag [node]
   (or (and (map? node) (node :tag)) :default))
 
-(defn get-limits
+(defn- code-zip [root]
+  (z/zipper map? :content p/make-node root))
+
+(defn- get-limits*
   "Gets the limits for each string in the tree, ignoring
 the limits for the nodes with the tag specified by ignore?."
   ([loc node-group]
@@ -30,17 +34,20 @@ the limits for the nodes with the tag specified by ignore?."
               :else 
                 (recur nxt offset limits ignore?))))))
 
-(defn print-code-from-ast
-  [loc]
-    (let [[node children :as nxt] (z/next loc)]
-      ;(println nxt)
-      (when (string? node)
-        (print node))
-      (when-not (z/end? nxt)
-        (recur nxt))))
+(defn text
+  ([tree]
+    (-> tree code-zip (text nil)))
+  ([loc x]
+  (let [[node children :as nxt] (z/next loc)]
+    (cond
+      (string? node)
+        (recur nxt (str x node))
+      (not (z/end? nxt))
+        (recur nxt x)
+      :else x))))
 
 #_(let [code "(defn bla [] (println :bla))";(slurp ".\\src\\proto\\core.clj")
-        zip  (build-ast code)]
-  ;(-> zip z/next z/next pp/pprint)
-  ;(println "---------------")
-  (get-limits zip))
+      p    (intern 'proto.parser 'parse)
+      zip  (-> code p code-zip)]
+  (text-from-ast zip)
+)

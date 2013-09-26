@@ -56,6 +56,9 @@
   [syntax tag]
   (or (-> syntax tag :style)
       (-> syntax :default :style)))
+ 
+(defn diff-str [a b]
+  (apply str (map #(if (= %1 %2) nil (str %1 "<" %2 ">")) a b)))
 
 (defn highlight [^JTextPane txt-pane]
   "Takes the syntax defined by regexes and looks 
@@ -66,7 +69,10 @@
         buf    (.getClientProperty txt-pane "buff")
         _      (await buf) ; Wait until all edits thus far have been applied to the buffer
         tree   (parser/parse-tree @buf group)
-        limits (-> tree ast/code-zip (ast/get-limits group))]
+        limits (ast/get-limits tree group)]
+    #_(if (not= (ast/text tree) (.getText txt-pane))
+        (println "The buffer's content and the text control content don't match." 
+                 (diff-str (.getText txt-pane) (ast/text tree))))
     (util/queue-action
       (doseq [[strt end tag] limits]
         (apply-style doc strt (- end strt) (style *syntax* tag))))))

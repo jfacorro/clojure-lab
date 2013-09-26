@@ -144,11 +144,14 @@
         sym   (eval-in-repl (:repl main) `(clojure.repl/doc ~sym)))
       main)))
 ;;------------------------------
-(defn document-buffer
-  ([txt]
-    (.getClientProperty txt "buff"))
-  ([txt buf]
-    (.putClientProperty txt "buff" buf)))
+(defn client-property
+  ([prop ctrl]
+    (.getClientProperty ctrl prop))
+  ([prop ctrl value]
+    (.putClientProperty ctrl prop value)))
+;;------------------------------
+(def document-buffer (partial client-property "buff"))
+(def document-undo-mgr (partial client-property "undo-mgr"))
 ;;------------------------------
 (defn insert-text
   "Inserts the specified text in the document."
@@ -158,8 +161,9 @@
     (insert-text main s restore (-> main current-txt .getCaretPosition)))
   ([main s restore pos]
     (let [txt (current-txt main)
-          doc (.getDocument txt)]
-      (.insertString doc pos s nil)
+          doc (.getDocument txt)
+          buf (document-buffer txt)]
+      (.insertString doc (-> main current-txt .getCaretPosition) s nil)
       (when restore (.setCaretPosition txt pos)))))
 ;;------------------------------
 (defn find-char
@@ -210,19 +214,34 @@ and copies the indenting for the new line."
           (.setSelectionStart txt start)
           (.setSelectionEnd txt end))))))
 ;;------------------------------
+(defn paren-balance [s]
+  #(insert-text % s true (-> % current-txt .getCaretPosition inc)))
+;;------------------------------
+(defn redo [main]
+  (let [txt      (current-txt main)
+        undo-mgr (document-undo-mgr txt)]
+  (when (.canRedo undo-mgr) (.redo undo-mgr))))
+;;------------------------------
+(defn undo [main]
+  (let [txt      (current-txt main)
+        undo-mgr (document-undo-mgr txt)]
+  (when (.canUndo undo-mgr) (.undo undo-mgr))))
+;;------------------------------
 (def key-map
   (->>
-    {"("         #(insert-text % ")")
-     "{"         #(insert-text % "}")
-     "["         #(insert-text % "]")
-     "\""        #(insert-text % "\"")
+    {"("         (paren-balance "()")
+     "{"         (paren-balance "{}")
+     "["         (paren-balance "[]")
+     "\""        (paren-balance "\"\"")
      "ENTER"     #(insert-tabs %)
      "TAB"       #(handle-tab %)
-     "shift TAB" #(handle-tab % true)}
+     "shift TAB" #(handle-tab % true)
+     "ctrl Z"    undo
+     "ctrl Y"    redo}
     (map (juxt (comp ui/key-stroke first) second))
     (into {})))
 ;;------------------------------
-(defn handle-input
+(defn handle-key
   "Handle automatic insertion and format while typing."
   [main e]
   (let [ks      (ui/key-stroke e)
@@ -231,6 +250,14 @@ and copies the indenting for the new line."
     (when action
       (.consume e)
       (action main))))
+;;------------------------------
+(defn consume-key
+  "Checks the key-map for any bindings, if there is one, consumes the key event."
+  [main e]
+  (let [ks      (ui/key-stroke e)
+        ksc     (ui/key-stroke (str (.getKeyChar e)))
+      sue  action  (or (key-map ks) (key-map ksc))]
+    (when action (.consume e))))
 ;;------------------------------
 (defn change-font-size [txts e]
   (when (ui/check-key e (ui/key-stroke "control CONTROL"))
@@ -269,11 +296,9 @@ and copies the indenting for the new line."
                    \{ {:end \}, :d 1}, \} {:end \{, :d -1}
                    \[ {:end \], :d 1}, \] {:end \[, :d -1}}]
         (when-let [{end :end dir :d} (delim c)]
-          (future ; start the search in another thread
-            (when-let [end (match-paren s pos end dir)]
-              (ui/queue-action
-                (reset! tags
-                        (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))))
+          (when-let [end (match-paren s pos end dir)]
+            (reset! tags
+                    (doall (map #(ui/add-highlight txt % 1 (ui/color 192)) [pos end])))))))))
 ;;-------------------------------
 (defn update-line-numbers
   "Updates the numbers in the text component
@@ -305,6 +330,7 @@ and copies the indenting for the new line."
         txt      (proto/text evt)
         doc      (.getDocument txt-code)
         buf      (document-buffer txt-code)]
+    ;(println :incremental-highlight (str txt))
     (reset! last-edit (java.util.Date.))
     (send-off buf parser/edit offset len txt)
     (update-line-numbers doc txt-lines)
@@ -327,7 +353,7 @@ and copies the indenting for the new line."
           txt-lines  (ui/text-area)
           src        (.replaceAll (or src "") "\r" "")
           buf        (agent (parser/make-buffer src))
-          last-edit  (atom (java.util.Date.))]
+          last-edit  (atom nil)]
 
       (-> pnl-code
         (ui/set :layout (ui/border-layout))
@@ -341,32 +367,27 @@ and copies the indenting for the new line."
         (ui/set :font @current-font)
         (ui/set :editable false)
         (ui/set :background (ui/color 0xC0)))
-        
-      ; Undo/redo key events
-      (ui/on :key-press txt-code
-             (fn [_] (when (.canUndo undo-mgr) (.undo undo-mgr)))
-             (ui/key-stroke "ctrl Z"))
-      (ui/on :key-press txt-code
-             (fn [_] (when (.canRedo undo-mgr) (.redo undo-mgr)))
-             (ui/key-stroke "ctrl Y"))
 
-      (ui/on :key-press txt-code (partial handle-input main))
-
+      (ui/on :key-press txt-code (partial handle-key main))
+      (ui/on :key-typed txt-code (partial consume-key main))
+      
       (ui/on :caret-update txt-code (check-paren txt-code))
-
-      ;; Load the text all at once
+      
+      (document-undo-mgr txt-code undo-mgr)
+      ;; Set the document's buffer and load the text all at once
       (document-buffer txt-code buf)
       (when src (ui/set txt-code :text src))
 
-      ; High-light text after code edition.
+      ; High-light text after code edition using a different
+      ; so that the processing doesn't block the UI.
       (ui/on :change
              txt-code
              #(future (incremental-highlight txt-code txt-lines last-edit %)))
 
       (when (seq src)
         (ui/queue-action
-        (hl/highlight txt-code)
-        (update-line-numbers doc txt-lines)))
+          (hl/highlight txt-code)
+          (update-line-numbers doc txt-lines)))
       
       ; Add Undo manager
       (ui/set undo-mgr :limit -1)
@@ -375,7 +396,7 @@ and copies the indenting for the new line."
       ; Set the increment for each vertical scroll
       (.. pnl-scroll (getVerticalScrollBar) (setUnitIncrement 16))
 
-      (ui/on :mouse-wheel pnl-scroll #(change-font-size [txt-code txt-lines] %))
+      (ui/on :mouse-wheel pnl-scroll (partial change-font-size [txt-code txt-lines]))
 
       (doto txt-code
         (.setFont @current-font)
@@ -532,9 +553,9 @@ and copies the indenting for the new line."
 ;;------------------------------------------
 (defn make-main
   "Builds the main window and its controls."
-  [name]
+  []
   (ui/init)
-  (let [main     (ui/frame name)
+  (let [main     (ui/frame app-name)
         tabs     (ui/tabbed-pane)
         ui-main  (atom {:main main :tabs tabs})
         icons    (map (comp ui/image io/resource) icons-paths)]
