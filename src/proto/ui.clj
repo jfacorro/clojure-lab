@@ -217,12 +217,18 @@ and copies the indenting for the new line."
 (defn paren-balance [s]
   #(insert-text % s true (-> % current-txt .getCaretPosition inc)))
 ;;------------------------------
-(defn redo [main]
+(defn redo
+  "Tries to redo an operation in the current document using
+  the undo manager stored as a client property."
+  [main]
   (let [txt      (current-txt main)
         undo-mgr (document-undo-mgr txt)]
   (when (.canRedo undo-mgr) (.redo undo-mgr))))
 ;;------------------------------
-(defn undo [main]
+(defn undo
+  "Tries to undo an operation in the current document using
+  the undo manager stored as a client property."
+  [main]
   (let [txt      (current-txt main)
         undo-mgr (document-undo-mgr txt)]
   (when (.canUndo undo-mgr) (.undo undo-mgr))))
@@ -254,9 +260,9 @@ and copies the indenting for the new line."
 (defn consume-key
   "Checks the key-map for any bindings, if there is one, consumes the key event."
   [main e]
-  (let [ks      (ui/key-stroke e)
-        ksc     (ui/key-stroke (str (.getKeyChar e)))
-      sue  action  (or (key-map ks) (key-map ksc))]
+  (let [ks        (ui/key-stroke e)
+          ksc      (ui/key-stroke (str (.getKeyChar e)))
+      	  action  (or (key-map ks) (key-map ksc))]
     (when action (.consume e))))
 ;;------------------------------
 (defn change-font-size [txts e]
