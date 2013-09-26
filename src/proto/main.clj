@@ -5,10 +5,10 @@
 ;;------------------------------
 (def main
   "Main UI window."
-  (atom nil))
+  nil)
 ;;------------------------------
 (defn -main
   "Program startup function."
   []
-  (reset! main (ui/make-main ui/app-name)))
+  (def main (ui/make-main)))
 ;;------------------------------
