@@ -17,7 +17,7 @@
   (if (ui/find menu-bar selector)
     menu-bar
     (let [text     (-> selector last meta :value) ; The meta from the last selector's predicate has the name of the menu.
-          menu     (ui/menu :text text)
+          menu     [:menu {:text text}]
           selector (or (butlast selector) [])]
       (ui/update menu-bar selector uip/add menu))))
 
@@ -35,8 +35,8 @@
                   ;; Build selectors for each of the menu path levels.
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (if separator
-                    (ui/menu-separator)
-                    (ui/menu-item :text name :on-click (partial action ui) :key-stroke key-stroke))
+                    [:menu-separator]
+                    [:menu-item {:text name :on-click (partial action ui) :key-stroke key-stroke}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector uip/add item)]
      (ui/set-attr ui :menu menu-bar)))

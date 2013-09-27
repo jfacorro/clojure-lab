@@ -16,7 +16,7 @@
   "Generate a setter interop function for the method whose name
   starts with 'set' followed by prop keyword formatted in camel case
   (e.g. :j-menu-bar turns into JMenuBar). The method takes n arguments
-  and the object is type hinted to class."
+  and the object is type hinted to Class."
   [^Class klass prop n]
   (let [args  (take n (repeatedly gensym))
         hint  (symbol (.getName klass))
@@ -45,15 +45,15 @@
   The method implemented always returns the first argument which 
   is supposed to be the component itself.
 
-  *attrs-declaration
+    *attrs-declaration
   
   Where each attrs-declaration is:
  
-  component-keyword *attr-declaration
+    component-keyword *attr-declaration
     
   And each attr-declaration is:
 
- (attr-name [c k v] & body)"
+   (attr-name [c k v] & body)"
   [& body]
   (let [comps (->> body 
                 (partition-by keyword?) 

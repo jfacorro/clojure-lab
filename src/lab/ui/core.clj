@@ -10,7 +10,7 @@
                                  Selected get-selected set-selected
                                  initialize]]))
 
-(declare init initialized?)
+(declare init initialized? build)
 
 ;; Every abstract component is represented by a Clojure map.
 
@@ -51,7 +51,20 @@
   (set-selected [this selected]
     (-> this impl (set-selected (impl selected)))))
 
-(def component? "Returns true if its arg is a component." :tag)
+(def components #{:window :panel :split 
+                  :menu-bar :menu :menu-item :menu-separator 
+                  :text-editor
+                  :tabs :tab
+                  :tree :tree-node
+                  :button :label})
+
+(defn component? 
+  "Returns true if its arg is a component."
+  [x]
+  (or (and (map? x)
+           (x :tag)) 
+      (and (vector? x)
+           (-> x first components))))
 
 (def ^:private initialized?
   "Checks if the component is initialized."
@@ -60,8 +73,7 @@
 (defn- init-content
   "Initialize all content (children) for this component."
   [{content :content :as component}]
-  (let [content   (if (sequential? content) content [content])
-        content   (map init content)
+  (let [content   (map init content)
         component (assoc component :content [])]
     (reduce add component content)))
 
@@ -100,16 +112,17 @@
   "Initializes a component, creating the implementation for 
   each child and the attributes that have a component as a value."
   [component]
-  {:pre [(component? component)]}
-  (if (initialized? component) ; do nothing if it's already initiliazed
-    component
-    (let [ctrl       (initialize component)
-          component  (-> component
-                       (impl ctrl)
-                       set-attrs
-                       init-content)
-          ctrl       (abstract ctrl component)]
-      (impl component ctrl))))
+  {:post [(component? component)]}
+  (let [component (build component)]
+    (if (initialized? component) ; do nothing if it's already initiliazed
+      component
+      (let [ctrl       (initialize component)
+            component  (-> component
+                         (impl ctrl)
+                         set-attrs
+                         init-content)
+            ctrl       (abstract ctrl component)]
+        (impl component ctrl)))))
 
 (defn find
   [root selector]
@@ -151,40 +164,8 @@
     (build tag content-vector)
     (build tag & content)
     (build tag key val & kvs)"
-  ([tag]
-    (build tag {} []))
-  ([tag & [x y & z :as xs]]
-   {:pre [(keyword? tag)]}
-   (cond (map? x)
-           {:tag tag :attrs x :content (or (if (component? y) (reduce conj [y] z) y) [])}
-         (component? x)
-           {:tag tag :attrs {} :content (reduce conj [x] z)}
-         (vector? x)
-           {:tag tag :attrs {} :content x}
-         (keyword? x)
-           (let [attrs   (apply hash-map xs)
-                 content (:content attrs)]
-             {:tag tag :attrs (dissoc attrs :content) :content (or content [])}))))
-
-;;-----------------------
-;; Constructor functions
-;;-----------------------
-(def window (partial build :window))
-(def panel (partial build :panel))
-(def split (partial build :split))
-
-(def menu-bar (partial build :menu-bar))
-(def menu (partial build :menu))
-(def menu-item (partial build :menu-item))
-(def menu-separator (partial build :menu-separator))
-
-(def text-editor (partial build :text-editor))
-
-(def tabs (partial build :tabs))
-(def tab (partial build :tab))
-
-(def tree (partial build :tree))
-(def tree-node (partial build :tree-node))
-
-(def label (partial build :label))
-(def button (partial build :button))
+  [x]
+    (if (vector? x)
+      (let [[tag attrs & children] x]
+        {:tag tag :attrs attrs :content children})
+      x))

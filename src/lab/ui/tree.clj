@@ -1,6 +1,5 @@
 (ns lab.ui.tree
   (:require [clojure.java.io :as io]
-            [lab.ui.core :as ui]
             [lab.ui.protocols :as uip]))
 
 (defn file-proxy
@@ -27,9 +26,9 @@
                      (filter (comp not hidden?))
                      (sort-by #(if (.isDirectory %) 0 1))
                      (map file-proxy))]
-      (ui/tree-node :item file 
-                    :content (->> children (map tree-node-from-file) vec)))
-    (ui/tree-node :item file)))
+      (into [:tree-node {:item file}]
+              (->> children (map tree-node-from-file) vec)))
+    [:tree-node {:item file}]))
 
 (defn load-dir
   "Loads the directory tree for the given path. If its a file
