@@ -33,7 +33,6 @@
                               [:label {:text (str item)}]
                               [:button {:icon     "close-tab.png"
                                         :border   :none
-                                        :opaque   false
                                         :on-click close}]]
            :border  :none}
            text]))
@@ -41,7 +40,7 @@
 (defn open-file [ui evt]
   (let [^java.io.File file (-> evt uip/source uip/get-selected)]
     (when-not (.isDirectory file)
-      (swap! ui ui/update :tabs uip/add (new-tab ui file)))))
+      (swap! ui ui/update :#documents uip/add (new-tab ui file)))))
 
 (defn build-main [{ui :ui name :name :as app}]
   [:window {:-id     "main"
