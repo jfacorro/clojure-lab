@@ -51,9 +51,11 @@
             :menu    [:menu-bar]}
             [:split {:orientation :horizontal
                      :border      :none}
-                    [:tree {:-id          "file-tree" 
-                            :on-dbl-click (partial #'open-file ui)
-                            :root         (tree/load-dir "/home/jfacorro/clojure-lab/src")}]
+                    [:tabs {:border :none}
+                           [:tab {:-title "Files"}
+                                 [:tree {:-id          "file-tree" 
+                                         :on-dbl-click (partial #'open-file ui)
+                                         :root         (tree/load-dir "/home/jfacorro/clojure-lab/src/lab/ui/swing")}]]]
                     [:tabs {:-id "documents" :border :none}]]])
 
 ;; Init
@@ -61,7 +63,7 @@
   (let [ui  (atom nil)
         app (assoc app :ui ui)]
     (reset! ui (-> app build-main ui/init))
-    #_(do
+    (do
       (swap! ui menu/add-option {:menu "File" :name "New" :action #(println "New" (class %2)) :key-stroke "ctrl N"})
       (swap! ui menu/add-option {:menu "File" :name "Open" :action #(println "Open" (class %2)) :key-stroke "ctrl O"})
       (swap! ui menu/add-option {:menu "File -> Project" :name "New" :action #(println "New Project" (class %2))})

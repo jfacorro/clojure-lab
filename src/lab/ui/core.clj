@@ -157,15 +157,12 @@
   "Used by constructor functions to build a component with keys :tag,
   :attrs and :content.
   
-  Usage:  
-    (build tag attr-map content-vector)
-    (build tag attr-map & content)
-    (build tag attr-map)
-    (build tag content-vector)
-    (build tag & content)
-    (build tag key val & kvs)"
+  Usage:
+    [tag-keyword attrs-map? children*]"
   [x]
     (if (vector? x)
-      (let [[tag attrs & children] x]
-        {:tag tag :attrs attrs :content children})
+      (let [[tag & [attrs & ch :as children]] x]
+        {:tag     tag 
+         :attrs   (if (map? attrs) attrs {})
+         :content (if (map? attrs) ch children)})
       x))

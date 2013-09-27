@@ -83,7 +83,7 @@
   (add [this child]
     (let [i         (.getTabCount this)
           child-abs (abstract child)
-          header    (-> child-abs (ui/get-attr :-header) impl)
+          header    (when-let [h (ui/get-attr child-abs :-header)] (impl h))
           tool-tip  (ui/get-attr child-abs :-tool-tip)
           title     (ui/get-attr child-abs :-title)]
       (.addTab this title child)
