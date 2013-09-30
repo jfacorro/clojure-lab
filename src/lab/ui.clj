@@ -48,14 +48,25 @@
             :size    [700 500]
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
-            [:split {:orientation :horizontal
-                     :border      :none}
-                    [:tabs {:border :none}
-                           [:tab {:-title "Files"}
-                                 [:tree {:-id          "file-tree" 
-                                         :on-dbl-click (partial #'open-file ui)
-                                         :root         (tree/load-dir "/home/jfacorro/clojure-lab/src/lab/ui/swing")}]]]
-                    [:tabs {:-id "documents" :border :none}]]])
+            [:split {:orientation      :vertical
+                     :border           :none
+                     :divider-location 100}
+                    [:split {:one-touch-expandable true
+                             :divider-location 0.2
+                             :resize-weight 0
+                             :border :none}
+                            [:tabs {:-id "left-controls" :border :none}
+                                   [:tab {:-title "Files" :border :none}
+                                         [:tree {:-id          "file-tree" 
+                                                 :on-dbl-click (partial #'open-file ui)
+                                                 :root         (tree/load-dir "/home/jfacorro/Downloads/clojure-lab/src/lab/ui/swing")}]]]
+                            [:split {:one-touch-expandable true
+                                     :divider-location 0.8
+                                     :resize-weight 1
+                                     :border :none}
+                                     [:tabs {:border :none :-id "documents"}]
+                                     [:tabs {:-id "right-controls"}]]]
+                    [:tabs {:-id "bottom-controls"}]]])
 
 ;; Init
 (defn init [app]
@@ -71,10 +82,9 @@
       (swap! ui menu/add-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
     app))
 
-(do
-  (-> {:name "Clojure Lab - UI dummy"}
-    init
-    :ui
-    (swap! ui/init)
-    uip/show)
-  nil)
+(def x
+  (let [app (init {:name "Clojure Lab - UI dummy"})
+        ui  (app :ui)]
+    (swap! ui ui/init)
+    ui))
+(uip/show @x)
