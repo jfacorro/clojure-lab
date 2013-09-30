@@ -82,9 +82,15 @@
       (swap! ui menu/add-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
     app))
 
-(def x
-  (let [app (init {:name "Clojure Lab - UI dummy"})
-        ui  (app :ui)]
-    (swap! ui ui/init)
-    ui))
-(uip/show @x)
+(do
+  (def x
+    (let [app (init {:name "Clojure Lab - UI dummy"})
+          ui  (app :ui)]
+      (swap! ui ui/init)
+      ui))
+  (uip/show @x)
+  
+  (require '[lab.ui.stylesheet :as css :reload true])
+  (def stylesheet {:#documents {:border [:line 0x0000FF 5]}})
+  (css/apply-stylesheet x stylesheet)
+  nil)

@@ -51,11 +51,17 @@
   (set-selected [this selected]
     (-> this impl (set-selected (impl selected)))))
 
-(def components #{:window :panel :split 
+(def components #{; containers
+                  :window :panel :split :scroll
+                  ; menu
                   :menu-bar :menu :menu-item :menu-separator 
+                  ; text
                   :text-editor
+                  ; tabs
                   :tabs :tab
+                  ; tree
                   :tree :tree-node
+                  ; misc
                   :button :label})
 
 (defn component? 

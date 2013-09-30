@@ -98,7 +98,9 @@
 
 (defn select
   "Takes a selection expression and returns the path for the
-  matching components from root, which must be a component."
+  first matching component from root, which must be a component.
+  
+  TODO: returns a list of all matching components."
   [root selector]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])

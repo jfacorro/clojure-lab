@@ -128,7 +128,7 @@
   (source [this]
     (.getSource this)))
 
-(defn text-editor-init [c]
+(defn- text-editor-init [c]
   (proxy [JTextPane] []
     (getScrollableTracksViewportWidth []
       (if (ui/get-attr c :wrap)
@@ -164,8 +164,8 @@
 
 (defmethod set-attr :default
   [c k args]
-  "docstring: fall-back method implementation
-  for properties not specified for the component.
+  "Fall-back method implementation for properties not specified 
+  for the component in defattributes.
   Tries to set the property by building a function setter
   and calling it with the supplied args."
   (let [ctrl  (impl c)
@@ -175,6 +175,8 @@
     (apply (swutil/setter! (class ctrl) k n) ctrl args)
     c))
 
+;; Definition of attribute setters for each kind
+;; of component in the hierarchy.
 (swutil/defattributes
   :component
     (:border [c _ v]
