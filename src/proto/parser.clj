@@ -66,7 +66,10 @@ check if its one of the registered symbols."
 (defn make-buffer [src]
   (-> parse p/incremental-buffer (edit 0 0 src)))
 ;;---------------------------------
-(defn parse-tree [buf node-group]
+(defn parse-tree
+  "Parse the incremental buffer and tag the new nodes with the
+  node-group provided."
+  [buf node-group]
   (binding [*node-group* node-group]
     (p/parse-tree buf)))
 ;;---------------------------------

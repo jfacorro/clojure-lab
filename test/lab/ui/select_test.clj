@@ -1,4 +1,3 @@
-
 (ns lab.ui.select-test
   (:use lab.ui.select
         [clojure.test :only [deftest is are run-tests testing]]))
@@ -10,7 +9,9 @@
                      {:tag :button 
                       :attrs {:-id "2"} 
                       :content [{:tag :combo 
-                                 :attrs{:-id "combo" :size [100 200]}}]}]})
+                                 :attrs{:-id "combo" :size [100 200]}}]}
+                     {:tag :label
+                      :attrs {:-id "3" :size [100 100]}}]})
 
 (deftest ui-selection []
   (testing "single"
@@ -44,3 +45,7 @@
       []           [[:window :#main]]
       nil          [[:window :label]]
       [:content 0] [[:label :label]])))
+
+(deftest ui-select-all []
+  (are [x y] (= x (select-all root y))
+    [[:content 0] [:content 2]] :label))
