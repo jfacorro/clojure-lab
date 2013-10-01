@@ -1,6 +1,7 @@
 (ns lab.ui.select
   (:refer-clojure :exclude [compile])
-  (:require [clojure.zip :as zip])
+  (:require [clojure.zip :as zip]
+            [clojure.set :as set])
   (:use [lab.ui.protocols :only [Component add children]]))
 
 ;; Selector functions
@@ -126,16 +127,14 @@
                        [[] nil])]
       path)))
 
-(defn- children-index [parent child]
-  (let [children (vec (zip/children parent))
-        child    (zip/node child)]
-    (.indexOf children child)))
-
-(defn- path-from-root [node]
+(defn- path-from-root
+  "Takes a node from a zipper and finds the vector path
+  to it by traversing the tree backwards."
+  [node]
   (loop [path []
          node node]
     (if-let [parent (zip/up node)]
-      (recur (into [:content (children-index parent node)] path)
+      (recur (into [:content (-> node zip/lefts count)] path)
              parent)
         path)))
 
@@ -148,15 +147,15 @@
         children?  (-> node zip/children seq)
         rights?    (-> node zip/rights seq)
         m1         (when (and match? (not ps))
-                     {(gensym) #_(zip/node node) node})
+                     #{(path-from-root node)})
         m2         (when (and match? ps children?)
                      (find-all-paths (zip/down node) orig-preds ps))
         m3         (when children?
                      (find-all-paths (zip/down node) orig-preds orig-preds))
         m4         (when rights?
-                     (merge (find-all-paths (zip/right node) orig-preds preds)
-                            (find-all-paths (zip/right node) orig-preds orig-preds)))
-        result     (reduce merge [m1 m2 m3 m4])]
+                     (set/union (find-all-paths (zip/right node) orig-preds preds)
+                                (find-all-paths (zip/right node) orig-preds orig-preds)))
+        result     (reduce set/union #{} [m1 m2 m3 m4])]
     result))
 
 (defn select-all
@@ -169,6 +168,6 @@
           root       (zip/zipper map? :content identity root)
           result     (if (-> predicates count pos?)
                        (find-all-paths root predicates predicates)
-                       {})]
-      (->> result vals (map path-from-root) set))))
+                       #{})]
+      result)))
   

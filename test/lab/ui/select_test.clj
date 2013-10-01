@@ -1,3 +1,4 @@
+(remove-ns 'lab.ui.select-test)
 (ns lab.ui.select-test
   (:use lab.ui.select
         [clojure.test :only [deftest is are run-tests testing]]))
@@ -52,5 +53,8 @@
 
 (deftest ui-select-all []
   (are [x y] (= x (select-all root y))
+    nil nil
+    #{} []
     #{[:content 0] [:content 2]} :label
-    #{[:content 3 :content 0] [:content 3 :content 1] [:content 3 :content 2]} :tab))
+    #{[:content 3 :content 0] [:content 3 :content 1] [:content 3 :content 2]} :tab
+    #{[]} :window))
