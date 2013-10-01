@@ -128,28 +128,20 @@
                        [[] nil])]
       path)))
 
-(defn merge-result [src [nodes _]]
-  (reduce (fn [[result index] node]
-            (if (and node (-> node zip/node index not))
-              [(conj result node) (conj index (zip/node node))]
-              [result index]))
-          src
-          nodes))
-
 (defn- find-all-paths [node orig-preds [p & ps :as preds]]
   (let [match?     (-> node zip/node p)
         children?  (-> node zip/children seq)
         rights?    (-> node zip/rights seq)
         m1         (when (and match? (not ps))
-                     [[node] #{(zip/node node)}])
+                     {(zip/node node) node})
         m2         (when (and match? ps children?)
                      (find-all-paths (zip/down node) orig-preds ps))
         m3         (when children?
                      (find-all-paths (zip/down node) orig-preds orig-preds))
-        [m4 m5]    (when rights?
-                     [(find-all-paths (zip/right node) orig-preds preds)
-                      (find-all-paths (zip/right node) orig-preds orig-preds)])
-        result     (reduce merge-result [[] #{}] [m1 m2 m3 m4 m5])]
+        m4         (when rights?
+                     (merge (find-all-paths (zip/right node) orig-preds preds)
+                            (find-all-paths (zip/right node) orig-preds orig-preds)))
+        result     (reduce merge [m1 m2 m3 m4])]
     result))
 
 (defn select-all
@@ -158,8 +150,8 @@
     (let [selector   (if (sequential? selector) selector [selector])
           predicates (map compile selector)
           root       (zip/zipper map? :content identity root)
-          [nodes _]  (if (-> predicates count pos?)
+          result     (if (-> predicates count pos?)
                        (find-all-paths root predicates predicates)
                        [])]
-      (mapv zip/node nodes))))
+      (mapv zip/node (vals result)))))
   
