@@ -82,7 +82,7 @@
       (swap! ui menu/add-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
     app))
 
-(do
+#_(do
   (def x
     (let [app (init {:name "Clojure Lab - UI dummy"})
           ui  (app :ui)]

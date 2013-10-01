@@ -10,7 +10,7 @@
                                  Selected get-selected set-selected
                                  initialize]]))
 
-(declare init initialized? build)
+(declare init initialized?)
 
 ;; Every abstract component is represented by a Clojure map.
 
@@ -72,6 +72,19 @@
       (and (vector? x)
            (-> x first components))))
 
+(defn hiccup->map
+  "Used to convert huiccup syntax declarations to map components.
+  
+  x: [tag-keyword attrs-map? children*]"
+  [x]
+    (if (vector? x)
+      (let [[tag & [attrs & ch :as children]] x]
+        {:tag     tag 
+         :attrs   (if-not (component? attrs) attrs {})
+         :content (mapv hiccup->map (if (component? attrs) children ch))})
+      x))
+
+
 (def ^:private initialized?
   "Checks if the component is initialized."
   (comp not nil? impl))
@@ -119,7 +132,7 @@
   each child and the attributes that have a component as a value."
   [component]
   {:post [(component? component)]}
-  (let [component (build component)]
+  (let [component (hiccup->map component)]
     (if (initialized? component) ; do nothing if it's already initiliazed
       component
       (let [ctrl       (initialize component)
@@ -158,17 +171,3 @@
   [c ks]
   (let [i (impl c)]
     (impl c (p/remove-binding i ks))))
-
-(defn- build
-  "Used by constructor functions to build a component with keys :tag,
-  :attrs and :content.
-  
-  Usage:
-    [tag-keyword attrs-map? children*]"
-  [x]
-    (if (vector? x)
-      (let [[tag & [attrs & ch :as children]] x]
-        {:tag     tag 
-         :attrs   (if (map? attrs) attrs {})
-         :content (if (map? attrs) ch children)})
-      x))
