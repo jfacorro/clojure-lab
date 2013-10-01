@@ -4,7 +4,6 @@
 
 (defn- apply-style
   [ui [selector attrs]]
-  (println selector)
   (reduce (fn [ui [attr value]]
             (ui/update ui selector ui/set-attr attr value))
           ui

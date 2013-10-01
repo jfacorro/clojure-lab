@@ -91,6 +91,6 @@
   (uip/show @x)
   
   (require '[lab.ui.stylesheet :as css :reload true])
-  (def stylesheet {:#documents {:border [:line 0x0000FF 5]}})
+  (def stylesheet {:tabs {:border [:line 0xFFFF00 5]}})
   (css/apply-stylesheet x stylesheet)
   nil)

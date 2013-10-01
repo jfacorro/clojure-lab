@@ -144,20 +144,22 @@
         (impl component ctrl)))))
 
 (defn find
+  "Returns the first component found."
   [root selector]
   (when-let [path (sel/select root selector)]
     (get-in root path)))
 
 (defn update
-  "Updates the component that matches the selector expression
+  "Updates all the components that match the selector expression
   using:
     (update-in root (path-to-selector) f args)."
   [root selector f & args]
-  (if-let [path (sel/select root selector)]
-    (if (empty? path)
-      (apply f root args)
-      (apply update-in root path f args))
-    root))
+  (reduce (fn [root path]
+            (if (empty? path)
+              (apply f root args)
+              (apply update-in root path f args)))
+          root
+          (sel/select-all root selector)))
 
 (defn add-binding
   "Adds a key binding to this component."
