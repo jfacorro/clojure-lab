@@ -11,7 +11,11 @@
                       :content [{:tag :combo 
                                  :attrs{:-id "combo" :size [100 200]}}]}
                      {:tag :label
-                      :attrs {:-id "3" :size [100 100]}}]})
+                      :attrs {:-id "3" :size [100 100]}}
+                     {:tag :tabs
+                      :content [{:tag :tab}
+                                {:tag :tab}
+                                {:tag :tab}]}]})
 
 (deftest ui-selection []
   (testing "single"
@@ -48,4 +52,5 @@
 
 (deftest ui-select-all []
   (are [x y] (= x (select-all root y))
-    [[:content 0] [:content 2]] :label))
+    #{[:content 0] [:content 2]} :label
+    #{[:content 3 :content 0] [:content 3 :content 1] [:content 3 :content 2]} :tab))

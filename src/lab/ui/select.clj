@@ -116,9 +116,7 @@
   
   Id          :#value-id
   Tag         :tag-name
-  Unary pred  (fn [c] true)    
-
-  TODO: returns a list of all matching components."
+  Unary pred  (fn [c] true)"
   [root selector]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])
@@ -128,12 +126,29 @@
                        [[] nil])]
       path)))
 
-(defn- find-all-paths [node orig-preds [p & ps :as preds]]
+(defn- children-index [parent child]
+  (let [children (vec (zip/children parent))
+        child    (zip/node child)]
+    (.indexOf children child)))
+
+(defn- path-from-root [node]
+  (loop [path []
+         node node]
+    (if-let [parent (zip/up node)]
+      (recur (into [:content (children-index parent node)] path)
+             parent)
+        path)))
+
+(defn- find-all-paths
+  "Traverses the tree using a zipper and merging the results
+  in a map where the component is the key and the zipper node
+  is the value."
+  [node orig-preds [p & ps :as preds]]
   (let [match?     (-> node zip/node p)
         children?  (-> node zip/children seq)
         rights?    (-> node zip/rights seq)
         m1         (when (and match? (not ps))
-                     {(zip/node node) node})
+                     {(gensym) #_(zip/node node) node})
         m2         (when (and match? ps children?)
                      (find-all-paths (zip/down node) orig-preds ps))
         m3         (when children?
@@ -145,6 +160,8 @@
     result))
 
 (defn select-all
+  "Searches the whole component tree from the root and returns
+  a sequence of paths to matches."
   [root selector]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])
@@ -152,6 +169,6 @@
           root       (zip/zipper map? :content identity root)
           result     (if (-> predicates count pos?)
                        (find-all-paths root predicates predicates)
-                       [])]
-      (mapv zip/node (vals result)))))
+                       {})]
+      (->> result vals (map path-from-root) set))))
   
