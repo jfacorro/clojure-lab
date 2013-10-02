@@ -151,13 +151,12 @@
 
 (defn update
   "Updates all the components that match the selector expression
-  using:
-    (update-in root (path-to-selector) f args)."
+  using (update-in root path-to-component f args)."
   [root selector f & args]
-  (reduce (fn [root path]
+  (reduce (fn [x path]
             (if (empty? path)
-              (apply f root args)
-              (apply update-in root path f args)))
+              (apply f x args)
+              (apply update-in x path f args)))
           root
           (sel/select-all root selector)))
 

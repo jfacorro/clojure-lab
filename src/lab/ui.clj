@@ -3,7 +3,8 @@
   (:require [lab.ui [core :as ui :reload true]
                     [select :as ui.sel :reload true]
                     [tree :as tree]
-                    [menu :as menu]
+                    [menu :as menu :reload true]
+                    [stylesheet :as css :reload true]
                     [protocols :as uip]
                     [swing :reload true]]))
 
@@ -48,23 +49,20 @@
             :size    [700 500]
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
-            [:split {:orientation      :vertical
-                     :border           :none
-                     :divider-location 100}
+            [:split {:orientation :vertical
+                     :resize-weight 1}
                     [:split {:one-touch-expandable true
-                             :divider-location 0.2
-                             :resize-weight 0
-                             :border :none}
-                            [:tabs {:-id "left-controls" :border :none}
+                             :divider-location 100
+                             :resize-weight 0}
+                            [:tabs {:-id "left-controls"}
                                    [:tab {:-title "Files" :border :none}
                                          [:tree {:-id          "file-tree" 
                                                  :on-dbl-click (partial #'open-file ui)
                                                  :root         (tree/load-dir "/home/jfacorro/Downloads/clojure-lab/src/lab/ui/swing")}]]]
                             [:split {:one-touch-expandable true
                                      :divider-location 0.8
-                                     :resize-weight 1
-                                     :border :none}
-                                     [:tabs {:border :none :-id "documents"}]
+                                     :resize-weight 1}
+                                     [:tabs {:-id "documents"}]
                                      [:tabs {:-id "right-controls"}]]]
                     [:tabs {:-id "bottom-controls"}]]])
 
@@ -86,11 +84,11 @@
   (def x
     (let [app (init {:name "Clojure Lab - UI dummy"})
           ui  (app :ui)]
-      (swap! ui ui/init)
       ui))
   (uip/show @x)
   
-  (require '[lab.ui.stylesheet :as css :reload true])
-  (def stylesheet {:tabs {:border [:line 0xFFFF00 5]}})
+  (def stylesheet {:split {:border :none}
+                   :tabs  {:border :none}
+                   :text-editor {:background 0x555555}})
   (css/apply-stylesheet x stylesheet)
   nil)
