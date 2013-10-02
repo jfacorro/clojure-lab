@@ -168,6 +168,6 @@
           root       (zip/zipper map? :content identity root)
           result     (if (-> predicates count pos?)
                        (find-all-paths root predicates predicates)
-                       #{})]
+                       #{[]})]
       result)))
   
