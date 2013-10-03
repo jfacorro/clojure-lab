@@ -1,8 +1,7 @@
 (remove-ns 'lab.ui.swing)
 (ns lab.ui.swing
   (:refer-clojure :exclude [remove])
-  (:import [javax.swing UIManager JFrame JScrollPane JSplitPane JPanel 
-                        JButton JLabel AbstractAction JComponent]
+  (:import [javax.swing UIManager JComponent JButton JLabel AbstractAction ]
            [java.awt Dimension]
            [java.awt.event MouseAdapter ActionListener])
   (:use    [lab.ui.protocols :only [Component add remove
@@ -14,6 +13,8 @@
                                     Selected get-selected set-selected]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as swutil]
+                          window
+                          panel
                           file-dialog
                           tree
                           menu
@@ -79,32 +80,15 @@
       (when desc
         (.remove im ks)
         (.remove am desc))
-      this))
-
-  JSplitPane
-  (add [this child]
-    (if (instance? JButton (.getTopComponent this))
-      (.setTopComponent this child)
-      (.setBottomComponent this child))
-    this)
-
-  JScrollPane
-  (add [this child]
-    (.. this getViewport (add child nil))
-    this))
+      this)))
 ;;-------------------
 (extend-protocol Event
   java.util.EventObject
   (source [this]
     (.getSource this)))
 
-;; Initialize multimethod implementations
+;; initialize multi-method implementations
 (swutil/definitializations
-  ;; Frame
-  :window      JFrame
-  ;; Layout
-  :split       JSplitPane
-  :panel       JPanel
   ;; Controls
   :button      JButton
   :label       JLabel)
@@ -151,24 +135,10 @@
                          (when (= 2 (.getClickCount e)) (handler e))))]
         (.addMouseListener (impl c) listener)))
 
-  :window
-    (:menu [c _ v]
-      (set-attr c :j-menu-bar (impl v))
-      (.revalidate (impl c)))
-    (:icons [c _ v]
-      (let [icons (map swutil/image v)]
-        (.setIconImages (impl c) icons)))
-
   :button
     (:icon [c _ img]
       (.setIcon (impl c) (swutil/icon img)))
     (:on-click [c _ f]
       (let [action (reify ActionListener
                       (actionPerformed [this e] (f e)))]
-        (.addActionListener (impl c) action)))
-
-  :split
-    (:divider-location [c _ value]
-      (.setDividerLocation (impl c) value))
-    (:orientation [c attr value]
-      (.setOrientation (impl c) (swutil/split-orientations value))))
+        (.addActionListener (impl c) action))))
