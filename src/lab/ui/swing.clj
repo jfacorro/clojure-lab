@@ -1,10 +1,9 @@
 (ns lab.ui.swing
   (:refer-clojure :exclude [remove])
   (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
-                        JScrollPane JTextPane JTree JSplitPane JButton JPanel
+                        JScrollPane JTextPane JSplitPane JButton JPanel
                         JButton JLabel AbstractAction JComponent JSeparator]
-           [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]           
-           [javax.swing.event TreeSelectionListener DocumentListener]
+           [javax.swing.event DocumentListener]
            [java.awt Dimension]
            [java.awt.event MouseAdapter ActionListener])
   (:use    [lab.ui.protocols :only [Component add remove
@@ -16,7 +15,9 @@
                                     Selected get-selected set-selected]])
   (:require [lab.util :as util]
             [lab.ui.core :as ui]
-            [lab.ui.swing.util :as swutil]))
+            [lab.ui.swing [util :as swutil]
+                          file-dialog
+                          tree]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
@@ -105,18 +106,9 @@
   JScrollPane
   (add [this child]
     (.. this getViewport (add child nil))
-    this)
-
-  DefaultMutableTreeNode
-  (add [this child]
-    (.add this child)
     this))
 ;;-------------------
 (extend-protocol Selected
-  JTree 
-  (get-selected [this]
-    (when-let [node (-> this .getLastSelectedPathComponent)]
-      (.getUserObject node)))
   JTabbedPane
   (get-selected [this]
     (.getSelectedIndex this))
@@ -153,9 +145,6 @@
   ;; Layout
   :split       JSplitPane
   :panel       JPanel
-  ;; Tree
-  :tree        JTree
-  :tree-node   DefaultMutableTreeNode
   ;; Controls
   :button      JButton
   :label       JLabel)
@@ -201,24 +190,14 @@
                        (mousePressed [e]
                          (when (= 2 (.getClickCount e)) (handler e))))]
         (.addMouseListener (impl c) listener)))
-  
+
   :window
     (:menu [c _ v]
-      (set-attr c :j-menu-bar v)
+      (set-attr c :j-menu-bar (impl v))
       (.revalidate (impl c)))
     (:icons [c _ v]
       (let [icons (map swutil/image v)]
         (.setIconImages (impl c) icons)))
-
-  :tree
-    (:root [c _ v]
-      (let [model (DefaultTreeModel. (impl v))]
-        (.setModel (impl c) model)))
-    (:on-selected [c _ handler]
-      (let [listener (proxy [TreeSelectionListener] []
-                       (valueChanged [e]
-                         (handler (get-selected c))))]
-        (.addTreeSelectionListener (impl c) listener)))
 
   :button
     (:icon [c _ img]

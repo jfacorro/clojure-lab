@@ -31,7 +31,7 @@
   for each of the entries in the map m."
   [& {:as m}]
   `(do
-      (remove-all-methods initialize)
+      ;(remove-all-methods initialize) ; this is useful for developing but messes up the ability to break implementations into namespaces
     ~@(for [[k c] m]
       (if (-> c resolve class?)
         `(defmethod initialize ~k [c#]
