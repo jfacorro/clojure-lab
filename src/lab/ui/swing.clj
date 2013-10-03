@@ -241,6 +241,8 @@
       (.setUserObject (impl c) item))
 
   :split
+    (:divider-location [c _ value]
+      (.setDividerLocation (impl c) value))
     (:orientation [c attr value]
       (.setOrientation (impl c) (swutil/split-orientations value)))
 

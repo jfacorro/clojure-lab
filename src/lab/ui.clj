@@ -8,6 +8,8 @@
                     [protocols :as uip]
                     [swing :reload true]]))
 
+(set! *warn-on-reflection* true)
+
 (defn- new-text-editor [file]
   [:text-editor {:text        (slurp file)
                  :border      :none
@@ -78,6 +80,7 @@
       (swap! ui menu/add-option {:menu "File" :separator true})
       (swap! ui menu/add-option {:menu "File" :name "Exit" :action #(do %& (System/exit 0))})
       (swap! ui menu/add-option {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
+    (uip/show @ui)
     app))
 
 #_(do
