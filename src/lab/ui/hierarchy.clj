@@ -20,7 +20,19 @@
   "Default hierarchy description for the different types
   of UI components. Must be built and rebound to the result
   of calling [build-hierarchy]."
-  {:component [:window :panel :scroll :tabs :tab :tree :split
-               :tree-node :menu :menu-item :button :label :text-editor]})
+  {:component [; containers
+                  :window :panel :split :scroll
+                  ; menu
+                  :menu-bar :menu :menu-item :menu-separator 
+                  ; text
+                  :text-editor
+                  ; tabs
+                  :tabs :tab
+                  ; tree
+                  :tree :tree-node
+                  ; misc
+                  :button :label
+                  ; dialogs
+                  :file-dialog]})
 
 (def hierarchy (build-hierarchy hierarchy-description))

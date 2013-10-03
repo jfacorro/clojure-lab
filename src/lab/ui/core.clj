@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [find])
   (:require [lab.util :as util]
             [lab.ui.select :as sel]
+            [lab.ui.hierarchy :as h]
             [lab.ui.protocols :as p :reload true])
   (:use [lab.ui.protocols :only [Component add children
                                  Abstract impl
@@ -51,26 +52,13 @@
   (set-selected [this selected]
     (-> this impl (set-selected (impl selected)))))
 
-(def components #{; containers
-                  :window :panel :split :scroll
-                  ; menu
-                  :menu-bar :menu :menu-item :menu-separator 
-                  ; text
-                  :text-editor
-                  ; tabs
-                  :tabs :tab
-                  ; tree
-                  :tree :tree-node
-                  ; misc
-                  :button :label})
-
 (defn component? 
   "Returns true if its arg is a component."
   [x]
   (or (and (map? x)
-           (x :tag)) 
+           (x :tag))
       (and (vector? x)
-           (-> x first components))))
+           (isa? h/hierarchy (first x) :component))))
 
 (defn hiccup->map
   "Used to convert huiccup syntax declarations to map components.
