@@ -25,7 +25,6 @@
     (init nil)
 
     (->is not= nil)
-    (->is not= nil :workspace)
     (->is not= nil :documents)
     (->is = nil :current-document)))
 ;;------------------------------------
