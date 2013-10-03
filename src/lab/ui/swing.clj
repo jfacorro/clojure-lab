@@ -1,9 +1,7 @@
 (ns lab.ui.swing
   (:refer-clojure :exclude [remove])
-  (:import [javax.swing UIManager JFrame JMenuBar JMenu JMenuItem JTabbedPane 
-                        JScrollPane JTextPane JSplitPane JButton JPanel
-                        JButton JLabel AbstractAction JComponent JSeparator]
-           [javax.swing.event DocumentListener]
+  (:import [javax.swing UIManager JFrame JTabbedPane JScrollPane  
+                        JSplitPane JPanel JButton JLabel AbstractAction JComponent]
            [java.awt Dimension]
            [java.awt.event MouseAdapter ActionListener])
   (:use    [lab.ui.protocols :only [Component add remove
@@ -13,11 +11,12 @@
                                     Implementation abstract
                                     Event source
                                     Selected get-selected set-selected]])
-  (:require [lab.util :as util]
-            [lab.ui.core :as ui]
+  (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as swutil]
                           file-dialog
-                          tree]))
+                          tree
+                          menu
+                          text]))
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
@@ -120,28 +119,13 @@
   (source [this]
     (.getSource this)))
 
-(defn- text-editor-init [c]
-  (proxy [JTextPane] []
-    (getScrollableTracksViewportWidth []
-      (if (ui/get-attr c :wrap)
-        true
-        (<= (.. this getUI (getPreferredSize this) width)
-            (.. this getParent getSize width))))))
-
 ;; Initialize multimethod implementations
 (swutil/definitializations
   ;; Frame
   :window      JFrame
-  ;; Menu
-  :menu-bar    JMenuBar
-  :menu        JMenu
-  :menu-item   JMenuItem
-  :menu-separator JSeparator
   ;; Panels
   :tabs        JTabbedPane
   :tab         JScrollPane
-  ;; Text
-  :text-editor text-editor-init
   ;; Layout
   :split       JSplitPane
   :panel       JPanel
@@ -207,45 +191,8 @@
                       (actionPerformed [this e] (f e)))]
         (.addActionListener (impl c) action)))
 
-  :menu-item
-    (:on-click [c _ f]
-      (let [action (reify ActionListener
-                      (actionPerformed [this e] (f e)))]
-        (.addActionListener (impl c) action)))
-    (:key-stroke [c _ ks]
-      (.setAccelerator (impl c) (swutil/key-stroke ks)))
-
-  :tree-node
-    (:item [c attr item]
-      (.setUserObject (impl c) item))
-
   :split
     (:divider-location [c _ value]
       (.setDividerLocation (impl c) value))
     (:orientation [c attr value]
-      (.setOrientation (impl c) (swutil/split-orientations value)))
-
-  :text-editor
-    (:caret-color [c _ v]
-      (.setCaretColor (impl c) (swutil/color v)))
-    (:on-insert [c _ handler]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e] (handler e))
-                       (removeUpdate [e])
-                       (changedUpdate [e]))
-            doc      (.getDocument (impl c))]
-        (.addDocumentListener doc listener)))
-    (:on-delete [c _ handler]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e])
-                       (removeUpdate [e] (handler e))
-                       (changedUpdate [e]))
-            doc      (.getDocument (impl c))]
-        (.addDocumentListener doc listener)))
-    (:on-change [c _ handler]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e])
-                       (removeUpdate [e])
-                       (changedUpdate [e] (handler e)))
-            doc      (.getDocument (impl c))]
-        (.addDocumentListener doc listener))))
+      (.setOrientation (impl c) (swutil/split-orientations value))))

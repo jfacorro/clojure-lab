@@ -33,4 +33,8 @@
       (let [listener (proxy [TreeSelectionListener] []
                        (valueChanged [e]
                          (handler (get-selected c))))]
-        (.addTreeSelectionListener (impl c) listener))))
+        (.addTreeSelectionListener (impl c) listener)))
+  
+  :tree-node
+    (:item [c attr item]
+      (.setUserObject (impl c) item)))
