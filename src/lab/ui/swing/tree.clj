@@ -3,11 +3,9 @@
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
             [javax.swing.event TreeSelectionListener])
   (:use     [lab.ui.protocols :only [Component Selected impl get-selected]])
-  (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as swutil]))
+  (:require [lab.ui.swing.util :as swutil]))
 
 (swutil/definitializations
-  ;; Tree
   :tree        JTree
   :tree-node   DefaultMutableTreeNode)
 
