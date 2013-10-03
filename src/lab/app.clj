@@ -6,22 +6,24 @@
             [lab.ui :as ui]
             [clojure.java.io :as io]))
 
-(def default-config
-  '{:name "Clojure Lab"
-   :core-plugins [lab.ui
-                  lab.core
-                  lab.clojure.project
-                  lab.clojure.document]
-   :plugins-dir "plugins"})
+(declare open-document save-document close-document)
 
-(defn app
+(def default-config
+  {:name          "Clojure Lab"
+   :core-plugins  '[lab.ui]
+   :plugins       []
+   :plugins-dir   "plugins"})
+
+(defn- app
   "Returns a new app with nothing initialized and a
   default configuration."
   []
   {:config            default-config
    :documents         #{}
    :current-document  nil
-   :workspace         (ws/workspace)})
+   :key-map           {"ctrl O"  #'open-document
+                       "ctrl S"  #'save-document
+                       "ctrl W"  #'close-document}})
   
 (defn current-document
   "Returns the atom that contains the current document."
@@ -95,32 +97,27 @@
     (doc/save doc))
   app)
 
-(defn open-project
-  "Opens a project from an existing file
-  and adds it to the current workspace."
-  [{ws :workspace :as app} path]
-  (let [p (pj/project path)]
-    (assoc app :workspace (ws/add-project ws p))))
+(defn- load-plugin
+  "Receives the app and a symbol representing a plugin's
+  name(space). The namespace has to have an init  "
+  [app plugin-name]
+  (require plugin-name)
+  (let [init (ns-resolve (the-ns plugin-name) 'init)]
+    (assert (-> init nil? not) (str "Couldn't find an init function in " plugin-name "."))
+    (init app)))
 
-(defn save-project
-  "Saves the project to its associated file."
-  [{ws :workspace :as app} name]
-  (let [p (ws/get-project ws name)]
-    (pj/save p))
-  app)
-
-(defn load-plugins
+(defn- load-plugins
   "Loads all files from the extension path specified in 
   the config map."
-  [{config :config :as app}]
-  app)
+  [app plugin-type]
+  (reduce load-plugin app (-> app :config plugin-type )))
 
-(defn load-config
+(defn- load-config
   "Loads the configuration file form the specified path
   or the default path if no path is given."
   ([app]
     (load-config app "./lab.config"))
-  ([app path]
+  ([app path]  
     (let [exists  (and path (-> (io/file path) .exists))
           config  (when exists (load-string (slurp path)))]
       (update-in app [:config] merge config))))
@@ -129,6 +126,6 @@
   "Initializes an instance of an application."
   [config-path]
   (-> (app)
-      ;ui/init
       (load-config config-path)
-      load-plugins))
+      (as-> x (load-plugins x :core-plugins))
+      (as-> x (load-plugins x :plugins))))
