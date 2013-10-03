@@ -5,18 +5,7 @@
   (:require [clojure.java.io :as io]
             [lab.model.document :as doc]))
 ;;------------------------------------
-(def tmp-files ["./tmp" "../tmp"])
-;;------------------------------------
-(defn delete-file
-  "Deletes a file if it exists."
-  [path]
-  (when (-> path io/file .exists)
-    (io/delete-file path)))
-;;------------------------------------
-(defn create-file
-  "Creates a file with the supplied content."
-  [content path]
-  (spit path content))
+(declare delete-file create-file tmp-files)
 ;;------------------------------------
 (defn temp-document-config
   "Fixture that creates some temp files and sets
@@ -58,16 +47,16 @@
     
     (as-> x (close-document x (find-doc-by-name x "Untitled 1")))
     (->is = 1 (comp count :documents))
-    (->is = nil (comp :current-document))
+    (->is = nil :current-document)
     
     (open-document "./tmp")
     (->is = 2 (comp count :documents))
-    (->is not= nil (comp :current-document))
+    (->is not= nil :current-document)
     (->is = "tmp" (comp :name deref :current-document))
 
     (open-document "../tmp")
     (->is = 3 (comp count :documents))
-    (->is not= nil (comp :current-document))
+    (->is not= nil :current-document)
     (->is = "tmp" (comp :name deref :current-document))
 
     ; Open the same file with different paths
@@ -86,4 +75,21 @@
 ;;------------------------------------
 #_(deftest workspace-operations
   (is false))
+;;------------------------------------
+
+;;------------------------------------
+;; Helper functions
+;;------------------------------------
+(def tmp-files ["./tmp" "../tmp"])
+;;------------------------------------
+(defn delete-file
+  "Deletes a file if it exists."
+  [path]
+  (when (-> path io/file .exists)
+    (io/delete-file path)))
+;;------------------------------------
+(defn create-file
+  "Creates a file with the supplied content."
+  [content path]
+  (spit path content))
 ;;------------------------------------

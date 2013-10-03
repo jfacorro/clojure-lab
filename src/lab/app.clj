@@ -14,7 +14,10 @@
                   lab.clojure.document]
    :plugins-dir "plugins"})
 
-(defn app []
+(defn app
+  "Returns a new app with nothing initialized and a
+  default configuration."
+  []
   {:config            default-config
    :documents         #{}
    :current-document  nil
@@ -22,9 +25,8 @@
   
 (defn current-document
   "Returns the atom that contains the current document."
-  [app-ref]
-  {:pre [(instance? clojure.lang.Atom app-ref)]}
-  (:current-document @app-ref))
+  [app]
+  (:current-document app))
 
 (defn switch-document
   "Changes the current document to the one with the
