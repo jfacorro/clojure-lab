@@ -17,10 +17,8 @@
           result      (case dialog-type
                         :open   (.showOpenDialog this nil)
                         :save   (.showSaveDialog this nil)
-                        :custom (.showSaveDialog this nil (ui/get-attr c :accept-label))
-                        nil   nil)
+                        :custom (.showSaveDialog this nil (ui/get-attr c :accept-label)))
           chosen      (.getSelectedFile this)]
-      (println result JFileChooser/CANCEL_OPTION JFileChooser/APPROVE_OPTION JFileChooser/ERROR_OPTION)
       (condp = result
         nil [:invalid-type nil]
         JFileChooser/CANCEL_OPTION   [:cancel chosen]
