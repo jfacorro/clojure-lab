@@ -13,7 +13,6 @@
             [proto.ui.swing.text :as txt]
             [proto.ui.protocols :as proto :reload true]))
 ;;------------------------------
-;; TODO: ask if this is acceptable
 (misc/intern-vars 'proto.ui.swing.core)
 ;;------------------------------
 (def app-name "Clojure Lab")
