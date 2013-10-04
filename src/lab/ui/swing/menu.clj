@@ -2,21 +2,21 @@
   (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator]
             [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl]])
-  (:require [lab.ui.swing.util :as swutil]))
+  (:require [lab.ui.swing.util :as util]))
 
 
-(swutil/definitializations
+(util/definitializations
   ;; Menu
   :menu-bar    JMenuBar
   :menu        JMenu
   :menu-item   JMenuItem
   :menu-separator JSeparator)
   
-(swutil/defattributes
+(util/defattributes
   :menu-item
     (:on-click [c _ f]
       (let [action (reify ActionListener
                       (actionPerformed [this e] (f e)))]
         (.addActionListener (impl c) action)))
     (:key-stroke [c _ ks]
-      (.setAccelerator (impl c) (swutil/key-stroke ks))))
+      (.setAccelerator (impl c) (util/key-stroke ks))))
