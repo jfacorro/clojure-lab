@@ -148,6 +148,12 @@
           root
           (sel/select-all root selector)))
 
+(defn update!
+  "Same as update but assumes root is an atom." 
+  [root selector f & args]
+  {:pre [(instance? clojure.lang.Atom root)]}
+  (apply swap! root update selector f args))
+
 (defn add-binding
   "Adds a key binding to this component."
   [c ks f]
