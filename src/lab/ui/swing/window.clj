@@ -4,9 +4,9 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util]))
 
-(util/definitializations :window JFrame)
+(ui/definitializations :window JFrame)
 
-(util/defattributes
+(ui/defattributes
   :window
     (:menu [c _ v]
       (ui/set-attr c :j-menu-bar (impl v))

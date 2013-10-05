@@ -99,7 +99,7 @@
 
 ;; Definition of attribute setters for each kind
 ;; of component in the hierarchy.
-(util/defattributes
+(ui/defattributes
   :component
     (:border [c _ v]
       (let [v (if (sequential? v) v [v])]

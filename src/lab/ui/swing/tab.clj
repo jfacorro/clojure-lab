@@ -1,10 +1,9 @@
 (ns lab.ui.swing.tab
   (:import  [javax.swing JTabbedPane JScrollPane])
   (:use     [lab.ui.protocols :only [Component abstract impl Selected set-selected]])
-  (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as swutil]))
+  (:require [lab.ui.core :as ui]))
 
-(swutil/definitializations
+(ui/definitializations
   :tabs        JTabbedPane
   :tab         JScrollPane)
 

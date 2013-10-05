@@ -4,7 +4,7 @@
             [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl]])
   (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as swutil]))
+            [lab.ui.swing.util :as util]))
 
 (defn- text-editor-init [c]
   (proxy [JTextPane] []
@@ -14,13 +14,13 @@
         (<= (.. this getUI (getPreferredSize this) width)
             (.. this getParent getSize width))))))
 
-(swutil/definitializations
+(ui/definitializations
   :text-editor text-editor-init)
 
-(swutil/defattributes
+(ui/defattributes
   :text-editor
     (:caret-color [c _ v]
-      (.setCaretColor (impl c) (swutil/color v)))
+      (.setCaretColor (impl c) (util/color v)))
     (:on-insert [c _ handler]
       (let [listener (proxy [DocumentListener] []
                        (insertUpdate [e] (handler e))

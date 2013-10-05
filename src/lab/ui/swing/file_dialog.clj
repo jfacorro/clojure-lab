@@ -1,10 +1,9 @@
 (ns lab.ui.swing.file-dialog
   (:import  [javax.swing JFileChooser])
   (:use     [lab.ui.protocols :only [Visible abstract]])
-  (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as swutil]))
+  (:require [lab.ui.core :as ui]))
 
-(swutil/definitializations
+(ui/definitializations
   :file-dialog JFileChooser)
 
 (extend-protocol Visible

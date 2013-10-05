@@ -13,6 +13,53 @@
 
 (declare init initialized?)
 
+;; Convenience macros for multimethod implementations
+
+(defmacro definitializations
+  "Generates all the multimethod implementations
+  for each of the entries in the map destrcutured
+  from its args.
+  
+  :component-name ClassName or init-fn"
+  [& {:as m}]
+  `(do
+      ;(remove-all-methods initialize) ; this is useful for developing but messes up the ability to break implementations into namespaces
+    ~@(for [[k c] m]
+      (if (-> c resolve class?)
+        `(defmethod p/initialize ~k [c#]
+          (new ~c))
+        `(defmethod p/initialize ~k [x#]
+          (~c x#))))))
+
+(defmacro defattributes
+  "Convenience macro to define attribute setters for each
+  component type.
+  The method implemented always returns the first argument which 
+  is supposed to be the component itself.
+
+    *attrs-declaration
+  
+  Where each attrs-declaration is:
+ 
+    component-keyword *attr-declaration
+    
+  And each attr-declaration is:
+
+   (attr-name [c k v] & body)"
+  [& body]
+  (let [comps (->> body 
+                (partition-by keyword?) 
+                (partition 2) 
+                (map #(apply concat %)))
+        f     (fn [tag & mthds]
+                (for [[attr [c _ _ :as args] & body] mthds]
+                  `(defmethod p/set-attr [~tag ~attr]
+                    ~args 
+                    ~@body 
+                    ~c)))]
+    `(do ~@(mapcat (partial apply f) comps))))
+
+
 ;; Every abstract component is represented by a Clojure map.
 
 (extend-type clojure.lang.IPersistentMap

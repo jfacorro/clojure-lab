@@ -4,12 +4,12 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util]))
 
-(util/definitializations
+(ui/definitializations
   :split       JSplitPane
   :panel       JPanel
   :scroll      JScrollPane)
 
-(util/defattributes
+(ui/defattributes
   :split
     (:divider-location [c _ value]
       (.setDividerLocation (impl c) value))

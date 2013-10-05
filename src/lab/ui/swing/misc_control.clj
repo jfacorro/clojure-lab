@@ -1,14 +1,15 @@
 (ns lab.ui.swing.misc-control
   (:import [javax.swing JButton JLabel]
            [java.awt.event ActionListener])
-  (:require [lab.ui.protocols :as p]
+  (:require [lab.ui.core :as ui]
+            [lab.ui.protocols :as p]
             [lab.ui.swing.util :as util]))
 
-(util/definitializations
+(ui/definitializations
   :button      JButton
   :label       JLabel)
   
-(util/defattributes
+(ui/defattributes
   :button
     (:icon [c _ img]
       (.setIcon (p/impl c) (util/icon img)))

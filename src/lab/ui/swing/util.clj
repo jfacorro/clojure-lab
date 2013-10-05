@@ -24,49 +24,6 @@
         f     `(fn [^{:tag ~hint} x# ~@args] (. x# ~mthd ~@args))]
     (eval f)))
 
-;; Convenience macros for multimethod implementations
-
-(defmacro definitializations
-  "Generates all the multimethod implementations
-  for each of the entries in the map m."
-  [& {:as m}]
-  `(do
-      ;(remove-all-methods initialize) ; this is useful for developing but messes up the ability to break implementations into namespaces
-    ~@(for [[k c] m]
-      (if (-> c resolve class?)
-        `(defmethod initialize ~k [c#]
-          (new ~c))
-        `(defmethod initialize ~k [x#]
-          (~c x#))))))
-
-(defmacro defattributes
-  "Convenience macro to define attribute setters for each
-  component type.
-  The method implemented always returns the first argument which 
-  is supposed to be the component itself.
-
-    *attrs-declaration
-  
-  Where each attrs-declaration is:
- 
-    component-keyword *attr-declaration
-    
-  And each attr-declaration is:
-
-   (attr-name [c k v] & body)"
-  [& body]
-  (let [comps (->> body 
-                (partition-by keyword?) 
-                (partition 2) 
-                (map #(apply concat %)))
-        f     (fn [tag & mthds]
-                (for [[attr [c _ _ :as args] & body] mthds]
-                  `(defmethod set-attr [~tag ~attr] 
-                    ~args 
-                    ~@body 
-                    ~c)))]
-    `(do ~@(mapcat (partial apply f) comps))))
-
 ;; SplitPane Orientations
 
 (def split-orientations

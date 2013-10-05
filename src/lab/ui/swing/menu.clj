@@ -2,17 +2,17 @@
   (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator]
             [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl]])
-  (:require [lab.ui.swing.util :as util]))
+  (:require [lab.ui.core :as ui]
+            [lab.ui.swing.util :as util]))
 
-
-(util/definitializations
+(ui/definitializations
   ;; Menu
   :menu-bar    JMenuBar
   :menu        JMenu
   :menu-item   JMenuItem
   :menu-separator JSeparator)
   
-(util/defattributes
+(ui/defattributes
   :menu-item
     (:on-click [c _ f]
       (let [action (reify ActionListener
