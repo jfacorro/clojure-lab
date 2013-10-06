@@ -3,3 +3,5 @@
 *.jar
 target/
 Clojure Lab.lnk
+libs/
+repo/

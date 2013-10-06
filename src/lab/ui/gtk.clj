@@ -1,16 +1,11 @@
-(ns lab.ui.gtk)
-(require '[cemerick.pomegranate :as pom])
-(pom/add-classpath "/usr/share/java/gtk.jar")
-(pom/add-classpath "/usr/share/java/gtk-4.1.jar")
-
 (ns lab.ui.gtk
   (:import [org.gnome.gtk Gtk Window Window$DeleteEvent 
             VBox VPaned
             Label Button Notebook
             TextBuffer TextView
             MenuBar MenuItem Menu])
-  (:require [lab.ui.core :as ui]
-            [lab.ui.protocols :as p]
+  (:require [lab.ui [core :as ui :reload true]
+                    [protocols :as p]]
             [lab.ui.gtk.window :reload true]))
 
 (when (not (Gtk/isInitialized))
@@ -27,8 +22,9 @@
     (:on-click [c _ handler])
     (:on-dbl-click [c _ handler]))
 
+(comment
 
-#_(let [window (Window.)
+(let [window (Window.)
       menu-bar (MenuBar.)
       file-item(MenuItem. "File")
       file-menu(Menu.)
@@ -57,10 +53,4 @@
                      (onDeleteEvent [src, evt] (Gtk/mainQuit) false)))
   (Gtk/main))
 
-(comment
-  
-  l = new Label("Go ahead:\nMake my day");
-  x.add(l);
-  w.setTitle("Hello World");
-  w.showAll();
 )
