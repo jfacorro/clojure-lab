@@ -1,9 +1,10 @@
 (ns lab.ui.gtk.test
-  "DSL to abstract the UIcomponents with Clojure data structures."
-  (:require [lab.ui [core :as ui :reload true]
-                    [protocols :as p :reload true]
-                    [gtk :reload true]]))
+  "Testing an implementation with Gtk+ libraries."
+  (:require [lab.ui.core :as ui]
+            [lab.ui.protocols :as p]
+            [lab.ui.gtk]))
 
-(let [w (ui/init [:window {:title "Clojure-Lab Dummy" :size [500 500] :icons ["/home/jfacorro/sd-card/dev/clojure-lab/resources/icon-16.png"]}])]
-  (p/show w)
-  (org.gnome.gtk.Gtk/main))
+(future
+  (let [w (ui/init [:window {:title "Clojure-Lab Dummy" :size [500 500] :icons ["/home/jfacorro/dev/clojure-lab/resources/icon-16.png"]}])]
+    (p/show w)
+    (org.gnome.gtk.Gtk/main)))
