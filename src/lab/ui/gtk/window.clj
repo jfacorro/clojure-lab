@@ -1,16 +1,17 @@
 (ns lab.ui.gtk.window
-  (:import  [org.gnome.gtk Gtk Window Window$DeleteEvent]
-            [lab.ui.protocols Implementation])
+  (:import  [org.gnome.gtk Gtk Window Window$DeleteEvent])
   (:require [lab.ui.core :as ui]
             [lab.ui.protocols :as p]
             [lab.ui.gtk.util :as util]))
 
 (defn- window-init [c]
   (let [ab (atom c)
-        w  (proxy [Window Implementation] []
-             (abstract
-               ([this] @ab)
-               ([this the-abstract] (reset! ab the-abstract) this)))]
+        w  (proxy [Window lab.ui.protocols.Implementation] []
+             (abstract 
+               ([] @ab)
+               ([the-abstract]
+                 (reset! ab the-abstract)
+                 this)))]
     (.connect w (proxy [Window$DeleteEvent] []
                   (onDeleteEvent [src, evt] (Gtk/mainQuit) false)))
     w))
