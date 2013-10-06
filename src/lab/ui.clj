@@ -6,7 +6,7 @@
                     [menu :as menu]
                     [stylesheet :as css]
                     [protocols :as p]
-                    [swing]]))
+                    swing]))
 
 (defn- create-text-editor [file]
   [:text-editor {:text        (slurp file)

@@ -3,13 +3,7 @@
   (:require [lab.util :as util]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]
-            [lab.ui.protocols :as p :reload true])
-  (:use [lab.ui.protocols :only [Component add children
-                                 Abstract impl
-                                 Implementation abstract
-                                 Visible visible? hide show
-                                 Selected get-selected set-selected
-                                 initialize]]))
+            [lab.ui.protocols :as p]))
 
 (declare init initialized?)
 
@@ -63,41 +57,41 @@
 ;; Every abstract component is represented by a Clojure map.
 
 (extend-type clojure.lang.IPersistentMap
-  Component ; Extend Clojure maps so that adding children is transparent.
+  p/Component ; Extend Clojure maps so that adding children is transparent.
   (children [this]
     (:content this))
   (add [this child]
     (let [this  (init this)
           child (init child)]
       (-> this
-        (impl (add (impl this) (impl child)))
+        (p/impl (p/add (p/impl this) (p/impl child)))
         (update-in [:content] conj child))))
   (p/remove [this child]
-    (let [i (.indexOf (children this) child)]
+    (let [i (.indexOf (p/children this) child)]
       (-> this
-        (impl (p/remove (impl this) (impl child)))
+        (p/impl (p/remove (p/impl this) (p/impl child)))
         (update-in [:content] util/remove-at i))))
 
-  Abstract
+  p/Abstract
   (impl
     ([component]
       (-> component meta :impl))
     ([component implementation]
       (vary-meta component assoc :impl implementation)))
 
-  Visible
+  p/Visible
   (visible? [this]
-    (-> this impl visible?))
+    (-> this p/impl p/visible?))
   (hide [this]
-    (-> this impl hide))
+    (-> this p/impl p/hide))
   (show [this]
-    (-> this impl show))
+    (-> this p/impl p/show))
 
-  Selected
+  p/Selected
   (get-selected [this]
-    (-> this impl get-selected))
+    (-> this p/impl p/get-selected))
   (set-selected [this selected]
-    (-> this impl (set-selected (impl selected)))))
+    (-> this p/impl (p/set-selected (p/impl selected)))))
 
 (defn component? 
   "Returns true if its arg is a component."
@@ -122,14 +116,14 @@
 
 (def ^:private initialized?
   "Checks if the component is initialized."
-  (comp not nil? impl))
+  (comp not nil? p/impl))
 
 (defn- init-content
   "Initialize all content (children) for this component."
   [{content :content :as component}]
   (let [content   (map init content)
         component (assoc component :content [])]
-    (reduce add component content)))
+    (reduce p/add component content)))
 
 (defn- abstract-attr?
   [k]
@@ -170,13 +164,13 @@
   (let [component (hiccup->map component)]
     (if (initialized? component) ; do nothing if it's already initiliazed
       component
-      (let [ctrl       (initialize component)
+      (let [ctrl       (p/initialize component)
             component  (-> component
-                         (impl ctrl)
+                         (p/impl ctrl)
                          set-attrs
                          init-content)
-            ctrl       (abstract ctrl component)]
-        (impl component ctrl)))))
+            ctrl       (p/abstract ctrl component)]
+        component))))
 
 (defn find
   "Returns the first component found."
@@ -205,11 +199,11 @@
   "Adds a key binding to this component."
   [c ks f]
   (let [c (init c)
-        i (impl c)]
-    (impl c (p/add-binding i ks f))))
+        i (p/impl c)]
+    (p/impl c (p/add-binding i ks f))))
 
 (defn remove-binding
   "Adds a key binding to this component."
   [c ks]
-  (let [i (impl c)]
-    (impl c (p/remove-binding i ks))))
+  (let [i (p/impl c)]
+    (p/impl c (p/remove-binding i ks))))
