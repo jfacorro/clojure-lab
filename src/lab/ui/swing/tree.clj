@@ -2,25 +2,12 @@
   (:import  [javax.swing JTree]
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
             [javax.swing.event TreeSelectionListener])
-  (:use     [lab.ui.protocols :only [Component Selected impl get-selected]])
+  (:use     [lab.ui.protocols :only [Component Selected get-selected Implementation impl]])
   (:require [lab.ui.core :as ui]))
 
 (ui/definitializations
   :tree        JTree
   :tree-node   DefaultMutableTreeNode)
-
-(extend-protocol Component
-  DefaultMutableTreeNode
-  (add [this child]
-    (.add this child)
-    this))
-
-(extend-protocol Selected
-  JTree 
-  (get-selected [this]
-    (when-let [node (-> this .getLastSelectedPathComponent)]
-      (.getUserObject node))))
-      
 
 (ui/defattributes
   :tree
@@ -36,3 +23,19 @@
   :tree-node
     (:item [c attr item]
       (.setUserObject (impl c) item)))
+
+(extend-type DefaultMutableTreeNode
+  Component
+  (add [this child]
+    (.add this child)
+    this)
+  Implementation
+  (abstract
+    ([this] nil)
+    ([this the-abstract] this)))
+
+(extend-protocol Selected
+  JTree 
+  (get-selected [this]
+    (when-let [node (-> this .getLastSelectedPathComponent)]
+      (.getUserObject node))))

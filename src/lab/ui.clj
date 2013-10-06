@@ -65,6 +65,7 @@
   [:window {:-id     "main"
             :title   name
             :size    [700 500]
+            :maximized true
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
             [:split {:one-touch-expandable true
@@ -77,7 +78,7 @@
                                    [:tab {:-title "Files" :border :none}
                                          [:tree {:-id          "file-tree" 
                                                  :on-dbl-click (partial #'on-file-selection app)
-                                                 :root         (tree/load-dir "/home/jfacorro/Downloads/clojure-lab/src/lab/ui/swing")}]]]
+                                                 :root         (tree/load-dir "/media/jfacorro/9016-4EF8/dev/clojure-lab/src/lab/ui/swing")}]]]
                             [:split {:one-touch-expandable true
                                      :divider-location 0.8
                                      :resize-weight 1}
@@ -117,5 +118,3 @@
   (css/apply-stylesheet x stylesheet)
   (p/show @x)
   nil)
-
-;(-> [:file-dialog {:-type :save}] ui/init p/show)

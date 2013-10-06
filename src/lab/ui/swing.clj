@@ -18,7 +18,6 @@
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
-;;-------------------
 (extend-protocol p/Visible
   java.awt.Container
   (visible? [this] (.isVisible this))
@@ -32,12 +31,7 @@
       (.getClientProperty this :abstract))
     ([this the-abstract] 
       (.putClientProperty this :abstract the-abstract)
-      this))
-
-  Object
-  (abstract 
-    ([this] this)
-    ([this the-abstract] this)))
+      this)))
 
 (extend-protocol p/Component
   java.awt.Container
@@ -110,7 +104,7 @@
       (.setForeground (p/impl c) (util/color v)))
     (:font [c _ value]
       (.setFont (p/impl c) (util/font value)))
-    (:preferred-size [c attr [w h :as value]]
+    (:size [c attr [w h :as value]]
       (.setPreferredSize (p/impl c) (Dimension. w h)))
 
     (:on-click [c _ handler]
