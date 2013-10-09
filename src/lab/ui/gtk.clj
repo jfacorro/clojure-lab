@@ -4,9 +4,9 @@
             Label Button Notebook
             TextBuffer TextView
             MenuBar MenuItem Menu])
-  (:require [lab.ui [core :as ui :reload true]
+  (:require [lab.ui [core :as ui]
                     [protocols :as p]]
-            [lab.ui.gtk.window :reload true]))
+            [lab.ui.gtk.window]))
 
 (when (not (Gtk/isInitialized))
   (Gtk/init (make-array String 0)))
