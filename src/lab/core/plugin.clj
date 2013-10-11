@@ -8,7 +8,7 @@
   (let [plugin-ns (the-ns plugin-name)
         init      (ns-resolve plugin-ns 'init)
         hooks     (ns-resolve plugin-ns 'hooks)
-        keymaps   (ns-resolve fplugin-ns 'keymaps)]
+        keymaps   (ns-resolve plugin-ns 'keymaps)]
     (assert (-> init nil? not) (str "Couldn't find an init function in " plugin-name "."))
     (init app)))
 
