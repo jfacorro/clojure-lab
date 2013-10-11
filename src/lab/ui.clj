@@ -68,31 +68,25 @@
             :maximized true
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
-            [:split {:one-touch-expandable true
-                     :orientation :vertical
+            [:split {:orientation :vertical
                      :resize-weight 1}
-                    [:split {:one-touch-expandable true
-                             :divider-location 100
+                    [:split {:divider-location 100
                              :resize-weight 0}
                             [:tabs {:-id "left-controls"}
                                    [:tab {:-title "Files" :border :none}
                                          [:tree {:-id          "file-tree" 
                                                  :on-dbl-click (partial #'on-file-selection app)
                                                  :root         (tree/load-dir "/media/jfacorro/9016-4EF8/dev/clojure-lab/src/lab/ui/swing")}]]]
-                            [:split {:one-touch-expandable true
-                                     :divider-location 0.8
+                            [:split {:divider-location 0.8
                                      :resize-weight 1}
                                      [:tabs {:-id "documents"}]
                                      [:tabs {:-id "right-controls"}]]]
                     [:tabs {:-id "bottom-controls"}]]])
 
-(def key-map {"ctrl O" {:menu "File" :name "Open" :action #'open-document :key-stroke "ctrl O"}})
-
 ;; Init
 (defn init [app]
   (let [ui  (atom nil)
-        app (assoc app :ui ui)
-        km  (:key-map app)]
+        app (assoc app :ui ui)]
     (reset! ui (-> app build-main ui/init))
     
     (do
@@ -103,10 +97,10 @@
       (swap! ui menu/add-option app {:menu "File" :separator true})
       (swap! ui menu/add-option app {:menu "File" :name "Exit" :action #(do %& (System/exit 0))})
       (swap! ui menu/add-option app {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
-    ; (p/show @ui) ; comment out when testing == pretty bad workflow
+    ;(p/show @ui) ; comment out when testing == pretty bad workflow
     app))
 
-(do
+#_(do
   (def x
     (let [app (init {:name "Clojure Lab - UI dummy"})
           ui  (app :ui)]
