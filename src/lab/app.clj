@@ -4,6 +4,7 @@
                        [project :as pj]
                        [document :as doc]]
             [lab.ui :as ui]
+            [lab.core.plugin :as pl]
             [clojure.java.io :as io]))
 
 (declare open-document save-document close-document)
@@ -97,21 +98,6 @@
     (doc/save doc))
   app)
 
-(defn- load-plugin
-  "Receives the app and a symbol representing a plugin's
-  name(space). The namespace has to have an init  "
-  [app plugin-name]
-  (require plugin-name)
-  (let [init (ns-resolve (the-ns plugin-name) 'init)]
-    (assert (-> init nil? not) (str "Couldn't find an init function in " plugin-name "."))
-    (init app)))
-
-(defn- load-plugins
-  "Loads all files from the extension path specified in 
-  the config map."
-  [app plugin-type]
-  (reduce load-plugin app (-> app :config plugin-type )))
-
 (defn- load-config
   "Loads the configuration file form the specified path
   or the default path if no path is given."
@@ -127,5 +113,5 @@
   [config-path]
   (-> (app)
       (load-config config-path)
-      (as-> x (load-plugins x :core-plugins))
-      (as-> x (load-plugins x :plugins))))
+      (pl/load-plugins :core-plugins)
+      (pl/load-plugins :plugins)))
