@@ -69,15 +69,16 @@
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
             [:split {:orientation :vertical
-                     :resize-weight 1}
-                    [:split {:divider-location 100
+                     :resize-weight 1
+                     :divider-location 200}
+                    [:split {:divider-location 200
                              :resize-weight 0}
                             [:tabs {:-id "left-controls"}
                                    [:tab {:-title "Files" :border :none}
                                          [:tree {:-id          "file-tree" 
                                                  :on-dbl-click (partial #'on-file-selection app)
                                                  :root         (tree/load-dir "/media/jfacorro/9016-4EF8/dev/clojure-lab/src/lab/ui/swing")}]]]
-                            [:split {:divider-location 0.8
+                            [:split {:divider-location 200
                                      :resize-weight 1}
                                      [:tabs {:-id "documents"}]
                                      [:tabs {:-id "right-controls"}]]]
@@ -90,14 +91,14 @@
     (reset! ui (-> app build-main ui/init))
     
     (do
-      (swap! ui menu/add-option app {:menu "File" :name "New" :action #(println "New" (class %2)) :key-stroke "ctrl N"})
-      (swap! ui menu/add-option app {:menu "File" :name "Open" :action #'open-file :key-stroke "ctrl O"})
-      (swap! ui menu/add-option app {:menu "File" :name "Close" :action #'close-document :key-stroke "ctrl W"})
-      (swap! ui menu/add-option app {:menu "File -> History" :name "Show" :action #(println "History Show" (class %2)) :key-stroke "ctrl B"})
-      (swap! ui menu/add-option app {:menu "File" :separator true})
-      (swap! ui menu/add-option app {:menu "File" :name "Exit" :action #(do %& (System/exit 0))})
-      (swap! ui menu/add-option app {:menu "Edit" :name "Copy" :action #(println "Exit" (class %2))}))
-    ;(p/show @ui) ; comment out when testing == pretty bad workflow
+      (swap! ui menu/add-option app {:category "File" :name "New" :fn #(println "New" (class %2)) :keystroke "ctrl N"})
+      (swap! ui menu/add-option app {:category "File" :name "Open" :fn #'open-file :keystroke "ctrl O"})
+      (swap! ui menu/add-option app {:category "File" :name "Close" :fn #'close-document :keystroke "ctrl W"})
+      (swap! ui menu/add-option app {:category "File > History" :name "Show" :fn #(println "History Show" (class %2)) :keystroke "ctrl B"})
+      (swap! ui menu/add-option app {:category "File" :separator true})
+      (swap! ui menu/add-option app {:category "File" :name "Exit" :fn #(do %& (System/exit 0))})
+      (swap! ui menu/add-option app {:category "Edit" :name "Copy" :fn #(println "Exit" (class %2))}))
+    (p/show @ui) ; comment out when testing == pretty bad workflow
     app))
 
 #_(do

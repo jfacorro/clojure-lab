@@ -7,7 +7,7 @@
   "Deconstructs a menu path from a string with a '->' separator."
   [^String s]
   (when s
-    (->> (.split s "->") seq (map clojure.string/trim))))
+    (->> (.split s ">") seq (map clojure.string/trim))))
 
 (defn- create-menu-path
   "Searches the menu-bar children using the selector. If the
@@ -24,19 +24,19 @@
 (defn add-option
   "Takes a menu option and add it to the ui menu bar.
   The menu option map must have the following keys:
-    :menu      -> path in the menu.
-    :name      -> name of the option.
-    :action    -> var to a function with args [ui evt & args].
-    :separator -> true if the option should be followed by a separator."
-  [ui app {:keys [menu name action separator key-stroke] :as option}]
+    :category   path in the menu.
+    :name       name of the option.
+    :fn     var to a function with args [ui evt & args].
+    :separator  true if the option should be followed by a separator."
+  [ui app {:keys [category name fn separator keystroke] :as option}]
   (let [menu-bar  (ui/get-attr ui :menu)
                   ;; Explode the menu path and build a selector.
-        selector  (map (partial ui.sel/attr= :text) (menu-path menu))
+        selector  (map (partial ui.sel/attr= :text) (menu-path category))
                   ;; Build selectors for each of the menu path levels.
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (if separator
                     [:menu-separator]
-                    [:menu-item {:text name :on-click (partial action app) :key-stroke key-stroke}])
+                    [:menu-item {:text name :on-click (partial fn app) :key-stroke keystroke}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector p/add item)]
      (ui/set-attr ui :menu menu-bar)))
