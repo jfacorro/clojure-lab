@@ -15,10 +15,9 @@
    :plugins       []
    :plugins-dir   "plugins"})
 
-(defn- app
+(def default-app
   "Returns a new app with nothing initialized and a
   default configuration."
-  []
   {:config            default-config
    :documents         #{}
    :current-document  nil
@@ -111,7 +110,12 @@
 (defn init
   "Initializes an instance of an application."
   [config-path]
-  (-> (app)
-      (load-config config-path)
-      (pl/load-plugins :core-plugins)
-      (pl/load-plugins :plugins)))
+  (let [app (atom default-app)]
+    ; Load configuration from the file specified.
+    (swap! app load-config config-path)
+    
+    ; Load core and other plugins specified in the config.
+    (doseq [plugin-type [:core-plugins :plugins]]
+      (pl/load-plugins! app (get-in @app [:config plugin-type])))
+    
+    app))

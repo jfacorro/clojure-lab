@@ -25,8 +25,9 @@
 
 (defn- close-document
   "Closes the current document."
-  [{ui :ui :as app} evt]
-  (let [docs  (ui/find @ui :#documents)
+  [app evt]
+  (let [ui    (:ui @app)
+        docs  (ui/find @ui :#documents)
         tab   (nth (p/children docs) (p/get-selected docs))]
     (ui/update! ui :#documents p/remove tab))
   app)
@@ -46,9 +47,10 @@
            :border  :none}
            text]))
 
-(defn- open-document [{ui :ui :as app} file]
+(defn- open-document [app file]
   (when-not (.isDirectory file)
-    (ui/update! ui :#documents p/add (document-tab ui file))))
+    (as-> (:ui @app) ui
+      (ui/update! ui :#documents p/add (document-tab ui file)))))
 
 (defn- on-file-selection [app evt]
   (let [^java.io.File file (-> evt p/source p/get-selected)]
@@ -61,9 +63,15 @@
       (open-document app file)
       #_(f app file))))
 
-(defn build-main [{ui :ui name :name :as app}]
+(defn- file-tree [app]
+  [:tab {:-title "Files" :border :none}
+        [:tree {:-id          "file-tree" 
+                :on-dbl-click (partial #'on-file-selection app)
+                :root         (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
+
+(defn build-main [app-name]
   [:window {:-id     "main"
-            :title   name
+            :title   app-name
             :size    [700 500]
             :maximized true
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
@@ -73,11 +81,7 @@
                      :divider-location 200}
                     [:split {:divider-location 200
                              :resize-weight 0}
-                            [:tabs {:-id "left-controls"}
-                                   [:tab {:-title "Files" :border :none}
-                                         [:tree {:-id          "file-tree" 
-                                                 :on-dbl-click (partial #'on-file-selection app)
-                                                 :root         (tree/load-dir "/media/jfacorro/9016-4EF8/dev/clojure-lab/src/lab/ui/swing")}]]]
+                            [:tabs {:-id "left-controls"}]
                             [:split {:divider-location 200
                                      :resize-weight 1}
                                      [:tabs {:-id "documents"}]
@@ -85,11 +89,14 @@
                     [:tabs {:-id "bottom-controls"}]]])
 
 ;; Init
-(defn init [app]
-  (let [ui  (atom nil)
-        app (assoc app :ui ui)]
-    (reset! ui (-> app build-main ui/init))
+(defn init!
+  "Expects an atom containing the app. Builds the basic UI and 
+  adds it to the app under the key :ui."
+  [app]
+  (let [ui (atom (-> (:name @app) build-main ui/init))]
+    (swap! app assoc :ui ui)
     
+    (ui/update! ui :#left-controls p/add (file-tree app))
     (do
       (swap! ui menu/add-option app {:category "File" :name "New" :fn #(println "New" (class %2)) :keystroke "ctrl N"})
       (swap! ui menu/add-option app {:category "File" :name "Open" :fn #'open-file :keystroke "ctrl O"})
@@ -98,10 +105,12 @@
       (swap! ui menu/add-option app {:category "File" :separator true})
       (swap! ui menu/add-option app {:category "File" :name "Exit" :fn #(do %& (System/exit 0))})
       (swap! ui menu/add-option app {:category "Edit" :name "Copy" :fn #(println "Exit" (class %2))}))
-    (p/show @ui) ; comment out when testing == pretty bad workflow
-    app))
+    ; comment out when testing == pretty bad workflow
+    (p/show @ui)))
 
-#_(do
+(comment
+
+(do
   (def x
     (let [app (init {:name "Clojure Lab - UI dummy"})
           ui  (app :ui)]
@@ -113,3 +122,5 @@
   (css/apply-stylesheet x stylesheet)
   (p/show @x)
   nil)
+
+)
