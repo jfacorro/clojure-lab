@@ -29,11 +29,10 @@ name(space) and requires the ns. The plugin's vars init!,
 keymap and hooks are searched and processed accordingly if 
 they exist."
   [app plugin-name]
-  (require plugin-name)
-  (println "Loading plugin " plugin-name)
-  (let [plugin-ns            (the-ns plugin-name)
-        resolve-var          (partial ns-resolve plugin-ns)
-        [init! hooks keymaps] (map resolve-var '[init! hooks keymaps])]
+  (require [plugin-name :reload true])
+  (let [plugin-ns              (the-ns plugin-name)
+        resolve-var            (partial ns-resolve plugin-ns)
+        [init! hooks keymaps]  (map resolve-var '[init! hooks keymaps])]
     (assert (-> init! nil? not) (str "Couldn't find a function " (name 'init!) " in plugin " plugin-name "."))
     (add-hooks @hooks plugin-name)
     (swap! app add-keymaps @keymaps)

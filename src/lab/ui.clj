@@ -41,11 +41,12 @@
         close (partial #'close-tab ui id)]
     [:tab {:-id       id
            :-tool-tip path
-           :-header   [:panel {:opaque false}
+           :-header   [:panel {:transparent true}
                               [:label {:text (str file)}]
-                              [:button {:icon     "close-tab.png"
-                                        :border   :none
-                                        :on-click close}]]
+                              [:button {:icon        "close-tab.png"
+                                        :border      :none
+                                        :transparent true
+                                        :on-click    close}]]
            :border    :none}
            text]))
 

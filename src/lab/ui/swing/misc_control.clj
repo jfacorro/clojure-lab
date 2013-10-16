@@ -11,6 +11,8 @@
   
 (ui/defattributes
   :button
+    (:transparent [c _ v]
+      (.setContentAreaFilled (p/impl c) (not v)))
     (:icon [c _ img]
       (.setIcon (p/impl c) (util/icon img)))
     (:on-click [c _ f]

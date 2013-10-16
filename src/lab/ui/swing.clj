@@ -95,6 +95,8 @@
 ;; of component in the hierarchy.
 (ui/defattributes
   :component
+    (:transparent [c _ v]
+      (.setOpaque (p/impl c) (not v)))
     (:border [c _ v]
       (let [v (if (sequential? v) v [v])]
         (.setBorder (p/impl c) (apply util/border v))))
