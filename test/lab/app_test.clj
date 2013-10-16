@@ -23,7 +23,7 @@
 (deftest init-app
   (->test
     (init nil)
-
+    deref ; since init returns an atom we have to deref it.
     (->is not= nil)
     (->is not= nil :documents)
     (->is = nil :current-document)))
@@ -31,7 +31,7 @@
 (deftest document-operations
   (->test
     (init nil)
-
+    deref ; since init returns an atom we have to deref it.
     (new-document)
     (->is = 1 (comp count :documents))
     (->is not= nil :current-document)
