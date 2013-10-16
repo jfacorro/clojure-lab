@@ -6,10 +6,11 @@
                     [menu :as menu]
                     [stylesheet :as css]
                     [protocols :as p]
-                    swing]))
+                    swing]
+             lab.core.keymap))
 
-(defn- create-text-editor [file]
-  [:text-editor {:text        (slurp file)
+(defn- create-text-editor [txt]
+  [:text-editor {:text        txt
                  :border      :none
                  :background  0x666666
                  :foreground  0xFFFFFF
@@ -32,25 +33,26 @@
     (ui/update! ui :#documents p/remove tab))
   app)
 
-(defn- document-tab [ui item]
-  (let [id    (ui/genid)
-        path  (.getCanonicalPath ^java.io.File item)
-        text  (create-text-editor item)
+(defn- document-tab [app file]
+  (let [ui    (:ui @app)
+        id    (ui/genid)
+        path  (.getCanonicalPath ^java.io.File file)
+        text  (create-text-editor (slurp file))
         close (partial #'close-tab ui id)]
-    [:tab {:-id  id
+    [:tab {:-id       id
            :-tool-tip path
            :-header   [:panel {:opaque false}
-                              [:label {:text (str item)}]
+                              [:label {:text (str file)}]
                               [:button {:icon     "close-tab.png"
                                         :border   :none
                                         :on-click close}]]
-           :border  :none}
+           :border    :none}
            text]))
 
 (defn- open-document [app file]
   (when-not (.isDirectory file)
     (as-> (:ui @app) ui
-      (ui/update! ui :#documents p/add (document-tab ui file)))))
+      (ui/update! ui :#documents p/add (document-tab app file)))))
 
 (defn- on-file-selection [app evt]
   (let [^java.io.File file (-> evt p/source p/get-selected)]
@@ -88,6 +90,16 @@
                                      [:tabs {:-id "right-controls"}]]]
                     [:tabs {:-id "bottom-controls"}]]])
 
+(defn- register-keymap-hook
+  [f app keymap]
+  (f app keymap))
+
+(def hooks
+  {#'lab.app/register-keymap register-keymap-hook})
+
+(def keymaps
+  [{:type :global}])
+
 ;; Init
 (defn init!
   "Expects an atom containing the app. Builds the basic UI and 
@@ -97,16 +109,9 @@
     (swap! app assoc :ui ui)
     
     (ui/update! ui :#left-controls p/add (file-tree app))
-    (do
-      (swap! ui menu/add-option app {:category "File" :name "New" :fn #(println "New" (class %2)) :keystroke "ctrl N"})
-      (swap! ui menu/add-option app {:category "File" :name "Open" :fn #'open-file :keystroke "ctrl O"})
-      (swap! ui menu/add-option app {:category "File" :name "Close" :fn #'close-document :keystroke "ctrl W"})
-      (swap! ui menu/add-option app {:category "File > History" :name "Show" :fn #(println "History Show" (class %2)) :keystroke "ctrl B"})
-      (swap! ui menu/add-option app {:category "File" :separator true})
-      (swap! ui menu/add-option app {:category "File" :name "Exit" :fn #(do %& (System/exit 0))})
-      (swap! ui menu/add-option app {:category "Edit" :name "Copy" :fn #(println "Exit" (class %2))}))
     ; comment out when testing == pretty bad workflow
     (p/show @ui)))
+
 
 (comment
 
@@ -122,5 +127,14 @@
   (css/apply-stylesheet x stylesheet)
   (p/show @x)
   nil)
+
+(do
+  (swap! ui menu/add-option app {:category "File" :name "New" :fn #'new-file :keystroke "ctrl N"})
+  (swap! ui menu/add-option app {:category "File" :name "Open" :fn #'open-file :keystroke "ctrl O"})
+  (swap! ui menu/add-option app {:category "File" :name "Close" :fn #'close-document :keystroke "ctrl W"})
+  (swap! ui menu/add-option app {:category "File > History" :name "Show" :fn #(println "History Show" (class %2)) :keystroke "ctrl B"})
+  (swap! ui menu/add-option app {:category "File" :separator true})
+  (swap! ui menu/add-option app {:category "File" :name "Exit" :fn #(do %& (System/exit 0))})
+  (swap! ui menu/add-option app {:category "Edit" :name "Copy" :fn #(println "Exit" (class %2))}))
 
 )

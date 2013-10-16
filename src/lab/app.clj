@@ -3,11 +3,11 @@
   (:require [lab.model [workspace :as ws]
                        [project :as pj]
                        [document :as doc]]
-            [lab.ui :as ui]
+            [lab.core.keymap :as km]
             [lab.core.plugin :as pl]
             [clojure.java.io :as io]))
 
-(declare open-document save-document close-document)
+(declare current-document open-document save-document close-document)
 
 (def default-config
   {:name          "Clojure Lab"
@@ -17,14 +17,35 @@
 
 (def default-app
   "Returns a new app with nothing initialized and a
-  default configuration."
+default configuration."
   {:config            default-config
    :documents         #{}
    :current-document  nil
-   :key-map           {"ctrl O"  #'open-document
+   :langs             {}
+   :keymap            {"ctrl O"  #'open-document
                        "ctrl S"  #'save-document
                        "ctrl W"  #'close-document}})
-  
+
+(defn register-keymap
+  "Uses the register multi-method from lab.core.keymap.
+This is created so that plugin can add hooks in the 
+registration process."
+  [app keymap]
+  (km/register app keymap))
+
+(defmethod km/register :global
+  [app keymap]
+  (update-in app [:keymap] km/append keymap))
+
+(defmethod km/register :lang
+  [app {lang :lang :as keymap}]
+  (update-in app [:langs lang :keymap] km/append keymap))
+
+(defmethod km/register :local
+  [app keymap]
+  (let [doc (current-document app)]
+    (swap! doc update-in [:keymap] km/append keymap)))
+
 (defn current-document
   "Returns the atom that contains the current document."
   [app]
@@ -64,25 +85,27 @@
 (defn new-document 
   "Creates a new document, adds it to the document
   collection and sets it as the current-document."
-  [{documents :documents :as app}]
+  [app]
   (let [doc (atom (doc/document))]
-    (assoc app :documents (conj documents doc)
-               :current-document doc)))
+    (-> app
+      (update-in [:documents] conj doc)
+      (assoc :current-document doc))))
 
 (defn open-document
   "Opens a document from an existing file 
-  and adds it to the openened documents map."
-  [{documents :documents :as app} path]
+and adds it to the openened documents map."
+  [app path]
   {:pre [path]}
   (let [doc (atom (doc/document :path path))]
     (if (find-doc-by-path app path)
       (switch-document app doc)
-      (assoc app :documents (conj documents doc)
-                 :current-document doc))))
+      (-> app
+        (update-in [:documents] conj doc)
+        (assoc :current-document doc)))))
 
 (defn close-document
   "Closes a document and removes it from the opened
-  documents collection."
+documents collection."
   [{documents :documents current :current-document :as app} doc]
   (let [current (when (not= current doc) current)]
     (when doc
@@ -99,7 +122,7 @@
 
 (defn- load-config
   "Loads the configuration file form the specified path
-  or the default path if no path is given."
+or the default path if no path is given."
   ([app]
     (load-config app "./lab.config"))
   ([app path]  
