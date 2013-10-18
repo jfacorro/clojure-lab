@@ -20,18 +20,22 @@
 ;;------------------------------------
 (use-fixtures :once temp-document-config)
 ;;------------------------------------
+(def config {:core-plugins []})
+;;------------------------------------
 (deftest init-app
   (->test
-    (init nil)
-    deref ; since init returns an atom we have to deref it.
+    default-app
     (->is not= nil)
     (->is not= nil :documents)
     (->is = nil :current-document)))
 ;;------------------------------------
 (deftest document-operations
   (->test
-    (init nil)
-    deref ; since init returns an atom we have to deref it.
+    default-app
+    
+    (->is = 0 (comp count :documents))
+    (->is = nil :current-document)
+    
     (new-document)
     (->is = 1 (comp count :documents))
     (->is not= nil :current-document)

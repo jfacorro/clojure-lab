@@ -104,7 +104,7 @@ documents collection."
     (when doc
       (doc/close doc))
     (-> app
-      (update-in [:documents] disj #{doc})
+      (update-in [:documents] (partial disj #{doc}))
       (assoc :current-document current))))
 
 (defn save-document
@@ -137,4 +137,3 @@ or the default path if no path is given."
     
     app))
 
-(do (init nil) nil)
