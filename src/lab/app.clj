@@ -26,22 +26,15 @@ default configuration."
                        "ctrl S"  #'save-document
                        "ctrl W"  #'close-document}})
 
-(defn register-keymap
-  "Uses the register multi-method from lab.core.keymap.
-This is created so that plugin can add hooks in the 
-registration process."
-  [app keymap]
-  (km/register app keymap))
-
-(defmethod km/register :global
+(defmethod km/register-multi :global
   [app keymap]
   (update-in app [:keymap] km/append keymap))
 
-(defmethod km/register :lang
+(defmethod km/register-multi :lang
   [app {lang :lang :as keymap}]
   (update-in app [:langs lang :keymap] km/append keymap))
 
-(defmethod km/register :local
+(defmethod km/register-multi :local
   [app keymap]
   (let [doc (current-document app)]
     (swap! doc update-in [:keymap] km/append keymap)))
@@ -106,12 +99,13 @@ and adds it to the openened documents map."
 (defn close-document
   "Closes a document and removes it from the opened
 documents collection."
-  [{documents :documents current :current-document :as app} doc]
+  [{current :current-document :as app} doc]
   (let [current (when (not= current doc) current)]
     (when doc
       (doc/close doc))
-    (assoc app :documents (disj #{doc} documents)
-               :current-document current)))
+    (-> app
+      (update-in [:documents] disj #{doc})
+      (assoc :current-document current))))
 
 (defn save-document
   "Saves a document to a file."
@@ -142,3 +136,5 @@ or the default path if no path is given."
       (pl/load-plugins! app (get-in @app [:config plugin-type])))
     
     app))
+
+(do (init nil) nil)

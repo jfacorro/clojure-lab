@@ -8,13 +8,15 @@ hooks      A map where the keys are the target vars and the values are
 keymap     A keymap with global bindings that will be applied to the existing
            global keymap."
   (:require [robert.hooke :as hook]
-            [lab.core.keymap :as km]))
+            [lab.core.keymap :as km]
+            [clojure.tools.logging :as log]))
 
 (defn- add-hooks
   "Add the defined hooks supplied and use the name
 of the plugin as the hooks' key."
   [hooks hook-key]
   (doseq [[target-var f] hooks]
+    (log/info hook-key "- Adding hook" f "to" target-var)
     (hook/add-hook target-var hook-key f)))
 
 (defn- add-keymaps
@@ -33,10 +35,10 @@ they exist."
   (let [plugin-ns              (the-ns plugin-name)
         resolve-var            (partial ns-resolve plugin-ns)
         [init! hooks keymaps]  (map resolve-var '[init! hooks keymaps])]
-    (assert (-> init! nil? not) (str "Couldn't find a function " (name 'init!) " in plugin " plugin-name "."))
+    (assert init! (str "Couldn't find a function " (name 'init!) " in plugin " plugin-name "."))
     (add-hooks @hooks plugin-name)
-    (swap! app add-keymaps @keymaps)
-    (init! app)))
+    (init! app)
+    (swap! app add-keymaps @keymaps)))
 
 (defn load-plugins!
   "Loads the plugins specified by calling the init! function

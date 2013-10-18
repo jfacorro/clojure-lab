@@ -30,9 +30,15 @@ is nil the other is returned."
     (nil? child)  parent
     :else         (assoc child :parent parent)))
 
-(defmulti register 
+(defmulti register-multi
   "Registers a keymap in the app according to its type."
   (fn [app km] (:type km)))
+
+(defn register
+  "Uses the register multi-method. This is created as a function 
+so that plugins can add hooks."
+  [app keymap]
+  (register-multi app keymap))
 
 
 (comment
