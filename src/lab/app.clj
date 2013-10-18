@@ -18,7 +18,8 @@
 (def default-app
   "Returns a new app with nothing initialized and a
 default configuration."
-  {:config            default-config
+  {:name              "Clojure Lab - UI"
+   :config            default-config
    :documents         #{}
    :current-document  nil
    :langs             {}
@@ -46,7 +47,7 @@ default configuration."
 
 (defn switch-document
   "Changes the current document to the one with the
-  specified id."
+specified id."
   [{documents :documents :as app} doc]
     (or (and doc (assoc app :current-document doc))
         app))
@@ -77,7 +78,7 @@ default configuration."
 
 (defn new-document 
   "Creates a new document, adds it to the document
-  collection and sets it as the current-document."
+collection and sets it as the current-document."
   [app]
   (let [doc (atom (doc/document))]
     (-> app
@@ -109,7 +110,7 @@ documents collection."
 
 (defn save-document
   "Saves a document to a file."
-  [{documents :documents :as app} doc]
+  [app doc]
   (when doc
     (doc/save doc))
   app)
@@ -136,4 +137,3 @@ or the default path if no path is given."
       (pl/load-plugins! app (get-in @app [:config plugin-type])))
     
     app))
-

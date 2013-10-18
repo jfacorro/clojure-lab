@@ -52,13 +52,17 @@
 ;; IO operations
 
 (defn bind
-  "Binds a document to a file."
+  "Binds a document to a file in the given path. If the 
+file exists then the contents are read into the document's
+buffer."
   [doc path]
-  (let [text   (slurp path)
-        name   (-> path io/file .getName)
-        props  {:buffer (default-buffer text)
-                :path path
-                :name name}]
+  (let [file   (io/file path)
+        text   (if (.exists file) (slurp path) "")
+        name   (.getName file)
+        props  {:buffer   (default-buffer text)
+                :path     path
+                :modified (not (.exists file))
+                :name     name}]
     (merge doc props)))
 
 (defn close
@@ -68,9 +72,10 @@
     (throw (Error.))))
 
 (defn save
-  "Saves the document to a file, if bounded."
+  "Saves the document to a file in path."
   [{:keys [path modified] :as doc}]
-  (if (and path modified)
+  (assert path "The document doesn't have a path.")
+  (if modified
     (do
       (spit path (text doc))
       (assoc doc :modified false))

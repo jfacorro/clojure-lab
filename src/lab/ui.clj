@@ -16,26 +16,11 @@
                  :background  0x666666
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
-                 :font        [:name "Monospaced.plain" :size 14]
-                 :on-insert   #(do (println %) (println "insert"))
-                 :on-delete   #(do (println %) (println "delete"))
-                 :on-change   #(do % (println "change"))}])
+                 :font        [:name "Monospaced.plain" :size 14]}])
 
 (defn close-tab [ui id & _]
   (let [tab  (ui/find @ui (str "#" id))]
     (ui/update! ui :#documents p/remove tab)))
-
-(defn- close-document-hook
-  "Closes the current document."
-  [f app & evt]
-  (let [ui    (:ui app)
-        docs  (ui/find @ui :#documents)
-        tab   (nth (p/children docs) (p/get-selected docs))
-        doc   (ui/get-attr tab :-doc)
-        app   (f app doc)]
-    (println doc)
-    (ui/update! ui :#documents p/remove tab)
-    app))
 
 (defn- document-tab [app doc]
   (let [ui    (:ui app)
@@ -55,6 +40,11 @@
            :border    :none}
            text]))
 
+(defn- current-document-tab [ui]
+  (as-> (ui/find @ui :#documents)
+    docs
+    (nth (p/children docs) (p/get-selected docs))))
+
 (defn- open-document [app doc]
   (as-> (:ui app) ui
     (ui/update! ui :#documents p/add (document-tab app doc))))
@@ -72,7 +62,6 @@
       app
       (let [app (f app (.getCanonicalPath file))
             doc (lab.app/current-document app)]
-        (println doc)
         (open-document app doc)
         app))))
 
@@ -82,6 +71,37 @@
         doc  (lab.app/current-document app)]
     (open-document app doc)
     app))
+
+(defn- close-document-hook
+  "Finds the currently selected tab, removes it and closes the document
+associated to it."
+  [f app & evt]
+  (let [ui    (:ui app)
+        tab   (current-document-tab ui)
+        doc   (ui/get-attr tab :-doc)
+        app   (f app @doc)]
+    (ui/update! ui :#documents p/remove tab)
+    app))
+
+(defn- assign-path
+  "If the document doesn't have a path, get one from the user."
+  [doc]
+  (if (doc/path doc)
+    doc
+    (let [file-dialog   (ui/init [:file-dialog {:-type :save}])
+          [result file] (p/show file-dialog)]
+      (if file
+        (doc/bind doc (.getCanonicalPath file))
+        doc))))
+
+(defn- save-document-hook
+  [f app & evt]
+  (let [ui    (:ui app)
+        tab   (current-document-tab ui)
+        doc   (ui/get-attr tab :-doc)]
+    (swap! doc assign-path)
+    (println doc)
+    (f app @doc)))
 
 (defn- file-tree [app]
   [:tab {:-title "Files" :border :none}
@@ -124,6 +144,7 @@
   {#'lab.core.keymap/register  #'register-keymap-hook
    #'lab.app/new-document      #'new-document-hook
    #'lab.app/open-document     #'open-document-hook
+   #'lab.app/save-document     #'save-document-hook
    #'lab.app/close-document    #'close-document-hook})
 
 (def keymaps
@@ -131,7 +152,8 @@
               :global
               {:category "File" :name "New" :fn #'lab.app/new-document :keystroke "ctrl N"}
               {:category "File" :name "Open" :fn #'lab.app/open-document :keystroke "ctrl O"}
-              {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"})])
+              {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"}
+              {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"})])
 
 ;; Init
 (defn init!

@@ -58,7 +58,7 @@
         (->is = false modified?))))
 ;---------------------------
 (deftest bind-non-existing-file
-    (is (thrown? java.io.FileNotFoundException (bind (document) "./bla"))))
+  (is (= "bla" (-> (document) (bind "./bla") name))))
 ;---------------------------
 (deftest search-and-replace
   (let [doc (append (document) "abc\nabc\nd")]
