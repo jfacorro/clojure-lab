@@ -28,7 +28,7 @@
     :name       name of the option.
     :fn     var to a function with args [ui evt & args].
     :separator  true if the option should be followed by a separator."
-  [ui app {:keys [category name fn separator keystroke] :as option}]
+  [app ui {:keys [category name fn separator keystroke] :as option}]
   (let [menu-bar  (ui/get-attr ui :menu)
                   ;; Explode the menu path and build a selector.
         selector  (map (partial ui.sel/attr= :text) (menu-path category))
