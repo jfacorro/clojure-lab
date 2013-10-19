@@ -11,8 +11,9 @@ TODO
     - Remove all defaults and replace them all?
     - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
   - The abstraction reference for the implementations should be updated with each modification to the abstraction.
+    - ...or have a reference for the abstract (not).
   
-  - Code Editor:
+  - Code Editor (or use RSyntaxTextArea and adapt it):
     - Indent code.
     - Line numbers (show/hide).
     - Comment / Uncomment lines.

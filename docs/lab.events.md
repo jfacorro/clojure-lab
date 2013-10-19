@@ -8,7 +8,6 @@ The following events are supported for any type of component:
 - [Click (:on-click)][1]
 - [Pressed (:on-mouse-press)][2]
 - Release (:on-mouse-release)
-- Double Click (:on-dbl-click)
 - Entered (:on-mouse-enter)
 - Exits (:on-mouse-exit)
 - Moved (:on-mouse-moved)

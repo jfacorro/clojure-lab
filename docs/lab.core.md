@@ -4,6 +4,8 @@
   - Loading a document.
   - Keeps track of the current document that's being worked on.
   - Saving the changes to a modified document.
+  - Switching documents.
+  - Maps a document to a language (see Lang mgmt).
 
 - Language management:
   - Assigns a language to each opened document.
