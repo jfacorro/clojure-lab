@@ -27,6 +27,7 @@
 (extend-protocol Selected
   JTabbedPane
   (get-selected [this]
-    (.getSelectedIndex this))
+    (let [selected (.getComponentAt this (.getSelectedIndex this))]
+      (abstract selected)))
   (set-selected [this index]
     (.setSelectedIndex this index)))

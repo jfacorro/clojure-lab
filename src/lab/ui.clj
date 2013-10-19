@@ -10,12 +10,17 @@
              [lab.core.keymap :as km]
              [lab.model.document :as doc]))
 
+(defn insert-text [app evt]
+  ; TODO: implement insertion and deletion on documents.
+)
+
 (defn- create-text-editor [txt]
   [:text-editor {:text        txt
                  :border      :none
                  :background  0x666666
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
+                 :on-insert   #'insert-text
                  :font        [:name "Monospaced.plain" :size 14]}])
 
 (defn close-tab [ui id & _]
@@ -41,35 +46,37 @@
            text]))
 
 (defn- current-document-tab [ui]
-  (as-> (ui/find @ui :#documents)
-    docs
-    (nth (p/children docs) (p/get-selected docs))))
+  (-> @ui (ui/find :#documents) p/get-selected))
 
-(defn- open-document [app doc]
+(defn- open-document-ui [app doc]
   (as-> (:ui app) ui
     (ui/update! ui :#documents p/add (document-tab app doc))))
 
-(defn- on-file-selection [app evt]
+(defn- open-document-tree [app evt]
   (let [^java.io.File file (-> evt p/source p/get-selected)]
     (when-not (.isDirectory file)
-      (lab.app/open-document app (.getCanoncialPath file)))))
+      (lab.app/open-document app (.getCanonicalPath file)))))
 
-(defn- open-document-hook
-  [f app & evt]
+(defn- open-document-menu
+  [app evt]
   (let [file-dialog   (ui/init [:file-dialog {:-type :open}])
         [result file] (p/show file-dialog)]
-    (if-not file
-      app
-      (let [app (f app (.getCanonicalPath file))
-            doc (lab.app/current-document app)]
-        (open-document app doc)
-        app))))
+    (if file
+      (lab.app/open-document app (.getCanonicalPath file))
+      app)))
+
+(defn- open-document-hook
+  [f app path]
+  (let [app (f app path)
+        doc (lab.app/current-document app)]
+    (open-document-ui app doc)
+    app))
 
 (defn- new-document-hook
   [f app & evt]
   (let [app  (f app)
         doc  (lab.app/current-document app)]
-    (open-document app doc)
+    (open-document-ui app doc)
     app))
 
 (defn- close-document-hook
@@ -100,13 +107,13 @@ associated to it."
         tab   (current-document-tab ui)
         doc   (ui/get-attr tab :-doc)]
     (swap! doc assign-path)
-    (println doc)
-    (f app @doc)))
+    (when (doc/path @doc)
+      (f app @doc))))
 
 (defn- file-tree [app]
   [:tab {:-title "Files" :border :none}
         [:tree {:-id          "file-tree" 
-                :on-dbl-click (partial #'on-file-selection app)
+                :on-dbl-click (partial #'open-document-tree app)
                 :root         (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
 
 (defn build-main [app-name]
@@ -151,7 +158,7 @@ associated to it."
   [(km/keymap (ns-name *ns*)
               :global
               {:category "File" :name "New" :fn #'lab.app/new-document :keystroke "ctrl N"}
-              {:category "File" :name "Open" :fn #'lab.app/open-document :keystroke "ctrl O"}
+              {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
               {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"}
               {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"})])
 
@@ -163,7 +170,7 @@ associated to it."
   (let [ui (atom (-> (:name @app) build-main ui/init))]
     (swap! app assoc :ui ui)
     
-    (ui/update! ui :#left-controls p/add (file-tree app))
+    (ui/update! ui :#left-controls p/add (file-tree @app))
     ; comment out when testing == pretty bad workflow
     (p/show @ui)))
 
