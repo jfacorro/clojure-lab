@@ -16,8 +16,6 @@
                           tab
                           misc-control]))
 ;;------------------- 
-(set! *warn-on-reflection* true)
-;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
 (extend-protocol p/Visible

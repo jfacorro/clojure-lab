@@ -5,8 +5,6 @@
             [lab.ui.hierarchy :as h]
             [lab.ui.protocols :as p]))
 
-(set! *warn-on-reflection* true)
-
 (declare init initialized?)
 
 ;; Convenience macros for multimethod implementations
