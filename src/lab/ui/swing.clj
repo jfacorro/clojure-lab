@@ -16,6 +16,8 @@
                           tab
                           misc-control]))
 ;;------------------- 
+(set! *warn-on-reflection* true)
+;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
 (extend-protocol p/Visible
@@ -36,19 +38,19 @@
 (extend-protocol p/Component
   java.awt.Container
   (add [this child]
-    (.add this child)
+    (.add this ^java.awt.Component child)
     (.validate this)
     this)
   (remove [this child]
-    (.remove this child)
+    (.remove this ^java.awt.Component child)
     this)
     
   JComponent
   (add [this child]
-    (.add this child)
+    (.add this ^JComponent child)
     (.validate this)
     this)
-  (remove [this child]
+  (remove [this ^JComponent child]
     (.remove this child)
     this)
   (add-binding [this ks f]
@@ -96,26 +98,26 @@
 (ui/defattributes
   :component
     (:transparent [c _ v]
-      (.setOpaque (p/impl c) (not v)))
+      (.setOpaque ^JComponent (p/impl c) (not v)))
     (:border [c _ v]
       (let [v (if (sequential? v) v [v])]
-        (.setBorder (p/impl c) (apply util/border v))))
+        (.setBorder ^JComponent (p/impl c) (apply util/border v))))
     (:background [c _ v]
-      (.setBackground (p/impl c) (util/color v)))
+      (.setBackground ^JComponent (p/impl c) (util/color v)))
     (:foreground [c _ v]
-      (.setForeground (p/impl c) (util/color v)))
+      (.setForeground ^JComponent (p/impl c) (util/color v)))
     (:font [c _ value]
-      (.setFont (p/impl c) (util/font value)))
+      (.setFont ^JComponent (p/impl c) (util/font value)))
     (:size [c attr [w h :as value]]
-      (.setPreferredSize (p/impl c) (Dimension. w h)))
+      (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
 
     (:on-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []
                        (mousePressed [e]
                          (when (= 1 (.getClickCount e)) (handler e))))]
-        (.addMouseListener (p/impl c) listener)))
+        (.addMouseListener ^JComponent (p/impl c) listener)))
     (:on-dbl-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []
                        (mousePressed [e]
                          (when (= 2 (.getClickCount e)) (handler e))))]
-        (.addMouseListener (p/impl c) listener))))
+        (.addMouseListener ^JComponent (p/impl c) listener))))

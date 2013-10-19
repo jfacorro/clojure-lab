@@ -5,6 +5,8 @@
             [lab.ui.hierarchy :as h]
             [lab.ui.protocols :as p]))
 
+(set! *warn-on-reflection* true)
+
 (declare init initialized?)
 
 ;; Convenience macros for multimethod implementations
@@ -67,7 +69,7 @@
         (p/impl (p/add (p/impl this) (p/impl child)))
         (update-in [:content] conj child))))
   (p/remove [this child]
-    (let [i (.indexOf (p/children this) child)]
+    (let [i (.indexOf ^java.util.List (p/children this) child)]
       (-> this
         (p/impl (p/remove (p/impl this) (p/impl child)))
         (update-in [:content] util/remove-at i))))
