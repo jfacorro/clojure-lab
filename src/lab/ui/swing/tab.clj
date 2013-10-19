@@ -1,6 +1,6 @@
 (ns lab.ui.swing.tab
   (:import  [javax.swing JTabbedPane JScrollPane])
-  (:use     [lab.ui.protocols :only [Component abstract impl Selected set-selected]])
+  (:use     [lab.ui.protocols :only [Component abstract impl Selected selected]])
   (:require [lab.ui.core :as ui]))
 
 (ui/definitializations
@@ -9,6 +9,8 @@
 
 (extend-protocol Component
   JTabbedPane
+  (children [this child]
+    (.getComponents this))
   (add [this child]
     (let [i         (.getTabCount this)
           child-abs (abstract child)
@@ -18,7 +20,7 @@
       (.addTab this title child)
       (when header (.setTabComponentAt this i header))
       (when tool-tip (.setToolTipTextAt this i tool-tip))
-      (set-selected this i))
+      (selected this i))
     this)
   (remove [this child]
     (.remove this child)
@@ -26,8 +28,9 @@
 
 (extend-protocol Selected
   JTabbedPane
-  (get-selected [this]
-    (let [selected (.getComponentAt this (.getSelectedIndex this))]
-      (abstract selected)))
-  (set-selected [this index]
-    (.setSelectedIndex this index)))
+  (selected 
+    ([this]
+      (let [selected (.getComponentAt this (.getSelectedIndex this))]
+        (abstract selected)))
+    ([this index]
+      (.setSelectedIndex this index))))

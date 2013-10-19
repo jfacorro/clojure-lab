@@ -46,14 +46,14 @@
            text]))
 
 (defn- current-document-tab [ui]
-  (-> @ui (ui/find :#documents) p/get-selected))
+  (-> @ui (ui/find :#documents) p/selected))
 
 (defn- open-document-ui [app doc]
   (as-> (:ui app) ui
     (ui/update! ui :#documents p/add (document-tab app doc))))
 
 (defn- open-document-tree [app evt]
-  (let [^java.io.File file (-> evt p/source p/get-selected)]
+  (let [^java.io.File file (-> evt p/source p/selected)]
     (when-not (.isDirectory file)
       (lab.app/open-document app (.getCanonicalPath file)))))
 
@@ -125,13 +125,10 @@ associated to it."
             :menu    [:menu-bar]}
             [:split {:orientation :vertical
                      :resize-weight 1
-                     :divider-location 200
                      :border :none}
-                    [:split {:divider-location 200
-                             :resize-weight 0}
+                    [:split {:resize-weight 0}
                             [:tabs {:-id "left-controls"}]
-                            [:split {:divider-location 200
-                                     :resize-weight 1}
+                            [:split {:resize-weight 1}
                                      [:tabs {:-id "documents"}]
                                      [:tabs {:-id "right-controls"}]]]
                     [:tabs {:-id "bottom-controls"}]]])
@@ -188,15 +185,5 @@ associated to it."
   (css/apply-stylesheet x stylesheet)
   (p/show @ui)
   nil)
-
-(do
-  (swap! ui reduce (partial menu/add-option app)
-                   [{:category "File" :name "New" :fn #'new-file :keystroke "ctrl N"}
-                    {:category "File" :name "Open" :fn #'open-file :keystroke "ctrl O"}
-                    {:category "File" :name "Close" :fn #'close-document :keystroke "ctrl W"}
-                    {:category "File > History" :name "Show" :fn #(println "History Show" (class %2)) :keystroke "ctrl B"}
-                    {:category "File" :separator true}
-                    {:category "File" :name "Exit" :fn #(do %& (System/exit 0))}
-                    {:category "Edit" :name "Copy" :fn #(println "Exit" (class %2))}]))
 
 )

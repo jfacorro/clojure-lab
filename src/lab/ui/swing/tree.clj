@@ -2,7 +2,7 @@
   (:import  [javax.swing JTree]
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
             [javax.swing.event TreeSelectionListener])
-  (:use     [lab.ui.protocols :only [Component Selected get-selected Implementation impl]])
+  (:use     [lab.ui.protocols :only [Component Selected selected Implementation impl]])
   (:require [lab.ui.core :as ui]))
 
 (ui/definitializations
@@ -17,7 +17,7 @@
     (:on-selected [c _ handler]
       (let [listener (proxy [TreeSelectionListener] []
                        (valueChanged [e]
-                         (handler (get-selected c))))]
+                         (handler (selected c))))]
         (.addTreeSelectionListener (impl c) listener)))
   
   :tree-node
@@ -36,6 +36,9 @@
 
 (extend-protocol Selected
   JTree 
-  (get-selected [this]
-    (when-let [node (-> this .getLastSelectedPathComponent)]
-      (.getUserObject node))))
+  (selected 
+    ([this]
+      (when-let [node (-> this .getLastSelectedPathComponent)]
+        (.getUserObject node)))
+    ([this selected]
+      (throw (UnsupportedOperationException. "Set selected item for :tree UI implementation.")))))

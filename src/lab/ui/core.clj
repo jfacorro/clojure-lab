@@ -66,11 +66,18 @@
       (-> this
         (p/impl (p/add (p/impl this) (p/impl child)))
         (update-in [:content] conj child))))
-  (p/remove [this child]
+  (remove [this child]
     (let [i (.indexOf ^java.util.List (p/children this) child)]
       (-> this
         (p/impl (p/remove (p/impl this) (p/impl child)))
         (update-in [:content] util/remove-at i))))
+  (add-binding [this ks f]
+    (let [this (init this)
+          i    (p/impl this)]
+      (p/impl this (p/add-binding i ks f))))
+  (remove-binding [this ks]
+    (let [i (p/impl this)]
+      (p/impl this (p/remove-binding i ks))))
 
   p/Abstract
   (impl
@@ -88,10 +95,11 @@
     (-> this p/impl p/show))
 
   p/Selected
-  (get-selected [this]
-    (-> this p/impl p/get-selected))
-  (set-selected [this selected]
-    (-> this p/impl (p/set-selected (p/impl selected)))))
+  (selected
+    ([this]
+      (-> this p/impl p/selected))
+    ([this selected]
+      (-> this p/impl (p/selected (p/impl selected))))))
 
 (defn component? 
   "Returns true if its arg is a component."
@@ -195,15 +203,14 @@
   {:pre [(instance? clojure.lang.Atom root)]}
   (apply swap! root update selector f args))
 
-(defn add-binding
-  "Adds a key binding to this component."
-  [c ks f]
-  (let [c (init c)
-        i (p/impl c)]
-    (p/impl c (p/add-binding i ks f))))
+; Event
 
-(defn remove-binding
-  "Adds a key binding to this component."
-  [c ks]
-  (let [i (p/impl c)]
-    (p/impl c (p/remove-binding i ks))))
+(defn event-handler
+  "Builds a function that swap!s the x using
+f, which should take a value and an event."
+  ([f]
+    (fn [x evt]
+      (assert (instance? clojure.lang.Atom x) "x should be an atom.")
+      (swap! x f evt)))
+  ([f x]
+    (partial (event-handler f) x)))
