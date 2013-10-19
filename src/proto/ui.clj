@@ -383,7 +383,7 @@ and copies the indenting for the new line."
       (document-buffer txt-code buf)
       (when src (ui/set txt-code :text src))
 
-      ; High-light text after code edition using a different
+      ; High-light text after code edition using a different thread
       ; so that the processing doesn't block the UI.
       (ui/on :change
              txt-code
@@ -407,7 +407,7 @@ and copies the indenting for the new line."
         (.setFont @current-font)
         (.setForeground (ui/color 255))
         (.setCaretColor (ui/color 255))
-        (.setBackground (ui/color 64))
+        (.setBackground (ui/color 0))
         (.setCaretPosition 0)
         (.grabFocus))
 
