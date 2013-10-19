@@ -24,7 +24,7 @@
   (if (.isDirectory file)
     (let [children (->> file .listFiles 
                      (filter (comp not hidden?))
-                     (sort-by #(if (.isDirectory %) 0 1))
+                     (sort-by #(if (.isDirectory %) 0 (.getName %)))
                      (map file-proxy))]
       (into [:tree-node {:item file}]
               (->> children (map tree-node-from-file) vec)))
