@@ -19,10 +19,11 @@ of the plugin as the hooks' key."
     (log/info hook-key "- Adding hook" f "to" target-var)
     (hook/add-hook target-var hook-key f)))
 
-(defn- add-keymaps
+(defn- register-keymaps!
   [app keymaps]
   (if keymaps
-    (reduce km/register app keymaps)
+    (doseq [km keymaps]
+      (km/register! app km))
     app))
 
 (defn- load-plugin!
@@ -38,7 +39,7 @@ they exist."
     (assert init! (str "Couldn't find a function " (name 'init!) " in plugin " plugin-name "."))
     (add-hooks @hooks plugin-name)
     (init! app)
-    (swap! app add-keymaps @keymaps)))
+    (register-keymaps! app @keymaps)))
 
 (defn load-plugins!
   "Loads the plugins specified by calling the init! function
