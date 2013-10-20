@@ -68,8 +68,33 @@
 
 ;; Reflection
 
-(defn list-methods [x]
-  (->> (r/reflect x) :members (sort-by :name)))
+(defmulti class-info (fn [_ info] info))
 
-(defn print-methods [x]
-  (p/print-table (list-methods x)))
+(defmethod class-info :methods
+  [c info]
+  (->> (#'clojure.reflect/declared-methods c) (sort-by :name)))
+
+(defmethod class-info :constructors
+  [c info]
+  (->> (#'clojure.reflect/declared-constructors c) (sort-by :name)))
+
+(defmethod class-info :fields
+  [c info]
+  (->> (#'clojure.reflect/declared-fields c) (sort-by :name)))
+
+(defn print-info [clazz info]
+  (p/print-table (class-info clazz info)))
+
+(defn- access [o mthd]
+  {(keyword (:name mthd)) (eval `(. ~o ~(:name mthd)))})
+
+(defn- getter? [mthd]
+  (-> mthd :name name (.startsWith "get")))
+
+(defn- no-args? [mthd]
+  (-> mthd :parameter-types empty?))
+
+(defn mapize [obj]
+  (let [clazz   (class obj)
+        members (->> (r/reflect clazz) :members (filter #(and (no-args? %) (getter? %))))]
+    (into {} (map (partial access obj) members))))
