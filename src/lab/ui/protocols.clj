@@ -24,7 +24,7 @@
   (selected [this] [this selected] "Gets or sets the selected children abstract component."))
 
 (defprotocol Event
-  (event->map [this] "Serializes the event into a map.")
+  (to-map [this] "Serializes the event into a map.")
   (source [this] "Gets the component that generated the event."))
 
 ;; Multi methods
