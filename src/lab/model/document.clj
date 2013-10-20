@@ -55,13 +55,15 @@
   "Binds a document to a file in the given path. If the 
 file exists then the contents are read into the document's
 buffer."
-  [doc path]
+  [doc path & {:keys [new?]}]
   (let [file   (io/file path)
-        text   (if (.exists file) (slurp path) "")
+        buf    (if new?
+                 (:buffer doc)
+                 (default-buffer (if (.exists file) (-> path slurp) "")))
         name   (.getName file)
-        props  {:buffer   (default-buffer text)
+        props  {:buffer   buf
                 :path     path
-                :modified (not (.exists file))
+                :modified (boolean new?)
                 :name     name}]
     (merge doc props)))
 
@@ -69,7 +71,7 @@ buffer."
   "Closes a file checking if its been modified first."
   [doc]
   (if (modified? doc)
-    (throw (Error.))))
+    (throw (RuntimeException. "Sorry, can't close a modified document."))))
 
 (defn save
   "Saves the document to a file in path."
@@ -173,40 +175,13 @@ buffer."
 ;; Document creation function
 
 (defn document
-  "Creates a new document using the name and alternate models provided."
-  [& {:keys [path alternates] :or {path nil alternates []}}]
+  "Creates a new document using the name."
+  [& {:keys [path] :or {path nil}}]
   (let [doc (map->Document {:name (untitled)
                             :path nil
                             :modified false
                             :buffer (default-buffer)
-                            :history (h/history)
-                            :alternates alternates})]
+                            :history (h/history)})]
     (if path
       (bind doc path)
       doc)))
-      
-;; Alternates
-
-(defn add-alternate
-  "Adds an alternate model to the map."
-  [m k alt]
-  {:pre [(map? m)
-         (-> m :alternates k nil?)]}
-  (let [alts (-> m :alternates (assoc k alt))]
-    (assoc m :alternates alts)))
-
-(defn alternate
-  [doc alt-name]
-  (-> doc :alternates alt-name))
-
-(defn all-alternates
-  [doc alt-name]
-  (-> doc :alternates))
-
-(defn attach-view
-  "Attaches a view to the document. x should be 
-  an agent/atom/var/ref reference.
-  (Maybe it should be declared in view)"
-  [x view]
-  (view :init x)
-  (add-watch x :update view))
