@@ -112,7 +112,7 @@ documents collection."
   "Saves a document to a file."
   [app doc]
   (when doc
-    (doc/save doc))
+    (swap! doc doc/save))
   app)
 
 (defn- load-config

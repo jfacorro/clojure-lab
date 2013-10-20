@@ -29,6 +29,7 @@
     :fn     var to a function with args [ui evt & args].
     :separator  true if the option should be followed by a separator."
   [app ui {:keys [category name fn separator keystroke] :as option}]
+  (assert (instance? clojure.lang.IRef app) "app should be a reference of some type.")
   (let [menu-bar  (ui/get-attr ui :menu)
                   ;; Explode the menu path and build a selector.
         selector  (map (partial ui.sel/attr= :text) (menu-path category))
@@ -36,7 +37,7 @@
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (if separator
                     [:menu-separator]
-                    [:menu-item {:text name :on-click (partial fn app) :key-stroke keystroke}])
+                    [:menu-item {:text name :on-click (ui/event-handler fn app) :key-stroke keystroke}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector p/add item)]
      (ui/set-attr ui :menu menu-bar)))

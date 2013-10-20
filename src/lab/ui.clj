@@ -10,17 +10,16 @@
              [lab.core.keymap :as km]
              [lab.model.document :as doc]))
 
-(defn insert-text [app evt]
-  ; TODO: implement insertion and deletion on documents.
-)
+(defn insert-text [app doc evt]
+  (swap! doc doc/insert (:offset evt) (:text evt)))
 
-(defn- create-text-editor [txt]
-  [:text-editor {:text        txt
+(defn- create-text-editor [app doc]
+  [:text-editor {:text        (doc/text @doc)
                  :border      :none
                  :background  0x666666
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
-                 :on-insert   #'insert-text
+                 :on-insert   (partial #'insert-text app doc)
                  :font        [:name "Monospaced.plain" :size 14]}])
 
 (defn close-tab [ui id & _]
@@ -31,7 +30,7 @@
   (let [ui    (:ui app)
         id    (ui/genid)
         path  (doc/path @doc)
-        text  (create-text-editor (doc/text @doc))
+        text  (create-text-editor app doc)
         close (partial #'close-tab ui id)]
     [:tab {:-id       id
            :-doc      doc
@@ -98,7 +97,7 @@ associated to it."
     (let [file-dialog   (ui/init [:file-dialog {:-type :save}])
           [result file] (p/show file-dialog)]
       (if file
-        (doc/bind doc (.getCanonicalPath file))
+        (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
 
 (defn- save-document-hook
@@ -108,7 +107,7 @@ associated to it."
         doc   (ui/get-attr tab :-doc)]
     (swap! doc assign-path)
     (when (doc/path @doc)
-      (f app @doc))))
+      (f app doc))))
 
 (defn- file-tree [app]
   [:tab {:-title "Files" :border :none}
@@ -137,7 +136,7 @@ associated to it."
   [f app keymap]
   (case (:type keymap)
     :global
-      (let [ui    (:ui app)
+      (let [ui    (:ui @app)
             cmds  (-> keymap :bindings vals)]
         (swap! ui (partial reduce (partial menu/add-option app)) cmds))
      :lang  nil
@@ -145,7 +144,7 @@ associated to it."
   (f app keymap))
 
 (def hooks
-  {#'lab.core.keymap/register  #'register-keymap-hook
+  {#'lab.core.keymap/register! #'register-keymap-hook
    #'lab.app/new-document      #'new-document-hook
    #'lab.app/open-document     #'open-document-hook
    #'lab.app/save-document     #'save-document-hook
