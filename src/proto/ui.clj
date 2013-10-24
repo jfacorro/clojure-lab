@@ -15,7 +15,7 @@
 ;;------------------------------
 (misc/intern-vars 'proto.ui.swing.core)
 ;;------------------------------
-(def app-name "Clojure Lab")
+(def app-name "Clojure Lab - Proto")
 (def new-doc-title "Untitled")
 (def icons-paths ["icon-16.png"
 
