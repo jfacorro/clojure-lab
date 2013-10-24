@@ -10,51 +10,22 @@
              [lab.core.keymap :as km]
              [lab.model.document :as doc]))
 
-(defn insert-text [app doc evt]
-  (swap! doc doc/insert (:offset evt) (:text evt)))
-
-(defn- create-text-editor [app doc]
-  [:text-editor {:text        (doc/text @doc)
-                 :border      :none
-                 :background  0x666666
-                 :foreground  0xFFFFFF
-                 :caret-color 0xFFFFFF
-                 :on-insert   (partial #'insert-text app doc)
-                 :font        [:name "Monospaced.plain" :size 14]}])
-
-(defn close-tab [ui id & _]
-  (let [tab  (ui/find @ui (str "#" id))]
-    (ui/update! ui :#documents p/remove tab)))
-
-(defn- document-tab [app doc]
-  (let [ui    (:ui app)
-        id    (ui/genid)
-        path  (doc/path @doc)
-        text  (create-text-editor app doc)
-        close (partial #'close-tab ui id)]
-    [:tab {:-id       id
-           :-doc      doc
-           :-tool-tip path
-           :-header   [:panel {:transparent true}
-                              [:label {:text (doc/name @doc)}]
-                              [:button {:icon        "close-tab.png"
-                                        :border      :none
-                                        :transparent true
-                                        :on-click    close}]]
-           :border    :none}
-           text]))
+(declare document-tab)
 
 (defn- current-document-tab [ui]
   (-> @ui (ui/find :#documents) p/selected))
+
+; Open
 
 (defn- open-document-ui [app doc]
   (as-> (:ui app) ui
     (ui/update! ui :#documents p/add (document-tab app doc))))
 
-(defn- open-document-tree [app evt]
-  (let [^java.io.File file (-> evt p/source p/selected)]
-    (when-not (.isDirectory file)
-      (lab.app/open-document app (.getCanonicalPath file)))))
+(defn- open-document-tree [app {:keys [source click-count]}]
+  (when (= click-count 2)
+    (let [^java.io.File file (p/selected source)]
+      (when-not (.isDirectory file)
+        (lab.app/open-document app (.getCanonicalPath file))))))
 
 (defn- open-document-menu
   [app evt]
@@ -71,12 +42,21 @@
     (open-document-ui app doc)
     app))
 
+; New
+
 (defn- new-document-hook
   [f app & evt]
   (let [app  (f app)
         doc  (lab.app/current-document app)]
     (open-document-ui app doc)
     app))
+
+; Close
+
+(defn close-tab
+  [ui id & _]
+  (let [tab  (ui/find @ui (str "#" id))]
+    (ui/update! ui :#documents p/remove tab)))
 
 (defn- close-document-hook
   "Finds the currently selected tab, removes it and closes the document
@@ -88,6 +68,8 @@ associated to it."
         app   (f app @doc)]
     (ui/update! ui :#documents p/remove tab)
     app))
+
+; Save
 
 (defn- assign-path
   "If the document doesn't have a path, get one from the user."
@@ -109,11 +91,56 @@ associated to it."
     (when (doc/path @doc)
       (f app doc))))
 
-(defn- file-tree [app]
-  [:tab {:-title "Files" :border :none}
-        [:tree {:-id          "file-tree" 
-                :on-dbl-click (partial #'open-document-tree app)
-                :root         (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
+; Insert
+
+(defn text-editor-change [app doc evt]
+  (case (:type evt)
+    :insert
+      (swap! doc doc/insert (:offset evt) (:text evt))
+    :remove
+      (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
+    :change
+      (println evt)))
+
+; Register
+
+(defn- register-keymap-hook
+  [f app keymap]
+  (case (:type keymap)
+    :global
+      (let [ui    (:ui @app)
+            cmds  (-> keymap :bindings vals)]
+        (swap! ui (partial reduce (partial menu/add-option app)) cmds))
+     :lang  nil
+     :local nil)
+  (f app keymap))
+
+(defn- create-text-editor [app doc]
+  [:text-editor {:text        (doc/text @doc)
+                 :border      :none
+                 :background  0x666666
+                 :foreground  0xFFFFFF
+                 :caret-color 0xFFFFFF
+                 :on-change   (partial #'text-editor-change app doc)
+                 :font        [:name "Monospaced.plain" :size 14]}])
+
+(defn- document-tab [app doc]
+  (let [ui    (:ui app)
+        id    (ui/genid)
+        path  (doc/path @doc)
+        text  (create-text-editor app doc)
+        close (partial #'close-tab ui id)]
+    [:tab {:-id       id
+           :-doc      doc
+           :-tool-tip path
+           :-header   [:panel {:transparent true}
+                              [:label {:text (doc/name @doc)}]
+                              [:button {:icon        "close-tab.png"
+                                        :border      :none
+                                        :transparent true
+                                        :on-click    close}]]
+           :border    :none}
+           text]))
 
 (defn build-main [app-name]
   [:window {:-id     "main"
@@ -132,16 +159,11 @@ associated to it."
                                      [:tabs {:-id "right-controls"}]]]
                     [:tabs {:-id "bottom-controls"}]]])
 
-(defn- register-keymap-hook
-  [f app keymap]
-  (case (:type keymap)
-    :global
-      (let [ui    (:ui @app)
-            cmds  (-> keymap :bindings vals)]
-        (swap! ui (partial reduce (partial menu/add-option app)) cmds))
-     :lang  nil
-     :local nil)
-  (f app keymap))
+(defn- file-tree [app]
+  [:tab {:-title "Files" :border :none}
+        [:tree {:-id      "file-tree"
+                :on-click (partial #'open-document-tree app)
+                :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
 
 (def hooks
   {#'lab.core.keymap/register! #'register-keymap-hook
