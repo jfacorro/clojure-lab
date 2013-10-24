@@ -1,4 +1,3 @@
-(remove-ns 'lab.ui.swing)
 (ns lab.ui.swing
   (:refer-clojure :exclude [remove])
   (:import [javax.swing UIManager JComponent AbstractAction]
@@ -70,11 +69,18 @@
         (.remove im ks)
         (.remove am desc))
       this)))
-;;-------------------
+
 (extend-protocol p/Event
   java.util.EventObject
-  (source [this]
-    (.getSource this)))
+  (to-map [this]
+    {:source (.getSource this)})
+  java.awt.event.MouseEvent
+  (to-map [this]
+    {:source       (.getSource this)
+     :button       (.getButton this)
+     :click-count  (.getClickCount this)
+     :screen-loc   (as-> (.getLocationOnScreen this) p [(.getX p) (.getY p)])
+     :point        (as-> (.getPoint this) p [(.getX p) (.getY p)])}))
 
 ;; Attributes
 
@@ -108,14 +114,10 @@
       (.setFont ^JComponent (p/impl c) (util/font value)))
     (:size [c attr [w h :as value]]
       (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
-
+    
+    ; events
     (:on-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []
                        (mousePressed [e]
-                         (when (= 1 (.getClickCount e)) (handler e))))]
-        (.addMouseListener ^JComponent (p/impl c) listener)))
-    (:on-dbl-click [c _ handler]
-      (let [listener (proxy [MouseAdapter] []
-                       (mousePressed [e]
-                         (when (= 2 (.getClickCount e)) (handler e))))]
+                         (-> e p/to-map handler)))]
         (.addMouseListener ^JComponent (p/impl c) listener))))

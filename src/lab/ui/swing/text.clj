@@ -35,24 +35,10 @@
   :text-editor
     (:caret-color [c _ v]
       (.setCaretColor (impl c) (util/color v)))
-    (:on-insert [c _ handler]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e] (handler (to-map e)))
-                       (removeUpdate [e])
-                       (changedUpdate [e]))
-            doc      (.getDocument (impl c))]
-        (.addDocumentListener doc listener)))
-    (:on-delete [c _ handler]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e])
-                       (removeUpdate [e] (handler e))
-                       (changedUpdate [e]))
-            doc      (.getDocument (impl c))]
-        (.addDocumentListener doc listener)))
     (:on-change [c _ handler]
       (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e])
-                       (removeUpdate [e])
-                       (changedUpdate [e] (handler e)))
+                       (insertUpdate [e] (handler (to-map e)))
+                       (removeUpdate [e] (handler (to-map e)))
+                       (changedUpdate [e] (handler (to-map e))))
             doc      (.getDocument (impl c))]
         (.addDocumentListener doc listener))))
