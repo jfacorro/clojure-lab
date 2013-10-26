@@ -8,6 +8,9 @@
 
 (ui/defattributes
   :window
+    (:title [c _ v]
+      (.setTitle (p/impl c) v)
+      c)
     (:maximized [c _ v]
       (when v
         (.setExtendedState ^JFrame (p/impl c) 
@@ -16,7 +19,7 @@
     (:size [c _ [w h]]
       (.setSize ^JFrame (p/impl c) w h))
     (:menu [c _ v]
-      (ui/set-attr c :j-menu-bar (p/impl v))
+      (.setJMenuBar (p/impl c) (p/impl v))
       (.revalidate ^JFrame (p/impl c)))
     (:icons [c _ v]
       (let [icons (map util/image v)]

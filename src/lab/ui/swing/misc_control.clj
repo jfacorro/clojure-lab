@@ -18,4 +18,8 @@
     (:on-click [c _ f]
       (let [action (reify ActionListener
                       (actionPerformed [this e] (f e)))]
-        (.addActionListener (p/impl c) action))))
+        (.addActionListener (p/impl c) action)))
+  :label
+  (:text [c _ v]
+    (.setText (p/impl c) v)
+    c))

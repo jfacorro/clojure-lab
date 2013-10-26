@@ -4,15 +4,15 @@
         [clojure.test :only [deftest is are run-tests testing]]))
 
 (def root {:tag :window
-           :attrs {:-id "main"}
+           :attrs {:id "main"}
            :content [{:tag :label 
-                      :attrs {:-id "1" :size [100 100]}}
+                      :attrs {:id "1" :size [100 100]}}
                      {:tag :button 
-                      :attrs {:-id "2"} 
+                      :attrs {:id "2"} 
                       :content [{:tag :combo 
-                                 :attrs{:-id "combo" :size [100 200]}}]}
+                                 :attrs{:id "combo" :size [100 200]}}]}
                      {:tag :label
-                      :attrs {:-id "3" :size [100 100]}}
+                      :attrs {:id "3" :size [100 100]}}
                      {:tag :tabs
                       :content [{:tag :tab}
                                 {:tag :tab}

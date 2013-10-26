@@ -13,6 +13,9 @@
   :menu-separator JSeparator)
   
 (ui/defattributes
+  :menu
+  (:text [c _ v]
+      (.setText (impl c) v) c)
   :menu-item
     (:on-click [c _ f]
       (let [action (reify ActionListener

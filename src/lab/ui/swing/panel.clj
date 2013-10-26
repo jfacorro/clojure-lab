@@ -11,6 +11,9 @@
 
 (ui/defattributes
   :split
+    (:resize-weight [c _ v]
+      (.setResizeWeight (impl c) v)
+      c)
     (:divider-location [c _ value]
       (.setDividerLocation (impl c) value))
     (:orientation [c attr value]

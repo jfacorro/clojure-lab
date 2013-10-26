@@ -16,7 +16,7 @@
   "Returns a predicate that indicates wheter its
   argument has the same id as the provided."
   [id]
-  (with-meta #(= id (-> % :attrs :-id)) {:id id}))
+  (with-meta #(= id (-> % :attrs :id)) {:id id}))
 
 (defn attr= [attr v]
   "Returns a predicate that indicates whether its

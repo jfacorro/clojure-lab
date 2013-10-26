@@ -3,12 +3,12 @@
   (:use lab.ui.core
         [clojure.test :only [deftest is are run-tests testing]]))
 
-(def tab1 (hiccup->map [:tab {:-id "2"}]))
-(def tab2 (hiccup->map [:tab {:-id "3"}]))
+(def tab1 (hiccup->map [:tab {:id "2"}]))
+(def tab2 (hiccup->map [:tab {:id "3"}]))
 
-(def ts (hiccup->map [:tabs {:-id "0"} tab1 tab2]))
+(def ts (hiccup->map [:tabs {:id "0"} tab1 tab2]))
 
-(def tr (hiccup->map [:tree {:-id "1"}]))
+(def tr (hiccup->map [:tree {:id "1"}]))
 
 (def ui-test (hiccup->map [:window ts tr]))
 

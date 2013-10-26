@@ -33,6 +33,7 @@
                   ; misc
                   :button :label
                   ; dialogs
-                  :file-dialog]})
+                  :dialog]
+    :dialog [:file-dialog :option-dialog]})
 
 (def hierarchy (build-hierarchy hierarchy-description))

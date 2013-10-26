@@ -8,7 +8,7 @@
             [lab.ui.swing [util :as util]
                           window
                           panel
-                          file-dialog
+                          dialog
                           tree
                           menu
                           text
@@ -84,7 +84,7 @@
 
 ;; Attributes
 
-(defmethod p/set-attr :default
+#_(defmethod p/set-attr :default
   [c k args]
   "Fall-back method implementation for properties not specified 
   for the component in defattributes.
@@ -101,6 +101,7 @@
 ;; of component in the hierarchy.
 (ui/defattributes
   :component
+    (:id [c _ _] c)
     (:transparent [c _ v]
       (.setOpaque ^JComponent (p/impl c) (not v)))
     (:border [c _ v]
@@ -114,7 +115,7 @@
       (.setFont ^JComponent (p/impl c) (util/font value)))
     (:size [c attr [w h :as value]]
       (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
-    
+
     ; events
     (:on-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []

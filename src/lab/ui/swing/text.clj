@@ -33,6 +33,9 @@
 
 (ui/defattributes
   :text-editor
+    (:text [c _ v]
+      (.setText (impl c) v)
+      c)
     (:caret-color [c _ v]
       (.setCaretColor (impl c) (util/color v)))
     (:on-change [c _ handler]

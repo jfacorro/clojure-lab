@@ -133,10 +133,6 @@
         component (assoc component :content [])]
     (reduce p/add component content)))
 
-(defn- abstract-attr?
-  [k]
-  (-> k name first #{\-}))
-
 (def genid
   "Generates a unique id string."
   #(name (gensym)))
@@ -146,9 +142,7 @@
   for the implementation and updates the abstract component
   as well."
   [c k v]
-  (let [c (if (abstract-attr? k)
-            c
-            (p/set-attr c k v))]
+  (let [c (p/set-attr c k v)]
     (assoc-in c [:attrs k] v)))
 
 (defn get-attr

@@ -29,7 +29,7 @@
 
 (defn- open-document-menu
   [app evt]
-  (let [file-dialog   (ui/init [:file-dialog {:-type :open}])
+  (let [file-dialog   (ui/init [:file-dialog {:type :open}])
         [result file] (p/show file-dialog)]
     (if file
       (lab.app/open-document app (.getCanonicalPath file))
@@ -64,7 +64,7 @@ associated to it."
   [f app & evt]
   (let [ui    (:ui app)
         tab   (current-document-tab ui)
-        doc   (ui/get-attr tab :-doc)
+        doc   (ui/get-attr tab :doc)
         app   (f app @doc)]
     (ui/update! ui :#documents p/remove tab)
     app))
@@ -76,7 +76,7 @@ associated to it."
   [doc]
   (if (doc/path doc)
     doc
-    (let [file-dialog   (ui/init [:file-dialog {:-type :save}])
+    (let [file-dialog   (ui/init [:file-dialog {:type :save}])
           [result file] (p/show file-dialog)]
       (if file
         (doc/bind doc (.getCanonicalPath file) :new? true)
@@ -86,7 +86,7 @@ associated to it."
   [f app & evt]
   (let [ui    (:ui app)
         tab   (current-document-tab ui)
-        doc   (ui/get-attr tab :-doc)]
+        doc   (ui/get-attr tab :doc)]
     (swap! doc assign-path)
     (when (doc/path @doc)
       (f app doc))))
@@ -130,20 +130,20 @@ associated to it."
         path  (doc/path @doc)
         text  (create-text-editor app doc)
         close (partial #'close-tab ui id)]
-    [:tab {:-id       id
-           :-doc      doc
-           :-tool-tip path
-           :-header   [:panel {:transparent true}
-                              [:label {:text (doc/name @doc)}]
-                              [:button {:icon        "close-tab.png"
-                                        :border      :none
-                                        :transparent true
-                                        :on-click    close}]]
+    [:tab {:id       id
+           :doc      doc
+           :tool-tip path
+           :header   [:panel {:transparent true}
+                             [:label {:text (doc/name @doc)}]
+                             [:button {:icon        "close-tab.png"
+                                       :border      :none
+                                       :transparent true
+                                       :on-click    close}]]
            :border    :none}
            text]))
 
 (defn build-main [app-name]
-  [:window {:-id     "main"
+  [:window {:id     "main"
             :title   app-name
             :size    [700 500]
             :maximized true
@@ -153,15 +153,15 @@ associated to it."
                      :resize-weight 1
                      :border :none}
                     [:split {:resize-weight 0}
-                            [:tabs {:-id "left-controls"}]
+                            [:tabs {:id "left-controls"}]
                             [:split {:resize-weight 1}
-                                     [:tabs {:-id "documents"}]
-                                     [:tabs {:-id "right-controls"}]]]
-                    [:tabs {:-id "bottom-controls"}]]])
+                                     [:tabs {:id "documents"}]
+                                     [:tabs {:id "right-controls"}]]]
+                    [:tabs {:id "bottom-controls"}]]])
 
 (defn- file-tree [app]
-  [:tab {:-title "Files" :border :none}
-        [:tree {:-id      "file-tree"
+  [:tab {:title "Files" :border :none}
+        [:tree {:id      "file-tree"
                 :on-click (partial #'open-document-tree app)
                 :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
 
