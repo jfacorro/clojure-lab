@@ -23,9 +23,7 @@ default configuration."
    :documents         #{}
    :current-document  nil
    :langs             {}
-   :keymap            {"ctrl O"  #'open-document
-                       "ctrl S"  #'save-document
-                       "ctrl W"  #'close-document}})
+   :keymap            nil})
 
 (defmethod km/register-multi :global
   [app keymap]
