@@ -15,11 +15,13 @@
 (ui/defattributes
   :menu
   (:text [c _ v]
-      (.setText (impl c) v) c)
+    (.setText (impl c) v) c)
   :menu-item
-    (:on-click [c _ f]
-      (let [action (reify ActionListener
-                      (actionPerformed [this e] (f e)))]
-        (.addActionListener (impl c) action)))
-    (:key-stroke [c _ ks]
-      (.setAccelerator (impl c) (util/key-stroke ks))))
+  (:text [c _ v]
+    (.setText (impl c) v) c)
+  (:on-click [c _ f]
+    (let [action (reify ActionListener
+                   (actionPerformed [this e] (f e)))]
+      (.addActionListener (impl c) action)))
+  (:key-stroke [c _ ks]
+    (.setAccelerator (impl c) (util/key-stroke ks))))
