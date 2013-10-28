@@ -34,13 +34,6 @@ is nil the other is returned."
   "Registers a keymap in the app according to its type."
   (fn [app km] (:type km)))
 
-(defn register!
-  "Uses the register multi-method. This is created as a function 
-so that plugins can add hooks."
-  [app keymap]
-  (swap! app register-multi keymap))
-
-
 (comment
 
 {:name     'keymap-name

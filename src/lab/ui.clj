@@ -18,15 +18,11 @@
 
 ; Open
 
-(defn- open-document-ui [app doc]
+(defn- open-document-ui
+  "Used by the open and new commands."
+  [app doc]
   (as-> (:ui app) ui
     (ui/update! ui :#documents p/add (document-tab app doc))))
-
-(defn- open-document-tree [app {:keys [source click-count]}]
-  (when (= click-count 2)
-    (let [^java.io.File file (p/selected source)]
-      (when-not (.isDirectory file)
-        (lab.app/open-document app (.getCanonicalPath file))))))
 
 (defn- open-document-menu
   [app evt]
@@ -166,12 +162,18 @@ associated to it."
                 :on-click (partial #'open-document-tree app)
                 :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
 
+(defn- open-document-tree [app {:keys [source click-count]}]
+  (when (= click-count 2)
+    (let [^java.io.File file (p/selected source)]
+      (when-not (.isDirectory file)
+        (lab.app/open-document app (.getCanonicalPath file))))))
+
 (def hooks
-  {#'lab.core.keymap/register! #'register-keymap-hook
-   #'lab.app/new-document      #'new-document-hook
-   #'lab.app/open-document     #'open-document-hook
-   #'lab.app/save-document     #'save-document-hook
-   #'lab.app/close-document    #'close-document-hook})
+  {#'lab.core.plugin/register-keymap! #'register-keymap-hook
+   #'lab.app/new-document             #'new-document-hook
+   #'lab.app/open-document            #'open-document-hook
+   #'lab.app/save-document            #'save-document-hook
+   #'lab.app/close-document           #'close-document-hook})
 
 (def keymaps
   [(km/keymap (ns-name *ns*)
@@ -181,7 +183,6 @@ associated to it."
               {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"}
               {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"})])
 
-;; Init
 (defn init!
   "Expects an atom containing the app. Builds the basic UI and 
   adds it to the app under the key :ui."
@@ -193,10 +194,10 @@ associated to it."
     ; comment out when testing == pretty bad workflow
     (p/show @ui)))
 
-(plugin/defplugin lab.core.ui 
+(plugin/defplugin lab.core.ui
   "Creates the UI for the application and hooks into
-  basic file operations." 
-  :init!    #'init! 
+basic file operations."
+  :init!    #'init!
   :hooks    hooks
   :keymaps  keymaps)
 

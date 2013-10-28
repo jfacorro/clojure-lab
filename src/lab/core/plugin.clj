@@ -19,11 +19,18 @@ of the plugin as the hooks' key."
     (log/info hook-key "- Adding hook" f "to" target-var)
     (hook/add-hook target-var hook-key f)))
 
+(defn register-keymap!
+  "Uses the register multi-method. This is created as a function 
+so that plugins can add hooks."
+  [app keymap]
+  (swap! app km/register-multi keymap))
+
 (defn- register-keymaps!
+  "Register all keymaps in the plugin."
   [app keymaps]
   (if keymaps
     (doseq [km keymaps]
-      (km/register! app km))
+      (register-keymap! app km))
     app))
 
 (defn- load-plugin!
@@ -34,8 +41,8 @@ they exist."
   [app plugin-name]
   (require [plugin-name :reload true])
   (let [plugin-ns                      (the-ns plugin-name)
-        {:keys [init! hooks keymaps]} (->> (ns-resolve plugin-ns 'plugin) deref)]
-    (assert init! (str "Couldn't find a function " (name 'init!) " in plugin " plugin-name "."))
+        {:keys [init! hooks keymaps] :as plugin} (->> (ns-resolve plugin-ns 'plugin) deref)]
+    (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
     (add-hooks! hooks plugin-name)
     (init! app)
     (register-keymaps! app keymaps)))
