@@ -22,7 +22,7 @@
 
 - Keymap management:
   - Register keymaps at the :global and :language levels.
-    - Consider :local level, though not sure how that would work.
+    - Consider :local level, which registers the km in the current document.
   - Unregister keymaps at the same levels.
   - Mapper that can be attached to UI controls.
 
@@ -31,8 +31,8 @@
   - Event Handling plumbing using keymaps.
     - Alternatives:
     1. Create a custom event handler that can be hooked to any UI control.
-      - Abstract event handling => more work.
-      - The events hace to be mapped anyway.
-    2. Use the native event handling model and adapt to it.
+      - Abstract the event handling => more work.
+      - The events have to be mapped anyway.
+    2. Use the native event handling model (swing/gtk+) and adapt to it.
       - Would mean a high coupling with the underlying UI implementation.
-      - More work in the long run maybe.
+      - More work in the long run?
