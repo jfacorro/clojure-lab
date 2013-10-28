@@ -208,3 +208,10 @@ f, which should take a value and an event."
       (swap! x f evt)))
   ([f x]
     (partial (event-handler f) x)))
+
+(defmacro with-id
+  "Assigns a unique id to the component which can be
+used in the component's definition (e.g. in event handlers)."
+  [x component]
+  `(let [~x (genid)]
+    (assoc-in (hiccup->map ~component) [:attrs :id] ~x)))

@@ -7,8 +7,8 @@
                     [stylesheet :as css]
                     [protocols :as p]
                     swing]
-             [lab.core.keymap :as km]
-             [lab.core.plugin :as plugin]
+             [lab.core [keymap :as km]
+                       [plugin :as plugin]]
              [lab.model.document :as doc]))
 
 (declare document-tab)
@@ -122,22 +122,17 @@ associated to it."
                  :font        [:name "Monospaced.plain" :size 14]}])
 
 (defn- document-tab [app doc]
-  (let [ui    (:ui app)
-        id    (ui/genid)
-        path  (doc/path @doc)
-        text  (create-text-editor app doc)
-        close (partial #'close-tab ui id)]
-    [:tab {:id       id
-           :doc      doc
-           :tool-tip path
+  (ui/with-id id
+    [:tab {:doc      doc
+           :tool-tip (doc/path @doc)
            :header   [:panel {:transparent true}
                              [:label {:text (doc/name @doc)}]
-                             [:button {:icon        "close-tab.png"
-                                       :border      :none
-                                       :transparent true
-                                       :on-click    close}]]
+                             [:button {:icon         "close-tab.png"
+                                       :border       :none
+                                       :transparent  true
+                                       :on-click     (partial #'close-tab (:ui app) id)}]]
            :border    :none}
-           text]))
+           (create-text-editor app doc)]))
 
 (defn build-main [app-name]
   [:window {:id     "main"
@@ -156,17 +151,17 @@ associated to it."
                                      [:tabs {:id "right-controls"}]]]
                     [:tabs {:id "bottom-controls"}]]])
 
-(defn- file-tree [app]
-  [:tab {:title "Files" :border :none}
-        [:tree {:id      "file-tree"
-                :on-click (partial #'open-document-tree app)
-                :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
-
 (defn- open-document-tree [app {:keys [source click-count]}]
   (when (= click-count 2)
     (let [^java.io.File file (p/selected source)]
       (when-not (.isDirectory file)
         (lab.app/open-document app (.getCanonicalPath file))))))
+
+(defn- file-tree [app]
+  [:tab {:title "Files" :border :none}
+        [:tree {:id      "file-tree"
+                :on-click (partial #'open-document-tree app)
+                :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
 
 (def hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook
