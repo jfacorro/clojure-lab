@@ -18,7 +18,7 @@
 (def default-app
   "Returns a new app with nothing initialized and a
 default configuration."
-  {:name              "Clojure Lab - UI"
+  {:name              "Clojure Lab"
    :config            default-config
    :documents         #{}
    :current-document  nil
