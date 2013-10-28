@@ -8,6 +8,7 @@
                     [protocols :as p]
                     swing]
              [lab.core.keymap :as km]
+             [lab.core.plugin :as plugin]
              [lab.model.document :as doc]))
 
 (declare document-tab)
@@ -100,7 +101,7 @@ associated to it."
     :remove
       (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
     :change
-      (println evt)))
+      nil))
 
 ; Register
 
@@ -191,6 +192,13 @@ associated to it."
     (ui/update! ui :#left-controls p/add (file-tree @app))
     ; comment out when testing == pretty bad workflow
     (p/show @ui)))
+
+(plugin/defplugin lab.core.ui 
+  "Creates the UI for the application and hooks into
+  basic file operations." 
+  :init!    #'init! 
+  :hooks    hooks
+  :keymaps  keymaps)
 
 (comment
 

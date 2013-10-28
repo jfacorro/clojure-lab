@@ -11,7 +11,7 @@ keymap     A keymap with global bindings that will be applied to the existing
             [lab.core.keymap :as km]
             [clojure.tools.logging :as log]))
 
-(defn- add-hooks
+(defn- add-hooks!
   "Add the defined hooks supplied and use the name
 of the plugin as the hooks' key."
   [hooks hook-key]
@@ -33,16 +33,22 @@ keymap and hooks are searched and processed accordingly if
 they exist."
   [app plugin-name]
   (require [plugin-name :reload true])
-  (let [plugin-ns              (the-ns plugin-name)
-        resolve-var            (partial ns-resolve plugin-ns)
-        [init! hooks keymaps]  (map resolve-var '[init! hooks keymaps])]
+  (let [plugin-ns                      (the-ns plugin-name)
+        {:keys [init! hooks keymaps]} (->> (ns-resolve plugin-ns 'plugin) deref)]
     (assert init! (str "Couldn't find a function " (name 'init!) " in plugin " plugin-name "."))
-    (add-hooks @hooks plugin-name)
+    (add-hooks! hooks plugin-name)
     (init! app)
-    (register-keymaps! app @keymaps)))
+    (register-keymaps! app keymaps)))
 
 (defn load-plugins!
   "Loads the plugins specified by calling the init! function
 defined in their namespace."
   [app plugins]
   (reduce load-plugin! app plugins))
+
+(defmacro defplugin
+  "Defines a #'plugin var with the plugin's definition."
+  [name & [docstr & opts :as options]]
+  `(def ~'plugin
+      ~(if (string? docstr) docstr (str "Plugin " name))
+      (hash-map :name '~name ~@(if (string? docstr) opts options))))
