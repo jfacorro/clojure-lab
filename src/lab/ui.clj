@@ -92,12 +92,9 @@ associated to it."
 
 (defn text-editor-change [app doc evt]
   (case (:type evt)
-    :insert
-      (swap! doc doc/insert (:offset evt) (:text evt))
-    :remove
-      (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
-    :change
-      nil))
+    :insert (swap! doc doc/insert (:offset evt) (:text evt))
+    :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
+    :change nil))
 
 ; Register
 
@@ -151,7 +148,9 @@ associated to it."
                                      [:tabs {:id "right-controls"}]]]
                     [:tabs {:id "bottom-controls"}]]])
 
-(defn- open-document-tree [app {:keys [source click-count]}]
+(defn- open-document-tree
+  "Handler for the click event of an item in the tree."
+  [app {:keys [source click-count]}]
   (when (= click-count 2)
     (let [^java.io.File file (p/selected source)]
       (when-not (.isDirectory file)
@@ -162,6 +161,12 @@ associated to it."
         [:tree {:id      "file-tree"
                 :on-click (partial #'open-document-tree app)
                 :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
+
+(defn add-component
+  "Add component to a tabs control."
+  [app selector title component]
+  (let [tab      [:tab {:title title :border :none} component]]
+    (ui/update! (app :ui) selector p/add component)))
 
 (def hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook
@@ -185,7 +190,7 @@ associated to it."
   (let [ui (atom (-> (:name @app) build-main ui/init))]
     (swap! app assoc :ui ui)
     
-    (ui/update! ui :#left-controls p/add (file-tree @app))
+    (add-component @app :#left-controls "Files" (file-tree @app))
     ; comment out when testing == pretty bad workflow
     (p/show @ui)))
 
