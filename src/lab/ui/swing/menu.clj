@@ -23,5 +23,5 @@
     (let [action (reify ActionListener
                    (actionPerformed [this e] (f e)))]
       (.addActionListener (impl c) action)))
-  (:key-stroke [c _ ks]
-    (.setAccelerator (impl c) (util/key-stroke ks))))
+  (:keystroke [c _ ks]
+    (.setAccelerator (impl c) (util/keystroke ks))))

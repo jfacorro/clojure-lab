@@ -53,7 +53,7 @@
   (add-binding [this ks f]
     (let [im   (.getInputMap this)
           am   (.getActionMap this)
-          ks   (util/key-stroke ks)
+          ks   (util/keystroke ks)
           desc (or (-> f meta :name) (name (gensym "binding-")))
           act  (proxy [AbstractAction] []
                  (actionPerformed [e] (f e)))]
@@ -63,7 +63,7 @@
   (remove-binding [this ks]
     (let [im   (.getInputMap this)
           am   (.getActionMap this)
-          ks   (util/key-stroke ks)
+          ks   (util/keystroke ks)
           desc (.get im ks)]
       (when desc
         (.remove im ks)

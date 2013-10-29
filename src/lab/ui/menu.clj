@@ -37,7 +37,7 @@
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (if separator
                     [:menu-separator]
-                    [:menu-item {:text name :on-click (ui/event-handler fn app) :key-stroke keystroke}])
+                    [:menu-item {:text name :on-click (ui/event-handler fn app) :keystroke keystroke}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector p/add item)]
      (ui/set-attr ui :menu menu-bar)))

@@ -123,7 +123,7 @@
       (BorderFactory/createTitledBorder x)))
 
 ;; KeyStroke
-(defn key-stroke
+(defn keystroke
   "Returns a swing key stroke based on the string provided."
   [s]
   (KeyStroke/getKeyStroke s))
