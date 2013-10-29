@@ -1,6 +1,5 @@
 (ns lab.ui.tree
-  (:require [clojure.java.io :as io]
-            [lab.ui.protocols :as uip]))
+  (:require [clojure.java.io :as io]))
 
 (defn file-proxy
   "Creates a proxy that overrides the toString method

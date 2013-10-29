@@ -1,7 +1,6 @@
 (ns lab.ui.menu
   (:require [lab.ui [core :as ui]
-                    [select :as ui.sel]
-                    [protocols :as p]]))
+                    [select :as ui.sel]]))
 
 (defn- menu-path
   "Deconstructs a menu path from a string with a '->' separator."
@@ -19,7 +18,7 @@
     (let [text     (-> selector last meta :value) ; The meta from the last selector's predicate has the name of the menu.
           menu     [:menu {:text text}]
           selector (or (butlast selector) [])]
-      (ui/update menu-bar selector p/add menu))))
+      (ui/update menu-bar selector ui/add menu))))
 
 (defn add-option
   "Takes a menu option and add it to the ui menu bar.
@@ -39,5 +38,5 @@
                     [:menu-separator]
                     [:menu-item {:text name :on-click (ui/event-handler fn app) :keystroke keystroke}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
-        menu-bar  (ui/update menu-bar selector p/add item)]
+        menu-bar  (ui/update menu-bar selector ui/add item)]
      (ui/set-attr ui :menu menu-bar)))
