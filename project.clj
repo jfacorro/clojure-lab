@@ -12,10 +12,9 @@
                  ; gtk+
                  [local/gtk "4.1"]
                  [local/gtk-bindings "4.1"]]
-  :manifest {"SplashScreen-Image" "logo.png"}  
-  
+  :manifest {"SplashScreen-Image" "logo.png"}
   :aliases  {"build" ["do" "clean," "uberjar"]
-             "build-aot" ["with-profile" "aot" "do" "clean," "uberjar"]}
+             "build-aot" ["with-profile" "aot" "build"]}
   :repositories {"local" "file:repo"}
   :profiles {:aot {:aot :all}
              :uberjar {:main proto.main
