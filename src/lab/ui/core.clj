@@ -11,8 +11,8 @@
 
 (defmacro definitializations
   "Generates all the multimethod implementations
-  for each of the entries in the map destrcutured
-  from its args.
+for each of the entries in the map destrcutured
+from its args.
   
   :component-name ClassName or init-fn"
   [& {:as m}]
@@ -27,19 +27,19 @@
 
 (defmacro defattributes
   "Convenience macro to define attribute setters for each
-  component type.
-  The method implemented always returns the first argument which 
-  is supposed to be the component itself.
+component type.
+The method implemented always returns the first argument which 
+is supposed to be the component itself.
 
-    *attrs-declaration
+  *attrs-declaration
   
-  Where each attrs-declaration is:
+Where each attrs-declaration is:
  
-    component-keyword *attr-declaration
+  component-keyword *attr-declaration
     
-  And each attr-declaration is:
+And each attr-declaration is:
 
-   (attr-name [c k v] & body)"
+  (attr-name [c k v] & body)"
   [& body]
   (let [comps (->> body 
                 (partition-by keyword?) 
@@ -52,7 +52,6 @@
                     ~@body 
                     ~c)))]
     `(do ~@(mapcat (partial apply f) comps))))
-
 
 ;; Every abstract component is represented by a Clojure map.
 
