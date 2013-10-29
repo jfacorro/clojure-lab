@@ -1,7 +1,6 @@
 TODO
 ====
   - UI
-    - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
     - Abstraction for events
       - Define available events for each component (alla seesaw)
     - Key Bindings
@@ -46,7 +45,8 @@ Done
       - This would allow better component composition (i.e. header and title in the Tab class).
     - Implement Enlive selectors.
     - Modify the global atom created for the ui.
-  
+    - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
+
   - Model
     - Complete Document
       - Keep track of changes (implement history or some scheme where changes are registered and kept in a clojure ordered data structure)
