@@ -168,14 +168,14 @@ associated to it."
   (let [tab      [:tab {:title title :border :none} component]]
     (ui/update! (app :ui) selector p/add component)))
 
-(def hooks
+(def ^:private hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook
    #'lab.app/new-document             #'new-document-hook
    #'lab.app/open-document            #'open-document-hook
    #'lab.app/save-document            #'save-document-hook
    #'lab.app/close-document           #'close-document-hook})
 
-(def keymaps
+(def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
               {:category "File" :name "New" :fn #'lab.app/new-document :keystroke "ctrl N"}
@@ -183,9 +183,9 @@ associated to it."
               {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"}
               {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"})])
 
-(defn init!
+(defn- init!
   "Expects an atom containing the app. Builds the basic UI and 
-  adds it to the app under the key :ui."
+adds it to the app under the key :ui."
   [app]
   (let [ui (atom (-> (:name @app) build-main ui/init))]
     (swap! app assoc :ui ui)
