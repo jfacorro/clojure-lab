@@ -1,22 +1,16 @@
 (remove-ns 'lab.ui.select-test)
 (ns lab.ui.select-test
+  (:require [lab.ui.core :as ui])
   (:use lab.ui.select
         [clojure.test :only [deftest is are run-tests testing]]))
 
-(def root {:tag :window
-           :attrs {:id "main"}
-           :content [{:tag :label 
-                      :attrs {:id "1" :size [100 100]}}
-                     {:tag :button 
-                      :attrs {:id "2"} 
-                      :content [{:tag :combo 
-                                 :attrs{:id "combo" :size [100 200]}}]}
-                     {:tag :label
-                      :attrs {:id "3" :size [100 100]}}
-                     {:tag :tabs
-                      :content [{:tag :tab}
-                                {:tag :tab}
-                                {:tag :tab}]}]})
+(def root (ui/hiccup->component
+            [:window {:id "main"}
+                     [:label {:id "1" :size [100 100]}]
+                     [:button {:id "2"} 
+                              [:combo {:id "combo" :size [100 200]}]]
+                     [:label {:id "3" :size [100 100]}]
+                     [:tabs [:tab] [:tab] [:tab]]]))
 
 (deftest ui-selection []
   (testing "single"

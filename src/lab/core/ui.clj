@@ -5,7 +5,6 @@
                     [tree :as tree]
                     [menu :as menu]
                     [stylesheet :as css]
-                    [protocols :as p]
                     swing]
              [lab.core [keymap :as km]
                        [plugin :as plugin]]
@@ -14,7 +13,7 @@
 (declare document-tab)
 
 (defn- current-document-tab [ui]
-  (-> @ui (ui/find :#documents) p/selected))
+  (-> @ui (ui/find :#documents) ui/selected))
 
 ; Open
 
@@ -22,14 +21,14 @@
   "Used by the open and new commands."
   [app doc]
   (as-> (:ui app) ui
-    (ui/update! ui :#documents p/add (document-tab app doc))))
+    (ui/update! ui :#documents ui/add (document-tab app doc))))
 
 (defn- open-document-menu
   [app evt]
   (let [file-dialog   (ui/init [:file-dialog {:type :open}])
-        [result file] (p/show file-dialog)]
+        [result file] (ui/show file-dialog)]
     (if file
-      (lab.app/open-document app (.getCanonicalPath file))
+      (#'lab.app/open-document app (.getCanonicalPath file))
       app)))
 
 (defn- open-document-hook
@@ -53,7 +52,7 @@
 (defn close-tab
   [ui id & _]
   (let [tab  (ui/find @ui (str "#" id))]
-    (ui/update! ui :#documents p/remove tab)))
+    (ui/update! ui :#documents ui/remove tab)))
 
 (defn- close-document-hook
   "Finds the currently selected tab, removes it and closes the document
@@ -63,7 +62,7 @@ associated to it."
         tab   (current-document-tab ui)
         doc   (ui/get-attr tab :doc)
         app   (f app @doc)]
-    (ui/update! ui :#documents p/remove tab)
+    (ui/update! ui :#documents ui/remove tab)
     app))
 
 ; Save
@@ -74,7 +73,7 @@ associated to it."
   (if (doc/path doc)
     doc
     (let [file-dialog   (ui/init [:file-dialog {:type :save}])
-          [result file] (p/show file-dialog)]
+          [result file] (ui/show file-dialog)]
       (if file
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
@@ -152,7 +151,7 @@ associated to it."
   "Handler for the click event of an item in the tree."
   [app {:keys [source click-count]}]
   (when (= click-count 2)
-    (let [^java.io.File file (p/selected source)]
+    (let [^java.io.File file (ui/selected source)]
       (when-not (.isDirectory file)
         (lab.app/open-document app (.getCanonicalPath file))))))
 
@@ -166,7 +165,7 @@ associated to it."
   "Add component to a tabs control."
   [app selector title component]
   (let [tab      [:tab {:title title :border :none} component]]
-    (ui/update! (app :ui) selector p/add component)))
+    (ui/update! (app :ui) selector ui/add component)))
 
 (def ^:private hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook
@@ -192,7 +191,7 @@ adds it to the app under the key :ui."
     
     (add-component @app :#left-controls "Files" (file-tree @app))
     ; comment out when testing == pretty bad workflow
-    (p/show @ui)))
+    (ui/show @ui)))
 
 (plugin/defplugin lab.core.ui
   "Creates the UI for the application and hooks into
@@ -213,7 +212,7 @@ basic file operations."
                    :text-editor {:background 0x555555
                                  :font       [:name "Monospaced.plain" :size 14]}})
   (css/apply-stylesheet x stylesheet)
-  (p/show @ui)
+  (ui/show @ui)
   nil)
 
 )

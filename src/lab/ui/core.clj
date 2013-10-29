@@ -1,5 +1,5 @@
 (ns lab.ui.core
-  (:refer-clojure :exclude [find])
+  (:refer-clojure :exclude [find remove])
   (:require [lab.util :as util]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]
@@ -55,7 +55,9 @@ And each attr-declaration is:
 
 ;; Every abstract component is represented by a Clojure map.
 
-(extend-type clojure.lang.IPersistentMap
+(defrecord UIComponent [tag attrs content])
+
+(extend-type UIComponent
   p/Component ; Extend Clojure maps so that adding children is transparent.
   (children [this]
     (:content this))
@@ -100,26 +102,36 @@ And each attr-declaration is:
     ([this selected]
       (-> this p/impl (p/selected (p/impl selected))))))
 
-(defn component? 
+; Expose protocol functions
+
+(defn children [c] (p/children c))
+(defn add [c child] (p/add c child))
+(defn remove [c child] (p/remove c child))
+
+(defn show [c] (p/show c))
+(defn hide [c] (p/hide c))
+(defn visible? [c] (p/visible? c))
+
+(defn selected [c] (p/selected c))
+
+(defn component?
   "Returns true if its arg is a component."
   [x]
-  (or (and (map? x)
-           (x :tag))
+  (or (instance? UIComponent x)
       (and (vector? x)
            (isa? h/hierarchy (first x) :component))))
 
-(defn hiccup->map
+(defn hiccup->component
   "Used to convert huiccup syntax declarations to map components.
-  
-  x: [tag-keyword attrs-map? children*]"
+x should be a vector with the content [tag-keyword attrs-map? children*]"
   [x]
     (if (vector? x)
       (let [[tag & [attrs & ch :as children]] x]
-        {:tag     tag 
-         :attrs   (if-not (component? attrs) attrs {})
-         :content (mapv hiccup->map (if (component? attrs) children ch))})
+        (->UIComponent
+          tag 
+          (if-not (component? attrs) attrs {})
+          (mapv hiccup->component (if (component? attrs) children ch))))
       x))
-
 
 (def ^:private initialized?
   "Checks if the component is initialized."
@@ -131,15 +143,14 @@ And each attr-declaration is:
   (let [content   (map init content)
         component (assoc component :content [])]
     (reduce p/add component content)))
-
 (def genid
   "Generates a unique id string."
   #(name (gensym)))
 
 (defn set-attr
   "Uses the set-attr multimethod to set the attribute value 
-  for the implementation and updates the abstract component
-  as well."
+for the implementation and updates the abstract component
+as well."
   [c k v]
   (let [c (p/set-attr c k v)]
     (assoc-in c [:attrs k] v)))
@@ -151,7 +162,7 @@ And each attr-declaration is:
 
 (defn- set-attrs
   "Called when initializing a component. Gets all defined
-  attributes and sets their corresponding values."
+attributes and sets their corresponding values."
   [{attrs :attrs :as component}]
   (let [f (fn [c [k v]]
             (set-attr c k (if (component? v) (init v) v)))]
@@ -159,19 +170,19 @@ And each attr-declaration is:
 
 (defn init
   "Initializes a component, creating the implementation for 
-  each child and the attributes that have a component as a value."
-  [component]
-  {:post [(component? component)]}
-  (let [component (hiccup->map component)]
-    (if (initialized? component) ; do nothing if it's already initiliazed
-      component
-      (let [ctrl       (p/initialize component)
-            component  (-> component
-                         (p/impl ctrl)
-                         set-attrs
-                         init-content)
-            ctrl       (p/abstract ctrl component)]
-        component))))
+each child and the attributes that have a component as a value."
+  [c]
+  {:post [(component? c)]}
+  (let [c (hiccup->component c)]
+    (if (initialized? c) ; do nothing if it's already initiliazed
+      c
+      (let [ctrl  (p/initialize c)
+            c     (-> c
+                    (p/impl ctrl)
+                    set-attrs
+                    init-content)
+            ctrl  (p/abstract ctrl c)]
+        c))))
 
 (defn find
   "Returns the first component found."
@@ -181,7 +192,7 @@ And each attr-declaration is:
 
 (defn update
   "Updates all the components that match the selector expression
-  using (update-in root path-to-component f args)."
+using (update-in root path-to-component f args)."
   [root selector f & args]
   (reduce (fn [x path]
             (if (empty? path)
@@ -213,4 +224,4 @@ f, which should take a value and an event."
 used in the component's definition (e.g. in event handlers)."
   [x component]
   `(let [~x (genid)]
-    (assoc-in (hiccup->map ~component) [:attrs :id] ~x)))
+    (assoc-in (hiccup->component ~component) [:attrs :id] ~x)))
