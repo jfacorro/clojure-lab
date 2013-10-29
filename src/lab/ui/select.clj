@@ -1,8 +1,7 @@
 (ns lab.ui.select
   (:refer-clojure :exclude [compile])
   (:require [clojure.zip :as zip]
-            [clojure.set :as set])
-  (:use [lab.ui.protocols :only [Component add children]]))
+            [clojure.set :as set]))
 
 ;; Selector functions
 
@@ -93,7 +92,7 @@
   (if (pred component)
     []
     (if-let [path (->> component
-                    children
+                    :content
                     (map-indexed #(vector %1 (find-path pred %2)))
                     (filter second)
                     first)]
