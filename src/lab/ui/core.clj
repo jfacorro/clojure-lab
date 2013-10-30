@@ -1,12 +1,29 @@
 (ns lab.ui.core
+  "Provides the API to create and manipulate UI component 
+abstractions as Clojure records. Components can be declared as 
+maps or in a hiccup format. Existing tags are defined in an ad-hoc 
+hierarchy which can be extended as needed.
+
+Implementation of components is based on the definitialize and defattribute
+multi-methods. The former should return an instance of the underlying UI object,
+while the latter is used for setting its attributes' value defined in the 
+abstract specification (or explicitly through the use of set-attr).
+
+Example: the following code creates a 300x400 window with a \"Hello!\" button
+         and shows it on the screen.
+
+  (-> [:window {:size [300 400]} [:button {:text \"Hello!\"}]]
+    init
+    show)"
   (:refer-clojure :exclude [find remove])
   (:require [lab.util :as util]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]
             [lab.ui.protocols :as p]))
 
-(declare init initialized?)
+(declare init initialized? set-attr)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Convenience macros for multimethod implementations
 
 (defmacro definitializations
@@ -53,7 +70,8 @@ And each attr-declaration is:
                     ~c)))]
     `(do ~@(mapcat (partial apply f) comps))))
 
-;; Every abstract component is represented by a Clojure map.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Abstract UI Component record
 
 (defrecord UIComponent [tag attrs content])
 
@@ -102,7 +120,8 @@ And each attr-declaration is:
     ([this selected]
       (-> this p/impl (p/selected (p/impl selected))))))
 
-; Expose protocol functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Expose Protocol Functions
 
 (defn children [c] (p/children c))
 (defn add [c child] (p/add c child))
@@ -114,14 +133,17 @@ And each attr-declaration is:
 
 (defn selected [c] (p/selected c))
 
-(defn component?
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Private supporting functions
+
+(defn- component?
   "Returns true if its arg is a component."
   [x]
   (or (instance? UIComponent x)
       (and (vector? x)
            (isa? h/hierarchy (first x) :component))))
 
-(defn hiccup->component
+(defn- hiccup->component
   "Used to convert huiccup syntax declarations to map components.
 x should be a vector with the content [tag-keyword attrs-map? children*]"
   [x]
@@ -131,7 +153,7 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
           tag 
           (if-not (component? attrs) attrs {})
           (mapv hiccup->component (if (component? attrs) children ch))))
-      x))
+      (update-in x [:content] (partial mapv hiccup->component))))
 
 (def ^:private initialized?
   "Checks if the component is initialized."
@@ -143,9 +165,17 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
   (let [content   (map init content)
         component (assoc component :content [])]
     (reduce p/add component content)))
-(def genid
-  "Generates a unique id string."
-  #(name (gensym)))
+
+(defn- set-attrs
+  "Called when initializing a component. Gets all defined
+attributes and sets their corresponding values."
+  [{attrs :attrs :as component}]
+  (let [f (fn [c [k v]]
+            (set-attr c k (if (component? v) (init v) v)))]
+    (reduce f component attrs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Initialization and Attributes Access
 
 (defn set-attr
   "Uses the set-attr multimethod to set the attribute value 
@@ -159,14 +189,6 @@ as well."
   "Returns the attribute k from the component."
   [c k]
   (-> c :attrs k))
-
-(defn- set-attrs
-  "Called when initializing a component. Gets all defined
-attributes and sets their corresponding values."
-  [{attrs :attrs :as component}]
-  (let [f (fn [c [k v]]
-            (set-attr c k (if (component? v) (init v) v)))]
-    (reduce f component attrs)))
 
 (defn init
   "Initializes a component, creating the implementation for 
@@ -183,6 +205,10 @@ each child and the attributes that have a component as a value."
                     init-content)
             ctrl  (p/abstract ctrl c)]
         c))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Finding and Updating
 
 (defn find
   "Returns the first component found."
@@ -207,7 +233,8 @@ using (update-in root path-to-component f args)."
   {:pre [(instance? clojure.lang.Atom root)]}
   (apply swap! root update selector f args))
 
-; Event
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Event Handling
 
 (defn event-handler
   "Builds a function that swap!s the x using
@@ -219,9 +246,16 @@ f, which should take a value and an event."
   ([f x]
     (partial (event-handler f) x)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Utils
+
+(def genid
+  "Generates a unique id string."
+  #(name (gensym)))
+
 (defmacro with-id
   "Assigns a unique id to the component which can be
 used in the component's definition (e.g. in event handlers)."
   [x component]
   `(let [~x (genid)]
-    (assoc-in (hiccup->component ~component) [:attrs :id] ~x)))
+    (assoc-in (#'lab.ui.core/hiccup->component ~component) [:attrs :id] ~x)))

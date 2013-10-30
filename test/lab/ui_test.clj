@@ -3,21 +3,21 @@
   (:use lab.ui.core
         [clojure.test :only [deftest is are run-tests testing]]))
 
-(def tab1 (hiccup->component [:tab {:id "2"}]))
-(def tab2 (hiccup->component [:tab {:id "3"}]))
+(def tab1 [:tab {:id "2"}])
+(def tab2 [:tab {:id "3"}])
 
-(def ts (hiccup->component [:tabs {:id "0"} tab1 tab2]))
+(def ts [:tabs {:id "0"} tab1 tab2])
 
-(def tr (hiccup->component [:tree {:id "1"}]))
+(def tr [:tree {:id "1"}])
 
-(def ui-test (hiccup->component [:window ts tr]))
+(def ui-test (#'lab.ui.core/hiccup->component [:window ts tr]))
 
 (deftest find-in-ui
   (testing "Find by id"
-    (are [x y] (= x (find ui-test y))
-      ts   :#0
-      tab1 :#2
-      tr   :#1
+    (are [x y] (= x (-> ui-test (find y) (get-attr :id)))
+      "0"   :#0  
+      "2"   :#2
+      "1"   :#1
       nil  :#9)))
 
 (deftest update-ui

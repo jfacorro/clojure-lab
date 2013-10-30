@@ -4,7 +4,7 @@
   (:use lab.ui.select
         [clojure.test :only [deftest is are run-tests testing]]))
 
-(def root (ui/hiccup->component
+(def root (#'lab.ui.core/hiccup->component
             [:window {:id "main"}
                      [:label {:id "1" :size [100 100]}]
                      [:button {:id "2"} 

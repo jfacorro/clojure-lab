@@ -82,21 +82,6 @@
      :screen-loc   (as-> (.getLocationOnScreen this) p [(.getX p) (.getY p)])
      :point        (as-> (.getPoint this) p [(.getX p) (.getY p)])}))
 
-;; Attributes
-
-#_(defmethod p/set-attr :default
-  [c k args]
-  "Fall-back method implementation for properties not specified 
-  for the component in defattributes.
-  Tries to set the property by building a function setter
-  and calling it with the supplied args."
-  (let [ctrl  (p/impl c)
-        args  (if (sequential? args) args [args])
-        args  (map #(if (ui/component? %) (p/impl %) %) args)
-        n     (count args)]
-    (apply (util/setter! (class ctrl) k n) ctrl args)
-    c))
-
 ;; Definition of attribute setters for each kind
 ;; of component in the hierarchy.
 (ui/defattributes
