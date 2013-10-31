@@ -147,6 +147,14 @@ associated to it."
                                      [:tabs {:id "right-controls"}]]]
                     [:tabs {:id "bottom-controls"}]]])
 
+(defn- toggle-fullscreen
+  "Toggles between fullscreen and non fullscreen mode."
+  [app evt]
+  (let [ui    (:ui app)
+        full? (-> (ui/find @ui :#main) (ui/get-attr :fullscreen))]
+    (ui/update! ui :#main ui/set-attr :fullscreen (not full?)))
+  app)
+
 (defn- open-document-tree
   "Handler for the click event of an item in the tree."
   [app {:keys [source click-count]}]
@@ -180,7 +188,8 @@ associated to it."
               {:category "File" :name "New" :fn #'lab.app/new-document :keystroke "ctrl N"}
               {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
               {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"}
-              {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"})])
+              {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"}
+              {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
 
 (defn- init!
   "Expects an atom containing the app. Builds the basic UI and 

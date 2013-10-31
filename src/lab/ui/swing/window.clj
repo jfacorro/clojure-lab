@@ -8,6 +8,8 @@
 
 (ui/defattributes
   :window
+    (:fullscreen [c _ v]
+      (util/fullscreen (when v (p/impl c))))
     (:title [c _ v]
       (.setTitle (p/impl c) v)
       c)

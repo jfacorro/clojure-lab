@@ -1,12 +1,12 @@
 (ns lab.ui.swing.util
-  (:import [java.awt Color Font Toolkit]
-           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon]
-           [javax.swing.text StyleConstants])
   (:use    [lab.ui.protocols :only [initialize set-attr]])
   (:require [lab.ui.core :as ui]
             [lab.util :as util]
             [lab.ui.protocols :as uip]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import [java.awt Color Font Toolkit GraphicsEnvironment]
+           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon]
+           [javax.swing.text StyleConstants]))
 
 (def toolkit (Toolkit/getDefaultToolkit))
 
@@ -101,7 +101,6 @@
   "Load an image from a resource file."
   [rsrc]
   (->> rsrc image (ImageIcon.)))
-  
 
 ;; Border
 
@@ -123,7 +122,19 @@
       (BorderFactory/createTitledBorder x)))
 
 ;; KeyStroke
+
 (defn keystroke
   "Returns a swing key stroke based on the string provided."
   [s]
   (KeyStroke/getKeyStroke s))
+
+;; Fullscreen
+
+(def device (-> (GraphicsEnvironment/getLocalGraphicsEnvironment) .getScreenDevices first))
+
+(defn fullscreen
+  "Sets the window that will show in fullscreen mode. If the argument
+is null, no window is set and the current one (if any) shows fullscreen
+no more."
+  [window]
+  (.setFullScreenWindow device window))
