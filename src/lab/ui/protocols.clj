@@ -9,11 +9,6 @@
   (add-binding [this ks f] "Adds a key binding to this component.")
   (remove-binding [this ks] "Removes a key binding from this component."))
 
-(defprotocol Visible
-  (visible? [this])
-  (hide [this])
-  (show [this]))
-
 (defprotocol Abstract
   (impl [this] [this implementation] "Gets or sets the implementation for component."))
 

@@ -25,8 +25,8 @@
 
 (defn- open-document-menu
   [app evt]
-  (let [file-dialog   (ui/init [:file-dialog {:type :open}])
-        [result file] (ui/show file-dialog)]
+  (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
+        [result file] (ui/get-attr file-dialog :result)]
     (if file
       (#'lab.app/open-document app (.getCanonicalPath file))
       app)))
@@ -72,8 +72,8 @@ associated to it."
   [doc]
   (if (doc/path doc)
     doc
-    (let [file-dialog   (ui/init [:file-dialog {:type :save}])
-          [result file] (ui/show file-dialog)]
+    (let [file-dialog   (ui/init [:file-dialog {:type :save :visible true}])
+          [result file] (ui/get-attr file-dialog :result)]
       (if file
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
@@ -133,6 +133,7 @@ associated to it."
 (defn build-main [app-name]
   [:window {:id     "main"
             :title   app-name
+            :visible true
             :size    [700 500]
             :maximized true
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
@@ -198,9 +199,7 @@ adds it to the app under the key :ui."
   (let [ui (atom (-> (:name @app) build-main ui/init))]
     (swap! app assoc :ui ui)
     
-    (add-component @app :#left-controls "Files" (file-tree @app))
-    ; comment out when testing == pretty bad workflow
-    (ui/show @ui)))
+    (add-component @app :#left-controls "Files" (file-tree @app))))
 
 (plugin/defplugin lab.core.ui
   "Creates the UI for the application and hooks into
@@ -221,7 +220,6 @@ basic file operations."
                    :text-editor {:background 0x555555
                                  :font       [:name "Monospaced.plain" :size 14]}})
   (css/apply-stylesheet x stylesheet)
-  (ui/show @ui)
   nil)
 
 )

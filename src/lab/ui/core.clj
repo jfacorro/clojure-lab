@@ -43,20 +43,21 @@ from its args.
           (~c x#))))))
 
 (defmacro defattributes
-  "Convenience macro to define attribute setters for each
-component type.
-The method implemented always returns the first argument which 
-is supposed to be the component itself.
+  "Convenience macro to define attribute setters for each component type. 
+
+The method implemented returns the first argument (which is the component 
+itself), UNLESS the ^:modify metadata flag is true for the argument vector, 
+in which case the value from the body evaluation is returned.
 
   *attrs-declaration
   
 Where each attrs-declaration is:
- 
+
   component-keyword *attr-declaration
     
 And each attr-declaration is:
 
-  (attr-name [c k v] & body)"
+  (attr-name [c attr v] & body)"
   [& body]
   (let [comps (->> body 
                 (partition-by keyword?) 
@@ -64,10 +65,11 @@ And each attr-declaration is:
                 (map #(apply concat %)))
         f     (fn [tag & mthds]
                 (for [[attr [c _ _ :as args] & body] mthds]
-                  `(defmethod p/set-attr [~tag ~attr]
-                    ~args 
-                    ~@body 
-                    ~c)))]
+                  (let [x (gensym)]
+                    `(defmethod p/set-attr [~tag ~attr]
+                      ~args
+                      (let [~x (do ~@body)]
+                        ~(if (-> args meta :modify) x c))))))]
     `(do ~@(mapcat (partial apply f) comps))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -79,14 +81,6 @@ And each attr-declaration is:
     (-> component meta :impl))
   (impl [component implementation]
     (vary-meta component assoc :impl implementation))
-
-  p/Visible
-  (visible? [this]
-    (-> this p/impl p/visible?))
-  (hide [this]
-    (-> this p/impl p/hide))
-  (show [this]
-    (-> this p/impl p/show))
 
   p/Selected
   (selected [this]
@@ -123,10 +117,6 @@ And each attr-declaration is:
 (defn children [c] (p/children c))
 (defn add [c child] (p/add c child))
 (defn remove [c child] (p/remove c child))
-
-(defn show [c] (p/show c))
-(defn hide [c] (p/hide c))
-(defn visible? [c] (p/visible? c))
 
 (defn selected [c] (p/selected c))
 

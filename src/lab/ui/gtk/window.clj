@@ -20,6 +20,8 @@
 
 (ui/defattributes
   :window
+    (:visible [c _ v]
+      (if v (.showAll (p/impl c))))
     (:title [c _ v]
       (.setTitle (p/impl c) v))
     (:menu [c _ v]
@@ -28,11 +30,6 @@
     (:icons [c _ v]
       (let [[icon & _] (map util/image v)]
         (.setIcon (p/impl c) icon))))
-
-(extend-protocol p/Visible
-  Window
-  (show [this]
-    (.showAll this)))
 
 (extend-protocol p/Implementation
   Window

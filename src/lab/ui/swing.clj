@@ -17,11 +17,6 @@
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
-(extend-protocol p/Visible
-  java.awt.Container
-  (visible? [this] (.isVisible this))
-  (hide [this] (.setVisible this false))
-  (show [this] (.setVisible this true)))
   
 (extend-protocol p/Implementation
   JComponent
@@ -96,11 +91,12 @@
       (.setBackground ^JComponent (p/impl c) (util/color v)))
     (:foreground [c _ v]
       (.setForeground ^JComponent (p/impl c) (util/color v)))
-    (:font [c _ value]
-      (.setFont ^JComponent (p/impl c) (util/font value)))
-    (:size [c attr [w h :as value]]
+    (:font [c _ v]
+      (.setFont ^JComponent (p/impl c) (util/font v)))
+    (:size [c attr [w h :as v]]
       (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
-
+    (:visible [c _ v]
+      (.setVisible (p/impl c) v))
     ; events
     (:on-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []
