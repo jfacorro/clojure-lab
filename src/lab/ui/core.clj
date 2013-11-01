@@ -17,9 +17,9 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
     show)"
   (:refer-clojure :exclude [find remove])
   (:require [lab.util :as util]
+            [lab.ui.protocols :as p]
             [lab.ui.select :as sel]
-            [lab.ui.hierarchy :as h]
-            [lab.ui.protocols :as p]))
+            [lab.ui.hierarchy :as h]))
 
 (declare init initialized? set-attr)
 
@@ -73,10 +73,30 @@ And each attr-declaration is:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Abstract UI Component record
 
-(defrecord UIComponent [tag attrs content])
+(defrecord UIComponent [tag attrs content]
+  p/Abstract
+  (impl [component]
+    (-> component meta :impl))
+  (impl [component implementation]
+    (vary-meta component assoc :impl implementation))
 
+  p/Visible
+  (visible? [this]
+    (-> this p/impl p/visible?))
+  (hide [this]
+    (-> this p/impl p/hide))
+  (show [this]
+    (-> this p/impl p/show))
+
+  p/Selected
+  (selected [this]
+      (p/selected (p/impl this)))
+  (selected [this selected]
+      (p/selected (p/impl this) (p/impl selected))))
+
+;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
-  p/Component ; Extend Clojure maps so that adding children is transparent.
+  p/Component 
   (children [this]
     (:content this))
   (add [this child]
@@ -96,30 +116,7 @@ And each attr-declaration is:
       (p/impl this (p/add-binding i ks f))))
   (remove-binding [this ks]
     (let [i (p/impl this)]
-      (p/impl this (p/remove-binding i ks))))
-
-  p/Abstract
-  (impl
-    ([component]
-      (-> component meta :impl))
-    ([component implementation]
-      (vary-meta component assoc :impl implementation)))
-
-  p/Visible
-  (visible? [this]
-    (-> this p/impl p/visible?))
-  (hide [this]
-    (-> this p/impl p/hide))
-  (show [this]
-    (-> this p/impl p/show))
-
-  p/Selected
-  (selected
-    ([this]
-      (-> this p/impl p/selected))
-    ([this selected]
-      (-> this p/impl (p/selected (p/impl selected))))))
-
+      (p/impl this (p/remove-binding i ks)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 
