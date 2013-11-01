@@ -141,7 +141,8 @@ associated to it."
             [:split {:orientation :vertical
                      :resize-weight 1
                      :border :none}
-                    [:split {:resize-weight 0}
+                    [:split {:resize-weight 0
+                             :divider-location 150}
                             [:tabs {:id "left-controls"}]
                             [:split {:resize-weight 1}
                                      [:tabs {:id "documents"}]

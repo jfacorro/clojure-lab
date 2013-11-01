@@ -41,7 +41,7 @@
   (:type [c _ v])
   (:visible ^:modify [c _ v]
     (if (not v)
-      (.setVisble (impl c) v)
+      (.setVisible (impl c) v)
       (->> c 
         file-dialog-open
         (apply file-dialog-result)
