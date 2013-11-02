@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [remove])
   (:import [javax.swing UIManager JComponent AbstractAction]
            [java.awt Dimension]
-           [java.awt.event MouseAdapter])
+           [java.awt.event MouseAdapter MouseEvent
+                           FocusAdapter FocusEvent])
   (:require [lab.ui.protocols :as p]
             [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -69,13 +70,18 @@
   java.util.EventObject
   (to-map [this]
     {:source (.getSource this)})
-  java.awt.event.MouseEvent
+  MouseEvent
   (to-map [this]
     {:source       (.getSource this)
      :button       (.getButton this)
      :click-count  (.getClickCount this)
      :screen-loc   (as-> (.getLocationOnScreen this) p [(.getX p) (.getY p)])
-     :point        (as-> (.getPoint this) p [(.getX p) (.getY p)])}))
+     :point        (as-> (.getPoint this) p [(.getX p) (.getY p)])})
+  FocusEvent
+  (to-map [this]
+    {:source    (.getSource this)
+     :previous  (.getOppositeComponent this)
+     :temporary (.isTemporary this)}))
 
 ;; Definition of attribute setters for each kind
 ;; of component in the hierarchy.
@@ -98,8 +104,15 @@
     (:visible [c _ v]
       (.setVisible (p/impl c) v))
     ; events
+    (:on-focus [c _ handler]
+      (let [listener (proxy [FocusAdapter] []
+                       (focusGained [e] (handler (p/to-map e))))]
+        (.addFocusListener (p/impl c) listener)))
+    (:on-blur [c _ handler]
+      (let [listener (proxy [FocusAdapter] []
+                       (focusLost [e] (handler (p/to-map e))))]
+        (.addFocusListener (p/impl c) listener)))
     (:on-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []
-                       (mousePressed [e]
-                         (-> e p/to-map handler)))]
+                       (mousePressed [e] (handler (p/to-map e))))]
         (.addMouseListener ^JComponent (p/impl c) listener))))
