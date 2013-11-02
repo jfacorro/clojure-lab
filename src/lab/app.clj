@@ -47,7 +47,7 @@ default configuration."
   "Changes the current document to the one with the
 specified id."
   [{documents :documents :as app} doc]
-    (or (and doc (assoc app :current-document doc))
+    (or (and doc (documents doc) (assoc app :current-document doc))
         app))
 
 (defn find-doc-by
