@@ -33,6 +33,7 @@
 
 (ui/defattributes
   :text-editor
+    (:doc [c _ _] c)
     (:text [c _ v]
       (.setText (impl c) v)
       c)

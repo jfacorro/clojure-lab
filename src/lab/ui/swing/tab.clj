@@ -1,7 +1,8 @@
 (ns lab.ui.swing.tab
-  (:import  [javax.swing JTabbedPane JScrollPane])
-  (:use     [lab.ui.protocols :only [Component abstract impl Selected selected]])
-  (:require [lab.ui.core :as ui]))
+  (:use     [lab.ui.protocols :only [Component abstract impl Selected selected to-map]])
+  (:require [lab.ui.core :as ui])
+  (:import  [javax.swing JTabbedPane JScrollPane]
+            [javax.swing.event ChangeListener ChangeEvent]))
 
 (ui/definitializations
   :tabs        JTabbedPane
@@ -30,8 +31,9 @@
   JTabbedPane
   (selected 
     ([this]
-      (let [selected (.getComponentAt this (.getSelectedIndex this))]
-        (abstract selected)))
+      (let [index (.getSelectedIndex this)]
+        (when (<= 0 index)
+          (abstract (.getComponentAt this index)))))
     ([this index]
       (.setSelectedIndex this index))))
 
@@ -39,5 +41,10 @@
   :tab
   (:title [c _ _] c)
   (:tool-tip [c _ _] c)
-  (:doc [c _ _] c)
-  (:header [c _ _] c))
+  (:header [c _ _] c)
+
+  :tabs
+  (:on-tab-change [c _ handler]
+    (let [listener (proxy [ChangeListener] []
+                     (stateChanged [e] (handler (to-map e))))]
+      (.addChangeListener (impl c) listener))))
