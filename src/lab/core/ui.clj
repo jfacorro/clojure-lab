@@ -13,18 +13,29 @@
 (declare document-tab)
 
 (defn- current-document-tab [ui]
-  (-> @ui (ui/find :#documents) ui/selected))
+  "Returns the currently selected document tab."
+  (-> @ui
+    (ui/find :#documents)
+    ui/selected))
+
+(defn- current-text-editor
+  "Returns the currently selected text-editor."
+  [ui]
+  (ui/find (current-document-tab ui) :text-editor))
 
 ; Open
 
-(defn- open-document-ui
-  "Used by the open and new commands."
+(defn- open-document-ui!
+  "Adds a new tab to the documents tab container. This is used by both 
+the open and new commands."
   [app doc]
   (as-> (:ui app) ui
     (ui/update! ui :#documents ui/add (document-tab app doc))))
 
 (defn- open-document-menu
-  [app evt]
+  "Opens a file selection dialog for the user to choose a file
+and call the app's open-document function."
+  [app _]
   (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
         [result file] (ui/get-attr file-dialog :result)]
     (if file
@@ -32,19 +43,20 @@
       app)))
 
 (defn- open-document-hook
+  "Adds a new tab with the open document."
   [f app path]
   (let [app (f app path)
         doc (lab.app/current-document app)]
-    (open-document-ui app doc)
+    (open-document-ui! app doc)
     app))
 
 ; New
 
 (defn- new-document-hook
-  [f app & evt]
+  [f app & _]
   (let [app  (f app)
         doc  (lab.app/current-document app)]
-    (open-document-ui app doc)
+    (open-document-ui! app doc)
     app))
 
 ; Close
@@ -57,18 +69,21 @@
 (defn- close-document-hook
   "Finds the currently selected tab, removes it and closes the document
 associated to it."
-  [f app & evt]
-  (let [ui    (:ui app)
-        tab   (current-document-tab ui)
-        doc   (ui/get-attr tab :doc)
-        app   (f app @doc)]
-    (ui/update! ui :#documents ui/remove tab)
-    app))
+  [f app & _]
+  (let [ui     (:ui app)
+        tab    (current-document-tab ui)
+        editor (current-text-editor ui)
+        doc    (ui/get-attr editor :doc)]
+    (if doc
+      (do
+        (ui/update! ui :#documents ui/remove tab)
+        (f app @doc))
+      app)))
 
 ; Save
 
 (defn- assign-path
-  "If the document doesn't have a path, get one from the user."
+  "When saving, if the document doesn't have a path, get one from the user."
   [doc]
   (if (doc/path doc)
     doc
@@ -79,13 +94,22 @@ associated to it."
         doc))))
 
 (defn- save-document-hook
-  [f app & evt]
-  (let [ui    (:ui app)
-        tab   (current-document-tab ui)
-        doc   (ui/get-attr tab :doc)]
+  [f app & _]
+  (let [ui     (:ui app)
+        editor (current-text-editor ui)
+        doc    (ui/get-attr editor :doc)]
     (swap! doc assign-path)
     (when (doc/path @doc)
       (f app doc))))
+
+; Switch document
+
+(defn- switch-document-ui [app evt]
+  (let [ui     (:ui @app)
+        editor (current-text-editor ui)
+        doc    (ui/get-attr editor :doc)]
+    ; (swap! app #'lab.app/switch-document doc)
+    (println (:current-document @app))))
 
 ; Insert
 
@@ -109,7 +133,8 @@ associated to it."
   (f app keymap))
 
 (defn- create-text-editor [app doc]
-  [:text-editor {:text        (doc/text @doc)
+  [:text-editor {:doc         doc
+                 :text        (doc/text @doc)
                  :border      :none
                  :background  0x666666
                  :foreground  0xFFFFFF
@@ -119,8 +144,7 @@ associated to it."
 
 (defn- document-tab [app doc]
   (ui/with-id id
-    [:tab {:doc      doc
-           :tool-tip (doc/path @doc)
+    [:tab {:tool-tip (doc/path @doc)
            :header   [:panel {:transparent true}
                              [:label {:text (doc/name @doc)}]
                              [:button {:icon         "close-tab.png"
@@ -130,9 +154,9 @@ associated to it."
            :border    :none}
            (create-text-editor app doc)]))
 
-(defn build-main [app-name]
+(defn app-window [app]
   [:window {:id     "main"
-            :title   app-name
+            :title   (:name @app)
             :visible true
             :size    [700 500]
             :maximized true
@@ -145,13 +169,15 @@ associated to it."
                              :divider-location 150}
                             [:tabs {:id "left-controls"}]
                             [:split {:resize-weight 1}
-                                     [:tabs {:id "documents"}]
+                                     [:tabs {:id "documents"
+                                             :on-tab-change (partial #'switch-document-ui app)
+                                             }]
                                      [:tabs {:id "right-controls"}]]]
                     [:tabs {:id "bottom-controls"}]]])
 
 (defn- toggle-fullscreen
   "Toggles between fullscreen and non fullscreen mode."
-  [app evt]
+  [app _]
   (let [ui    (:ui app)
         full? (-> (ui/find @ui :#main) (ui/get-attr :fullscreen))]
     (ui/update! ui :#main ui/set-attr :fullscreen (not full?)))
@@ -197,7 +223,7 @@ associated to it."
   "Expects an atom containing the app. Builds the basic UI and 
 adds it to the app under the key :ui."
   [app]
-  (let [ui (atom (-> (:name @app) build-main ui/init))]
+  (let [ui (atom (-> app app-window ui/init))]
     (swap! app assoc :ui ui)
     
     (add-component @app :#left-controls "Files" (file-tree @app))))
