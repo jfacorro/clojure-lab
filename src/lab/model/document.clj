@@ -42,7 +42,7 @@
 
 ;; Document
 
-(defrecord Document [name path modified buffer alternates])
+(defrecord Document [name path modified buffer])
 
 (defn- default-buffer
   "Returns a buffer implementation."
