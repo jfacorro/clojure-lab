@@ -72,7 +72,7 @@ specified id."
   "Returns the document that has the supplied path."
   [app x]
   (let [x (io/file x)]
-    (find-doc-by app #(-> % doc/file (same-file? x)))))
+    (find-doc-by app #(same-file? (doc/file %) x))))
 
 (defn new-document 
   "Creates a new document, adds it to the document
@@ -103,7 +103,7 @@ documents collection."
     (when doc
       (doc/close doc))
     (-> app
-      (update-in [:documents] (partial disj #{doc}))
+      (update-in [:documents] #(disj % doc))
       (assoc :current-document current))))
 
 (defn save-document
