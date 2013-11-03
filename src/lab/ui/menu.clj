@@ -1,5 +1,6 @@
 (ns lab.ui.menu
-  (:require [lab.ui [core :as ui]
+  (:require [lab.util :as util]
+            [lab.ui [core :as ui]
                     [select :as ui.sel]]))
 
 (defn- menu-path
@@ -36,7 +37,7 @@
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (if separator
                     [:menu-separator]
-                    [:menu-item {:text name :on-click (ui/event-handler fn app) :keystroke keystroke}])
+                    [:menu-item {:text name :on-click (util/event-handler fn app) :keystroke keystroke}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector ui/add item)]
      (ui/set-attr ui :menu menu-bar)))

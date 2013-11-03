@@ -98,3 +98,17 @@
   (let [clazz   (class obj)
         members (->> (r/reflect clazz) :members (filter #(and (no-args? %) (getter? %))))]
     (into {} (map (partial access obj) members))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Event Handling
+
+(defn event-handler
+  "Builds a function that swap!s the x using
+f, which should take a value and an event."
+  ([f]
+    (fn [x evt]
+      (assert (instance? clojure.lang.IRef x) (str "x should be a reference. f: " f " - event: " (class evt)))
+      (swap! x f evt)))
+  ([f x]
+    (partial (event-handler f) x)))

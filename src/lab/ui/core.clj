@@ -118,7 +118,9 @@ And each attr-declaration is:
 (defn add [c child] (p/add c child))
 (defn remove [c child] (p/remove c child))
 
-(defn selected [c] (p/selected c))
+(defn selected 
+  ([c] (p/selected c))
+  ([c s] (p/selected c s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Private supporting functions
@@ -219,19 +221,6 @@ using (update-in root path-to-component f args)."
   [root selector f & args]
   {:pre [(instance? clojure.lang.Atom root)]}
   (apply swap! root update selector f args))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Event Handling
-
-(defn event-handler
-  "Builds a function that swap!s the x using
-f, which should take a value and an event."
-  ([f]
-    (fn [x evt]
-      (assert (instance? clojure.lang.IRef x) (str "x should be a reference. f: " f " - event: " (class evt)))
-      (swap! x f evt)))
-  ([f x]
-    (partial (event-handler f) x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utils
