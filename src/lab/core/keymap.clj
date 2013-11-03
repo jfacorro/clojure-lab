@@ -38,7 +38,7 @@ is nil the other is returned."
 
 {:name     'keymap-name
  :type     :global ; or :lang or :local
- :binding  {"ctrl O" {:category "File" :name "Open" :fn #'lab.app/open-document :keystroke "ctrl O"}}}
+ :binding  {"ctrl O" {:category "File" :name "Open" :fn #'lab.core/open-document :keystroke "ctrl O"}}}
 
 (keymap :catita :global
   {:category "File" :name "Open" :fn #'keymap :keystroke "ctrl O"}

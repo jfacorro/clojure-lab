@@ -1,6 +1,7 @@
 (ns lab.core.ui
   "DSL to abstract the UIcomponents with Clojure data structures."
-  (:require [lab.ui [core :as ui]
+  (:require [lab.core :as lab]
+            [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [tree :as tree]
                     [menu :as menu]
@@ -39,14 +40,14 @@ and call the app's open-document function."
   (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
         [result file] (ui/get-attr file-dialog :result)]
     (if file
-      (#'lab.app/open-document app (.getCanonicalPath file))
+      (#'lab/open-document app (.getCanonicalPath file))
       app)))
 
 (defn- open-document-hook
   "Adds a new tab with the open document."
   [f app path]
   (let [app (f app path)
-        doc (lab.app/current-document app)]
+        doc (lab/current-document app)]
     (open-document-ui! app doc)
     app))
 
@@ -55,7 +56,7 @@ and call the app's open-document function."
 (defn- new-document-hook
   [f app & _]
   (let [app  (f app)
-        doc  (lab.app/current-document app)]
+        doc  (lab/current-document app)]
     (open-document-ui! app doc)
     app))
 
@@ -109,7 +110,7 @@ associated to it."
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
         doc    (ui/get-attr editor :doc)]
-    ;(swap! app #'lab.app/switch-document doc)
+    ;(swap! app #'lab/switch-document doc)
     (println (:current-document @app))))
 
 ; Insert
@@ -190,7 +191,7 @@ associated to it."
   (when (= click-count 2)
     (let [^java.io.File file (ui/selected source)]
       (when-not (.isDirectory file)
-        (lab.app/open-document app (.getCanonicalPath file))))))
+        (lab/open-document app (.getCanonicalPath file))))))
 
 (defn- file-tree [app]
   [:tab {:title "Files" :border :none}
@@ -206,18 +207,18 @@ associated to it."
 
 (def ^:private hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook
-   #'lab.app/new-document             #'new-document-hook
-   #'lab.app/open-document            #'open-document-hook
-   #'lab.app/save-document            #'save-document-hook
-   #'lab.app/close-document           #'close-document-hook})
+   #'lab/new-document             #'new-document-hook
+   #'lab/open-document            #'open-document-hook
+   #'lab/save-document            #'save-document-hook
+   #'lab/close-document           #'close-document-hook})
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
-              {:category "File" :name "New" :fn #'lab.app/new-document :keystroke "ctrl N"}
+              {:category "File" :name "New" :fn #'lab/new-document :keystroke "ctrl N"}
               {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
-              {:category "File" :name "Close" :fn #'lab.app/close-document :keystroke "ctrl W"}
-              {:category "File" :name "Save" :fn #'lab.app/save-document :keystroke "ctrl S"}
+              {:category "File" :name "Close" :fn #'lab/close-document :keystroke "ctrl W"}
+              {:category "File" :name "Save" :fn #'lab/save-document :keystroke "ctrl S"}
               {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
 
 (defn- init!

@@ -1,5 +1,5 @@
-(ns lab.app-test
-  (:use [lab.app :reload true]
+(ns lab.test.core
+  (:use [lab.core :reload true]
         [lab.test :only [->test ->is]]
         [clojure.test :only [deftest is run-tests use-fixtures]])
   (:require [clojure.java.io :as io]
