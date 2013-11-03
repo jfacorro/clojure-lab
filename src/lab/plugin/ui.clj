@@ -30,8 +30,15 @@
   "Adds a new tab to the documents tab container. This is used by both 
 the open and new commands."
   [app doc]
-  (as-> (:ui app) ui
+  (as-> (:ui @app) ui
     (ui/update! ui :#documents ui/add (document-tab app doc))))
+
+
+(defn- open-document
+  "Adds a new tab with the open document."
+  [app path]
+  (swap! app lab/open-document path)
+  (open-document-ui! app (lab/current-document @app)))
 
 (defn- open-document-menu
   "Opens a file selection dialog for the user to choose a file
@@ -40,25 +47,16 @@ and call the app's open-document function."
   (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
         [result file] (ui/get-attr file-dialog :result)]
     (if file
-      (#'lab/open-document app (.getCanonicalPath file))
+      (open-document app (.getCanonicalPath file))
       app)))
-
-(defn- open-document-hook
-  "Adds a new tab with the open document."
-  [f app path]
-  (let [app (f app path)
-        doc (lab/current-document app)]
-    (open-document-ui! app doc)
-    app))
 
 ; New
 
-(defn- new-document-hook
-  [f app & _]
-  (let [app  (f app)
-        doc  (lab/current-document app)]
-    (open-document-ui! app doc)
-    app))
+(defn- new-document
+  "Creates a new document and shows it in a new tab."
+  [app & _]
+  (swap! app lab/new-document)
+  (open-document-ui! app (lab/current-document @app)))
 
 ; Close
 
@@ -68,19 +66,17 @@ and call the app's open-document function."
         tab (ui/find @ui (str "#" id))]
     (ui/update! ui :#documents ui/remove tab)))
 
-(defn- close-document-hook
+(defn- close-document
   "Finds the currently selected tab, removes it and closes the document
 associated to it."
-  [f app & _]
-  (let [ui     (:ui app)
+  [app & _]
+  (let [ui     (:ui @app)
         tab    (current-document-tab ui)
         editor (current-text-editor ui)
         doc    (ui/get-attr editor :doc)]
-    (if doc
-      (do
-        (ui/update! ui :#documents ui/remove tab)
-        (f app @doc))
-      app)))
+    (when doc
+      (ui/update! ui :#documents ui/remove tab)
+      (swap! app lab/close-document doc))))
 
 ; Save
 
@@ -95,14 +91,14 @@ associated to it."
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
 
-(defn- save-document-hook
-  [f app & _]
+(defn- save-document
+  [app & _]
   (let [ui     (:ui app)
         editor (current-text-editor ui)
         doc    (ui/get-attr editor :doc)]
     (swap! doc assign-path)
     (when (doc/path @doc)
-      (f app doc))))
+      (swap! app lab/save-document doc))))
 
 ; Switch document
 
@@ -110,8 +106,7 @@ associated to it."
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
         doc    (ui/get-attr editor :doc)]
-    ;(swap! app #'lab/switch-document doc)
-    (println (:current-document @app))))
+    (swap! app lab/switch-document doc)))
 
 ; Insert
 
@@ -191,7 +186,7 @@ associated to it."
   (when (= click-count 2)
     (let [^java.io.File file (ui/selected source)]
       (when-not (.isDirectory file)
-        (lab/open-document app (.getCanonicalPath file))))))
+        (open-document app (.getCanonicalPath file))))))
 
 (defn- file-tree [app]
   [:tab {:title "Files" :border :none}
@@ -206,26 +201,22 @@ associated to it."
     (ui/update! (app :ui) selector ui/add component)))
 
 (def ^:private hooks
-  {#'lab.core.plugin/register-keymap! #'register-keymap-hook
-   #'lab/new-document             #'new-document-hook
-   #'lab/open-document            #'open-document-hook
-   #'lab/save-document            #'save-document-hook
-   #'lab/close-document           #'close-document-hook})
+  {#'lab.core.plugin/register-keymap! #'register-keymap-hook})
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
-              {:category "File" :name "New" :fn #'lab/new-document :keystroke "ctrl N"}
+              {:category "File" :name "New" :fn #'new-document :keystroke "ctrl N"}
               {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
-              {:category "File" :name "Close" :fn #'lab/close-document :keystroke "ctrl W"}
-              {:category "File" :name "Save" :fn #'lab/save-document :keystroke "ctrl S"}
+              {:category "File" :name "Close" :fn #'close-document :keystroke "ctrl W"}
+              {:category "File" :name "Save" :fn #'save-document :keystroke "ctrl S"}
               {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
   [app]
   (swap! app assoc :ui (atom (-> app app-window ui/init)))
-  (add-component @app :#left-controls "Files" (file-tree @app)))
+  (add-component @app :#left-controls "Files" (file-tree app)))
 
 (plugin/defplugin lab.core.ui
   "Creates the UI for the application and hooks into

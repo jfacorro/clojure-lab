@@ -109,6 +109,6 @@ f, which should take a value and an event."
   ([f]
     (fn [x evt]
       (assert (instance? clojure.lang.IRef x) (str "x should be a reference. f: " f " - event: " (class evt)))
-      (swap! x f evt)))
+      (f x evt)))
   ([f x]
     (partial (event-handler f) x)))
