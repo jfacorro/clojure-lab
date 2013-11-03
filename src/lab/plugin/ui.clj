@@ -1,4 +1,4 @@
-(ns lab.core.ui
+(ns lab.plugin.ui
   "DSL to abstract the UIcomponents with Clojure data structures."
   (:require [lab.core :as lab]
             [lab.ui [core :as ui]
