@@ -1,4 +1,4 @@
-(ns lab.history-test
+(ns lab.test.history
   (:refer-clojure :exclude [name replace])
   (:use [clojure.test :only [deftest testing is run-tests]]
         [lab.test :onle [->test ->is]]

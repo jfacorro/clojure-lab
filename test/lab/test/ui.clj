@@ -1,4 +1,4 @@
-(ns lab.ui-test
+(ns lab.test.ui
   (:refer-clojure :exclude [find remove])
   (:use lab.ui.core
         [clojure.test :only [deftest is are run-tests testing]]))
