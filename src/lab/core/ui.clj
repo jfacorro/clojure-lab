@@ -6,9 +6,9 @@
                     [menu :as menu]
                     [stylesheet :as css]
                     swing]
-             [lab.core [keymap :as km]
-                       [plugin :as plugin]]
-             [lab.model.document :as doc]))
+            [lab.core [keymap :as km]
+                      [plugin :as plugin]]
+            [lab.model.document :as doc]))
 
 (declare document-tab)
 
@@ -61,9 +61,10 @@ and call the app's open-document function."
 
 ; Close
 
-(defn close-tab
-  [ui id & _]
-  (let [tab  (ui/find @ui (str "#" id))]
+(defn close-document-button
+  [app id & _]
+  (let [ui  (:ui app)
+        tab (ui/find @ui (str "#" id))]
     (ui/update! ui :#documents ui/remove tab)))
 
 (defn- close-document-hook
@@ -108,7 +109,7 @@ associated to it."
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
         doc    (ui/get-attr editor :doc)]
-    ; (swap! app #'lab.app/switch-document doc)
+    ;(swap! app #'lab.app/switch-document doc)
     (println (:current-document @app))))
 
 ; Insert
@@ -127,7 +128,7 @@ associated to it."
     :global
       (let [ui    (:ui @app)
             cmds  (-> keymap :bindings vals)]
-        (swap! ui (partial reduce (partial menu/add-option app)) cmds))
+        (ui/update! ui [] (partial reduce (partial menu/add-option app)) cmds))
      :lang  nil
      :local nil)
   (f app keymap))
@@ -150,7 +151,7 @@ associated to it."
                              [:button {:icon         "close-tab.png"
                                        :border       :none
                                        :transparent  true
-                                       :on-click     (partial #'close-tab (:ui app) id)}]]
+                                       :on-click     (partial #'close-document-button app id)}]]
            :border    :none}
            (create-text-editor app doc)]))
 
@@ -220,13 +221,10 @@ associated to it."
               {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
 
 (defn- init!
-  "Expects an atom containing the app. Builds the basic UI and 
-adds it to the app under the key :ui."
+  "Builds the basic UI and adds it to the app under the key :ui."
   [app]
-  (let [ui (atom (-> app app-window ui/init))]
-    (swap! app assoc :ui ui)
-    
-    (add-component @app :#left-controls "Files" (file-tree @app))))
+  (swap! app assoc :ui (atom (-> app app-window ui/init)))
+  (add-component @app :#left-controls "Files" (file-tree @app)))
 
 (plugin/defplugin lab.core.ui
   "Creates the UI for the application and hooks into
