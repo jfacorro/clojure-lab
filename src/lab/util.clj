@@ -72,18 +72,29 @@
 
 (defmethod class-info :methods
   [c info]
-  (->> (#'clojure.reflect/declared-methods c) (sort-by :name)))
+  (->> (#'r/declared-methods c) (sort-by :name)))
 
 (defmethod class-info :constructors
   [c info]
-  (->> (#'clojure.reflect/declared-constructors c) (sort-by :name)))
+  (->> (#'r/declared-constructors c) (sort-by :name)))
 
 (defmethod class-info :fields
   [c info]
-  (->> (#'clojure.reflect/declared-fields c) (sort-by :name)))
+  (->> (#'r/declared-fields c) (sort-by :name)))
 
-(defn print-info [clazz info]
-  (p/print-table (class-info clazz info)))
+(defn print-info
+  ([clazz]
+    (doseq [[k v] (r/reflect clazz :ancestors true)]
+      (println "-----------------------------")
+      (println k)
+      (println "-----------------------------")
+      (case k
+        :ancestors (println v)
+        :members   (p/print-table (sort-by #(str (:declaring-class %) (type %)) v))
+        :bases     (println v)
+        :flags     (println v))))
+  ([clazz info]
+    (p/print-table (class-info clazz info))))
 
 (defn- access [o mthd]
   {(keyword (:name mthd)) (eval `(. ~o ~(:name mthd)))})

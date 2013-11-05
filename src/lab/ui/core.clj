@@ -217,7 +217,7 @@ using (update-in root path-to-component f args)."
           (sel/select-all root selector)))
 
 (defn update!
-  "Same as update but assumes root is an atom." 
+  "Same as update but assumes root is an atom."
   [root selector f & args]
   {:pre [(instance? clojure.lang.Atom root)]}
   (apply swap! root update selector f args))

@@ -8,7 +8,7 @@
 (ui/definitializations
   :button      JButton
   :label       JLabel)
-  
+
 (ui/defattributes
   :button
   (:text [c _ v]
@@ -19,7 +19,7 @@
     (.setIcon (p/impl c) (util/icon img)))
   (:on-click [c _ f]
     (let [action (reify ActionListener
-                    (actionPerformed [this e] (f e)))]
+                    (actionPerformed [this e] (f (p/to-map e))))]
       (.addActionListener (p/impl c) action)))
   :label
   (:text [c _ v]
