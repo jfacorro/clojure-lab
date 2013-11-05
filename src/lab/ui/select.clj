@@ -7,7 +7,7 @@
 
 (defn tag=
   "Returns a predicate that indicates whether its 
-  argument received has the specified tag name."
+  argument has the specified tag name."
   [tag]
   (with-meta #(= tag (:tag %)) {:tag tag}))
 
@@ -43,24 +43,24 @@
 
 (defn- id?
   "Returns true if the string begins with a
-  hash (#) sign which indicates its an id selector."
+hash (#) sign which indicates its an id selector."
   [s]
   (when-let [[x & _] (literal-selector? s)]
     (= x \#)))
 
 (defn- tag?
   "Returns true if the string doesn't begin with a
-  hash (#) and only has a single."
+hash (#)."
   [s]
   (when-let [[x & _] (literal-selector? s)]
     (not= x \#)))
 
 (defn- parse
   "Takes a selector (keyword) and parses it identifying
-  its type and value, returning it in a vector.
-  For example:
-    :#main [:id \"main\"]
-    :label [:tag :label]"
+its type and value, returning it in a vector.
+For example:
+  :#main [:id \"main\"]
+  :label [:tag :label]"
   [s]
   (cond (id? s)
           [:id (->> s name rest (apply str))]
@@ -85,6 +85,8 @@
         :id  (id= v)
         :tag (tag= v)
         :fn  v))))
+
+(def memoized-compile (memoize compile))
 
 (defn- find-path
   "Returns the path to the child component that satisfies (pred component)."
@@ -120,7 +122,7 @@
   [root selector]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])
-          predicates (map compile selector)
+          predicates (map memoized-compile selector)
           [path _]   (if (-> predicates count pos?)
                        (reduce chain [nil root] predicates)
                        [[] nil])]
@@ -137,25 +139,28 @@
              parent)
         path)))
 
+(defn- parents-match? [node [p & preds]]
+  (if p
+    (if (and node (p (zip/node node)))
+      (recur (zip/up node) preds)
+      false)
+    true))
+
 (defn- find-all-paths
   "Traverses the tree using a zipper and merging the results
   in a map where the component is the key and the zipper node
   is the value."
-  [node orig-preds [p & ps :as preds]]
-  (let [match?     (-> node zip/node p)
-        children?  (-> node zip/children seq)
-        rights?    (-> node zip/rights seq)
-        m1         (when (and match? (not ps))
-                     #{(path-from-root node)})
-        m2         (when (and match? ps children?)
-                     (find-all-paths (zip/down node) orig-preds ps))
-        m3         (when children?
-                     (find-all-paths (zip/down node) orig-preds orig-preds))
-        m4         (when rights?
-                     (set/union (find-all-paths (zip/right node) orig-preds preds)
-                                (find-all-paths (zip/right node) orig-preds orig-preds)))
-        result     (reduce set/union #{} [m1 m2 m3 m4])]
-    result))
+  [node preds]
+  (loop [node                node
+         [p & ps :as preds]  (reverse preds)
+         result              #{}]
+     (if (and p (not (zip/end? node)))
+       (let [x      (zip/node node)
+             result (if (and (p x) (parents-match? (zip/up node) ps))
+                      (conj result (path-from-root node))
+                      result)]
+         (recur (zip/next node) preds result))
+       result)))
 
 (defn select-all
   "Searches the whole component tree from the root and returns
@@ -163,10 +168,10 @@
   [root selector]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])
-          predicates (map compile selector)
+          predicates (map memoized-compile selector)
           root       (zip/zipper map? :content identity root)
           result     (if (-> predicates count pos?)
-                       (find-all-paths root predicates predicates)
+                       (find-all-paths root predicates)
                        #{[]})]
       result)))
   
