@@ -67,12 +67,15 @@
         (.remove am desc))
       this)))
 
-(defn- action-modifiers [n]
-  (->> {:alt   ActionEvent/ALT_MASK
-        :ctrl  ActionEvent/CTRL_MASK
-        :shift ActionEvent/SHIFT_MASK}
+(defn- flag-modifiers [m n]
+  (->> m 
     (filter #(pos? (bit-and n (second %))))
     (mapv first)))
+
+(def action-modifiers
+  {:alt   ActionEvent/ALT_MASK
+   :ctrl  ActionEvent/CTRL_MASK
+   :shift ActionEvent/SHIFT_MASK})
 
 (def mouse-button
   {MouseEvent/BUTTON1  :button-1
@@ -98,7 +101,7 @@
   ActionEvent
   (to-map [this]
     {:source    (.getSource this)
-     :modifiers (action-modifiers (.getModifiers this))}))
+     :modifiers (flag-modifiers action-modifiers (.getModifiers this))}))
 
 ;; Definition of attribute setters for each kind
 ;; of component in the hierarchy.
