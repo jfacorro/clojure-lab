@@ -3,7 +3,6 @@
   (:require [lab.core :as lab]
             [lab.ui [core :as ui]
                     [select :as ui.sel]
-                    [tree :as tree]
                     [menu :as menu]
                     [stylesheet :as css]
                     swing]
@@ -34,7 +33,7 @@ the open and new commands."
     (ui/update! ui :#documents ui/add (document-tab app doc))))
 
 
-(defn- open-document
+(defn open-document
   "Adds a new tab with the open document."
   [app path]
   (swap! app lab/open-document path)
@@ -136,7 +135,7 @@ associated to it."
   [:text-editor {:doc         doc
                  :text        (doc/text @doc)
                  :border      :none
-                 :background  0x666666
+                 :background  0x333333
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
                  :on-change   (partial #'text-editor-change app id doc)
@@ -182,26 +181,6 @@ associated to it."
     (ui/update! ui :#main ui/set-attr :fullscreen (not full?)))
   app)
 
-(defn- open-document-tree
-  "Handler for the click event of an item in the tree."
-  [app {:keys [source click-count]}]
-  (when (= click-count 2)
-    (let [^java.io.File file (ui/selected source)]
-      (when-not (.isDirectory file)
-        (open-document app (.getCanonicalPath file))))))
-
-(defn- file-tree [app]
-  [:tab {:title "Files" :border :none}
-        [:tree {:id      "file-tree"
-                :on-click (partial #'open-document-tree app)
-                :root     (tree/load-dir "/home/jfacorro/dev/clojure-lab/src/lab/ui/swing")}]])
-
-(defn add-component
-  "Add component to a tabs control."
-  [app selector title component]
-  (let [tab      [:tab {:title title :border :none} component]]
-    (ui/update! (app :ui) selector ui/add component)))
-
 (def ^:private hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook})
 
@@ -217,8 +196,7 @@ associated to it."
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
   [app]
-  (swap! app assoc :ui (atom (-> app app-window ui/init)))
-  (add-component @app :#left-controls "Files" (file-tree app)))
+  (swap! app assoc :ui (atom (-> app app-window ui/init))))
 
 (plugin/defplugin lab.core.ui
   "Creates the UI for the application and hooks into
@@ -226,19 +204,3 @@ basic file operations."
   :init!    #'init!
   :hooks    hooks
   :keymaps  keymaps)
-
-(comment
-
-(do
-  (def ui
-    (let [app (init {:name "Clojure Lab - UI dummy"})
-          ui  (app :ui)]
-      ui))
-  (def stylesheet {:split {:border :none}
-                   :tabs  {:border :none}
-                   :text-editor {:background 0x555555
-                                 :font       [:name "Monospaced.plain" :size 14]}})
-  (css/apply-stylesheet x stylesheet)
-  nil)
-
-)
