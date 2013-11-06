@@ -45,7 +45,8 @@ they exist."
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
     (add-hooks! hooks plugin-name)
     (init! app)
-    (register-keymaps! app keymaps)))
+    (register-keymaps! app keymaps)
+    app))
 
 (defn load-plugins!
   "Loads the plugins specified by calling the init! function
