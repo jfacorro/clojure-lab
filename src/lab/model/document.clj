@@ -16,29 +16,19 @@
 
 ;; Document operations
 
-(defrecord InsertText [offset s])
-(defrecord DeleteText [start end s])
-
-(extend-protocol h/Bijection
-  InsertText
+(defrecord InsertText [offset s]
+  h/Bijection
   (direct [this]
-    (let [offset (:offset this)
-          s      (:s this)]
-      #(insert % offset s)))
+    #(insert % offset s))
   (inverse [this]
-    (let [offset (:offset this)
-          n      (-> this :s count)]
-      #(delete % offset (+ offset n))))
+    #(delete % offset (+ offset (count s)))))
 
-  DeleteText
+(defrecord DeleteText [start end s]
+  h/Bijection
   (direct [this]
-    (let [start (:start this)
-          end   (:end this)]
-      #(delete % start end)))
+    #(delete % start end))
   (inverse [this]
-    (let [start (:start this)
-          s     (:s this)]
-      #(insert % start s))))
+    #(insert % start s)))
 
 ;; Document
 
