@@ -88,9 +88,10 @@ collection and sets it as the current-document."
 and adds it to the openened documents map."
   [app path]
   {:pre [path]}
-  (let [doc (atom (doc/document :path path))]
-    (if (find-doc-by-path app path)
-      (switch-document app doc)
+  (let [doc        (atom (doc/document :path path))
+        exists-doc (find-doc-by-path app path)]
+    (if exists-doc
+      (switch-document app exists-doc)
       (-> app
         (update-in [:documents] conj doc)
         (assoc :current-document doc)))))
