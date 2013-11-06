@@ -2,17 +2,9 @@
   (:import  [javax.swing JTextPane]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType]
             [java.awt.event ActionListener])
-  (:use     [lab.ui.protocols :only [impl Event to-map]])
+  (:use     [lab.ui.protocols :only [impl Event to-map Text]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util]))
-
-(defn- text-editor-init [c]
-  (proxy [JTextPane] []
-    (getScrollableTracksViewportWidth []
-      (if (ui/get-attr c :wrap)
-        true
-        (<= (.. this getUI (getPreferredSize this) width)
-            (.. this getParent getSize width))))))
 
 (def ^:private event-types
   {DocumentEvent$EventType/INSERT  :insert
@@ -22,21 +14,32 @@
 (extend-protocol Event
   DocumentEvent
   (to-map [this]
-    {:offset   (.getOffset this)
-     :length   (.getLength this)
-     :text     (.getText (.getDocument this) (.getOffset this) (.getLength this))
-     :type     (event-types (.getType this))
-     :document (.getDocument this)}))
+    (let [offset     (.getOffset this)
+          length     (.getLength this)
+          doc        (.getDocument this)
+          event-type (event-types (.getType this))
+          text       (when (not= event-type :remove)
+                       (.getText doc offset length))]
+      {:offset   offset
+       :length   length
+       :text     text
+       :type     event-type
+       :document doc})))
+
+(extend-protocol Text
+  JTextPane
+  (text [this]
+    (.getText this)))
 
 (ui/definitializations
-  :text-editor text-editor-init)
+  :text-editor JTextPane)
 
 (ui/defattributes
   :text-editor
-    (:doc [c _ _] c)
+    (:wrap [c _ _])
+    (:doc [c _ _])
     (:text [c _ v]
-      (.setText (impl c) v)
-      c)
+      (.setText (impl c) v))
     (:caret-color [c _ v]
       (.setCaretColor (impl c) (util/color v)))
     (:on-change [c _ handler]

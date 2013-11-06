@@ -21,6 +21,9 @@
 (defprotocol Event
   (to-map [this] "Serializes the event into a map."))
 
+(defprotocol Text
+  (text [this]))
+
 ;; Multi methods
 
 (defmulti initialize

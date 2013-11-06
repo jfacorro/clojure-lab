@@ -46,9 +46,8 @@ and call the app's open-document function."
   [app _]
   (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
         [result file] (ui/get-attr file-dialog :result)]
-    (if file
-      (open-document app (.getCanonicalPath file))
-      app)))
+    (when file
+      (open-document app (.getCanonicalPath file)))))
 
 ; New
 
@@ -62,7 +61,7 @@ and call the app's open-document function."
 
 (defn close-document-button
   [app id & _]
-  (let [ui  (:ui app)
+  (let [ui  (:ui @app)
         tab (ui/find @ui (str "#" id))]
     (ui/update! ui :#documents ui/remove tab)))
 
@@ -93,7 +92,7 @@ associated to it."
 
 (defn- save-document
   [app & _]
-  (let [ui     (:ui app)
+  (let [ui     (:ui @app)
         editor (current-text-editor ui)
         doc    (ui/get-attr editor :doc)]
     (swap! doc assign-path)
@@ -110,13 +109,16 @@ associated to it."
 
 ; Insert
 
-(defn text-editor-change [app doc evt]
-  (case (:type evt)
-    :insert (swap! doc doc/insert (:offset evt) (:text evt))
-    :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
-    :change nil))
+(defn text-editor-change [app id doc evt]
+  (let [ui     (:ui @app)
+        editor (ui/find @ui :text-editor)]
+    (case (:type evt)
+      :insert (swap! doc doc/insert (:offset evt) (:text evt))
+      :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
+      :change nil)
+    (assert (= (ui/text editor) (doc/text @doc)))))
 
-; Register
+; Register Keymap
 
 (defn- register-keymap-hook
   [f app keymap]
@@ -130,14 +132,15 @@ associated to it."
   (f app keymap))
 
 (defn- create-text-editor [app doc]
+  (ui/with-id id
   [:text-editor {:doc         doc
                  :text        (doc/text @doc)
                  :border      :none
                  :background  0x666666
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
-                 :on-change   (partial #'text-editor-change app doc)
-                 :font        [:name "Monospaced.plain" :size 14]}])
+                 :on-change   (partial #'text-editor-change app id doc)
+                 :font        [:name "Monospaced.plain" :size 14]}]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
@@ -167,15 +170,14 @@ associated to it."
                             [:tabs {:id "left-controls"}]
                             [:split {:resize-weight 1}
                                      [:tabs {:id "documents"
-                                             :on-tab-change (partial #'switch-document-ui app)
-                                             }]
+                                             :on-tab-change (partial #'switch-document-ui app)}]
                                      [:tabs {:id "right-controls"}]]]
                     [:tabs {:id "bottom-controls"}]]])
 
 (defn- toggle-fullscreen
   "Toggles between fullscreen and non fullscreen mode."
   [app _]
-  (let [ui    (:ui app)
+  (let [ui    (:ui @app)
         full? (-> (ui/find @ui :#main) (ui/get-attr :fullscreen))]
     (ui/update! ui :#main ui/set-attr :fullscreen (not full?)))
   app)

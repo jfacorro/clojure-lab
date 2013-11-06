@@ -86,7 +86,10 @@ And each attr-declaration is:
   (selected [this]
       (p/selected (p/impl this)))
   (selected [this selected]
-      (p/selected (p/impl this) (p/impl selected))))
+      (p/selected (p/impl this) (p/impl selected)))
+  
+  p/Text
+  (text [this] (p/text (p/impl this))))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -117,6 +120,8 @@ And each attr-declaration is:
 (defn children [c] (p/children c))
 (defn add [c child] (p/add c child))
 (defn remove [c child] (p/remove c child))
+
+(defn text [c] (p/text c))
 
 (defn selected 
   ([c] (p/selected c))
