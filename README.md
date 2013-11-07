@@ -66,14 +66,14 @@ Most of the features in the following list were extracted from the post [The Ide
 - Code generation (deftype/defrecord/extend-type/gen-class/proxy).
 - REPL
     - Configurable pretty-printing of output.
-    - Being able to �print� non-textual data, like images and such.
+    - Being able to `print` non-textual data, like images and such.
 - Static analysis
     - Symbol navigation (i.e. "Go to declaration").
     - Find usages.
 
 # License
 
-Copyright � 2013 Juan Facorro
+Copyright © 2013 Juan Facorro
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
