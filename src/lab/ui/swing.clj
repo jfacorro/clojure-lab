@@ -1,10 +1,5 @@
 (ns lab.ui.swing
   (:refer-clojure :exclude [remove])
-  (:import [javax.swing UIManager JComponent AbstractAction]
-           [java.awt Dimension]
-           [java.awt.event MouseAdapter MouseEvent
-                           FocusAdapter FocusEvent
-                           ActionEvent])
   (:require [lab.ui.protocols :as p]
             [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -15,7 +10,12 @@
                           menu
                           text
                           tab
-                          misc-control]))
+                          misc-control
+                          event])
+  (:import [javax.swing UIManager JComponent AbstractAction]
+           [java.awt Dimension]
+           [java.awt.event MouseAdapter FocusAdapter]))
+
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------
@@ -66,42 +66,6 @@
         (.remove im ks)
         (.remove am desc))
       this)))
-
-(defn- flag-modifiers [m n]
-  (->> m 
-    (filter #(pos? (bit-and n (second %))))
-    (mapv first)))
-
-(def action-modifiers
-  {:alt   ActionEvent/ALT_MASK
-   :ctrl  ActionEvent/CTRL_MASK
-   :shift ActionEvent/SHIFT_MASK})
-
-(def mouse-button
-  {MouseEvent/BUTTON1  :button-1
-   MouseEvent/BUTTON2  :button-2
-   MouseEvent/BUTTON3  :button-3})
-
-(extend-protocol p/Event
-  java.util.EventObject
-  (to-map [this]
-    {:source (.getSource this)})
-  MouseEvent
-  (to-map [this]
-    {:source       (.getSource this)
-     :button       (mouse-button (.getButton this))
-     :click-count  (.getClickCount this)
-     :screen-loc   (as-> (.getLocationOnScreen this) p [(.getX p) (.getY p)])
-     :point        (as-> (.getPoint this) p [(.getX p) (.getY p)])})
-  FocusEvent
-  (to-map [this]
-    {:source    (.getSource this)
-     :previous  (.getOppositeComponent this)
-     :temporary (.isTemporary this)})
-  ActionEvent
-  (to-map [this]
-    {:source    (.getSource this)
-     :modifiers (flag-modifiers action-modifiers (.getModifiers this))}))
 
 ;; Definition of attribute setters for each kind
 ;; of component in the hierarchy.
