@@ -150,7 +150,8 @@ associated to it."
                                        :border       :none
                                        :transparent  true
                                        :on-click     (partial #'close-document-button app id)}]]
-           :border    :none}
+           :border    :none
+           :scroll    true}
            (create-text-editor app doc)]))
 
 (defn app-window [app]
