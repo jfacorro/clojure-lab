@@ -28,10 +28,8 @@ so that plugins can add hooks."
 (defn- register-keymaps!
   "Register all keymaps in the plugin."
   [app keymaps]
-  (if keymaps
-    (doseq [km keymaps]
-      (register-keymap! app km))
-    app))
+  (doseq [km keymaps]
+    (register-keymap! app km)))
 
 (defn- load-plugin!
   "Receives the app atom and a symbol representing a plugin's
@@ -43,9 +41,12 @@ they exist."
   (let [plugin-ns                      (the-ns plugin-name)
         {:keys [init! hooks keymaps] :as plugin} (->> (ns-resolve plugin-ns 'plugin) deref)]
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
-    (add-hooks! hooks plugin-name)
-    (init! app)
-    (register-keymaps! app keymaps)
+    (when hooks
+      (add-hooks! hooks plugin-name))
+    (when init!
+      (init! app))
+    (when keymaps
+      (register-keymaps! app keymaps))
     app))
 
 (defn load-plugins!

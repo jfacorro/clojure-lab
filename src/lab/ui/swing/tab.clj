@@ -1,12 +1,18 @@
 (ns lab.ui.swing.tab
   (:use     [lab.ui.protocols :only [Component abstract impl Selected selected to-map]])
   (:require [lab.ui.core :as ui])
-  (:import  [javax.swing JTabbedPane JScrollPane]
+  (:import  [javax.swing JTabbedPane JScrollPane JPanel]
             [javax.swing.event ChangeListener ChangeEvent]))
+
+(defn- tab-initialize [c]
+  (if (ui/get-attr c :scroll)
+    (JScrollPane.)
+    (doto (JPanel.)
+      (.setLayout (java.awt.BorderLayout.)))))
 
 (ui/definitializations
   :tabs        JTabbedPane
-  :tab         JScrollPane)
+  :tab         tab-initialize)
 
 (extend-protocol Component
   JTabbedPane
@@ -42,6 +48,7 @@
   (:title [c _ _] c)
   (:tool-tip [c _ _] c)
   (:header [c _ _] c)
+  (:scroll [c _ _] c)
 
   :tabs
   (:on-tab-change [c _ handler]

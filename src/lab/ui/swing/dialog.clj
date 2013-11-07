@@ -21,6 +21,11 @@
    :yes-no-cancel JOptionPane/YES_NO_CANCEL_OPTION
    :ok-cancel     JOptionPane/OK_CANCEL_OPTION})
 
+(def ^:private selection-type
+  {:dir-only      JFileChooser/DIRECTORIES_ONLY
+   :dir-and-file  JFileChooser/FILES_AND_DIRECTORIES
+   :file-only     JFileChooser/FILES_ONLY})
+
 (defn- file-dialog-open [c]
   (let [x       (impl c)
         result  (case (ui/get-attr c :type)
@@ -36,13 +41,22 @@
     JFileChooser/APPROVE_OPTION  [:accept chosen]
     JFileChooser/ERROR_OPTION    [:error  chosen]))
 
+(defn- apply-attr [c k]
+  (ui/set-attr c k (ui/get-attr c k)))
+
 (ui/defattributes
   :file-dialog
   (:type [c _ v])
+  (:title [c _ v]
+    (.setDialogTitle (impl c) v))
+  (:selection-type [c _ v]
+    (when (selection-type v)
+      (.setFileSelectionMode (impl c) (selection-type v))))
   (:visible ^:modify [c _ v]
-    (if (not v)
-      (.setVisible (impl c) v)
-      (->> c 
+    (apply-attr c :selection-type)
+    (apply-attr c :title)
+    (when v
+      (->> c
         file-dialog-open
         (apply file-dialog-result)
         (ui/set-attr c :result))))
