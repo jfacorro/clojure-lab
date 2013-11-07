@@ -87,7 +87,9 @@
       (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
     (:visible [c _ v]
       (.setVisible (p/impl c) v))
-    ; events
+    ;;;;;;;;;;;
+    ;; Events
+    (:key-event [c _ _])
     (:on-focus [c _ handler]
       (let [listener (proxy [FocusAdapter] []
                        (focusGained [e] (handler (p/to-map e))))]

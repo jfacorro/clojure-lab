@@ -36,7 +36,7 @@ from its args.
   `(do
       ;(remove-all-methods initialize) ; this is useful for developing but messes up the ability to break implementations into namespaces
     ~@(for [[k c] m]
-      (if (-> c resolve class?)
+      (if (and (not (seq? c)) (-> c resolve class?))
         `(defmethod p/initialize ~k [c#]
           (new ~c))
         `(defmethod p/initialize ~k [x#]

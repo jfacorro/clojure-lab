@@ -138,6 +138,7 @@ associated to it."
                  :background  0x333333
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
+                 :key-event   (fn [e super] (println e))
                  :on-change   (partial #'text-editor-change app id doc)
                  :font        [:name "Monospaced.plain" :size 14]}]))
 

@@ -4,7 +4,8 @@
             [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl Event to-map Text]])
   (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as util]))
+            [lab.ui.swing [util :as util]
+                          [event :as event]]))
 
 (def ^:private event-types
   {DocumentEvent$EventType/INSERT  :insert
@@ -32,7 +33,7 @@
     (.getText this)))
 
 (ui/definitializations
-  :text-editor JTextPane)
+  :text-editor (fn [c] (event/hijack-events JTextPane (:attrs c))))
 
 (ui/defattributes
   :text-editor
