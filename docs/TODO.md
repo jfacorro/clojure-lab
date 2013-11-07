@@ -6,8 +6,6 @@ TODO
     - Key Bindings
       - Remove all defaults and replace them all?
       - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
-    - The abstraction reference for the implementations should be updated with each modification to the abstraction.
-      - ...or have a reference for the abstract (not).
   
     - Code Editor (or use RSyntaxTextArea and adapt it):
       - Indent code.
@@ -36,7 +34,8 @@ TODO
     - Link Document to ui/text-editor.
       a. Detect updates from Document and impact in editor. \__ Which one? Based on the test done in the prototype, (a) is the
       b. Detect updates form editor and impact in Document. /              one that works best, in (b) model and view can get out of sync.
-
+      - (a) is definitely the one to go:
+        - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
 Done
 ====
   - UI
@@ -46,6 +45,7 @@ Done
     - Implement Enlive selectors.
     - Modify the global atom created for the ui.
     - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
+    - The abstraction value for the implementations should be updated with each modification to the abstraction.
 
   - Model
     - Complete Document

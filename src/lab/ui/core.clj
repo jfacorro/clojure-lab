@@ -72,6 +72,13 @@ And each attr-declaration is:
                         ~(if (-> args meta :modify) x c))))))]
     `(do ~@(mapcat (partial apply f) comps))))
 
+(defn- update-abstraction
+  "Takes a component and set its own value as the abstraction
+of its implementation."
+  [c]
+  (let [impl (p/abstract (p/impl c) c)]
+    (p/impl c impl)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Abstract UI Component record
 
@@ -84,12 +91,13 @@ And each attr-declaration is:
 
   p/Selected
   (selected [this]
-      (p/selected (p/impl this)))
+    (p/selected (p/impl this)))
   (selected [this selected]
-      (p/selected (p/impl this) (p/impl selected)))
+    (p/selected (p/impl this) (p/impl selected)))
   
   p/Text
-  (text [this] (p/text (p/impl this))))
+  (text [this]
+    (p/text (p/impl this))))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -100,20 +108,22 @@ And each attr-declaration is:
     (let [this  (init this)
           child (init child)]
       (-> this
-        (p/impl (p/add (p/impl this) (p/impl child)))
-        (update-in [:content] conj child))))
+        (update-in [:content] conj child)
+        update-abstraction
+        (p/impl (p/add (p/impl this) (p/impl child))))))
   (remove [this child]
     (let [i (.indexOf ^java.util.List (p/children this) child)]
       (-> this
-        (p/impl (p/remove (p/impl this) (p/impl child)))
-        (update-in [:content] util/remove-at i))))
+        (update-in [:content] util/remove-at i)
+        update-abstraction
+        (p/impl (p/remove (p/impl this) (p/impl child))))))
   (add-binding [this ks f]
-    (let [this (init this)
-          i    (p/impl this)]
-      (p/impl this (p/add-binding i ks f))))
+    (let [this    (init this)
+          implem  (p/impl this)]
+      (p/impl this (p/add-binding implem ks f))))
   (remove-binding [this ks]
-    (let [i (p/impl this)]
-      (p/impl this (p/remove-binding i ks)))))
+    (let [implem (p/impl this)]
+      (p/impl this (p/remove-binding implem ks)))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 
@@ -123,7 +133,7 @@ And each attr-declaration is:
 
 (defn text [c] (p/text c))
 
-(defn selected 
+(defn selected
   ([c] (p/selected c))
   ([c s] (p/selected c s)))
 
@@ -176,8 +186,10 @@ attributes and sets their corresponding values."
 for the implementation and updates the abstract component
 as well."
   [c k v]
-  (let [c (p/set-attr c k v)]
-    (assoc-in c [:attrs k] v)))
+  (-> c
+    (assoc-in [:attrs k] v)
+    (p/set-attr k v)
+    update-abstraction))
 
 (defn get-attr
   "Returns the attribute k from the component."
@@ -192,13 +204,11 @@ each child and the attributes that have a component as a value."
   (let [c (hiccup->component c)]
     (if (initialized? c) ; do nothing if it's already initiliazed
       c
-      (let [ctrl  (p/initialize c)
-            c     (-> c
-                    (p/impl ctrl)
-                    set-attrs
-                    init-content)
-            ctrl  (p/abstract ctrl c)]
-        c))))
+      (-> c
+        (p/impl (p/initialize c))
+        set-attrs
+        init-content
+        update-abstraction))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
