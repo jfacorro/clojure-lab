@@ -1,7 +1,7 @@
 (ns lab.plugin.file-tree
   (:use [lab.core.plugin :only [defplugin]])
   (:require [lab.core.keymap :as km]
-            [lab.plugin.ui :as ui-plugin]
+            [lab.plugin.main-ui :as main]
             [lab.ui [core :as ui]
                     [tree :as tree]]))
 
@@ -11,7 +11,7 @@
   (when (= click-count 2)
     (let [^java.io.File file (ui/selected source)]
       (when-not (.isDirectory file)
-        (ui-plugin/open-document app (.getCanonicalPath file))))))
+        (main/open-document app (.getCanonicalPath file))))))
 
 (defn- file-tree [app file]
   [:tab {:title (.getName file) :border :none}

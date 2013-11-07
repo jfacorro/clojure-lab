@@ -11,7 +11,8 @@
 
 (def default-config
   {:name          "Clojure Lab"
-   :core-plugins  '[lab.plugin.ui lab.plugin.file-tree]
+   :core-plugins  '[lab.plugin.main-ui
+                    lab.plugin.file-tree]
    :plugins       []
    :plugins-dir   "plugins"})
 
