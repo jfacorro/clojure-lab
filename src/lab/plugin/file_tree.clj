@@ -35,5 +35,4 @@
               {:category "Project" :name "Open..." :fn #'open-project :keystroke "ctrl P"})])
 
 (defplugin file-tree
-  :init!   init!
   :keymaps keymaps)
