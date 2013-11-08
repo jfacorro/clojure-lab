@@ -1,7 +1,7 @@
 (ns lab.ui.swing.menu
   (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator]
             [java.awt.event ActionListener])
-  (:use     [lab.ui.protocols :only [impl]])
+  (:use     [lab.ui.protocols :only [impl to-map]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util]))
 
@@ -21,7 +21,7 @@
     (.setText (impl c) v) c)
   (:on-click [c _ f]
     (let [action (reify ActionListener
-                   (actionPerformed [this e] (f e)))]
+                   (actionPerformed [this e] (f (to-map e))))]
       (.addActionListener (impl c) action)))
   (:keystroke [c _ ks]
     (.setAccelerator (impl c) (util/keystroke ks))))
