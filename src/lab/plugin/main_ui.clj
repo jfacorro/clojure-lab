@@ -4,7 +4,6 @@
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
-                    [stylesheet :as css]
                     swing]
             [lab.core [keymap :as km]
                       [plugin :as plugin]]
@@ -23,7 +22,8 @@
   [ui]
   (ui/find (current-document-tab ui) :text-editor))
 
-; Open
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Open
 
 (defn- open-document-ui!
   "Adds a new tab to the documents tab container. This is used by both 
@@ -48,7 +48,8 @@ and call the app's open-document function."
     (when file
       (open-document app (.getCanonicalPath file)))))
 
-; New
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; New
 
 (defn- new-document
   "Creates a new document and shows it in a new tab."
@@ -56,7 +57,8 @@ and call the app's open-document function."
   (swap! app lab/new-document)
   (open-document-ui! app (lab/current-document @app)))
 
-; Close
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Close
 
 (defn close-document-button
   [app id & _]
@@ -76,7 +78,8 @@ associated to it."
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
 
-; Save
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Save
 
 (defn- assign-path
   "When saving, if the document doesn't have a path, get one from the user."
@@ -98,7 +101,8 @@ associated to it."
     (when (doc/path @doc)
       (swap! app lab/save-document doc))))
 
-; Switch document
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Switch
 
 (defn- switch-document-ui [app evt]
   (let [ui     (:ui @app)
@@ -106,7 +110,8 @@ associated to it."
         doc    (ui/get-attr editor :doc)]
     (swap! app lab/switch-document doc)))
 
-; Insert
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Insert
 
 (defn text-editor-change [app id doc evt]
   (let [ui     (:ui @app)
@@ -117,7 +122,8 @@ associated to it."
       :change nil)
     (assert (= (ui/text editor) (doc/text @doc)))))
 
-; Register Keymap
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Register Keymap
 
 (defn- register-keymap-hook
   [f app keymap]
@@ -130,6 +136,9 @@ associated to it."
      :local nil)
   (f app keymap))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Controls
+
 (defn- create-text-editor [app doc]
   (ui/with-id id
   [:text-editor {:doc         doc
@@ -138,7 +147,7 @@ associated to it."
                  :background  0x333333
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
-                 :key-event   (fn [e super] (println e))
+                 :key-event   (fn [e super] (println e) (super))
                  :on-change   (partial #'text-editor-change app id doc)
                  :font        [:name "Monospaced.plain" :size 14]}]))
 
@@ -182,6 +191,9 @@ associated to it."
         full? (-> (ui/find @ui :#main) (ui/get-attr :fullscreen))]
     (ui/update! ui :#main ui/set-attr :fullscreen (not full?)))
   app)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Plugin definition
 
 (def ^:private hooks
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook})
