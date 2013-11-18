@@ -250,3 +250,20 @@ used in the component's definition (e.g. in event handlers)."
   [x component]
   `(let [~x (genid)]
     (assoc-in (#'lab.ui.core/hiccup->component ~component) [:attrs :id] ~x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Stylesheet
+
+(defn- apply-style
+  [ui [selector attrs]]
+  (reduce (fn [ui [attr value]]
+            (update ui selector set-attr attr value))
+          ui
+          attrs))
+
+(defn apply-stylesheet
+  "Takes an atom with the root of a (initialized abstract UI) component and
+  a stylesheet (map where the key is a selector and the values a map of attributes
+  and values) and applies it to the matching components."
+  [ui stylesheet]
+  (reduce apply-style ui stylesheet))
