@@ -1,37 +1,15 @@
 (ns lab.ui.select
+  "Enables finding nodes in a tree by the use of selectors.
+This functionality was inspired by the enlive library, which in turn
+mirrors CSS selectors."
   (:refer-clojure :exclude [compile])
   (:require [clojure.zip :as zip]
             [clojure.set :as set]))
 
-;; Selector functions
+(declare tag= id= attr= attr?)
 
-(defn tag=
-  "Returns a predicate that indicates whether its 
-  argument has the specified tag name."
-  [tag]
-  (with-meta #(= tag (:tag %)) {:tag tag}))
-
-(defn id=
-  "Returns a predicate that indicates wheter its
-  argument has the same id as the provided."
-  [id]
-  (with-meta #(= id (-> % :attrs :id)) {:id id}))
-
-(defn attr= [attr v]
-  "Returns a predicate that indicates whether its
-  argument has the value provided in the attribute specified."
-  (with-meta
-    #(-> % :attrs attr (= v))
-    {:attr attr :value v}))
-
-(defn attr? [attr]
-  "Returns a predicate that indicates whether its
-  argument has a truthy value in the attribute specified."
-  (with-meta
-    #(-> % :attrs attr)
-    {:attr attr}))
-
-;; Parsing functions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Parsing
 
 (defn- literal-selector?
   "Indicates whether x is a literal selector (keyword or string), 
@@ -69,7 +47,8 @@ For example:
         (fn? s)
           [:fn s]))
 
-;; Path finding
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Compilation and search
 
 (defn- compile
   "Takes a selector and returns a single arg predicate."
@@ -86,7 +65,7 @@ For example:
         :tag (tag= v)
         :fn  v))))
 
-(def memoized-compile (memoize compile))
+(def ^:private memoized-compile (memoize compile))
 
 (defn- find-path
   "Returns the path to the child component that satisfies (pred component)."
@@ -108,25 +87,6 @@ For example:
         path  (when path' (concat path path'))
         root  (get-in root path)]
     [path root]))
-
-(defn select
-  "Takes a selection expression and returns the path for the
-  first matching component from root, which must be a component.
-  
-  The format of the selector mimics enlive selectors, the following
-  is the syntax for each type of selector:
-  
-  Id          :#value-id
-  Tag         :tag-name
-  Unary pred  (fn [c] true)"
-  [root selector]
-  (when selector
-    (let [selector   (if (sequential? selector) selector [selector])
-          predicates (map memoized-compile selector)
-          [path _]   (if (-> predicates count pos?)
-                       (reduce chain [nil root] predicates)
-                       [[] nil])]
-      path)))
 
 (defn- path-from-root
   "Takes a node from a zipper and finds the vector path
@@ -162,9 +122,31 @@ For example:
          (recur (zip/next node) preds result))
        result)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Public
+
+(defn select
+  "Takes a selection expression and returns the path for the
+  first matching component from root, which must be a component.
+  
+  The format of the selector mimics enlive selectors, the following
+  is the syntax for each type of selector:
+  
+  id          :#value-id
+  tag         :tag-name
+  predicate   (fn [c] true)"
+  [root selector]
+  (when selector
+    (let [selector   (if (sequential? selector) selector [selector])
+          predicates (map memoized-compile selector)
+          [path _]   (if (-> predicates count pos?)
+                       (reduce chain [nil root] predicates)
+                       [[] nil])]
+      path)))
+
 (defn select-all
   "Searches the whole component tree from the root and returns
-  a sequence of paths to matches."
+  a sequence of the paths to the matched elements."
   [root selector]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])
@@ -174,4 +156,31 @@ For example:
                        (find-all-paths root predicates)
                        #{[]})]
       result)))
-  
+
+;; Selectors
+
+(defn tag=
+  "Returns a predicate that indicates whether its 
+  argument has the specified tag name."
+  [tag]
+  (with-meta #(= tag (:tag %)) {:tag tag}))
+
+(defn id=
+  "Returns a predicate that indicates wheter its
+  argument has the same id as the provided."
+  [id]
+  (with-meta #(= id (-> % :attrs :id)) {:id id}))
+
+(defn attr= [attr v]
+  "Returns a predicate that indicates whether its
+  argument has the value provided in the attribute specified."
+  (with-meta
+    #(-> % :attrs attr (= v))
+    {:attr attr :value v}))
+
+(defn attr? [attr]
+  "Returns a predicate that indicates whether its
+  argument has a truthy value in the attribute specified."
+  (with-meta
+    #(-> % :attrs attr)
+    {:attr attr}))
