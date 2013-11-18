@@ -5,15 +5,15 @@
                        [document :as doc]]
             [lab.core.keymap :as km]
             [lab.core.plugin :as pl]
+            [lab.core.lang   :as lang]
             [clojure.java.io :as io]))
 
 (declare current-document open-document save-document close-document)
 
 (def default-config
   {:name          "Clojure Lab"
-   :core-plugins  '[lab.plugin.main-ui
-                    lab.plugin.file-tree]
-   :plugins       []
+   :core-plugins  '[lab.plugin.main-ui]
+   :plugins       '[lab.plugin.file-tree]
    :plugins-dir   "plugins"})
 
 (def default-app
@@ -23,8 +23,25 @@ default configuration."
    :config            default-config
    :documents         #{}
    :current-document  nil
-   :langs             {}
+   :langs             {:plain-text lang/plain-text}
+   :default-lang      :plain-text
    :keymap            nil})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Language
+
+(defn lang
+  "Returns the language registered with the specified key in the langs map."
+  [app k]
+  (->> app :langs k))
+
+(defn default-lang
+  "Returns the default language."
+  [app]
+  (->> app :default-lang (lang app)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Keymap registration
 
 (defmethod km/register-multi :global
   [app keymap]
@@ -38,6 +55,9 @@ default configuration."
   [app keymap]
   (let [doc (current-document app)]
     (swap! doc update-in [:keymap] km/append keymap)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Document operations
 
 (defn current-document
   "Returns the atom that contains the current document."
@@ -78,24 +98,28 @@ specified id."
 (defn new-document 
   "Creates a new document, adds it to the document
 collection and sets it as the current-document."
-  [app]
-  (let [doc (atom (doc/document))]
-    (-> app
-      (update-in [:documents] conj doc)
-      (assoc :current-document doc))))
+  ([app]
+    (new-document app (default-lang app)))
+  ([app lang]
+    (let [doc (atom (doc/document lang))]
+      (-> app
+        (update-in [:documents] conj doc)
+        (assoc :current-document doc)))))
 
 (defn open-document
-  "Opens a document from an existing file 
+  "Opens a document from an existing file
 and adds it to the openened documents map."
-  [app path]
+  ([app path]
+    (open-document app path (default-lang app)))
+  ([app path lang]
   {:pre [path]}
-  (let [doc        (atom (doc/document :path path))
+  (let [doc        (atom (doc/document lang path))
         exists-doc (find-doc-by-path app path)]
     (if exists-doc
       (switch-document app exists-doc)
       (-> app
         (update-in [:documents] conj doc)
-        (assoc :current-document doc)))))
+        (assoc :current-document doc))))))
 
 (defn close-document
   "Closes a document and removes it from the opened
@@ -115,6 +139,9 @@ documents collection."
     (swap! doc doc/save))
   app)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Configuration
+
 (defn- load-config
   "Loads the configuration file form the specified path
 or the default path if no path is given."
@@ -124,6 +151,9 @@ or the default path if no path is given."
     (let [exists  (and path (-> (io/file path) .exists))
           config  (when exists (load-string (slurp path)))]
       (update-in app [:config] merge config))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Initialization
 
 (defn init
   "Initializes an instance of an application."

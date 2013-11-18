@@ -20,8 +20,6 @@
 ;;------------------------------------
 (use-fixtures :once temp-document-config)
 ;;------------------------------------
-(def config {:core-plugins []})
-;;------------------------------------
 (deftest init-app
   (->test
     default-app

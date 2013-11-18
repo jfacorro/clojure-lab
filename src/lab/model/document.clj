@@ -1,4 +1,8 @@
 (ns lab.model.document
+  "A document is the representation in memory of the file, which
+holds not only a buffer for the string but additional information
+(e.g. the language, the parse tree or any useful information 
+that may need to be computed or mantained)."
   (:refer-clojure :exclude [replace name])
   (:require [lab.model [buffer :as b]
                        [history :as h]]
@@ -7,14 +11,16 @@
 
 (declare modified? delete insert text)
 
-;; History
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; History
 
 (defn- record-operations
   "Add a list of operations in the history."
   [doc ops]
   (update-in doc [:history] h/add ops))
 
-;; Document operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Editing operations and their inverse
 
 (defrecord InsertText [offset s]
   h/Bijection
@@ -30,16 +36,20 @@
   (inverse [this]
     #(insert % start s)))
 
-;; Document
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Document Record
 
-(defrecord Document [name path modified buffer])
+(defrecord Document [name path modified buffer lang])
 
 (defn- default-buffer
   "Returns a buffer implementation."
-  [& xs]
-  (apply b/incremental-buffer xs))
+  ([lang]
+    (default-buffer lang ""))
+  ([lang s]
+    (b/incremental-buffer lang s)))
 
-;; IO operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; IO operations
 
 (defn bind
   "Binds a document to a file in the given path. If the 
@@ -49,7 +59,8 @@ buffer."
   (let [file   (io/file path)
         buf    (if new?
                  (:buffer doc)
-                 (default-buffer (if (.exists file) (-> path slurp) "")))
+                 (default-buffer (:lang doc)
+                                 (if (.exists file) (-> path slurp) "")))
         name   (.getName file)
         props  {:buffer   buf
                 :path     path
@@ -73,7 +84,8 @@ buffer."
       (assoc doc :modified false))
     doc))
 
-;; Properties
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Properties 
 
 (defn name
   "Returns the document's name."
@@ -114,7 +126,8 @@ buffer."
   [doc s]
   (util/find-limits s (text doc)))
 
-;; Text operations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Text operations
 
 (defn insert
   "Inserts s at the document's offset position.
@@ -162,16 +175,18 @@ buffer."
   (swap! *untitled-count* inc) 
   (str "Untitled " @*untitled-count*))
 
-;; Document creation function
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Creation function
 
 (defn document
   "Creates a new document using the name."
-  [& {:keys [path] :or {path nil}}]
-  (let [doc (map->Document {:name (untitled)
-                            :path nil
+  [lang & [path]]
+  (let [doc (map->Document {:name     (when-not path (untitled))
+                            :path     nil
                             :modified false
-                            :buffer (default-buffer)
-                            :history (h/history)})]
+                            :lang     lang
+                            :buffer   (default-buffer lang)
+                            :history  (h/history)})]
     (if path
       (bind doc path)
       doc)))

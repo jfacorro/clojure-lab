@@ -4,10 +4,12 @@
         [lab.test :onle [->test ->is]]
         lab.model.document)
   (:require [clojure.java.io :as io]
-            [lab.model.history :as h]))
+            [lab.model.history :as h]
+            [lab.core.lang :as lang]))
 ;---------------------------
 (def file-content "Temp file, should be deleted.")
 (def tmp-file "./tmp")
+(def default-lang lang/plain-text)
 ;---------------------------
 (defn temp-document-config
   [f]
@@ -22,8 +24,8 @@
 (use-fixtures :each temp-document-config)
 ;---------------------------
 (deftest document-creation
-  (is (= "Untitled 1" (name (document))))
-  (is (= "" (text (document)))))
+  (is (= "Untitled 1" (name (document default-lang))))
+  (is (= "" (text (document default-lang)))))
 ;---------------------------
 (deftest document-manipulation
   (let [end      " Oh yes, it will!"
@@ -31,7 +33,7 @@
         len      (count file-content)]
     (->test
         ; Check new document properties
-        (document)
+        (document default-lang)
         (->is = false modified?)
         (->is = "" text)
         (->is = 0 length)
@@ -58,10 +60,10 @@
         (->is = false modified?))))
 ;---------------------------
 (deftest bind-non-existing-file
-  (is (= "bla" (-> (document) (bind "./bla") name))))
+  (is (= "bla" (-> (document default-lang) (bind "./bla") name))))
 ;---------------------------
 (deftest search-and-replace
-  (let [doc (append (document) "abc\nabc\nd")]
+  (let [doc (append (document default-lang) "abc\nabc\nd")]
     ; Search
     (->test
       doc
@@ -78,7 +80,7 @@
       (->is = "abc\nabc\nd" text))))
 ;---------------------------
 (deftest undo-redo
-  (->test (document)
+  (->test (document default-lang)
     (append "abc\nabc\nd")
     ; undo/redo replace
     (replace "b" "1")
