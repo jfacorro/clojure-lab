@@ -7,7 +7,7 @@ hierarchy which can be extended as needed.
 Implementation of components is based on the definitialize and defattribute
 multi-methods. The former should return an instance of the underlying UI object,
 while the latter is used for setting its attributes' value defined in the 
-abstract specification (or explicitly through the use of set-attr).
+abstract specification (or explicitly through the use of `attr`).
 
 Example: the following code creates a 300x400 window with a \"Hello!\" button
          and shows it on the screen.
@@ -21,7 +21,7 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]))
 
-(declare init initialized? set-attr)
+(declare init initialized? attr)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Convenience macros for multimethod implementations
@@ -34,7 +34,6 @@ from its args.
   :component-name ClassName or init-fn"
   [& {:as m}]
   `(do
-      ;(remove-all-methods initialize) ; this is useful for developing but messes up the ability to break implementations into namespaces
     ~@(for [[k c] m]
       (if (and (not (seq? c)) (-> c resolve class?))
         `(defmethod p/initialize ~k [c#]
@@ -46,14 +45,14 @@ from its args.
   "Convenience macro to define attribute setters for each component type. 
 
 The method implemented returns the first argument (which is the component 
-itself), UNLESS the ^:modify metadata flag is true for the argument vector, 
-in which case the value from the body evaluation is returned.
+itself), UNLESS the `^:modify` metadata flag is true for the argument vector, 
+in which case the value from the last expression in the body is returned.
 
   *attrs-declaration
   
 Where each attrs-declaration is:
 
-  component-keyword *attr-declaration
+  component-tag *attr-declaration
     
 And each attr-declaration is:
 
@@ -175,26 +174,25 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
 attributes and sets their corresponding values."
   [{attrs :attrs :as component}]
   (let [f (fn [c [k v]]
-            (set-attr c k (if (component? v) (init v) v)))]
+            (attr c k (if (component? v) (init v) v)))]
     (reduce f component attrs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialization and Attributes Access
 
-(defn set-attr
+(defn attr
   "Uses the set-attr multimethod to set the attribute value 
 for the implementation and updates the abstract component
 as well."
-  [c k v]
-  (-> c
-    (assoc-in [:attrs k] v)
-    (p/set-attr k v)
-    update-abstraction))
-
-(defn get-attr
-  "Returns the attribute k from the component."
-  [c k]
-  (-> c :attrs k))
+  ([c k]
+    (if-let [v (get-in c [:attrs k])]
+      v
+      nil #_(p/get-attr c k)))
+  ([c k v]
+    (-> c
+      (assoc-in [:attrs k] v)
+      (p/set-attr k v)
+      update-abstraction)))
 
 (defn init
   "Initializes a component, creating the implementation for 
@@ -256,8 +254,8 @@ used in the component's definition (e.g. in event handlers)."
 
 (defn- apply-style
   [ui [selector attrs]]
-  (reduce (fn [ui [attr value]]
-            (update ui selector set-attr attr value))
+  (reduce (fn [ui [attr-name value]]
+            (update ui selector attr attr-name value))
           ui
           attrs))
 

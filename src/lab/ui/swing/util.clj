@@ -1,5 +1,4 @@
 (ns lab.ui.swing.util
-  (:use    [lab.ui.protocols :only [initialize set-attr]])
   (:require [lab.ui.core :as ui]
             [lab.util :as util]
             [lab.ui.protocols :as uip]

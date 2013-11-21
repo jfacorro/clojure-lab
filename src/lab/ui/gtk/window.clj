@@ -25,7 +25,7 @@
     (:title [c _ v]
       (.setTitle (p/impl c) v))
     (:menu [c _ v]
-      (ui/set-attr c :j-menu-bar (p/impl v))
+      (ui/attr c :j-menu-bar (p/impl v))
       (.revalidate (p/impl c)))
     (:icons [c _ v]
       (let [[icon & _] (map util/image v)]

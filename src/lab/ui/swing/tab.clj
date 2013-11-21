@@ -5,7 +5,7 @@
             [javax.swing.event ChangeListener ChangeEvent]))
 
 (defn- tab-initialize [c]
-  (if (ui/get-attr c :scroll)
+  (if (ui/attr c :scroll)
     (JScrollPane.)
     (doto (JPanel.)
       (.setLayout (java.awt.BorderLayout.)))))
@@ -21,9 +21,9 @@
   (add [this child]
     (let [i         (.getTabCount this)
           child-abs (abstract child)
-          header    (when-let [h (ui/get-attr child-abs :header)] (impl h))
-          tool-tip  (ui/get-attr child-abs :tool-tip)
-          title     (ui/get-attr child-abs :title)]
+          header    (when-let [h (ui/attr child-abs :header)] (impl h))
+          tool-tip  (ui/attr child-abs :tool-tip)
+          title     (ui/attr child-abs :title)]
       (.addTab this title child)
       (when header (.setTabComponentAt this i header))
       (when tool-tip (.setToolTipTextAt this i tool-tip))

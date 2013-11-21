@@ -14,7 +14,7 @@
 
 (deftest find-in-ui
   (testing "Find by id"
-    (are [x y] (= x (-> ui-test (find y) (get-attr :id)))
+    (are [x y] (= x (-> ui-test (find y) (attr :id)))
       "0"   :#0  
       "2"   :#2
       "1"   :#1

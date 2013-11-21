@@ -25,7 +25,7 @@
                                               :selection-type :dir-only, 
                                               :visible        true, 
                                               :title          "Open Directory"}])
-        [result dir] (ui/get-attr file-dialog :result)]
+        [result dir] (ui/attr file-dialog :result)]
     (when dir
       (ui/update! (:ui @app) :#left-controls ui/add (file-tree app dir)))))
 

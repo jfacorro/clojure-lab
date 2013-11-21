@@ -44,7 +44,7 @@ the open and new commands."
 and call the app's open-document function."
   [app _]
   (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
-        [result file] (ui/get-attr file-dialog :result)]
+        [result file] (ui/attr file-dialog :result)]
     (when file
       (open-document app (.getCanonicalPath file)))))
 
@@ -73,7 +73,7 @@ associated to it."
   (let [ui     (:ui @app)
         tab    (current-document-tab ui)
         editor (current-text-editor ui)
-        doc    (ui/get-attr editor :doc)]
+        doc    (ui/attr editor :doc)]
     (when doc
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
@@ -87,7 +87,7 @@ associated to it."
   (if (doc/path doc)
     doc
     (let [file-dialog   (ui/init [:file-dialog {:type :save :visible true}])
-          [result file] (ui/get-attr file-dialog :result)]
+          [result file] (ui/attr file-dialog :result)]
       (if file
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
@@ -96,7 +96,7 @@ associated to it."
   [app & _]
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
-        doc    (ui/get-attr editor :doc)]
+        doc    (ui/attr editor :doc)]
     (swap! doc assign-path)
     (when (doc/path @doc)
       (swap! app lab/save-document doc))))
@@ -107,7 +107,7 @@ associated to it."
 (defn- switch-document-ui [app evt]
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
-        doc    (ui/get-attr editor :doc)]
+        doc    (ui/attr editor :doc)]
     (swap! app lab/switch-document doc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,7 +147,7 @@ associated to it."
                  :background  0x333333
                  :foreground  0xFFFFFF
                  :caret-color 0xFFFFFF
-                 :key-event   (fn [e super] (println e) (super))
+                 :key-event   (fn [e super] (println (:event e)) (super))
                  :on-change   (partial #'text-editor-change app id doc)
                  :font        [:name "Monospaced.plain" :size 14]}]))
 
@@ -188,8 +188,8 @@ associated to it."
   "Toggles between fullscreen and non fullscreen mode."
   [app _]
   (let [ui    (:ui @app)
-        full? (-> (ui/find @ui :#main) (ui/get-attr :fullscreen))]
-    (ui/update! ui :#main ui/set-attr :fullscreen (not full?)))
+        full? (-> (ui/find @ui :#main) (ui/attr :fullscreen))]
+    (ui/update! ui :#main ui/attr :fullscreen (not full?)))
   app)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -28,10 +28,10 @@
 
 (defn- file-dialog-open [c]
   (let [x       (impl c)
-        result  (case (ui/get-attr c :type)
+        result  (case (ui/attr c :type)
                   :open   (.showOpenDialog x nil)
                   :save   (.showSaveDialog x nil)
-                  :custom (.showSaveDialog x nil (ui/get-attr c :accept-label)))]
+                  :custom (.showSaveDialog x nil (ui/attr c :accept-label)))]
      [result (.getSelectedFile x)]))
 
 (defn- file-dialog-result [result chosen]
@@ -41,8 +41,11 @@
     JFileChooser/APPROVE_OPTION  [:accept chosen]
     JFileChooser/ERROR_OPTION    [:error  chosen]))
 
-(defn- apply-attr [c k]
-  (ui/set-attr c k (ui/get-attr c k)))
+(defn- apply-attr
+  "Used to ensure that the value of the attribute
+is set before processing other attribute's code."
+  [c k]
+  (ui/attr c k (ui/attr c k)))
 
 (ui/defattributes
   :file-dialog
@@ -59,16 +62,16 @@
       (->> c
         file-dialog-open
         (apply file-dialog-result)
-        (ui/set-attr c :result))))
+        (ui/attr c :result))))
   (:result [c _ _])
   
   :option-dialog
   (:visible [c _ v]
     (let [x       (impl c)
-          title   (ui/get-attr c :title)
+          title   (ui/attr c :title)
           dialog  (.createDialog x title)]
       (.setVisible dialog true)
-      (ui/set-attr c :result (options-result (.getValue x)))))
+      (ui/attr c :result (options-result (.getValue x)))))
   (:title [c _ _])
   (:icon [c _ v]
     (.setIcon (impl c) (util/icon v)))
