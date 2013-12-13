@@ -74,8 +74,10 @@
         buf    (.getClientProperty txt-pane "buff")
         _      (await buf) ; Wait until all edits thus far have been applied to the buffer
         tree   (parser/parse-tree @buf group)
-        limits (ast/get-limits tree group)]
-    (when (= (ast/text tree) (.getText txt-pane))
+        limits (ast/get-limits tree group)
+        ;; getText from Document returns SO agnostic newlines (\n)
+        doctxt (.getText doc 0 (.getLength doc))]
+    (when (= (ast/text tree) doctxt)
       (util/queue-action
         (doseq [[strt end tag] limits]
           (apply-style doc strt (- end strt) (style *syntax* tag)))

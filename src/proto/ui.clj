@@ -18,12 +18,11 @@
 (def app-name "Clojure Lab - Proto")
 (def new-doc-title "Untitled")
 (def icons-paths ["icon-16.png"
-
                   "icon-32.png"
                   "icon-64.png"])
 ;;------------------------------
 (def current-font
-  (atom (ui/font :name "Monospaced.plain" :styles [:plain] :size 14)))
+  (atom (ui/font :name "Consolas" :styles [:plain] :size 14)))
 ;;------------------------------
 (def default-dir (atom (ui/get (io/file ".") :canonical-path)))
 ;;------------------------------
@@ -335,7 +334,6 @@ and copies the indenting for the new line."
         txt      (proto/text evt)
         doc      (.getDocument txt-code)
         buf      (document-buffer txt-code)]
-    ;(println :incremental-highlight (str txt))
     (reset! last-edit (java.util.Date.))
     (send-off buf parser/edit offset len txt)
     (update-line-numbers doc txt-lines)
@@ -517,7 +515,7 @@ and copies the indenting for the new line."
             {:name "Save" :action #'save-document :keys "ctrl S"}
             {:name "Close" :action #'close-document :keys "ctrl W"}
             {:separator true}
-            {:name "Exit" :action #(do % (System/exit 0)) :keys "alt X"}]}
+            {:name "Exit" :action #(do % (System/exit 0)) :keys "ctrl Q"}]}
    {:name "Code"
     :items [{:name "Eval" :action #'eval-src :keys "ctrl ENTER"}
             {:name "Find" :action #'find-src :keys "ctrl F"}
