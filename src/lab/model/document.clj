@@ -14,7 +14,7 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; History
 
-(defn- record-operations
+(defn- archive-operations
   "Add a list of operations in the history."
   [doc ops]
   (update-in doc [:history] h/add ops))
@@ -137,7 +137,7 @@ buffer."
     (-> doc
       (update-in [:buffer] b/insert offset s)
       (assoc-in [:modified] true)
-      (record-operations ops))))
+      (archive-operations ops))))
 
 (defn append
   "Appends s to the document's content.
@@ -152,7 +152,7 @@ buffer."
   (let [s   (-> doc text (.substring start end))
         ops [(->DeleteText start end s)]]
     (-> doc
-      (record-operations ops)
+      (archive-operations ops)
       (update-in [:buffer] b/delete start end)
       (assoc-in [:modified] true))))
 
@@ -165,11 +165,11 @@ buffer."
         g      (fn [[s e]] [(->DeleteText s e src) (->InsertText s rpl)])
         ops    (mapcat g limits)]
     (-> (reduce f doc limits)
-      (record-operations ops))))
+      (archive-operations ops))))
 
 (def ^:dynamic *untitled-count* (atom 0))
 
-(defn- untitled
+(defn- untitled!
   "Returns a name for a new document."
   []
   (swap! *untitled-count* inc) 
@@ -181,7 +181,7 @@ buffer."
 (defn document
   "Creates a new document using the name."
   [lang & [path]]
-  (let [doc (map->Document {:name     (when-not path (untitled))
+  (let [doc (map->Document {:name     (when-not path (untitled!))
                             :path     nil
                             :modified false
                             :lang     lang
