@@ -8,6 +8,15 @@ They also provide the functions to create and update a parse tree."
 created during the node generation when creating the parse
 tree.")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Language 
+;;
+;; Holds the information for parsing each language
+;; using the parsley library.
+;; Its fields are self-explanatory except for lang?, which 
+;; should hold a predicate function that recieves a doc and
+;; returns true if the doc is of that language.
+
 (defrecord Language [name options grammar lang?])
 
 (defn node-meta 
@@ -23,12 +32,12 @@ check if its one of the registered symbols."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Public
 
-(def plain-text 
+(def plain-text
   {:name     "Plain text"
-   :options  {:main :expr*
-              :root-tag ::root
+   :options  {:main      :expr*
+              :root-tag  ::root
               :make-node #'make-node}
-   :grammar  [:expr #".*"]
+   :grammar  [:expr       #".+"]
    :lang?    (constantly true)
    :styles   {:expr {:color 0xFF}}})
 
