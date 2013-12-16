@@ -1,7 +1,7 @@
 (ns lab.ui.hierarchy
   "Declares and builds the UI component hierarchy
-  wich can be modified using alter-var-root! for 
-  the hierarch var.")
+  which can be modified using alter-var-root! for 
+  the hierarchy var.")
 
 (defn- process-hierarchy-entry
   "Takes a map entry from the hierarchy description
