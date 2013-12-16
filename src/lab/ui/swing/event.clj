@@ -41,8 +41,8 @@ super's implementation of processEvent(...).
     (super)))
 
 (def handlers
-  {:key        (#'f \"key\")
-   :focus      (#'f \"focus\")})
+  {:key-event    (#'f \"key\")
+   :focus-event  (#'f \"focus\")})
 
 Returns an instance of the object with the processEvent(...)
 methods overriden. "
@@ -59,15 +59,24 @@ methods overriden. "
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Utility functions
 
-(defn- flag-modifiers [m n]
+(defn- flag-modifiers
+  "Takes a map and an integer representing a flag value, 
+and returns a vector with all the values that apply to it."
+  [m n]
   (->> m 
     (filter #(pos? (bit-and n (second %))))
     (mapv first)))
 
-(defn- merge-results [f1 f2]
+(defn- merge-results
+  "Takes two functions that returns a map and 
+merges both in a single one."
+  [f1 f2]
   #(merge (f1 %) (f2 %)))
 
-(defn- merge-impls [x y]
+(defn- merge-impls
+  "Given two protocol map implementations, it takes x and
+overrides the implementations present in y."
+  [x y]
   (reduce 
     (fn [x k] (update-in x [k] merge-results (k y)))
     x
@@ -83,8 +92,8 @@ TODO: provide a map with merging functions."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event Object
 
-(def event-object
-  {:to-map (fn [this] {:source  (p/abstract (.getSource this))})})
+(def event-object "Root implementation."
+  {:to-map (fn [this] {:source (p/abstract (.getSource this))})})
 
 (extend java.util.EventObject
   p/Event
@@ -103,9 +112,8 @@ TODO: provide a map with merging functions."
    :shift  InputEvent/SHIFT_MASK
    :ctrl   InputEvent/CTRL_MASK})
 
-
 (def input-event
-  {:to-map (fn [this] {:modifiers  (flag-modifiers input-modifiers (.getModifiers this))})})
+  {:to-map (fn [this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})})
 
 (def key-event
   {:to-map (fn [this]
