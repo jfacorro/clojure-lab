@@ -34,7 +34,7 @@
       (.getText doc 0 (.getLength doc)))))
 
 (ui/definitializations
-  :text-editor (fn [c] (event/hijack-events JTextPane (:attrs c))))
+  :text-editor JTextPane)
 
 (ui/defattributes
   :text-editor
