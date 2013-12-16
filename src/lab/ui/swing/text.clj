@@ -30,7 +30,8 @@
 (extend-protocol Text
   JTextPane
   (text [this]
-    (.getText this)))
+    (as-> (.getDocument this) doc 
+      (.getText doc 0 (.getLength doc)))))
 
 (ui/definitializations
   :text-editor (fn [c] (event/hijack-events JTextPane (:attrs c))))
