@@ -1,6 +1,7 @@
 (ns lab.plugin.main-ui
-  "DSL to abstract the UIcomponents with Clojure data structures."
-  (:require [lab.core :as lab]
+  "Builds the main UI window and components."
+  (:require [clojure.core.async :as async]
+            [lab.core :as lab]
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
@@ -111,15 +112,46 @@ associated to it."
     (swap! app lab/switch-document doc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Insert
+;;; Text Change
 
-(defn text-editor-change [app id doc evt]
+(defn timeout-channel
+  "Creates a go block that works in two modes :wait and :recieve.
+When on :wait it blocks execution until the first value recieved
+from the channel, it then enters :recieve mode until the timeout
+wins. Returns a channel that takes the input events."
+  [timeout-ms f]
+  (let [c (async/chan)]
+    (async/go-loop [mode     :wait
+                    args     nil]
+      (condp = mode
+        :wait
+          (recur :recieve (async/<! c))
+        :recieve
+          (let [[_ ch] (async/alts! [c (async/timeout timeout-ms)])]
+            (if (= ch c)
+              (recur :recieve args)
+              (do
+                (apply f args)
+                (recur :wait nil))))))
+    c))
+    
+(defn highlight [app id]
+  (let [ui          (:ui @app)
+        editor      (ui/find @ui (str "#" id))
+        doc         (ui/attr editor :doc)
+        node-group  (gensym "group-")]
+    (swap! doc lab.core.lang/parse-tree node-group)
+    (println (lab.core.lang/tokens (:parse-tree @doc) 1))))
+  
+(defn text-editor-change [app id ch evt]
   (let [ui     (:ui @app)
-        editor (ui/find @ui :text-editor)]
+        editor (ui/find @ui (str "#" id))
+        doc    (ui/attr editor :doc)]
     (case (:type evt)
       :insert (swap! doc doc/insert (:offset evt) (:text evt))
       :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
       :change nil)
+    (async/put! ch [app id])
     (assert (= (ui/text editor) (doc/text @doc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -141,15 +173,15 @@ associated to it."
 
 (defn- create-text-editor [app doc]
   (ui/with-id id
-  [:text-editor {:doc         doc
-                 :text        (doc/text @doc)
-                 :border      :none
-                 :background  0x333333
-                 :foreground  0xFFFFFF
-                 :caret-color 0xFFFFFF
-                 :key-event   (fn [e super] (println (:event e)) (super))
-                 :on-change   (partial #'text-editor-change app id doc)
-                 :font        [:name "Monospaced.plain" :size 14]}]))
+    [:text-editor {:doc         doc
+                   :text        (doc/text @doc)
+                   :border      :none
+                   :background  0x333333
+                   :foreground  0xFFFFFF
+                   :caret-color 0xFFFFFF
+                   :font        [:name "Consolas" :size 14]
+                   :key-event   (fn [e super] (println (:event e)) (super))
+                   :on-change   (partial #'text-editor-change app id (timeout-channel 500 highlight))}]))
 
 (defn- document-tab [app doc]
   (ui/with-id id

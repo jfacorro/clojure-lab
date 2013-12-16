@@ -5,10 +5,11 @@ implementations."
             [net.cgrand.parsley.tree :as tree]))
 
 (defprotocol Buffer
-  (insert [this offset s] "Inserts s in offset.")
-  (delete [this start end] "Delete the contents of the buffer from positions start to end.")
-  (length [this] "Returns the length of the buffer.")
-  (text   [this] "Returns the contents of the buffer as a string."))
+  (insert     [this offset s] "Inserts s in offset.")
+  (delete     [this start end] "Delete the contents of the buffer from positions start to end.")
+  (length     [this] "Returns the length of the buffer.")
+  (text       [this] "Returns the contents of the buffer as a string.")
+  (parse-tree [this] "Returns a parse tree with each node being {:tag :tag-kw :content [node*]}"))
 
 (defn to-string
   ([b] (to-string b (StringBuffer.)))
@@ -32,7 +33,9 @@ implementations."
   (length [this]
     (-> buffer :buffer tree/len))
   (text [this]
-    (-> buffer :buffer to-string)))
+    (-> buffer :buffer to-string))
+  (parse-tree [this]
+    (parsley/parse-tree (:buffer buffer))))
 
 (defn incremental-buffer
   "Returns an incremental buffer whose content will be parsed using 
