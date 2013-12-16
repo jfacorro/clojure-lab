@@ -35,7 +35,7 @@ implementations."
   (text [this]
     (-> buffer :buffer to-string))
   (parse-tree [this]
-    (parsley/parse-tree (:buffer buffer))))
+    (parsley/parse-tree buffer)))
 
 (defn incremental-buffer
   "Returns an incremental buffer whose content will be parsed using 
