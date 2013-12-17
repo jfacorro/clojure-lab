@@ -13,7 +13,8 @@
 (def default-config
   {:name          "Clojure Lab"
    :core-plugins  '[lab.plugin.main-ui]
-   :plugins       '[lab.plugin.file-tree]
+   :plugins       '[lab.plugin.file-tree 
+                    lab.plugin.clojure-lang]
    :plugins-dir   "plugins"})
 
 (def default-app
@@ -110,13 +111,15 @@ collection and sets it as the current-document."
   "Opens a document from an existing file
 and adds it to the openened documents map."
   ([app path]
-    (open-document app path (default-lang app)))
+    (let [langs (-> app :langs vals)
+          default (default-lang app)]
+      (open-document app path (lang/resolve-lang path langs default))))
   ([app path lang]
   {:pre [path]}
   (let [doc        (atom (doc/document lang path))
-        exists-doc (find-doc-by-path app path)]
-    (if exists-doc
-      (switch-document app exists-doc)
+        opened-doc (find-doc-by-path app path)]
+    (if opened-doc
+      (switch-document app opened-doc)
       (-> app
         (update-in [:documents] conj doc)
         (assoc :current-document doc))))))

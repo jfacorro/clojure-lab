@@ -4,10 +4,27 @@ They also provide the functions to create and update a parse tree."
   (:require [lab.model.buffer :as buffer]
             [clojure.zip :as z]))
 
-(def ^{:dynamic true :private true} *node-group*
-  "Determines the value that will be assigned to the nodes 
-created during the node generation when creating the parse
-tree.")
+;;;;;;;;;;;;;;;;;;;;;;
+;; Languages resolution and predicates
+
+(defn resolve-lang
+  "Based on the langs and path provided, it uses the :rank 
+function from each lang to determine the appropiate one."
+  [path langs default]
+  (let [[rank lang] (->> langs
+                      (map #(vector ((:rank %) path) %))
+                      (sort-by first)
+                      reverse
+                      first)]
+    (if (zero? rank) default lang)))
+
+(defn file-extension?
+  "Returns a positive number if the path's extension 
+equals ext, zero otherwise."
+  [ext path]
+  (if (-> path (.split "\\.") last (= ext))
+    1
+    0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language 
@@ -17,7 +34,12 @@ tree.")
 ;; should hold a predicate function that recieves a doc and
 ;; returns true if the doc is of that language.
 
-(defrecord Language [name options grammar lang?])
+(defrecord Language [name options grammar lang? styles])
+
+(def ^{:dynamic true :private true} *node-group*
+  "Determines the value that will be assigned to the nodes 
+created during the node generation when creating the parse
+tree.")
 
 (defn node-meta
   "If the tag for the node is a symbol
@@ -25,12 +47,12 @@ check if its one of the registered symbols."
   [tag content]
   {:style tag :group *node-group*})
 
-(defn- make-node [tag content]
+(defn make-node [tag content]
   (with-meta {:tag tag :content content}
              (node-meta tag content)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Public
+;;; Plain Text Lang
 
 (def plain-text
   (map->Language
@@ -39,8 +61,12 @@ check if its one of the registered symbols."
                 :root-tag  ::root
                 :make-node #'make-node}
      :grammar  [:expr       #".+"]
-     :lang?    (constantly true)
-     :styles   {:expr {:color 0xFF}}}))
+     :rank     (partial file-extension? "txt")
+     :styles   {:default {:foreground 0xFFFFFF}
+                :expr    {:foreground 0xFFFFFF}}}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Parsing
 
 (defn parse-tree
   "Parses the incremental buffer of a Document and returns the
@@ -58,34 +84,32 @@ parse tree with the modified nodes marked with node-group."
 (defn- code-zip
   "Builds a zipper using the root node in the document
 under the :parse-tree key."
-  [doc]
-  (let [make-node  (-> doc :lang :options :make-node)
-        root       (:parse-tree doc)]
-    (z/zipper map? :content make-node root)))
+  [root]
+  (z/zipper map? :content make-node root))
 
-(defn- get-limits*
+(defn- tokens*
   "Gets the limits for each string in the tree, ignoring
 the limits for the nodes with the tag specified by ignore?."
-  ([loc node-group]
-    (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
-      (let [[node _ :as nxt] (z/next loc)]
-        (cond (string? node)
-                (let [new-offset (+ offset (.length node))
-                      parent     (-> nxt z/up first)
-                      tag        (tag parent)
-                      {:keys [style group]}
-                                 (meta parent)
-                      limits     (if (or (ignore? tag) (not (= group node-group)))
-                                   limits
-                                   (conj! limits [offset new-offset style]))]
-                  (recur nxt new-offset limits ignore?))
-              (z/end? nxt)
-                (persistent! limits)
-              :else 
-                (recur nxt offset limits ignore?))))))
+  [loc node-group]
+  (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
+    (let [[node _ :as nxt] (z/next loc)]
+      (cond (string? node)
+              (let [new-offset (+ offset (.length node))
+                    parent     (-> nxt z/up first)
+                    tag        (tag parent)
+                    {:keys [style group]}
+                               (meta parent)
+                    limits     (if (or (ignore? tag) (not (= group node-group)))
+                                 limits
+                                 (conj! limits [offset new-offset style]))]
+                (recur nxt new-offset limits ignore?))
+            (z/end? nxt)
+              (persistent! limits)
+            :else 
+              (recur nxt offset limits ignore?)))))
 
 (defn tokens
   "Returns the tokens identified incrementally in the parse-tree 
 generation that used the group-id identifier provided."
-  [doc node-group]
-  (get-limits* (code-zip doc) node-group))
+  [root node-group]
+  (tokens* (code-zip root) node-group))

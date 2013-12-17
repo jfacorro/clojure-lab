@@ -131,17 +131,35 @@ wins. Returns a channel that takes the input events."
             (if (= ch c)
               (recur :recieve args)
               (do
-                (apply f args)
+                (try (apply f args) (catch Exception ex (println ex)))
                 (recur :wait nil))))))
     c))
-    
-(defn highlight [app id]
+
+(defn style
+  "Looks for the style for the tag in the styles map.
+  If there's no style defined it returns the :default."
+  [styles tag]
+  (or (-> styles tag)
+      (-> styles :default)))
+
+(defn highlight
+  "Takes the app atom, the id for the current text 
+editor control and generates the parse tree. It then
+applies all the styles found in the document's language
+to the new tokens identified in the last parse tree
+generation."
+  [app id]
   (let [ui          (:ui @app)
         editor      (ui/find @ui (str "#" id))
         doc         (ui/attr editor :doc)
-        node-group  (gensym "group-")]
+        node-group  (gensym "group-")
+        lang        (:lang @doc)
+        styles      (:styles lang)]
     (swap! doc lab.core.lang/parse-tree node-group)
-    (println (lab.core.lang/tokens (:parse-tree @doc) 1))))
+    (let [tokens (lab.core.lang/tokens (:parse-tree @doc)  node-group)]
+      (doseq [[strt end tag] tokens]
+        (ui/apply-style editor strt (- end strt) (style styles tag)))
+      #_(ui/apply-style editor (-> styles :default)))))
   
 (defn text-editor-change [app id ch evt]
   (let [ui     (:ui @app)
@@ -244,7 +262,7 @@ wins. Returns a channel that takes the input events."
   [app]
   (swap! app assoc :ui (atom (-> app app-window ui/init))))
 
-(plugin/defplugin lab.core.ui
+(plugin/defplugin lab.plugin.main-ui
   "Creates the UI for the application and hooks into
 basic file operations."
   :init!    #'init!

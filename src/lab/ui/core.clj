@@ -96,7 +96,9 @@ of its implementation."
   
   p/Text
   (text [this]
-    (p/text (p/impl this))))
+    (p/text (p/impl this)))
+  (apply-style [this start length style]
+    (p/apply-style (p/impl this) start length style)))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -131,6 +133,8 @@ of its implementation."
 (defn remove [c child] (p/remove c child))
 
 (defn text [c] (p/text c))
+(defn apply-style [c start length style]
+  (p/apply-style c start length style))
 
 (defn selected
   ([c] (p/selected c))
@@ -252,7 +256,7 @@ used in the component's definition (e.g. in event handlers)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Stylesheet
 
-(defn- apply-style
+(defn- apply-class
   [ui [selector attrs]]
   (reduce (fn [ui [attr-name value]]
             (update ui selector attr attr-name value))
@@ -264,4 +268,4 @@ used in the component's definition (e.g. in event handlers)."
   a stylesheet (map where the key is a selector and the values a map of attributes
   and values) and applies it to the matching components."
   [ui stylesheet]
-  (reduce apply-style ui stylesheet))
+  (reduce apply-class ui stylesheet))

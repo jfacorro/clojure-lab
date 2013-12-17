@@ -22,7 +22,9 @@
   (to-map [this] "Serializes the event into a map."))
 
 (defprotocol Text
-  (text [this]))
+  (text [this])
+  (apply-style [this start length style]
+    "Applies a formatting style to the region defined by start and length."))
 
 ;; Multi methods
 

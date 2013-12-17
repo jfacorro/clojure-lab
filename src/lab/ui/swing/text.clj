@@ -31,7 +31,13 @@
   JTextPane
   (text [this]
     (as-> (.getDocument this) doc 
-      (.getText doc 0 (.getLength doc)))))
+      (.getText doc 0 (.getLength doc))))
+  (apply-style [this start length style]
+    (.setCharacterAttributes (.getDocument this) 
+      start
+      length
+      (util/make-style style)
+      true)))
 
 (ui/definitializations
   :text-editor JTextPane)
