@@ -23,6 +23,11 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
 
 (declare init initialized? attr)
 
+(def ui-action-macro)
+
+(defmacro action [& body]
+  `(~ui-action-macro ~@body))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Convenience macros for multimethod implementations
 
@@ -132,13 +137,10 @@ of its implementation."
 (defn add [c child] (p/add c child))
 (defn remove [c child] (p/remove c child))
 
-(defn text [c] (p/text c))
-(defn apply-style [c start length style]
-  (p/apply-style c start length style))
+(def text #'p/text)
+(def apply-style #'p/apply-style)
 
-(defn selected
-  ([c] (p/selected c))
-  ([c s] (p/selected c s)))
+(def selected #'p/selected)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Private supporting functions

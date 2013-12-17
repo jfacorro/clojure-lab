@@ -12,10 +12,17 @@
                           tab
                           misc-control
                           event])
-  (:import [javax.swing UIManager JComponent AbstractAction]
+  (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
            [java.awt Dimension]
            [java.awt.event MouseAdapter FocusAdapter]))
 
+(defmacro swing-action
+  "Queues an action to the event queue."
+  [& body]
+  `(SwingUtilities/invokeLater 
+    (fn [] ~@body)))
+
+(alter-var-root #'lab.ui.core/ui-action-macro #(do % %2) 'lab.ui.swing/swing-action)
 ;;------------------- 
 (UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
 ;;-------------------

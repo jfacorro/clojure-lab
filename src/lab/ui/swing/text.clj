@@ -1,7 +1,8 @@
 (ns lab.ui.swing.text
   (:import  [javax.swing JTextPane]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType]
-            [java.awt.event ActionListener])
+            [java.awt.event ActionListener]
+            [javax.swing.text StyledDocument SimpleAttributeSet])
   (:use     [lab.ui.protocols :only [impl Event to-map Text]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -27,17 +28,21 @@
        :type     event-type
        :document doc})))
 
+(defn- apply-style
+  "Applies the given style to the text
+  enclosed between the strt and end positions."
+  ([^StyledDocument doc ^long strt ^long end ^SimpleAttributeSet stl]
+    (.setCharacterAttributes doc strt end stl true))
+  ([^JTextPane txt ^SimpleAttributeSet stl]
+    (.setCharacterAttributes txt stl true)))
+
 (extend-protocol Text
   JTextPane
   (text [this]
     (as-> (.getDocument this) doc 
       (.getText doc 0 (.getLength doc))))
   (apply-style [this start length style]
-    (.setCharacterAttributes (.getDocument this) 
-      start
-      length
-      (util/make-style style)
-      true)))
+    (apply-style (.getDocument this) start length (util/make-style style))))
 
 (ui/definitializations
   :text-editor JTextPane)
@@ -47,7 +52,8 @@
     (:wrap [c _ _])
     (:doc [c _ _])
     (:text [c _ v]
-      (.setText (impl c) v))
+      (.setText (impl c) v)
+      (.setCaretPosition (impl c) 0))
     (:caret-color [c _ v]
       (.setCaretColor (impl c) (util/color v)))
     (:on-change [c _ handler]

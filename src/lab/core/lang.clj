@@ -60,10 +60,10 @@ check if its one of the registered symbols."
      :options  {:main      :expr*
                 :root-tag  ::root
                 :make-node #'make-node}
-     :grammar  [:expr       #".+"]
+     :grammar  [:expr       #"[\s\S]+"]
      :rank     (partial file-extension? "txt")
-     :styles   {:default {:foreground 0xFFFFFF}
-                :expr    {:foreground 0xFFFFFF}}}))
+     :styles   {:default {:color 0xFFFFFF}
+                :expr    {:color 0xFFFFFF}}}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing
@@ -94,14 +94,14 @@ the limits for the nodes with the tag specified by ignore?."
   (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
     (let [[node _ :as nxt] (z/next loc)]
       (cond (string? node)
-              (let [new-offset (+ offset (.length node))
+              (let [length     (.length node)
+                    new-offset (+ offset length)
                     parent     (-> nxt z/up first)
                     tag        (tag parent)
-                    {:keys [style group]}
-                               (meta parent)
+                    {:keys [style group]} (meta parent)
                     limits     (if (or (ignore? tag) (not (= group node-group)))
                                  limits
-                                 (conj! limits [offset new-offset style]))]
+                                 (conj! limits [offset length style]))]
                 (recur nxt new-offset limits ignore?))
             (z/end? nxt)
               (persistent! limits)

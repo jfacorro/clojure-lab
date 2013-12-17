@@ -7,7 +7,8 @@
                     [menu :as menu]
                     swing]
             [lab.core [keymap :as km]
-                      [plugin :as plugin]]
+                      [plugin :as plugin]
+                      [lang :as lang]]
             [lab.model.document :as doc]))
 
 (declare document-tab)
@@ -61,16 +62,8 @@ and call the app's open-document function."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Close
 
-(defn close-document-button
-  [app id & _]
-  (let [ui  (:ui @app)
-        tab (ui/find @ui (str "#" id))]
-    (ui/update! ui :#documents ui/remove tab)))
-
-(defn- close-document
-  "Finds the currently selected tab, removes it and closes the document
-associated to it."
-  [app & _]
+(defn close-document-ui
+  [app id]
   (let [ui     (:ui @app)
         tab    (current-document-tab ui)
         editor (current-text-editor ui)
@@ -78,6 +71,20 @@ associated to it."
     (when doc
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
+
+(defn close-document-button
+  "Handles the tabs' close button when clicked."
+  [app id & _]
+  (close-document-ui app id))
+
+(defn- close-document-menu
+  "Finds the currently selected tab, removes it and closes the document
+associated to it."
+  [app & _]
+  (let [ui     (:ui @app)
+        tab    (current-document-tab ui)
+        id     (ui/attr tab :id)]
+    (close-document-ui app id)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Save
@@ -131,16 +138,9 @@ wins. Returns a channel that takes the input events."
             (if (= ch c)
               (recur :recieve args)
               (do
-                (try (apply f args) (catch Exception ex (println ex)))
+                (future (apply f args))
                 (recur :wait nil))))))
     c))
-
-(defn style
-  "Looks for the style for the tag in the styles map.
-  If there's no style defined it returns the :default."
-  [styles tag]
-  (or (-> styles tag)
-      (-> styles :default)))
 
 (defn highlight
   "Takes the app atom, the id for the current text 
@@ -155,27 +155,32 @@ generation."
         node-group  (gensym "group-")
         lang        (:lang @doc)
         styles      (:styles lang)]
-    (swap! doc lab.core.lang/parse-tree node-group)
-    (let [tokens (lab.core.lang/tokens (:parse-tree @doc)  node-group)]
-      (doseq [[strt end tag] tokens]
-        (ui/apply-style editor strt (- end strt) (style styles tag)))
-      #_(ui/apply-style editor (-> styles :default)))))
-  
+    (swap! doc lang/parse-tree node-group)
+    (let [tokens (lang/tokens (:parse-tree @doc) node-group)]
+      (ui/action
+        (doseq [[start length tag] tokens]
+          (ui/apply-style editor start length (styles tag (:default styles))))))))
+
 (defn text-editor-change [app id ch evt]
-  (let [ui     (:ui @app)
-        editor (ui/find @ui (str "#" id))
-        doc    (ui/attr editor :doc)]
-    (case (:type evt)
+  (let [ui       (:ui @app)
+        editor   (ui/find @ui (str "#" id))
+        doc      (ui/attr editor :doc)
+        evt-type (:type evt)]
+    (case evt-type
       :insert (swap! doc doc/insert (:offset evt) (:text evt))
       :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
       :change nil)
-    (async/put! ch [app id])
-    (assert (= (ui/text editor) (doc/text @doc)))))
+    (when (or (not= evt-type :change)
+              (not (seq (:parse-tree @doc))))
+      (async/put! ch [app id])
+      #_(assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
 
 (defn- register-keymap-hook
+  "Processes the :global keymaps adding their commands 
+to the UI's main menu."
   [f app keymap]
   (case (:type keymap)
     :global
@@ -199,7 +204,7 @@ generation."
                    :caret-color 0xFFFFFF
                    :font        [:name "Consolas" :size 14]
                    :key-event   (fn [e super] (println (:event e)) (super))
-                   :on-change   (partial #'text-editor-change app id (timeout-channel 500 highlight))}]))
+                   :on-change   (partial #'text-editor-change app id (timeout-channel 250 highlight))}]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
@@ -253,7 +258,7 @@ generation."
               :global
               {:category "File" :name "New" :fn #'new-document :keystroke "ctrl N"}
               {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
-              {:category "File" :name "Close" :fn #'close-document :keystroke "ctrl W"}
+              {:category "File" :name "Close" :fn #'close-document-menu :keystroke "ctrl W"}
               {:category "File" :name "Save" :fn #'save-document :keystroke "ctrl S"}
               {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
 
