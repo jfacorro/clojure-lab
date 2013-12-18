@@ -91,7 +91,7 @@ with Color instances."
       (apply assoc style attrs)
       style)))
 
-(defn- make-style-memoizable [style]
+(defn make-style* [style]
   "Creates a new style with the given style map."
   (let [attr-set (SimpleAttributeSet.)
         att      (parse-attrs style)]
@@ -99,7 +99,7 @@ with Color instances."
       (.addAttribute attr-set (k style-constants) v))
     attr-set))
 
-(def make-style (memoize make-style-memoizable))
+(def make-style (memoize make-style*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Image
