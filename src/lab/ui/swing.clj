@@ -93,18 +93,18 @@
     (:size [c attr [w h :as v]]
       (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
     (:visible [c _ v]
-      (.setVisible (p/impl c) v))
+      (.setVisible ^java.awt.Component (p/impl c) v))
     ;;;;;;;;;;;
     ;; Events
     (:key-event [c _ _])
     (:on-focus [c _ handler]
       (let [listener (proxy [FocusAdapter] []
                        (focusGained [e] (handler (p/to-map e))))]
-        (.addFocusListener (p/impl c) listener)))
+        (.addFocusListener ^JComponent (p/impl c) listener)))
     (:on-blur [c _ handler]
       (let [listener (proxy [FocusAdapter] []
                        (focusLost [e] (handler (p/to-map e))))]
-        (.addFocusListener (p/impl c) listener)))
+        (.addFocusListener ^JComponent (p/impl c) listener)))
     (:on-click [c _ handler]
       (let [listener (proxy [MouseAdapter] []
                        (mousePressed [e] (handler (p/to-map e))))]

@@ -2,7 +2,7 @@
   (:import  [javax.swing JTextPane]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType]
             [java.awt.event ActionListener]
-            [javax.swing.text StyledDocument SimpleAttributeSet])
+            [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet])
   (:use     [lab.ui.protocols :only [impl Event to-map Text]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -50,16 +50,21 @@
 (ui/defattributes
   :text-editor
     (:wrap [c _ _])
-    (:doc [c _ _])
-    (:text [c _ v]
-      (.setText (impl c) v)
-      (.setCaretPosition (impl c) 0))
+    (:doc [c _ doc])
+    (:text [c p v]
+      (let [txt        ^JTextPane (impl c)
+            doc        ^DefaultStyledDocument (.getDocument txt)
+            blank      (DefaultStyledDocument.)]
+        (.setDocument ^JTextPane txt blank)
+        (.insertString doc 0 v nil)
+        (.setDocument ^JTextPane txt doc)
+        (.setCaretPosition ^JTextPane txt 0)))
     (:caret-color [c _ v]
-      (.setCaretColor (impl c) (util/color v)))
-    (:on-change [c _ handler]
+      (.setCaretColor ^JTextPane (impl c) (util/color v)))
+    (:on-change [c p handler]
       (let [listener (proxy [DocumentListener] []
                        (insertUpdate [e] (handler (to-map e)))
                        (removeUpdate [e] (handler (to-map e)))
                        (changedUpdate [e] (handler (to-map e))))
-            doc      (.getDocument (impl c))]
+            doc      (.getDocument ^JTextPane (impl c))]
         (.addDocumentListener doc listener))))

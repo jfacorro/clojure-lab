@@ -2,7 +2,8 @@
   "Provides a protocol interface for different text buffer
 implementations."
   (:require [net.cgrand.parsley :as parsley]
-            [net.cgrand.parsley.tree :as tree]))
+            [net.cgrand.parsley.tree :as tree])
+  (:import  [net.cgrand.parsley.tree InnerNode Leaf]))
 
 (defprotocol Buffer
   (insert     [this offset s] "Inserts s in offset.")
@@ -13,12 +14,16 @@ implementations."
 
 (defn to-string
   ([b] (to-string b (StringBuffer.)))
-  ([b s]
-    (cond (instance? net.cgrand.parsley.tree.Leaf b) 
-            (.append s (.s b))
+  ([b ^StringBuffer s]
+    (cond (instance? Leaf b)
+            (.append s (.s ^Leaf b))
           :else
+            (let [^InnerNode x b]
             (doall
-              (map #(to-string % s) (if (.c b) [(.a b) (.b b) (.c b)] [(.a b) (.b b)]))))
+              (map #(to-string % s)
+                   (if (.c x)
+                     [(.a x) (.b x) (.c x)]
+                     [(.a x) (.b x)])))))
     (.toString s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,12 +57,12 @@ the parsing information from the language provided."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; StringBuffer implementation
 
-(extend-type StringBuffer
-  Buffer
+(extend-protocol Buffer
+  StringBuffer
   (insert [this offset s]
-    (.insert this offset s))
+    (.insert this ^int offset ^String s))
   (delete [this start end]
-    (.delete this start end))
+    (.delete this ^int start ^int end))
   (length [this]
     (.length this))
   (text [this]
@@ -67,5 +72,5 @@ the parsing information from the language provided."
   "Return a native mutable java StringBuffer instance."
   ([]
     (string-buffer ""))
-  ([s]
+  ([^String s]
     (StringBuffer. s)))

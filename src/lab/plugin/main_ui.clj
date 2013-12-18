@@ -31,9 +31,13 @@
   "Adds a new tab to the documents tab container. This is used by both 
 the open and new commands."
   [app doc]
-  (as-> (:ui @app) ui
-    (ui/update! ui :#documents ui/add (document-tab app doc))))
-
+  (let [ui  (:ui @app)
+        tab (document-tab app doc)
+        txt (ui/find tab :text-editor)
+        id  (ui/attr txt :id)]
+    (ui/update! ui :#documents ui/add tab)
+    (ui/update! ui (str "#" id) ui/attr :doc doc)
+    (ui/update! ui (str "#" id) ui/attr :text (doc/text @doc))))
 
 (defn open-document
   "Adds a new tab with the open document."
@@ -65,8 +69,8 @@ and call the app's open-document function."
 (defn close-document-ui
   [app id]
   (let [ui     (:ui @app)
-        tab    (current-document-tab ui)
-        editor (current-text-editor ui)
+        tab    (ui/find @ui (str "#" id))
+        editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)]
     (when doc
       (ui/update! ui :#documents ui/remove tab)
@@ -157,23 +161,20 @@ generation."
         styles      (:styles lang)]
     (swap! doc lang/parse-tree node-group)
     (let [tokens (lang/tokens (:parse-tree @doc) node-group)]
-      (ui/action
-        (doseq [[start length tag] tokens]
-          (ui/apply-style editor start length (styles tag (:default styles))))))))
+      (doseq [[start length tag] tokens]
+        (ui/apply-style editor start length (styles tag (:default styles)))))))
 
 (defn text-editor-change [app id ch evt]
-  (let [ui       (:ui @app)
-        editor   (ui/find @ui (str "#" id))
-        doc      (ui/attr editor :doc)
-        evt-type (:type evt)]
-    (case evt-type
-      :insert (swap! doc doc/insert (:offset evt) (:text evt))
-      :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt)))
-      :change nil)
-    (when (or (not= evt-type :change)
-              (not (seq (:parse-tree @doc))))
-      (async/put! ch [app id])
-      #_(assert (= (ui/text editor) (doc/text @doc))))))
+  (when (not= (:type evt) :change)
+    (let [ui       (:ui @app)
+          editor   (ui/find @ui (str "#" id))
+          doc      (ui/attr editor :doc)]
+      (case (:type evt)
+        :insert (swap! doc doc/insert (:offset evt) (:text evt))
+        :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
+      (when (not (seq (:parse-tree @doc))))
+        (async/put! ch [app id])
+        #_(assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
@@ -194,17 +195,18 @@ to the UI's main menu."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Controls
 
+(def text-editor-style
+  {:border      :none
+   :background  0x333333
+   :foreground  0xFFFFFF
+   :caret-color 0xFFFFFF
+   :font        [:name "Consolas" :size 14]})
+
 (defn- create-text-editor [app doc]
   (ui/with-id id
-    [:text-editor {:doc         doc
-                   :text        (doc/text @doc)
-                   :border      :none
-                   :background  0x333333
-                   :foreground  0xFFFFFF
-                   :caret-color 0xFFFFFF
-                   :font        [:name "Consolas" :size 14]
-                   :key-event   (fn [e super] (println (:event e)) (super))
-                   :on-change   (partial #'text-editor-change app id (timeout-channel 250 highlight))}]))
+   [:text-editor (merge {:id id}
+                        text-editor-style
+                        {:on-change (partial #'text-editor-change app id (timeout-channel 250 highlight))})]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
