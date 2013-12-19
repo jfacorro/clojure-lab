@@ -50,6 +50,9 @@ is set before processing other attribute's code."
 (ui/defattributes
   :file-dialog
   (:type [c _ v])
+  (:current-dir [c _ v]
+    (when v
+      (.setCurrentDirectory (impl c) (java.io.File. v))))
   (:title [c _ v]
     (.setDialogTitle (impl c) v))
   (:selection-type [c _ v]
@@ -58,6 +61,7 @@ is set before processing other attribute's code."
   (:visible ^:modify [c _ v]
     (apply-attr c :selection-type)
     (apply-attr c :title)
+    (apply-attr c :current-dir)
     (when v
       (->> c
         file-dialog-open

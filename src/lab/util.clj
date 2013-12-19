@@ -8,7 +8,7 @@
   Convenience macro."
   [f x & args]
   `(swap! ~x ~f ~@args))
-  
+
 (defn interned-vars-meta
   "Returns a seq with the metadata of the interned vars 
   in the supplied namespace. The argument can be either 
@@ -123,3 +123,30 @@ f, which should take a value and an event."
       (f x evt)))
   ([f x]
     (partial (event-handler f) x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; break
+
+(defn readr [locals prompt exit-code]
+  (let [input (clojure.main/repl-read prompt exit-code)]
+    (if (= input :quit) 
+      exit-code
+      (do
+        (when (= input :locals)
+          (println locals))
+        input))))
+
+(defn contextual-eval [ctx expr]
+  (eval
+    `(let [~@(mapcat (fn [[k v]] [k `'~v]) ctx)]
+      ~expr)))
+
+(defmacro local-context []
+  (let [symbols (keys &env)]
+    `(zipmap '~symbols (list ~@symbols))))
+
+(defmacro break []
+  `(clojure.main/repl
+    :prompt #(print "debug=> ")
+    :read (partial readr (local-context))
+    :eval (partial contextual-eval (local-context))))

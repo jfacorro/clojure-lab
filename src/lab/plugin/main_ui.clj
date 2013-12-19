@@ -36,6 +36,8 @@ the open and new commands."
         txt (ui/find tab :text-editor)
         id  (ui/attr txt :id)]
     (ui/update! ui :#documents ui/add tab)
+    ;; This is done once the control is in the UI tree
+    ;; so that any event handler can find the :doc attribute.
     (ui/update! ui (str "#" id) ui/attr :doc doc)
     (ui/update! ui (str "#" id) ui/attr :text (doc/text @doc))))
 
@@ -49,7 +51,7 @@ the open and new commands."
   "Opens a file selection dialog for the user to choose a file
 and call the app's open-document function."
   [app _]
-  (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true}])
+  (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true :current-dir (lab/config @app :current-dir)}])
         [result file] (ui/attr file-dialog :result)]
     (when file
       (open-document app (.getCanonicalPath file)))))
@@ -95,10 +97,10 @@ associated to it."
 
 (defn- assign-path
   "When saving, if the document doesn't have a path, get one from the user."
-  [doc]
+  [doc current-dir]
   (if (doc/path doc)
     doc
-    (let [file-dialog   (ui/init [:file-dialog {:type :save :visible true}])
+    (let [file-dialog   (ui/init [:file-dialog {:type :save :visible true :current-dir current-dir}])
           [result file] (ui/attr file-dialog :result)]
       (if file
         (doc/bind doc (.getCanonicalPath file) :new? true)
@@ -109,7 +111,7 @@ associated to it."
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
         doc    (ui/attr editor :doc)]
-    (swap! doc assign-path)
+    (swap! doc assign-path (lab/config @app :current-dir))
     (when (doc/path @doc)
       (swap! app lab/save-document doc))))
 
@@ -161,8 +163,7 @@ generation."
         styles      (:styles lang)]
     (swap! doc lang/parse-tree node-group)
     (let [tokens (lang/tokens (:parse-tree @doc) node-group)]
-      (doseq [[start length tag] tokens]
-        (ui/apply-style editor start length (styles tag (:default styles)))))))
+      (ui/action (ui/apply-style editor tokens styles)))))
 
 (defn text-editor-change [app id ch evt]
   (when (not= (:type evt) :change)
@@ -223,7 +224,7 @@ to the UI's main menu."
 
 (defn app-window [app]
   [:window {:id     "main"
-            :title   (:name @app)
+            :title   (lab/config @app :name)
             :visible true
             :size    [700 500]
             :maximized true
@@ -267,7 +268,7 @@ to the UI's main menu."
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
   [app]
-  (swap! app assoc :ui (atom (-> app app-window ui/init))))
+  (swap! app assoc :ui (atom (ui/init (app-window app)))))
 
 (plugin/defplugin lab.plugin.main-ui
   "Creates the UI for the application and hooks into

@@ -2,7 +2,8 @@
   "Add an global action that creates a tree control with the dirs and files of
 the specified root dir."
   (:use [lab.core.plugin :only [defplugin]])
-  (:require [lab.core.keymap :as km]
+  (:require [lab.core :as lab]
+            [lab.core.keymap :as km]
             [lab.plugin.main-ui :as main]
             [lab.ui.core :as ui]
             [clojure.java.io :as io]))
@@ -49,7 +50,10 @@ tree. Returns a tree node."
   "Handler for the click event of an item in the tree."
   [app {:keys [source click-count]}]
   (when (= click-count 2)
-    (let [^java.io.File file (ui/selected source)]
+    (let [ui        (:ui @app)
+          node-id   (ui/selected source)
+          node      (ui/find @ui (ui/selector# node-id))
+          ^java.io.File file (ui/attr node :item)]
       (when-not (.isDirectory file)
         (main/open-document app (.getCanonicalPath file))))))
 
@@ -64,7 +68,8 @@ tree. Returns a tree node."
   (let [file-dialog   (ui/init [:file-dialog {:type           :open, 
                                               :selection-type :dir-only, 
                                               :visible        true, 
-                                              :title          "Open Directory"}])
+                                              :title          "Open Directory"
+                                              :current-dir    (lab/config @app :current-dir)}])
         [result dir] (ui/attr file-dialog :result)]
     (when dir
       (ui/update! (:ui @app) :#left-controls ui/add (file-tree app dir)))))

@@ -78,7 +78,9 @@
 ;; of component in the hierarchy.
 (ui/defattributes
   :component
-    (:id [c _ _] c)
+    (:id [c _ v]
+      (when (not= (ui/attr c :id) v)
+        (throw (Exception. (str "Can't change the :id once it is set: " c)))))
     (:transparent [c _ v]
       (.setOpaque ^JComponent (p/impl c) (not v)))
     (:border [c _ v]

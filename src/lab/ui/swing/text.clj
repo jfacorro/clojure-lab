@@ -41,8 +41,23 @@
   (text [this]
     (as-> (.getDocument this) doc 
       (.getText doc 0 (.getLength doc))))
-  (apply-style [this start length style]
-    (apply-style (.getDocument this) start length (util/make-style style))))
+  (apply-style
+    ([this start length style]
+      (apply-style (.getDocument this) start length (util/make-style style)))
+    ([this regions styles]
+      (let [styles (reduce (fn [m [k v]] (assoc m k (util/make-style v))) styles styles)
+            doc    (.getDocument this)
+            blank  (DefaultStyledDocument.)
+            pos    (.getCaretPosition this)]
+        (.setDocument this blank)
+        (doseq [[start length tag] regions]
+          (.setCharacterAttributes ^DefaultStyledDocument doc 
+            ^long start 
+            ^long length
+            ^SimpleAttributeSet (styles tag (:default styles))
+            true))
+         (.setDocument this doc)
+         (.setCaretPosition this pos)))))
 
 (ui/definitializations
   :text-editor JTextPane)
@@ -65,6 +80,6 @@
       (let [listener (proxy [DocumentListener] []
                        (insertUpdate [e] (handler (to-map e)))
                        (removeUpdate [e] (handler (to-map e)))
-                       (changedUpdate [e] (handler (to-map e))))
+                       (changedUpdate [e] #_(handler (to-map e))))
             doc      (.getDocument ^JTextPane (impl c))]
         (.addDocumentListener doc listener))))

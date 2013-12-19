@@ -8,14 +8,20 @@
             [lab.core.lang   :as lang]
             [clojure.java.io :as io]))
 
-(declare current-document open-document save-document close-document)
+(declare 
+  current-document 
+  open-document 
+  save-document 
+  close-document
+  config)
 
 (def default-config
   {:name          "Clojure Lab"
    :core-plugins  '[lab.plugin.main-ui]
    :plugins       '[lab.plugin.file-tree 
                     lab.plugin.clojure-lang]
-   :plugins-dir   "plugins"})
+   :plugins-dir   "plugins"
+   :current-dir   "."})
 
 (def default-app
   "Returns a new app with nothing initialized and a
@@ -122,7 +128,8 @@ and adds it to the openened documents map."
       (switch-document app opened-doc)
       (-> app
         (update-in [:documents] conj doc)
-        (assoc :current-document doc))))))
+        (assoc :current-document doc)
+        (config :current-dir path))))))
 
 (defn close-document
   "Closes a document and removes it from the opened
@@ -140,7 +147,7 @@ documents collection."
   [app doc]
   (when doc
     (swap! doc doc/save))
-  app)
+  (config app :current-dir (doc/path @doc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configuration
@@ -155,6 +162,15 @@ or the default path if no path is given."
           config  (when exists (load-string (slurp path)))]
       (update-in app [:config] merge config))))
 
+(defn config
+  "Gets or sets the value for key from the 
+app's configuration map."
+  ([app k]
+    (get-in app [:config k]))
+  ([app k v]
+    (println :config k v)
+    (assoc-in app [:config k] v)))
+    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Initialization
 

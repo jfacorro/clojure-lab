@@ -39,7 +39,9 @@
     ([this]
       (let [index (.getSelectedIndex this)]
         (when (<= 0 index)
-          (abstract (.getComponentAt this index)))))
+          (-> (.getComponentAt this index)
+            abstract
+            (ui/attr :id)))))
     ([this index]
       (.setSelectedIndex this index))))
 

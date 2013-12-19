@@ -16,14 +16,15 @@
   (abstract [this] [this the-abstract] "Gets or sets the asbtract component for the implementation."))
 
 (defprotocol Selected
-  (selected [this] [this selected] "Gets or sets the selected children abstract component."))
+  (selected [this] [this selected]
+    "Returns the id of the selected child or sets the selected child abstract component."))
 
 (defprotocol Event
   (to-map [this] "Serializes the event into a map."))
 
 (defprotocol Text
   (text [this])
-  (apply-style [this start length style]
+  (apply-style [this tokens styles] [this start length style]
     "Applies a formatting style to the region defined by start and length."))
 
 ;; Multi methods

@@ -21,11 +21,15 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]))
 
-(declare init initialized? attr)
+(declare init initialized? attr find genid selector#)
 
-(def ui-action-macro)
+(def ui-action-macro 
+  "This var should be set by the UI implementation with a macro 
+that runs code in the UI thread.")
 
-(defmacro action [& body]
+(defmacro action
+  "Macro that uses the UI aciton macro defined by the implementation."
+  [& body]
   `(~ui-action-macro ~@body))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -95,13 +99,20 @@ of its implementation."
 
   p/Selected
   (selected [this]
-    (p/selected (p/impl this)))
+    (let [id (p/selected (p/impl this))]
+      (find this (selector# id))))
   (selected [this selected]
     (p/selected (p/impl this) (p/impl selected)))
-  
+
+  Object
+  (toString [this]
+    (str tag (when (attr this :id) " (#" (attr this :id) ")")))
+
   p/Text
   (text [this]
     (p/text (p/impl this)))
+  (apply-style [this tokens styles]
+    (p/apply-style (p/impl this) tokens styles))
   (apply-style [this start length style]
     (p/apply-style (p/impl this) start length style)))
 
@@ -133,9 +144,9 @@ of its implementation."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 
-(defn children [c] (p/children c))
-(defn add [c child] (p/add c child))
-(defn remove [c child] (p/remove c child))
+(def children #'p/children)
+(def add #'p/add)
+(def remove #'p/remove)
 
 (def text #'p/text)
 (def apply-style #'p/apply-style)
@@ -183,6 +194,11 @@ attributes and sets their corresponding values."
             (attr c k (if (component? v) (init v) v)))]
     (reduce f component attrs)))
 
+(defn- check-missing-id [c]
+  (if (attr c :id)
+    c
+    (attr c :id (genid))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialization and Attributes Access
 
@@ -212,8 +228,8 @@ each child and the attributes that have a component as a value."
         (p/impl (p/initialize c))
         set-attrs
         init-content
+        check-missing-id
         update-abstraction))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Finding and Updating
@@ -223,6 +239,11 @@ each child and the attributes that have a component as a value."
   [root selector]
   (when-let [path (sel/select root selector)]
     (get-in root path)))
+
+(defn selector#
+  "Builds an id selector."
+  [^String id]
+  (-> (str "#" id) keyword))
 
 (defn update
   "Updates all the components that match the selector expression
@@ -246,7 +267,7 @@ using (update-in root path-to-component f args)."
 
 (def genid
   "Generates a unique id string."
-  #(name (gensym)))
+  #(name (gensym "component")))
 
 (defmacro with-id
   "Assigns a unique id to the component which can be
