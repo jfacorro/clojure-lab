@@ -51,17 +51,16 @@ tree. Returns a tree node."
   [app {:keys [source click-count]}]
   (when (= click-count 2)
     (let [ui        (:ui @app)
-          node-id   (ui/selected source)
-          node      (ui/find @ui (ui/selector# node-id))
+          node      (ui/selected source)
           ^java.io.File file (ui/attr node :item)]
       (when-not (.isDirectory file)
         (main/open-document app (.getCanonicalPath file))))))
 
-(defn- file-tree [app file]
-  [:tab {:title (.getName file) :border :none}
+(defn- file-tree [app dir]
+  [:tab {:title (.getName dir) :border :none}
         [:scroll [:tree {:id      "file-tree"
-                         :on-click (partial #'open-document-tree app)
-                         :root     (load-dir file)}]]])
+                         :on-click (partial #'open-document-tree app)}
+                        (load-dir dir)]]])
 
 (defn- open-project
   [app _]

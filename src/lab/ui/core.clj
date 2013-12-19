@@ -106,7 +106,9 @@ of its implementation."
 
   Object
   (toString [this]
-    (str tag (when (attr this :id) " (#" (attr this :id) ")")))
+    (if-let [id (attr this :id)]
+      (str tag " (#" id ")")
+      tag))
 
   p/Text
   (text [this]

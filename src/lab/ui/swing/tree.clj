@@ -18,9 +18,6 @@
 
 (ui/defattributes
   :tree
-    (:root [c _ v]
-      (let [model (DefaultTreeModel. (impl v))]
-        (.setModel (impl c) model)))
     (:on-selected [c _ handler]
       (let [listener (proxy [TreeSelectionListener] []
                        (valueChanged [e]
@@ -36,6 +33,11 @@
   (add [this child]
     (.add this child)
     this)
+  (remove [this child]
+    (.remove this child))
+  (children [this]
+    (.children this))
+
   Implementation
   (abstract
     ([this] (.abstract this))
@@ -43,8 +45,18 @@
       (.abstract this x)
       this)))
 
-(extend-protocol Selected
-  JTree 
+(extend-type JTree
+  Component
+  (add [this child]
+    (let [model (DefaultTreeModel. child)]
+      (.setModel this model)
+      this))
+  (remove [this child]
+    (.remove this child))
+  (children [this]
+    (.getComponents this))
+
+  Selected
   (selected 
     ([this]
       (when-let [node (-> this .getLastSelectedPathComponent)]
