@@ -168,7 +168,6 @@ app's configuration map."
   ([app k]
     (get-in app [:config k]))
   ([app k v]
-    (println :config k v)
     (assoc-in app [:config k] v)))
     
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

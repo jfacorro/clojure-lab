@@ -47,10 +47,10 @@
 
 (ui/defattributes
   :tab
-  (:title [c _ _] c)
-  (:tool-tip [c _ _] c)
-  (:header [c _ _] c)
-  (:scroll [c _ _] c)
+  (:title [c _ _])
+  (:tool-tip [c _ _])
+  (:header [c _ _])
+  (:scroll [c _ _])
 
   :tabs
   (:on-tab-change [c _ handler]

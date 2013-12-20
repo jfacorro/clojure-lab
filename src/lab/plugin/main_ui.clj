@@ -106,13 +106,24 @@ associated to it."
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
 
+(defn- update-document-tab-title
+  "Updated the document tab title."
+  [tab title]
+  (let [header (-> (ui/attr tab :header)
+                   (ui/update [:panel :label] ui/attr :text title))]
+    (ui/attr tab :header header)))
+
 (defn- save-document
   [app & _]
   (let [ui     (:ui @app)
-        editor (current-text-editor ui)
+        tab    (current-document-tab ui)
+        tab-id (ui/attr tab :id)
+        editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)]
     (swap! doc assign-path (lab/config @app :current-dir))
     (when (doc/path @doc)
+      (ui/update! ui (ui/selector# tab-id)
+        update-document-tab-title (doc/name @doc))
       (swap! app lab/save-document doc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
