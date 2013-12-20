@@ -13,6 +13,7 @@
 
 (ui/defattributes
   :component
+    (:id [c _ v])
     (:border [c _ v])
     (:background [c _ v])
     (:foreground [c _ v])
