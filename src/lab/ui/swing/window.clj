@@ -11,8 +11,7 @@
     (:fullscreen [c _ v]
       (util/fullscreen (when v (p/impl c))))
     (:title [c _ v]
-      (.setTitle (p/impl c) v)
-      c)
+      (.setTitle ^JFrame (p/impl c) v))
     (:maximized [c _ v]
       (when v
         (.setExtendedState ^JFrame (p/impl c) 
@@ -21,7 +20,7 @@
     (:size [c _ [w h]]
       (.setSize ^JFrame (p/impl c) w h))
     (:menu [c _ v]
-      (.setJMenuBar (p/impl c) (p/impl v))
+      (.setJMenuBar ^JFrame (p/impl c) (p/impl v))
       (.revalidate ^JFrame (p/impl c)))
     (:icons [c _ v]
       (let [icons (map util/image v)]

@@ -3,11 +3,11 @@
             [lab.ui.util :as util]
             [lab.ui.protocols :as uip]
             [clojure.java.io :as io])
-  (:import [java.awt Color Font Toolkit GraphicsEnvironment]
+  (:import [java.awt Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon]
            [javax.swing.text StyleConstants SimpleAttributeSet]))
 
-(def toolkit (Toolkit/getDefaultToolkit))
+(def ^Toolkit toolkit (Toolkit/getDefaultToolkit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SplitPane Orientations
@@ -34,7 +34,7 @@
           :else
             (throw)))
   ([r g b]
-    (Color. r g b)))
+    (Color. ^int r ^int g ^int b)))
     
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Font
@@ -104,12 +104,12 @@ with Color instances."
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Image
 
-(defn image
+(defn ^Image image
   "Load an image from a resource file."
   [rsrc]
   (->> rsrc io/resource (.createImage toolkit)))
 
-(defn icon
+(defn ^ImageIcon icon
   "Load an image from a resource file."
   [rsrc]
   (->> rsrc image (ImageIcon.)))
@@ -132,24 +132,24 @@ with Color instances."
     :line
       (BorderFactory/createLineBorder (color (or x 0)) (or y 1))
     :titled
-      (BorderFactory/createTitledBorder x)))
+      (BorderFactory/createTitledBorder ^String x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; KeyStroke
 
 (defn keystroke
   "Returns a swing key stroke based on the string provided."
-  [s]
+  [^String s]
   (KeyStroke/getKeyStroke s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fullscreen
 
-(def device (-> (GraphicsEnvironment/getLocalGraphicsEnvironment) .getScreenDevices first))
+(def ^GraphicsDevice device (-> (GraphicsEnvironment/getLocalGraphicsEnvironment) .getScreenDevices first))
 
 (defn fullscreen
   "Sets the window that will show in fullscreen mode. If the argument
 is null, no window is set and the current one (if any) shows fullscreen
 no more."
-  [window]
+  [^Window window]
   (.setFullScreenWindow device window))

@@ -6,7 +6,8 @@
             [lab.core.keymap :as km]
             [lab.core.plugin :as pl]
             [lab.core.lang   :as lang]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io])
+  (:import [java.io File]))
 
 (declare 
   current-document 
@@ -92,7 +93,7 @@ specified id."
 
 (defn same-file?
   "Checks if the two files supplied are the same."
-  [x y]
+  [^File x ^File y]
   (when (and x y)
     (= (.getCanonicalPath x) (.getCanonicalPath y))))
 

@@ -70,10 +70,10 @@
       (let [txt        ^JTextPane (impl c)
             doc        ^DefaultStyledDocument (.getDocument txt)
             blank      (DefaultStyledDocument.)]
-        (.setDocument ^JTextPane txt blank)
+        (.setDocument txt blank)
         (.insertString doc 0 v nil)
-        (.setDocument ^JTextPane txt doc)
-        (.setCaretPosition ^JTextPane txt 0)))
+        (.setDocument txt doc)
+        (.setCaretPosition txt 0)))
     (:caret-color [c _ v]
       (.setCaretColor ^JTextPane (impl c) (util/color v)))
     (:on-change [c p handler]

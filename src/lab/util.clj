@@ -34,7 +34,7 @@
   ([^String ptrn ^String s]
     (let [m (re-matcher (re-pattern ptrn) s)]
       (find-limits m)))
-  ([m]
+  ([^java.util.regex.Matcher m]
     (lazy-seq
       (when-let [lim (when (.find m) [(.start m) (.end m)])]
         (cons lim (find-limits m))))))

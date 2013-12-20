@@ -149,7 +149,7 @@ buffer."
   "Deletes the document's content from start to end position.
   Returns the modified document."
   [doc start end]
-  (let [s   (-> doc text (.substring start end))
+  (let [s   (.substring ^String (doc text) start end)
         ops [(->DeleteText start end s)]]
     (-> doc
       (archive-operations ops)

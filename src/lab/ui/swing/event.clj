@@ -93,7 +93,7 @@ TODO: provide a map with merging functions."
 ;; Event Object
 
 (def event-object "Root implementation."
-  {:to-map (fn [this] {:source (p/abstract (.getSource this))})})
+  {:to-map (fn [this] {:source (p/abstract (.getSource ^java.util.EventObject this))})})
 
 (extend java.util.EventObject
   p/Event
@@ -113,10 +113,10 @@ TODO: provide a map with merging functions."
    :ctrl   InputEvent/CTRL_MASK})
 
 (def input-event
-  {:to-map (fn [this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})})
+  {:to-map (fn [^InputEvent this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})})
 
 (def key-event
-  {:to-map (fn [this]
+  {:to-map (fn [^KeyEvent this]
              {:char         (.getKeyChar this)
               :code         (.getKeyCode this)
               :description  (KeyEvent/getKeyText (.getKeyCode this))
@@ -145,7 +145,7 @@ TODO: provide a map with merging functions."
    MouseEvent/MOUSE_WHEEL    :wheel})
 
 (def mouse-event
-  {:to-map (fn [this]
+  {:to-map (fn [^MouseEvent this]
              {:button       (mouse-button (.getButton this))
               :click-count  (.getClickCount this)
               :screen-loc   (as-> (.getLocationOnScreen this) p [(.getX p) (.getY p)])
@@ -165,7 +165,7 @@ TODO: provide a map with merging functions."
    :shift ActionEvent/SHIFT_MASK})
 
 (def action-event
-  {:to-map (fn [this]
+  {:to-map (fn [^ActionEvent this]
              {:source    (p/abstract (.getSource this))
               :modifiers (flag-modifiers action-modifiers (.getModifiers this))})})
 
@@ -177,7 +177,7 @@ TODO: provide a map with merging functions."
 ;; Focus Event
 
 (def focus-event
-  {:to-map (fn [this]
+  {:to-map (fn [^FocusEvent this]
              {:previous  (.getOppositeComponent this)
               :temporary (.isTemporary this)})})
 

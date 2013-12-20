@@ -12,12 +12,11 @@
 (ui/defattributes
   :split
     (:resize-weight [c _ v]
-      (.setResizeWeight (impl c) v)
-      c)
+      (.setResizeWeight ^JSplitPane (impl c) v))
     (:divider-location [c _ value]
-      (.setDividerLocation (impl c) value))
+      (.setDividerLocation ^JSplitPane (impl c) value))
     (:orientation [c attr value]
-      (.setOrientation (impl c) (util/split-orientations value))))
+      (.setOrientation ^JSplitPane (impl c) (util/split-orientations value))))
 
 (extend-protocol Component
   JSplitPane

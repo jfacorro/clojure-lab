@@ -12,16 +12,15 @@
 (ui/defattributes
   :button
   (:text [c _ v]
-    (.setText (p/impl c) v))
+    (.setText ^JButton (p/impl c) v))
   (:transparent [c _ v]
-    (.setContentAreaFilled (p/impl c) (not v)))
+    (.setContentAreaFilled ^JButton (p/impl c) (not v)))
   (:icon [c _ img]
-    (.setIcon (p/impl c) (util/icon img)))
+    (.setIcon ^JButton (p/impl c) (util/icon img)))
   (:on-click [c _ f]
     (let [action (reify ActionListener
                     (actionPerformed [this e] (f (p/to-map e))))]
-      (.addActionListener (p/impl c) action)))
+      (.addActionListener ^JButton (p/impl c) action)))
   :label
   (:text [c _ v]
-    (.setText (p/impl c) v)
-    c))
+    (.setText ^JLabel (p/impl c) v)))

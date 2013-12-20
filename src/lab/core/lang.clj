@@ -21,7 +21,7 @@ function from each lang to determine the appropiate one."
 (defn file-extension?
   "Returns a positive number if the path's extension 
 equals ext, zero otherwise."
-  [ext path]
+  [ext ^String path]
   (if (-> path (.split "\\.") last (= ext))
     1
     0))
@@ -94,7 +94,7 @@ the limits for the nodes with the tag specified by ignore?."
   (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
     (let [[node _ :as nxt] (z/next loc)]
       (cond (string? node)
-              (let [length     (.length node)
+              (let [length     (.length ^String node)
                     new-offset (+ offset length)
                     parent     (-> nxt z/up first)
                     tag        (tag parent)

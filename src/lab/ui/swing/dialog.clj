@@ -27,11 +27,11 @@
    :file-only     JFileChooser/FILES_ONLY})
 
 (defn- file-dialog-open [c]
-  (let [x       (impl c)
+  (let [x       ^JFileChooser (impl c)
         result  (case (ui/attr c :type)
                   :open   (.showOpenDialog x nil)
                   :save   (.showSaveDialog x nil)
-                  :custom (.showSaveDialog x nil (ui/attr c :accept-label)))]
+                  :custom (.showDialog x nil (ui/attr c :accept-label)))]
      [result (.getSelectedFile x)]))
 
 (defn- file-dialog-result [result chosen]
@@ -50,14 +50,14 @@ is set before processing other attribute's code."
 (ui/defattributes
   :file-dialog
   (:type [c _ v])
-  (:current-dir [c _ v]
+  (:current-dir [c _ ^String v]
     (when v
-      (.setCurrentDirectory (impl c) (java.io.File. v))))
+      (.setCurrentDirectory ^JFileChooser (impl c) (java.io.File. v))))
   (:title [c _ v]
-    (.setDialogTitle (impl c) v))
+    (.setDialogTitle ^JFileChooser (impl c) v))
   (:selection-type [c _ v]
     (when (selection-type v)
-      (.setFileSelectionMode (impl c) (selection-type v))))
+      (.setFileSelectionMode ^JFileChooser (impl c) (selection-type v))))
   (:visible ^:modify [c _ v]
     (apply-attr c :selection-type)
     (apply-attr c :title)
@@ -71,16 +71,16 @@ is set before processing other attribute's code."
   
   :option-dialog
   (:visible [c _ v]
-    (let [x       (impl c)
+    (let [x       ^JOptionPane (impl c)
           title   (ui/attr c :title)
           dialog  (.createDialog x title)]
       (.setVisible dialog true)
       (ui/attr c :result (options-result (.getValue x)))))
   (:title [c _ _])
   (:icon [c _ v]
-    (.setIcon (impl c) (util/icon v)))
+    (.setIcon ^JOptionPane (impl c) (util/icon v)))
   (:message [c _ v]
-    (.setMessage (impl c) v))
+    (.setMessage ^JOptionPane (impl c) v))
   (:options [c _ v]
     (when-let [t (options-type v)]
-      (.setOptionType (impl c) t))))
+      (.setOptionType ^JOptionPane (impl c) t))))

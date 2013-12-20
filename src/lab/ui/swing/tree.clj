@@ -22,11 +22,11 @@
       (let [listener (proxy [TreeSelectionListener] []
                        (valueChanged [e]
                          (handler (ui/selected c))))]
-        (.addTreeSelectionListener (impl c) listener)))
+        (.addTreeSelectionListener ^JTree (impl c) listener)))
   
   :tree-node
     (:item [c attr item]
-      (.setUserObject (impl c) item)))
+      (.setUserObject ^DefaultMutableTreeNode (impl c) item)))
 
 (extend-type DefaultMutableTreeNode
   Component
@@ -40,9 +40,9 @@
 
   Implementation
   (abstract
-    ([this] (.abstract this))
+    ([this] (.abstract ^lab.ui.protocols.Implementation this))
     ([this x]
-      (.abstract this x)
+      (.abstract ^lab.ui.protocols.Implementation this x)
       this)))
 
 (extend-type JTree
