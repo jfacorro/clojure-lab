@@ -3,6 +3,12 @@
                      [reflect :as r]
                      [pprint :as p]]))
 
+(defn keywordize [^String s]
+  (-> s
+    .toLowerCase
+    (.replace " " "-")
+    keyword))
+
 (defmacro !
   "Applies f to the atom x using the supplied arguments.
   Convenience macro."

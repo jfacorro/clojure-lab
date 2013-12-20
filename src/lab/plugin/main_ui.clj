@@ -176,16 +176,16 @@ generation."
     (let [tokens (lang/tokens (doc/parse-tree @doc) node-group)]
       (ui/action (ui/apply-style editor tokens styles)))))
 
-(defn text-editor-change [app id ch evt]
+(defn text-editor-change [app editor-id channel evt]
   (when (not= (:type evt) :change)
     (let [ui       (:ui @app)
-          editor   (ui/find @ui (ui/selector# id))
+          editor   (ui/find @ui (ui/selector# editor-id))
           doc      (ui/attr editor :doc)]
       (case (:type evt)
         :insert (swap! doc doc/insert (:offset evt) (:text evt))
         :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
-      (async/put! ch [app id])
-      #_(assert (= (ui/text editor) (doc/text @doc))))))
+      (async/put! channel [app editor-id])
+      (assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
