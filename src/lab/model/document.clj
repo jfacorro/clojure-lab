@@ -119,12 +119,11 @@ buffer."
   [doc]
   (:modified doc))
 
-(defn search
-  "Find the matches for the expression in the document
-  and returns the delimiters (index start and end) for each
-  match in ascending order."
-  [doc s]
-  (util/find-limits s (text doc)))
+(defn lang [doc]
+  (:lang doc))
+
+(defn parse-tree [doc]
+  (:parse-tree doc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text operations
@@ -149,12 +148,19 @@ buffer."
   "Deletes the document's content from start to end position.
   Returns the modified document."
   [doc start end]
-  (let [s   (.substring ^String (doc text) start end)
+  (let [s   (.substring ^String (text doc) start end)
         ops [(->DeleteText start end s)]]
     (-> doc
       (archive-operations ops)
       (update-in [:buffer] b/delete start end)
       (assoc-in [:modified] true))))
+
+(defn search
+  "Find the matches for the expression in the document
+  and returns the delimiters (index start and end) for each
+  match in ascending order."
+  [doc s]
+  (util/find-limits s (text doc)))
 
 (defn replace
   "Replaces all ocurrences of src with rpl."
@@ -166,6 +172,9 @@ buffer."
         ops    (mapcat g limits)]
     (-> (reduce f doc limits)
       (archive-operations ops))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; New documents name generation
 
 (def ^:dynamic *untitled-count* (atom 0))
 

@@ -45,21 +45,28 @@ tree. Returns a tree node."
         root  (if (.isDirectory root) root (.getParentFile root))]
     (tree-node-from-file root)))
 
+(defn- open-document-tree [app tree]
+  (let [ui        (:ui @app)
+        node      (ui/selected tree)
+        ^java.io.File file (ui/attr node :item)]
+    (when-not (.isDirectory file)
+      (main/open-document app (.getCanonicalPath file)))))
 
-(defn- open-document-tree
+(defn- open-document-tree-click
   "Handler for the click event of an item in the tree."
   [app {:keys [source click-count]}]
   (when (= click-count 2)
-    (let [ui        (:ui @app)
-          node      (ui/selected source)
-          ^java.io.File file (ui/attr node :item)]
-      (when-not (.isDirectory file)
-        (main/open-document app (.getCanonicalPath file))))))
+    (open-document-tree app source)))
+
+(defn- open-document-tree-enter [app {:keys [event source description] :as e}]
+  (when (and (= :pressed event) (= description :enter))
+    (open-document-tree app source)))
 
 (defn- file-tree [app dir]
   [:tab {:title (.getName dir) :border :none}
         [:scroll [:tree {:id      "file-tree"
-                         :on-click (partial #'open-document-tree app)}
+                         :on-click (partial #'open-document-tree-click app)
+                         :on-key (partial #'open-document-tree-enter app)}
                         (load-dir dir)]]])
 
 (defn- open-project

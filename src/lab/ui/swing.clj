@@ -14,7 +14,7 @@
                           event])
   (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
            [java.awt Dimension]
-           [java.awt.event MouseAdapter FocusAdapter]))
+           [java.awt.event MouseAdapter FocusAdapter KeyListener]))
 
 (defmacro swing-action
   "Queues an action to the event queue."
@@ -96,9 +96,14 @@
       (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
     (:visible [c _ v]
       (.setVisible ^java.awt.Component (p/impl c) v))
-    ;;;;;;;;;;;
+
     ;; Events
-    (:key-event [c _ _])
+    (:on-key [c _ handler]
+      (let [listener (proxy [KeyListener] []
+                       (keyPressed [e] (handler (p/to-map e)))
+                       (keyReleased [e] (handler (p/to-map e)))
+                       (keyTyped [e] (handler (p/to-map e))))]
+        (.addKeyListener ^JComponent (p/impl c) listener)))
     (:on-focus [c _ handler]
       (let [listener (proxy [FocusAdapter] []
                        (focusGained [e] (handler (p/to-map e))))]

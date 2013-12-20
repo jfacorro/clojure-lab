@@ -1,6 +1,7 @@
 (ns lab.ui.swing.event
   (:require [lab.ui.protocols :as p]
-            [lab.ui.core :as ui])
+            [lab.ui.core :as ui]
+            lab.util)
   (:import [javax.swing UIManager JComponent AbstractAction]
            [java.awt Dimension]
            [java.awt.event InputEvent
@@ -119,7 +120,7 @@ TODO: provide a map with merging functions."
   {:to-map (fn [^KeyEvent this]
              {:char         (.getKeyChar this)
               :code         (.getKeyCode this)
-              :description  (KeyEvent/getKeyText (.getKeyCode this))
+              :description  (-> (.getKeyCode this) KeyEvent/getKeyText lab.util/keywordize)
               :event        (key-event-ids (.getID this))})})
 
 (extend KeyEvent
