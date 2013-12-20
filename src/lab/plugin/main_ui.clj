@@ -38,8 +38,8 @@ the open and new commands."
     (ui/update! ui :#documents ui/add tab)
     ;; This is done once the control is in the UI tree
     ;; so that any event handler can find the :doc attribute.
-    (ui/update! ui (str "#" id) ui/attr :doc doc)
-    (ui/update! ui (str "#" id) ui/attr :text (doc/text @doc))))
+    (ui/update! ui (ui/selector# id) ui/attr :doc doc)
+    (ui/update! ui (ui/selector# id) ui/attr :text (doc/text @doc))))
 
 (defn open-document
   "Adds a new tab with the open document."
@@ -71,7 +71,7 @@ and call the app's open-document function."
 (defn close-document-ui
   [app id]
   (let [ui     (:ui @app)
-        tab    (ui/find @ui (str "#" id))
+        tab    (ui/find @ui (ui/selector# id))
         editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)]
     (when doc
@@ -140,8 +140,8 @@ associated to it."
 
 (defn timeout-channel
   "Creates a go block that works in two modes :wait and :recieve.
-When on :wait it blocks execution until the first value recieved
-from the channel, it then enters :recieve mode until the timeout
+When on ':wait' it blocks execution until a value is recieved
+from the channel, it then enters ':recieve' mode until the timeout
 wins. Returns a channel that takes the input events."
   [timeout-ms f]
   (let [c (async/chan)]
@@ -167,26 +167,26 @@ to the new tokens identified in the last parse tree
 generation."
   [app id]
   (let [ui          (:ui @app)
-        editor      (ui/find @ui (str "#" id))
+        editor      (ui/find @ui (ui/selector# id))
         doc         (ui/attr editor :doc)
         node-group  (gensym "group-")
-        lang        (:lang @doc)
+        lang        (doc/lang @doc)
         styles      (:styles lang)]
     (swap! doc lang/parse-tree node-group)
-    (let [tokens (lang/tokens (:parse-tree @doc) node-group)]
+    (let [tokens (lang/tokens (doc/parse-tree @doc) node-group)]
       (ui/action (ui/apply-style editor tokens styles)))))
 
 (defn text-editor-change [app id ch evt]
   (when (not= (:type evt) :change)
     (let [ui       (:ui @app)
-          editor   (ui/find @ui (str "#" id))
+          editor   (ui/find @ui (ui/selector# id))
           doc      (ui/attr editor :doc)]
       (case (:type evt)
         :insert (swap! doc doc/insert (:offset evt) (:text evt))
         :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
       (when (not (seq (:parse-tree @doc))))
         (async/put! ch [app id])
-        #_(assert (= (ui/text editor) (doc/text @doc))))))
+        (assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
