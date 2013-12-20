@@ -184,9 +184,8 @@ generation."
       (case (:type evt)
         :insert (swap! doc doc/insert (:offset evt) (:text evt))
         :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
-      (when (not (seq (:parse-tree @doc))))
-        (async/put! ch [app id])
-        (assert (= (ui/text editor) (doc/text @doc))))))
+      (async/put! ch [app id])
+      #_(assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap

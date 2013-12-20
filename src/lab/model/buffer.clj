@@ -1,7 +1,8 @@
 (ns lab.model.buffer
   "Provides a protocol interface for different text buffer
 implementations."
-  (:require [net.cgrand.parsley :as parsley]
+  (:require [clojure.zip :as zip]
+            [net.cgrand.parsley :as parsley]
             [net.cgrand.parsley.tree :as tree])
   (:import  [net.cgrand.parsley.tree InnerNode Leaf]))
 
@@ -12,18 +13,22 @@ implementations."
   (text       [this] "Returns the contents of the buffer as a string.")
   (parse-tree [this] "Returns a parse tree with each node being {:tag :tag-kw :content [node*]}"))
 
-(defn to-string
+(defn- node-children [^InnerNode x]
+  (if (.c x)
+    [(.a x) (.b x) (.c x)]
+    [(.a x) (.b x)]))
+
+(defn- to-string
   ([b] (to-string b (StringBuffer.)))
   ([b ^StringBuffer s]
-    (cond (instance? Leaf b)
-            (.append s (.s ^Leaf b))
-          :else
-            (let [^InnerNode x b]
-            (doall
-              (map #(to-string % s)
-                   (if (.c x)
-                     [(.a x) (.b x) (.c x)]
-                     [(.a x) (.b x)])))))
+    (loop [z (zip/zipper (partial instance? InnerNode)
+                         node-children
+                         nil
+                         b)]
+      (when-not (zip/end? z)
+        (when-not (zip/branch? z)
+          (.append s (.s ^Leaf (zip/node z))))
+        (recur (zip/next z))))
     (.toString s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
