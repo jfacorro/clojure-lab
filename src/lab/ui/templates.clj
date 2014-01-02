@@ -18,3 +18,9 @@
                                        :transparent  true
                                        :on-click     (partial #'close-tab-button app id)}]]}]))
 
+(defn confirm
+  [title message]
+  [:option-dialog {:title   title
+                   :message message
+                   :options :yes-no-cancel
+                   :visible true}])

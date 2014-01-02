@@ -41,6 +41,16 @@
     JFileChooser/APPROVE_OPTION  [:accept chosen]
     JFileChooser/ERROR_OPTION    [:error  chosen]))
 
+(defn- option-dialog-open [c]
+  (let [title   (ui/attr c :title)
+        msg     (ui/attr c :message)
+        options (ui/attr c :options)]
+    (JOptionPane/showConfirmDialog
+        nil
+        ^Object (ui/attr c :message)
+        ^String (ui/attr c :title)
+        ^int (options-type options))))
+
 (defn- apply-attr
   "Used to ensure that the value of the attribute
 is set before processing other attribute's code."
@@ -48,35 +58,36 @@ is set before processing other attribute's code."
   (ui/attr c k (ui/attr c k)))
 
 (ui/defattributes
+  :dialog
+  (:result [c _ _])
+  (:title [c _ v]
+    (.setDialogTitle ^JFileChooser (impl c) v))
+  
   :file-dialog
   (:type [c _ v])
   (:current-dir [c _ ^String v]
     (when v
       (.setCurrentDirectory ^JFileChooser (impl c) (java.io.File. v))))
-  (:title [c _ v]
-    (.setDialogTitle ^JFileChooser (impl c) v))
   (:selection-type [c _ v]
     (when (selection-type v)
       (.setFileSelectionMode ^JFileChooser (impl c) (selection-type v))))
   (:visible ^:modify [c _ v]
-    (apply-attr c :selection-type)
-    (apply-attr c :title)
-    (apply-attr c :current-dir)
     (when v
-      (->> c
+      (->> (reduce apply-attr c [:selection-type :title :current-dir])
         file-dialog-open
         (apply file-dialog-result)
         (ui/attr c :result))))
-  (:result [c _ _])
   
   :option-dialog
-  (:visible [c _ v]
-    (let [x       ^JOptionPane (impl c)
-          title   (ui/attr c :title)
-          dialog  (.createDialog x title)]
-      (.setVisible dialog true)
-      (ui/attr c :result (options-result (.getValue x)))))
-  (:title [c _ _])
+  (:visible ^:modify [c _ v]
+    (apply-attr c :title)
+    (apply-attr c :message)
+    (apply-attr c :options)
+    (when v
+      (->> c
+        option-dialog-open
+        options-result
+        (ui/attr c :result))))
   (:icon [c _ v]
     (.setIcon ^JOptionPane (impl c) (util/icon v)))
   (:message [c _ v]

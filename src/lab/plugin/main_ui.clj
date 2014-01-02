@@ -5,6 +5,7 @@
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
+                    [templates :as tpl]
                     swing]
             [lab.core [keymap :as km]
                       [plugin :as plugin]
@@ -27,14 +28,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Open
 
+(defn- update-tab-title [tab title]
+  (let [header (-> (ui/attr tab :header)
+                  (ui/update :label ui/attr :text title))]
+    (ui/attr tab :header header)))
+
+(defn- doc-modified-update-title [app id key doc old-state new-state]
+  (when (not= (doc/modified? old-state) (doc/modified? new-state))
+    (let [ui    (:ui @app)
+          name  (doc/name new-state)
+          title (if (doc/modified? new-state) (str name "*") name)]
+      (ui/update! ui (ui/selector# id) update-tab-title title))))
+
 (defn- open-document-ui!
   "Adds a new tab to the documents tab container. This is used by both 
 the open and new commands."
   [app doc]
   (let [ui  (:ui @app)
         tab (document-tab app doc)
-        txt (ui/find tab :text-editor)
-        id  (ui/attr txt :id)]
+        id  (ui/attr tab :id)]
+    (add-watch doc (str :editor id) (partial #'doc-modified-update-title app id))
     (ui/update! ui :#documents ui/add tab)))
 
 (defn open-document
@@ -67,13 +80,21 @@ and call the app's open-document function."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Close
 
+(defn- confirm-close-doc [doc]
+  (if (doc/modified? @doc)
+    (let [dialog (ui/init (tpl/confirm "Closing modified file"
+                                       "Do you want to close this modified file without saving the changes?"))
+          result (ui/attr dialog :result)]
+      (= result :ok))
+    true))
+
 (defn close-document-ui
   [app id]
   (let [ui     (:ui @app)
         tab    (ui/find @ui (ui/selector# id))
         editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)]
-    (when doc
+    (when (confirm-close-doc doc)
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
 
