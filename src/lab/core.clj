@@ -18,7 +18,8 @@
 
 (def default-config
   {:name          "Clojure Lab"
-   :core-plugins  '[lab.plugin.main-ui]
+   :core-plugins  '[lab.plugin.main-ui
+                    lab.plugin.notifier]
    :plugins       '[lab.plugin.file-tree 
                     lab.plugin.clojure-lang]
    :plugins-dir   "plugins"

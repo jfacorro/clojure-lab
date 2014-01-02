@@ -159,11 +159,16 @@ of its implementation."
 ;; Private supporting functions
 
 (defn- component?
-  "Returns true if its arg is a component."
+  "Returns true if x is a component."
   [x]
   (or (instance? UIComponent x)
       (and (vector? x)
            (isa? h/hierarchy (first x) :component))))
+
+(defn- attrs?
+  "Returns true if x is an attribute map."
+  [x]
+  (and (map? x) (not (component? x))))
 
 (defn- hiccup->component
   "Used to convert huiccup syntax declarations to map components.
@@ -172,9 +177,9 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
     (if (vector? x)
       (let [[tag & [attrs & ch :as children]] x]
         (->UIComponent
-          tag 
-          (if-not (component? attrs) attrs {})
-          (mapv hiccup->component (if (component? attrs) children ch))))
+          tag
+          (if (attrs? attrs) attrs {})
+          (mapv hiccup->component (if-not (attrs? attrs) children ch))))
       (update-in x [:content] (partial mapv hiccup->component))))
 
 (def ^:private initialized?
@@ -246,6 +251,12 @@ each child and the attributes that have a component as a value."
   "Builds an id selector."
   [^String id]
   (-> (str "#" id) keyword))
+
+(defn parent
+  "Selects the parent of the component with the id."
+  [id]
+  (fn [c]
+    (when c (some (sel/id= id) (children c)))))
 
 (defn update
   "Updates all the components that match the selector expression
