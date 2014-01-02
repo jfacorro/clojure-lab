@@ -35,11 +35,7 @@ the open and new commands."
         tab (document-tab app doc)
         txt (ui/find tab :text-editor)
         id  (ui/attr txt :id)]
-    (ui/update! ui :#documents ui/add tab)
-    ;; This is done once the control is in the UI tree
-    ;; so that any event handler can find the :doc attribute.
-    (ui/update! ui (ui/selector# id) ui/attr :doc doc)
-    (ui/update! ui (ui/selector# id) ui/attr :text (doc/text @doc))))
+    (ui/update! ui :#documents ui/add tab)))
 
 (defn open-document
   "Adds a new tab with the open document."
@@ -51,7 +47,10 @@ the open and new commands."
   "Opens a file selection dialog for the user to choose a file
 and call the app's open-document function."
   [app _]
-  (let [file-dialog   (ui/init [:file-dialog {:type :open :visible true :current-dir (lab/config @app :current-dir)}])
+  (let [curr-dir      (lab/config @app :current-dir)
+        file-dialog   (ui/init [:file-dialog {:type :open
+                                              :visible true 
+                                              :current-dir curr-dir}])
         [result file] (ui/attr file-dialog :result)]
     (when file
       (open-document app (.getCanonicalPath file)))))
@@ -184,7 +183,7 @@ generation."
       (case (:type evt)
         :insert (swap! doc doc/insert (:offset evt) (:text evt))
         :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
-      (async/put! channel [app editor-id])
+      #_(async/put! channel [app editor-id])
       (assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -215,9 +214,10 @@ to the UI's main menu."
 
 (defn- create-text-editor [app doc]
   (ui/with-id id
-   [:text-editor (merge {:id id}
-                        text-editor-style
-                        {:on-change (partial #'text-editor-change app id (timeout-channel 250 highlight))})]))
+   [:text-editor (merge ;text-editor-style
+                        {:doc       doc
+                         :on-change (partial #'text-editor-change app id (timeout-channel 250 highlight))
+                         :syntax    :clojure})]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
@@ -229,8 +229,8 @@ to the UI's main menu."
                                        :transparent  true
                                        :on-click     (partial #'close-document-button app id)}]]
            :border    :none
-           :scroll    true}
-           (create-text-editor app doc)]))
+           :scroll    false}
+           [:scroll-text-editor (create-text-editor app doc)]]))
 
 (defn app-window [app]
   [:window {:id     "main"
@@ -251,6 +251,9 @@ to the UI's main menu."
                                              :on-tab-change (partial #'switch-document-ui app)}]
                                      [:tabs {:id "right-controls"}]]]
                     [:tabs {:id "bottom-controls"}]]])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Toogle Fullscreen
 
 (defn- toggle-fullscreen
   "Toggles between fullscreen and non fullscreen mode."

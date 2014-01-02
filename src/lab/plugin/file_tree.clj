@@ -6,6 +6,7 @@ the specified root dir."
             [lab.core.keymap :as km]
             [lab.plugin.main-ui :as main]
             [lab.ui.core :as ui]
+            [lab.ui.templates :as tpl]
             [clojure.java.io :as io]))
 
 (defn file-proxy
@@ -63,11 +64,12 @@ tree. Returns a tree node."
     (open-document-tree app source)))
 
 (defn- file-tree [app dir]
-  [:tab {:title (.getName dir) :border :none}
-        [:scroll [:tree {:id      "file-tree"
-                         :on-click (partial #'open-document-tree-click app)
-                         :on-key (partial #'open-document-tree-enter app)}
-                        (load-dir dir)]]])
+  (-> app
+    (tpl/tab (.getName dir))
+    (ui/add [:tree {:id      "file-tree"
+                    :on-click (partial #'open-document-tree-click app)
+                    :on-key (partial #'open-document-tree-enter app)}
+                    (load-dir dir)])))
 
 (defn- open-project
   [app _]

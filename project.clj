@@ -10,6 +10,8 @@
                  [org.slf4j/slf4j-log4j12 "1.7.5"]
                  ; Repl console
                  [swingrepl "1.3.0" :exclusions [org.clojure/clojure org.clojure/clojure-contrib]]
+                 ; Text Editor
+                 [com.fifesoft/rsyntaxtextarea "2.5.0"]
                  ; gtk+
                  #_[local/gtk "4.1"]
                  #_[local/gtk-bindings "4.1"]]
