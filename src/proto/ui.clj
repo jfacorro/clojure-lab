@@ -138,8 +138,8 @@
           slct (.getSelectedText txt)
           sym  (when slct (symbol slct))]
       (cond 
-        find? (eval-in-repl (:repl main) `(clojure.repl/find-doc ~slct))
-        sym   (eval-in-repl (:repl main) `(clojure.repl/doc ~sym)))
+        find? (eval-in-repl (:repl main) `(do (require 'clojure.repl) (clojure.repl/find-doc ~slct)))
+        sym   (eval-in-repl (:repl main) `(do (require 'clojure.repl) (clojure.repl/doc ~sym))))
       main)))
 ;;------------------------------
 (defn client-property
