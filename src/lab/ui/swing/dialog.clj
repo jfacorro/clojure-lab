@@ -62,8 +62,8 @@ is set before processing other attribute's code."
   (:result [c _ _])
   (:title [c _ v]
     (.setDialogTitle ^JFileChooser (impl c) v))
-  
   :file-dialog
+
   (:type [c _ v])
   (:current-dir [c _ ^String v]
     (when v
@@ -79,6 +79,7 @@ is set before processing other attribute's code."
         (ui/attr c :result))))
   
   :option-dialog
+  (:title [c _ _])
   (:visible ^:modify [c _ v]
     (apply-attr c :title)
     (apply-attr c :message)

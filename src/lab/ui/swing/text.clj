@@ -1,7 +1,6 @@
 (ns lab.ui.swing.text
-  (:import  [org.fife.ui.rsyntaxtextarea RSyntaxTextArea TextEditorPane SyntaxConstants]
-            [org.fife.ui.rtextarea RTextScrollPane]
-            [javax.swing JTextArea]
+  (:import  [javax.swing JTextArea JTextPane JScrollPane]
+            [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType]
             [java.awt.event ActionListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet])
@@ -40,7 +39,7 @@
     (.setCharacterAttributes txt stl true)))
 
 (extend-protocol Text
-  RSyntaxTextArea
+  JTextPane
   (text [this]
     (as-> (.getDocument this) doc
       (.getText doc 0 (.getLength doc))))
@@ -55,7 +54,7 @@
         (.setDocument this blank)
         (doseq [[start length tag] regions]
           (.setCharacterAttributes ^DefaultStyledDocument doc 
-            ^long start 
+            ^long start
             ^long length
             ^SimpleAttributeSet (styles tag (:default styles))
             true))
@@ -65,42 +64,31 @@
 (defn init-text-editor [c]
   (let [doc (ui/attr c :doc)]
     (if doc
-      (doto (TextEditorPane.)
+      (doto (JTextPane.)
         (.setText (doc/text @doc))
-        (.setCaretPosition 0)
-        (.discardAllEdits))
-      (TextEditorPane.))))
+        (.setCaretPosition 0))
+      (JTextPane.))))
 
 (ui/definitializations
   :text-area   JTextArea
   :text-editor init-text-editor
-  :scroll-text-editor RTextScrollPane)
-
-(def ^:private syntax-constants
- {:plain      SyntaxConstants/SYNTAX_STYLE_NONE
-  :clojure    SyntaxConstants/SYNTAX_STYLE_CLOJURE
-  :java       SyntaxConstants/SYNTAX_STYLE_CLOJURE
-  :css        SyntaxConstants/SYNTAX_STYLE_CSS
-  :html       SyntaxConstants/SYNTAX_STYLE_HTML
-  :javascript SyntaxConstants/SYNTAX_STYLE_JAVASCRIPT})
+  :scroll-text-editor JScrollPane)
 
 (ui/defattributes
   :text-area
     (:text [c _ v]
-      (.setText (impl c) v))
+      (.setText ^JTextComponent (impl c) v))
     (:read-only [c _ v]
-      (.setEditable (impl c) (not v)))
+      (.setEditable ^JTextComponent (impl c) (not v)))
   :text-editor
     (:wrap [c _ _])
     (:doc [c _ doc])
-    (:syntax [c p v]
-      (.setSyntaxEditingStyle (impl c) (syntax-constants v)))
     (:caret-color [c _ v]
-      (.setCaretColor (impl c) (util/color v)))
+      (.setCaretColor ^JTextPane (impl c) (util/color v)))
     (:on-change [c p handler]
       (let [listener (proxy [DocumentListener] []
                        (insertUpdate [e] (handler (to-map e)))
                        (removeUpdate [e] (handler (to-map e)))
                        (changedUpdate [e] #_(handler (to-map e))))
-            doc      (.getDocument (impl c))]
-        (.addDocumentListener doc listener))))
+            doc      (.getDocument ^JTextPane (impl c))]
+        (.addDocumentListener ^Document doc listener))))

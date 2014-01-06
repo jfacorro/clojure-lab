@@ -80,21 +80,28 @@ and call the app's open-document function."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Close
 
-(defn- confirm-close-doc [doc]
-  (if (doc/modified? @doc)
-    (let [dialog (ui/init (tpl/confirm "Closing modified file"
-                                       "Do you want to close this modified file without saving the changes?"))
+(defn- save-changes-before-closing
+  "Asks the user for confirmation on whether to save a
+document before closing. Returns true if the document
+should be closed and false otherwise."
+  [app doc]
+  (if-not (doc/modified? @doc)
+    true
+    (let [dialog (ui/init (tpl/confirm "Save changes"
+                                       "Do you want to save the changes made to this file before closing?"))
           result (ui/attr dialog :result)]
-      (= result :ok))
-    true))
+      (when (= result :yes)
+        (swap! app lab/save-document doc))
+      (not= result :cancel))))
 
 (defn close-document-ui
   [app id]
   (let [ui     (:ui @app)
         tab    (ui/find @ui (ui/selector# id))
         editor (ui/find tab :text-editor)
-        doc    (ui/attr editor :doc)]
-    (when (confirm-close-doc doc)
+        doc    (ui/attr editor :doc)
+        close? (save-changes-before-closing app doc)]
+    (when close?
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
 
@@ -126,14 +133,7 @@ associated to it."
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
 
-(defn- update-document-tab-title
-  "Updated the document tab title."
-  [tab title]
-  (let [header (-> (ui/attr tab :header)
-                   (ui/update [:panel :label] ui/attr :text title))]
-    (ui/attr tab :header header)))
-
-(defn- save-document
+(defn- save-document-menu
   [app & _]
   (let [ui     (:ui @app)
         tab    (current-document-tab ui)
@@ -143,7 +143,7 @@ associated to it."
     (swap! doc assign-path (lab/config @app :current-dir))
     (when (doc/path @doc)
       (ui/update! ui (ui/selector# tab-id)
-        update-document-tab-title (doc/name @doc))
+        update-tab-title (doc/name @doc))
       (swap! app lab/save-document doc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,7 +175,7 @@ wins. Returns a channel that takes the input events."
             (if (= ch c)
               (recur :recieve args)
               (do
-                (future (apply f args))
+                (async/thread (apply f args))
                 (recur :wait nil))))))
     c))
 
@@ -204,8 +204,8 @@ generation."
       (case (:type evt)
         :insert (swap! doc doc/insert (:offset evt) (:text evt))
         :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
-      #_(async/put! channel [app editor-id])
-      (assert (= (ui/text editor) (doc/text @doc))))))
+      (async/put! channel [app editor-id])
+      #_(assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
@@ -235,10 +235,9 @@ to the UI's main menu."
 
 (defn- create-text-editor [app doc]
   (ui/with-id id
-   [:text-editor (merge ;text-editor-style
+   [:text-editor (merge text-editor-style
                         {:doc       doc
-                         :on-change (partial #'text-editor-change app id (timeout-channel 250 highlight))
-                         :syntax    :clojure})]))
+                         :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight))})]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
@@ -296,7 +295,7 @@ to the UI's main menu."
               {:category "File" :name "New" :fn #'new-document :keystroke "ctrl N"}
               {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
               {:category "File" :name "Close" :fn #'close-document-menu :keystroke "ctrl W"}
-              {:category "File" :name "Save" :fn #'save-document :keystroke "ctrl S"}
+              {:category "File" :name "Save" :fn #'save-document-menu :keystroke "ctrl S"}
               {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
 
 (defn- init!

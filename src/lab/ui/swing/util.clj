@@ -75,7 +75,7 @@ all optional and creates a Font."
                       :size       StyleConstants/Size,
                       :family     StyleConstants/Family,
                       :background StyleConstants/Background,
-	              :color      StyleConstants/Foreground})
+                      :color      StyleConstants/Foreground})
 
 (defn- color-attr?
   "Predicate that checks if the attribute is a color."
