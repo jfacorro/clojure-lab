@@ -92,11 +92,12 @@ under the :parse-tree key."
 the limits for the nodes with the tag specified by ignore?."
   [loc node-group]
   (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
-    (let [[node _ :as nxt] (z/next loc)]
+    (let [nxt  (z/next loc)
+          node (z/node nxt)]
       (cond (string? node)
               (let [length     (.length ^String node)
                     new-offset (+ offset length)
-                    parent     (-> nxt z/up first)
+                    parent     (-> nxt z/up z/node)
                     tag        (tag parent)
                     {:keys [style group]} (meta parent)
                     limits     (if (or (ignore? tag) (not (= group node-group)))
