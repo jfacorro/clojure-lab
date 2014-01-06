@@ -51,6 +51,12 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; IO operations
 
+(defn- remove-lf-cr
+  "Removes all Windows new line chars and replaces 
+them with *nix new line."
+  [txt]
+  (.replace txt "\r\n" "\n"))
+
 (defn bind
   "Binds a document to a file in the given path. If the 
 file exists then the contents are read into the document's
@@ -60,7 +66,7 @@ buffer."
         buf    (if new?
                  (:buffer doc)
                  (default-buffer (:lang doc)
-                                 (if (.exists file) (-> path slurp) "")))
+                                 (if (.exists file) (-> path slurp remove-lf-cr) "")))
         name   (.getName file)
         props  {:buffer   buf
                 :path     path
