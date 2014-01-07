@@ -7,21 +7,25 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; UI Error Handler
 
+;; TODO: add link to files when displaying the stack trace.
+
 (defn- show-error-info
   [app ex]
   (let [ui     (@app :ui)
         sw     (java.io.StringWriter.)
         _      (.printStackTrace ex (java.io.PrintWriter. sw))
+        title  (str "Error - " (or (.getMessage ex) ex))
         tab    (-> app
-                 (tmplt/tab (str "Error - " (or (.getMessage ex) ex)))
-                 (ui/add [:text-area {:text (str sw) :read-only true}]))]
+                 (tmplt/tab title)
+                 (ui/add [:text-area {:text (str sw) :read-only true :caret-position 0}]))]
     (ui/update! ui :#bottom-controls ui/add tab)))
 
 (defn- default-error-handler
   [app]
   (let [handler (proxy [Thread$UncaughtExceptionHandler] []
                   (uncaughtException [thread ex]
-                    (#'show-error-info app ex))
+                    (try (#'show-error-info app ex)
+                    (catch Exception new-ex (println ex))))
                   (handle [ex]
                     (#'show-error-info app ex)))
        class-name (-> handler class .getName)]
