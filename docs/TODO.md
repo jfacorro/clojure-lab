@@ -1,8 +1,6 @@
 TODO
 ====
   - UI
-    - Abstraction for events
-      - Define available events for each component (alla seesaw)
     - Key Bindings
       - Remove all defaults and replace them all?
       - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
@@ -13,7 +11,12 @@ TODO
       - Comment / Uncomment lines.
       - Balance delimiters: ( \[ {
       - Mark corresponding delimiter.
+
     - File Explorer
+      - Load directories lazily
+
+    - Menu
+      - Define a way to specify the order of the menu items.
 
 	- Unify protocol Text (there's one in buffer and another in UI).
       - So that text operations are defined in a single protocol.
@@ -41,6 +44,8 @@ TODO
 Done
 ====
   - UI
+    - Abstraction for events
+      - Define available events for each component (alla seesaw)
     - Generate hierarchy (ad-hoc?) for the different types of components so that common attributes share the same logic (and implementation code).
     - Gracefuly resolve the properties that don't actually exist in the **implementation** but that we want to have in the **abstraction**.
       - This would allow better component composition (i.e. header and title in the Tab class).
