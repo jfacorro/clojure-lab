@@ -35,7 +35,6 @@
                   ; dialogs
                   :dialog]
     :dialog [:file-dialog :option-dialog]
-    :text-area [:text-editor]
-    :scroll [:scroll-text-editor]})
+    :text-area [:text-editor]})
 
 (def hierarchy (build-hierarchy hierarchy-description))

@@ -1,8 +1,9 @@
 (ns lab.ui.swing.panel
-  (:import [javax.swing JPanel JSplitPane JScrollPane JButton])
-  (:use     [lab.ui.protocols :only [Component impl]])
   (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as util]))
+            [lab.ui.swing.util :as util])
+  (:use     [lab.ui.protocols :only [Component impl]])
+  (:import [javax.swing JPanel JSplitPane JScrollPane JButton]
+           [java.awt BorderLayout]))
 
 (ui/definitializations
   :split       JSplitPane
@@ -16,7 +17,12 @@
     (:divider-location [c _ value]
       (.setDividerLocation ^JSplitPane (impl c) value))
     (:orientation [c attr value]
-      (.setOrientation ^JSplitPane (impl c) (util/split-orientations value))))
+      (.setOrientation ^JSplitPane (impl c) (util/split-orientations value)))
+  :scroll
+    (:vertical-increment [c _ v]
+      (.. (impl c) (getVerticalScrollBar) (setUnitIncrement 16)))
+    (:margin-control [c _ v]
+      (.setRowHeaderView (impl c) (impl v))))
 
 (extend-protocol Component
   JSplitPane

@@ -28,7 +28,7 @@
   (is (= "" (text (document default-lang)))))
 ;---------------------------
 (deftest document-manipulation
-  (let [end      " Oh yes, it will!"
+  (let [end      "Oh yes, it will!"
         middle   "Do you think so?"
         len      (count file-content)]
     (->test
@@ -37,27 +37,38 @@
         (->is = false modified?)
         (->is = "" text)
         (->is = 0 length)
+        (->is = 1 line-count)
         (->is = "Untitled 1" name)
+
         ; Bind the document to a file
         (bind tmp-file)
         (->is = false modified?)
         (->is = file-content text)
         (->is = "tmp" name)
+
         ; Append text to the document
         (append end)
         (->is = true modified?)
         (->is = (str file-content end) text)
+
         ; Insert text in the middle
         (insert len middle)
         (->is = (str file-content middle end) text)
+
         ; Delete text from the middle
         (delete len (+ len (count middle)))
         (->is = (str file-content end) text)
+        
         ; Save file, check file-content and modified
         (->is not= (slurp tmp-file) text)
         (save)
         (->is = (slurp tmp-file) text)
-        (->is = false modified?))))
+        (->is = false modified?)
+        ; Check line count
+        (append "\n")
+        (->is = 2 line-count)
+        (append "\n")
+        (->is = 3 line-count))))
 ;---------------------------
 (deftest bind-non-existing-file
   (is (= "bla" (-> (document default-lang) (bind "./bla") name))))
@@ -82,6 +93,7 @@
 (deftest undo-redo
   (->test (document default-lang)
     (append "abc\nabc\nd")
+
     ; undo/redo replace
     (replace "b" "1")
     (replace "1" "bla")
@@ -93,6 +105,7 @@
     (->is = "a1c\na1c\nd" text)
     (h/redo)
     (->is = "ablac\nablac\nd" text)
+
     ; undo/redo delete
     (delete 0 4)
     (->is = "c\nablac\nd" text)
@@ -100,6 +113,7 @@
     (->is = "ablac\nablac\nd" text)
     (h/redo)
     (->is = "c\nablac\nd" text)
+
     ; undo/redo insert
     (insert 1 "ba")
     (->is = "cba\nablac\nd" text)

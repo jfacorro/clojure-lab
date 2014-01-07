@@ -110,13 +110,9 @@ of its implementation."
       (str tag " (#" id ")")
       tag))
 
-  p/Text
-  (text [this]
-    (p/text (p/impl this)))
+  p/TextEditor
   (apply-style [this tokens styles]
-    (p/apply-style (p/impl this) tokens styles))
-  (apply-style [this start length style]
-    (p/apply-style (p/impl this) start length style)))
+    (p/apply-style (p/impl this) tokens styles)))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -150,7 +146,6 @@ of its implementation."
 (def add #'p/add)
 (def remove #'p/remove)
 
-(def text #'p/text)
 (def apply-style #'p/apply-style)
 
 (def selected #'p/selected)
@@ -290,7 +285,7 @@ used in the component's definition (e.g. in event handlers)."
     (assoc-in (#'lab.ui.core/hiccup->component ~component) [:attrs :id] ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Stylesheet
+;; Stylesheets
 
 (defn- apply-class
   [ui [selector attrs]]

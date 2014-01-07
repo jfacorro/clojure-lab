@@ -205,7 +205,7 @@ generation."
         :insert (swap! doc doc/insert (:offset evt) (:text evt))
         :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
       (async/put! channel [app editor-id])
-      #_(assert (= (ui/text editor) (doc/text @doc))))))
+      (assert (= (ui/text editor) (doc/text @doc))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
@@ -250,7 +250,14 @@ to the UI's main menu."
                                        :on-click     (partial #'close-document-button app id)}]]
            :border    :none
            :scroll    false}
-           [:scroll-text-editor (create-text-editor app doc)]]))
+           [:scroll {:vertical-increment 16
+                     :margin-control [:text-area (assoc text-editor-style
+                                                     :background 0x666666
+                                                     :read-only true
+                                                     :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]}
+                    [:panel {:border :none
+                             :layout :border}
+                            (create-text-editor app doc)]]]))
 
 (defn app-window [app]
   [:window {:id     "main"
