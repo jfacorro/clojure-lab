@@ -11,13 +11,15 @@ TODO
       - Indent code.
       - Line numbers (show/hide).
       - Comment / Uncomment lines.
-      - Syntax high-lighting.
-        - Incremental.
-        - Strings.
-        - Comments.
-        - Balance delimiters: ( [ {
-        - Mark corresponding delimiter.
-    
+      - Balance delimiters: ( \[ {
+      - Mark corresponding delimiter.
+    - File Explorer
+
+	- Unify protocol Text (there's one in buffer and another in UI).
+      - So that text operations are defined in a single protocol.
+    - Modify parsley in order to be able to find node index keeping log(n).
+	- Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
+
   - Model
     - Complete Document
       - Keep track of changes:
@@ -46,6 +48,12 @@ Done
     - Modify the global atom created for the ui.
     - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
     - The abstraction value for the implementations should be updated with each modification to the abstraction.
+
+    - Code Editor (or use RSyntaxTextArea and adapt it):
+      - Syntax high-lighting.
+        - Incremental.
+        - Strings.
+        - Comments.
 
   - Model
     - Complete Document
