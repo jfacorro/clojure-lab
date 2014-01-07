@@ -16,7 +16,7 @@
     (:id [c _ v])
     (:border [c _ v])
     (:background [c _ v])
-    (:foreground [c _ v])
+    (:color [c _ v])
     (:font [c _ value])
     (:size [c attr [w h :as value]]
       (.setSizeRequest (p/impl c) w h))

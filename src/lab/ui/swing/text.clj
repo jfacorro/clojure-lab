@@ -57,28 +57,9 @@
        (.setDocument this doc)
        (.setCaretPosition this pos))))
 
-(defn- highlight
-    [editor doc]
-    (let [node-group  (gensym "group-")
-          lang        (doc/lang @doc)
-          styles      (:styles lang)]
-      (swap! doc lang/parse-tree node-group)
-      (let [tokens (lang/tokens (doc/parse-tree @doc) node-group)]
-        (ui/action (ui/apply-style editor tokens styles)))))
-
-(defn init-text-editor [c]
-  (let [doc (ui/attr c :doc)]
-    (if doc
-      (doto (JTextPane.)
-        (.setText (doc/text @doc))
-        (highlight doc)
-        (.setCaretPosition 0))
-      (JTextPane.))))
-
 (ui/definitializations
   :text-area   JTextArea
-  :text-editor init-text-editor
-  :scroll-text-editor JScrollPane)
+  :text-editor JTextPane)
 
 (ui/defattributes
   :text-area
@@ -88,6 +69,8 @@
       (.setEditable ^JTextComponent (impl c) (not v)))
     (:caret-color [c _ v]
       (.setCaretColor ^JTextComponent (impl c) (util/color v)))
+    (:caret-position [c _ v]
+      (.setCaretPosition (impl c) v))
   :text-editor
     (:wrap [c _ _])
     (:doc [c _ doc])

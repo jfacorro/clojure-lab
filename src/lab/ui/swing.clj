@@ -78,9 +78,6 @@
 ;; of component in the hierarchy.
 (ui/defattributes
   :component
-    (:id [c _ v]
-      (when (not= (ui/attr c :id) v)
-        (throw (Exception. (str "Can't change the :id once it is set: " c)))))
     (:transparent [c _ v]
       (.setOpaque ^JComponent (p/impl c) (not v)))
     (:layout [c _ v]
@@ -90,7 +87,7 @@
         (.setBorder ^JComponent (p/impl c) (apply util/border v))))
     (:background [c _ v]
       (.setBackground ^JComponent (p/impl c) (util/color v)))
-    (:foreground [c _ v]
+    (:color [c _ v]
       (.setForeground ^JComponent (p/impl c) (util/color v)))
     (:font [c _ v]
       (.setFont ^JComponent (p/impl c) (util/font v)))

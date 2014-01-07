@@ -74,6 +74,7 @@ And each attr-declaration is:
         f     (fn [tag & mthds]
                 (for [[attr [c _ _ :as args] & body] mthds]
                   (let [x (gensym)]
+                    (assert (not= c '_) "First arg symbol can't be _")
                     `(defmethod p/set-attr [~tag ~attr]
                       ~args
                       (let [~x (do ~@body)]
@@ -81,8 +82,8 @@ And each attr-declaration is:
     `(do ~@(mapcat (partial apply f) comps))))
 
 (defn- update-abstraction
-  "Takes a component and set its own value as the abstraction
-of its implementation."
+  "Takes a component and set its own value 
+as the abstraction of its implementation."
   [c]
   (let [impl (p/abstract (p/impl c) c)]
     (p/impl c impl)))
@@ -196,11 +197,6 @@ attributes and sets their corresponding values."
             (attr c k (if (component? v) (init v) v)))]
     (reduce f component attrs)))
 
-(defn- check-missing-id [c]
-  (if (attr c :id)
-    c
-    (attr c :id (genid))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialization and Attributes Access
 
@@ -211,12 +207,28 @@ as well."
   ([c k]
     (if-let [v (get-in c [:attrs k])]
       v
-      nil #_(p/get-attr c k)))
+      nil))
   ([c k v]
     (-> c
       (assoc-in [:attrs k] v)
       (p/set-attr k v)
       update-abstraction)))
+
+(defn- check-missing-id
+  "Makes sure the component is not
+missing an :id attribute."
+  [c]
+  (if (attr c :id)
+    c
+    (attr c :id (genid))))
+
+(defn- run-post-init
+  "Checks if there's a :post-init attribute
+and applies it to the component."
+  [c]
+  (if-let [post-init (attr c :post-init)]
+    (post-init c)
+    c))
 
 (defn init
   "Initializes a component, creating the implementation for 
@@ -231,6 +243,7 @@ each child and the attributes that have a component as a value."
         set-attrs
         init-content
         check-missing-id
+        run-post-init
         update-abstraction))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -300,3 +313,13 @@ used in the component's definition (e.g. in event handlers)."
   and values) and applies it to the matching components."
   [ui stylesheet]
   (reduce apply-class ui stylesheet))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Properties for all UI components implementation independent
+
+(defattributes
+  :component
+    (:id [c _ v]
+      (when (not= (attr c :id) v)
+        (throw (Exception. (str "Can't change the :id once it is set: " c)))))
+    (:post-init [c _ _]))
