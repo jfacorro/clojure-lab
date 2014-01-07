@@ -259,33 +259,37 @@ to the UI's main menu."
     (ui/attr :caret-position 0)
     highlight))
 
-(defn- create-text-editor [app doc]
+(defn- text-editor-line-number [doc]
+  [:panel {:layout :border 
+           :border [:line 0x666666 2]}
+    [:text-area (assoc text-editor-style
+                       :background 0x666666
+                       :read-only true
+                       :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]])
+
+(defn- text-editor-create [app doc]
   (ui/with-id id
-   [:text-editor (merge text-editor-style
-                        {:doc       doc
-                         :post-init (partial #'text-editor-post-init app doc)
-                         :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight-by-id))})]))
+    [:scroll {:vertical-increment 16
+              :margin-control (text-editor-line-number doc)}
+      [:panel {:border :none
+               :layout :border}
+        [:text-editor (merge text-editor-style
+                             {:doc       doc
+                              :post-init (partial #'text-editor-post-init app doc)
+                              :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight-by-id))})]]]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
     [:tab {:tool-tip (doc/path @doc)
            :header   [:panel {:transparent true}
-                             [:label {:text (doc/name @doc)}]
-                             [:button {:icon         "close-tab.png"
-                                       :border       :none
-                                       :transparent  true
-                                       :on-click     (partial #'close-document-button app id)}]]
+                       [:label {:text (doc/name @doc)}]
+                       [:button {:icon         "close-tab.png"
+                                 :border       :none
+                                 :transparent  true
+                                 :on-click     (partial #'close-document-button app id)}]]
            :border    :none
            :scroll    false}
-           [:scroll {:vertical-increment 16
-                     :margin-control [:panel {:layout :border :border [:line 0x666666 2]}
-                                             [:text-area (assoc text-editor-style
-                                                       :background 0x666666
-                                                       :read-only true
-                                                       :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]]}
-                    [:panel {:border :none
-                             :layout :border}
-                            (create-text-editor app doc)]]]))
+      (text-editor-create app doc)]))
 
 (defn app-window [app]
   [:window {:id     "main"
@@ -295,17 +299,17 @@ to the UI's main menu."
             :maximized true
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
-            [:split {:orientation :vertical
-                     :resize-weight 1
-                     :border :none}
-                    [:split {:resize-weight 0
-                             :divider-location 150}
-                            [:tabs {:id "left-controls"}]
-                            [:split {:resize-weight 1}
-                                     [:tabs {:id "documents"
-                                             :on-tab-change (partial #'switch-document-ui app)}]
-                                     [:tabs {:id "right-controls"}]]]
-                    [:tabs {:id "bottom-controls"}]]])
+    [:split {:orientation :vertical
+             :resize-weight 1
+             :border :none}
+      [:split {:resize-weight 0
+               :divider-location 150}
+        [:tabs {:id "left-controls"}]
+        [:split {:resize-weight 1}
+          [:tabs {:id "documents"
+                  :on-tab-change (partial #'switch-document-ui app)}]
+          [:tabs {:id "right-controls"}]]]
+      [:tabs {:id "bottom-controls"}]]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toogle Fullscreen
