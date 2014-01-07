@@ -80,18 +80,20 @@ and call the app's open-document function."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Close
 
+(declare save-document-ui)
+
 (defn- save-changes-before-closing
   "Asks the user for confirmation on whether to save a
 document before closing. Returns true if the document
 should be closed and false otherwise."
-  [app doc]
+  [app tab doc]
   (if-not (doc/modified? @doc)
     true
     (let [dialog (ui/init (tpl/confirm "Save changes"
                                        "Do you want to save the changes made to this file before closing?"))
           result (ui/attr dialog :result)]
-      (when (= result :yes)
-        (swap! app lab/save-document doc))
+      (when (= result :ok)
+        (save-document-ui app tab))
       (not= result :cancel))))
 
 (defn close-document-ui
@@ -100,7 +102,7 @@ should be closed and false otherwise."
         tab    (ui/find @ui (ui/selector# id))
         editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)
-        close? (save-changes-before-closing app doc)]
+        close? (save-changes-before-closing app tab doc)]
     (when close?
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
@@ -117,7 +119,8 @@ associated to it."
   (let [ui     (:ui @app)
         tab    (current-document-tab ui)
         id     (ui/attr tab :id)]
-    (close-document-ui app id)))
+    (when tab
+      (close-document-ui app id))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Save
@@ -133,23 +136,28 @@ associated to it."
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
 
+(defn- save-document-ui [app tab]
+  (let [ui      (:ui @app)
+        tab-id  (ui/attr tab :id)
+        doc     (-> tab (ui/find :text-editor) (ui/attr :doc))
+        cur-dir (lab/config @app :current-dir)]
+    (swap! doc assign-path cur-dir)
+    (when (doc/path @doc)
+        (ui/update! ui (ui/selector# tab-id)
+                    update-tab-title (doc/name @doc))
+        (swap! app lab/save-document doc))))
+
 (defn- save-document-menu
   [app & _]
   (let [ui     (:ui @app)
-        tab    (current-document-tab ui)
-        tab-id (ui/attr tab :id)
-        editor (ui/find tab :text-editor)
-        doc    (ui/attr editor :doc)]
-    (swap! doc assign-path (lab/config @app :current-dir))
-    (when (doc/path @doc)
-      (ui/update! ui (ui/selector# tab-id)
-        update-tab-title (doc/name @doc))
-      (swap! app lab/save-document doc))))
+        tab    (current-document-tab ui)]
+    (save-document-ui app tab)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Switch
 
-(defn- switch-document-ui [app evt]
+(defn- switch-document-ui
+  [app evt]
   (let [ui     (:ui @app)
         editor (current-text-editor ui)
         doc    (ui/attr editor :doc)]
@@ -185,27 +193,39 @@ editor control and generates the parse tree. It then
 applies all the styles found in the document's language
 to the new tokens identified in the last parse tree
 generation."
-  [app id]
-  (let [ui          (:ui @app)
-        editor      (ui/find @ui (ui/selector# id))
-        doc         (ui/attr editor :doc)
+  [editor]
+  (let [doc         (ui/attr editor :doc)
         node-group  (gensym "group-")
         lang        (doc/lang @doc)
         styles      (:styles lang)]
     (swap! doc lang/parse-tree node-group)
     (let [tokens (lang/tokens (doc/parse-tree @doc) node-group)]
-      (ui/action (ui/apply-style editor tokens styles)))))
+      ;(ui/action
+        (ui/apply-style editor tokens styles)
+      ;)
+      )
+    editor))
 
-(defn text-editor-change [app editor-id channel evt]
+(defn highlight-by-id
+  [app id]
+  (let [ui          (:ui @app)
+        editor      (ui/find @ui (ui/selector# id))]
+    (highlight editor)))
+
+(defn text-editor-change
+  "Handles changes in the control, updates the document
+and signals the highlighting process."
+  [app editor-id channel evt]
   (when (not= (:type evt) :change)
     (let [ui       (:ui @app)
           editor   (ui/find @ui (ui/selector# editor-id))
           doc      (ui/attr editor :doc)]
-      (case (:type evt)
-        :insert (swap! doc doc/insert (:offset evt) (:text evt))
-        :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
-      (async/put! channel [app editor-id])
-      (assert (= (ui/text editor) (doc/text @doc))))))
+      (when editor
+        (case (:type evt)
+          :insert (swap! doc doc/insert (:offset evt) (:text evt))
+          :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
+        (async/put! channel [app editor-id])
+        #_(assert (= (ui/text editor) (doc/text @doc)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
@@ -229,15 +249,22 @@ to the UI's main menu."
 (def text-editor-style
   {:border      :none
    :background  0x333333
-   :foreground  0xFFFFFF
+   :color       0xFFFFFF
    :caret-color 0xFFFFFF
    :font        [:name "Consolas" :size 14]})
+
+(defn- text-editor-post-init [app doc c]
+  (-> c
+    (ui/attr :text (doc/text @doc))
+    (ui/attr :caret-position 0)
+    highlight))
 
 (defn- create-text-editor [app doc]
   (ui/with-id id
    [:text-editor (merge text-editor-style
                         {:doc       doc
-                         :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight))})]))
+                         :post-init (partial #'text-editor-post-init app doc)
+                         :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight-by-id))})]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
@@ -251,10 +278,11 @@ to the UI's main menu."
            :border    :none
            :scroll    false}
            [:scroll {:vertical-increment 16
-                     :margin-control [:text-area (assoc text-editor-style
-                                                     :background 0x666666
-                                                     :read-only true
-                                                     :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]}
+                     :margin-control [:panel {:layout :border :border [:line 0x666666 2]}
+                                             [:text-area (assoc text-editor-style
+                                                       :background 0x666666
+                                                       :read-only true
+                                                       :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]]}
                     [:panel {:border :none
                              :layout :border}
                             (create-text-editor app doc)]]]))
