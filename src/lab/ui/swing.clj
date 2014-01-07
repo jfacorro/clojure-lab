@@ -83,6 +83,8 @@
         (throw (Exception. (str "Can't change the :id once it is set: " c)))))
     (:transparent [c _ v]
       (.setOpaque ^JComponent (p/impl c) (not v)))
+    (:layout [c _ v]
+      (.setLayout (p/impl c) (util/layout v)))
     (:border [c _ v]
       (let [v (if (sequential? v) v [v])]
         (.setBorder ^JComponent (p/impl c) (apply util/border v))))

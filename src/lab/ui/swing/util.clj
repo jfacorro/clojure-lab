@@ -115,6 +115,24 @@ with Color instances."
   (->> rsrc image (ImageIcon.)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
+;; Layout
+
+(import [java.awt BorderLayout CardLayout FlowLayout
+                  GridBagLayout GridLayout])
+(import [javax.swing BoxLayout GroupLayout SpringLayout])
+
+(defn layout [x]
+  (case x
+    :border   (BorderLayout.)
+    ;:box      (BoxLayout.)
+    :card     (CardLayout.)
+    :flow     (FlowLayout.)
+    :grid     (GridLayout.)
+    :grid-bag (GridBagLayout.)
+    ;:group    (GroupLayout.)
+    :spring   (SpringLayout.)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Border
 
 (defn border 
