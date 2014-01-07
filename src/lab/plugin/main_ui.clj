@@ -268,15 +268,15 @@ to the UI's main menu."
                        :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]])
 
 (defn- text-editor-create [app doc]
-  (ui/with-id id
+  (let [id (ui/genid)]
     [:scroll {:vertical-increment 16
               :margin-control (text-editor-line-number doc)}
       [:panel {:border :none
                :layout :border}
         [:text-editor (merge text-editor-style
-                             {:doc       doc
-                              :post-init (partial #'text-editor-post-init app doc)
-                              :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight-by-id))})]]]))
+                             {:post-init (partial #'text-editor-post-init app doc)
+                              :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight-by-id))
+                              :doc       doc})]]]))
 
 (defn- document-tab [app doc]
   (ui/with-id id
