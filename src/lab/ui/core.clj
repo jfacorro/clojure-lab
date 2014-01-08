@@ -17,6 +17,7 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
     show)"
   (:refer-clojure :exclude [find remove])
   (:require [clojure.zip :as zip]
+            [lab.util :as util]
             [lab.ui.protocols :as p]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]))
