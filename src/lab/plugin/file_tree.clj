@@ -50,7 +50,7 @@ tree. Returns a tree node."
   (let [ui        (:ui @app)
         node      (ui/selected tree)
         ^java.io.File file (ui/attr node :item)]
-    (when-not (.isDirectory file)
+    (when (and node (.isFile file))
       (main/open-document app (.getCanonicalPath file)))))
 
 (defn- open-document-tree-click
