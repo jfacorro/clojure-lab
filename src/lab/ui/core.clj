@@ -16,12 +16,12 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
     init
     show)"
   (:refer-clojure :exclude [find remove])
-  (:require [lab.util :as util]
+  (:require [clojure.zip :as zip]
             [lab.ui.protocols :as p]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]))
 
-(declare init initialized? attr find genid selector#)
+(declare init initialized? attr find genid selector# hiccup->component)
 
 (def ui-action-macro 
   "This var should be set by the UI implementation with a macro 
@@ -166,17 +166,24 @@ as the abstraction of its implementation."
   [x]
   (and (map? x) (not (component? x))))
 
+(defn- attr->component [attrs [k v]]
+  (if (component? v)
+    (update-in attrs [k] hiccup->component)
+    attrs))
+
 (defn- hiccup->component
   "Used to convert huiccup syntax declarations to map components.
 x should be a vector with the content [tag-keyword attrs-map? children*]"
   [x]
-    (if (vector? x)
-      (let [[tag & [attrs & ch :as children]] x]
-        (->UIComponent
-          tag
-          (if (attrs? attrs) attrs {})
-          (mapv hiccup->component (if-not (attrs? attrs) children ch))))
-      (update-in x [:content] (partial mapv hiccup->component))))
+  (if (vector? x)
+    (let [[tag & [attrs & ch :as children]] x]
+      (->UIComponent
+        tag
+        (if (attrs? attrs)
+          (reduce attr->component attrs attrs)
+          {})
+        (mapv hiccup->component (if-not (attrs? attrs) children ch))))
+    (update-in x [:content] (partial mapv hiccup->component))))
 
 (def ^:private initialized?
   "Checks if the component is initialized."
@@ -266,6 +273,15 @@ each child and the attributes that have a component as a value."
   (fn [c]
     (when c (some (sel/id= id) (children c)))))
 
+(def ^:private zipper (partial zip/zipper map? :content identity))
+
+(def ^:private attr-spec
+  {:path  (fn [k] [:attrs k])
+   :alts  (fn [x]
+            (->> (:attrs x)
+              (filter (comp component? val))
+              (map (juxt (comp zipper val) key))))})
+
 (defn update
   "Updates all the components that match the selector expression
 using (update-in root path-to-component f args)."
@@ -275,7 +291,7 @@ using (update-in root path-to-component f args)."
               (apply f x args)
               (apply update-in x path f args)))
           root
-          (sel/select-all root selector)))
+          (sel/select-all root selector attr-spec)))
 
 (defn update!
   "Same as update but assumes root is an atom."

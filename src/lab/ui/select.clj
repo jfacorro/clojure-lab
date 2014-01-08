@@ -6,7 +6,7 @@ mirrors CSS selectors."
   (:require [clojure.zip :as zip]
             [clojure.set :as set]))
 
-(declare tag= id= attr= attr?)
+(declare tag= id= attr= attr? find-all-paths)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing
@@ -106,26 +106,40 @@ For example:
       false)
     true))
 
+(defn- check-alternatives
+  [pnode preds {:keys [alts path] :as alt-spec}]
+  (let [x      (zip/node pnode)
+        values (alts x)
+        f      (fn [node & xs]
+                 (map #(concat (path-from-root pnode) (apply path xs) %)
+                      (find-all-paths node preds alt-spec)))]
+    (mapcat (partial apply f) values)))
+
 (defn- find-all-paths
   "Traverses the tree using a zipper and merging the results
-  in a map where the component is the key and the zipper node
-  is the value."
-  [node preds]
+in a map where the component is the key and the zipper node
+is the value."
+  [node preds & [alt-spec]]
   (loop [node                node
          [p & ps :as preds]  (reverse preds)
          result              #{}]
      (if (and p (not (zip/end? node)))
-       (let [x      (zip/node node)
-             result (if (and (p x) (parents-match? (zip/up node) ps))
-                      (conj result (path-from-root node))
-                      result)]
-         (recur (zip/next node) preds result))
+       (if-not (zip/node node)
+         (recur (zip/next node) preds result)
+         (let [x      (zip/node node)
+               result (if (and (p x) (parents-match? (zip/up node) ps))
+                        (conj result (path-from-root node))
+                        result)
+               result (if alt-spec
+                        (into result (check-alternatives node preds alt-spec))
+                        result)]
+           (recur (zip/next node) preds result)))
        result)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Public
 
-(defn select
+(defn- select*
   "Takes a selection expression and returns the path for the
   first matching component from root, which must be a component.
   
@@ -144,18 +158,22 @@ For example:
                        [[] nil])]
       path)))
 
-(defn select-all
+(def select (memoize select*))
+
+(defn- select-all*
   "Searches the whole component tree from the root and returns
   a sequence of the paths to the matched elements."
-  [root selector]
+  [root selector & [alt-spec]]
   (when selector
     (let [selector   (if (sequential? selector) selector [selector])
           predicates (map memoized-compile selector)
           root       (zip/zipper map? :content identity root)
           result     (if (-> predicates count pos?)
-                       (find-all-paths root predicates)
+                       (find-all-paths root predicates alt-spec)
                        #{[]})]
       result)))
+
+(def select-all (memoize select-all*))
 
 ;; Selectors
 
