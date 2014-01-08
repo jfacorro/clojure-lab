@@ -128,16 +128,13 @@ buffer."
 (defn lang [doc]
   (:lang doc))
 
-(defn parse-tree [doc]
-  (:parse-tree doc))
-
 (defn line-count
   "Returns the number of lines in the document's content."
   [doc]
   (->> (text doc)
     (filter #{\newline})
     count
-    (+ 2)))
+    inc))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text operations
 

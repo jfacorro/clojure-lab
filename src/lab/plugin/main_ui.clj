@@ -94,7 +94,7 @@ should be closed and false otherwise."
           result (ui/attr dialog :result)]
       (when (= result :ok)
         (save-document-ui app tab))
-      (not= result :cancel))))
+      (not (#{:cancel :closed} result)))))
 
 (defn close-document-ui
   [app id]
@@ -193,24 +193,21 @@ editor control and generates the parse tree. It then
 applies all the styles found in the document's language
 to the new tokens identified in the last parse tree
 generation."
-  [editor]
+  [editor & [incremental]]
   (let [doc         (ui/attr editor :doc)
-        node-group  (gensym "group-")
+        node-group  (and incremental (gensym "group-"))
         lang        (doc/lang @doc)
-        styles      (:styles lang)]
-    (swap! doc lang/parse-tree node-group)
-    (let [tokens (lang/tokens (doc/parse-tree @doc) node-group)]
-      ;(ui/action
-        (ui/apply-style editor tokens styles)
-      ;)
-      )
-    editor))
+        styles      (:styles lang)
+        parse-tree  (lang/parse-tree @doc node-group)]
+    (let [tokens (lang/tokens parse-tree node-group)]
+      (ui/action (ui/apply-style editor tokens styles))))
+  editor)
 
 (defn highlight-by-id
   [app id]
   (let [ui          (:ui @app)
         editor      (ui/find @ui (ui/selector# id))]
-    (highlight editor)))
+    (highlight editor true)))
 
 (defn text-editor-change
   "Handles changes in the control, updates the document
@@ -253,29 +250,46 @@ to the UI's main menu."
    :caret-color 0xFFFFFF
    :font        [:name "Consolas" :size 14]})
 
-(defn- text-editor-post-init [app doc c]
+(defn- text-editor-post-init [doc c]
   (-> c
     (ui/attr :text (doc/text @doc))
     (ui/attr :caret-position 0)
     highlight))
 
-(defn- text-editor-line-number [doc]
-  [:panel {:layout :border 
-           :border [:line 0x666666 2]}
-    [:text-area (assoc text-editor-style
-                       :background 0x666666
-                       :read-only true
-                       :text (->> (range 1 (doc/line-count @doc)) (interpose "\n") (apply str)))]])
+(defn line-count-str [doc]
+  (->> (doc/line-count doc)
+    inc
+    (range 1)
+    (interpose "\n")
+    (apply str)))
+
+(defn update-line-numbers [app id key ref old-state new-state]
+  (let [ui     (:ui @app)]
+    (ui/action
+      (ui/update! ui (ui/selector# id) ui/attr :text (line-count-str new-state)))))
+
+(defn- text-editor-line-number [app doc]
+  (let [id (ui/genid)
+        numbers (line-count-str @doc)]
+    (add-watch doc :update-numbers (partial #'update-line-numbers app id))
+    [:panel {:layout :border
+             :border [:line 0x666666 2]}
+      [:text-area (assoc text-editor-style
+                         :id id
+                         :background 0x666666
+                         :read-only true
+                         :text numbers)]]))
 
 (defn- text-editor-create [app doc]
   (let [id (ui/genid)]
     [:scroll {:vertical-increment 16
-              :margin-control (text-editor-line-number doc)}
+              :margin-control (text-editor-line-number app doc)}
       [:panel {:border :none
                :layout :border}
         [:text-editor (merge text-editor-style
-                             {:post-init (partial #'text-editor-post-init app doc)
-                              :on-change (partial #'text-editor-change app id (timeout-channel 250 #'highlight-by-id))
+                             {:id        id
+                              :post-init (partial #'text-editor-post-init doc)
+                              :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
                               :doc       doc})]]]))
 
 (defn- document-tab [app doc]

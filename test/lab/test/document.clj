@@ -64,6 +64,7 @@
         (save)
         (->is = (slurp tmp-file) text)
         (->is = false modified?)
+
         ; Check line count
         (append "\n")
         (->is = 2 line-count)

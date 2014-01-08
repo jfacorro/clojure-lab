@@ -64,7 +64,8 @@
 (ui/defattributes
   :text-area
     (:text [c _ v]
-      (.setText ^JTextComponent (impl c) v))
+      (.setText ^JTextComponent (impl c) v)
+      (.updateUI (impl c)))
     (:read-only [c _ v]
       (.setEditable ^JTextComponent (impl c) (not v)))
     (:caret-color [c _ v]

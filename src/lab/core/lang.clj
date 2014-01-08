@@ -73,8 +73,7 @@ check if its one of the registered symbols."
 parse tree with the modified nodes marked with node-group."
   [doc node-group]
   (binding [*node-group* node-group]
-    (assoc doc :parse-tree
-               (buffer/parse-tree (:buffer doc)))))
+    (buffer/parse-tree (:buffer doc))))
 
 (defn- tag
   "If the node is a map returns its :tag, otherwise the keyword :default."
@@ -89,7 +88,9 @@ under the :parse-tree key."
 
 (defn- tokens*
   "Gets the limits for each string in the tree, ignoring
-the limits for the nodes with the tag specified by ignore?."
+the limits for the nodes with the tag specified by ignore?.
+If node-group is false all tokens are returned, otherwise
+only the tokens from the last tree generation are returned."
   [loc node-group]
   (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
     (let [nxt  (z/next loc)
@@ -100,7 +101,7 @@ the limits for the nodes with the tag specified by ignore?."
                     parent     (-> nxt z/up z/node)
                     tag        (tag parent)
                     {:keys [style group]} (meta parent)
-                    limits     (if (or (ignore? tag) (not (= group node-group)))
+                    limits     (if (and node-group (or (ignore? tag) (not (= group node-group))))
                                  limits
                                  (conj! limits [offset length style]))]
                 (recur nxt new-offset limits ignore?))
