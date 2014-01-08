@@ -12,15 +12,12 @@ TODO
       - Balance delimiters: ( \[ {
       - Mark corresponding delimiter.
 
-    - File Explorer
-      - Load directories lazily
-
     - Menu
       - Define a way to specify the order of the menu items.
 
-	- Unify protocol Text (there's one in buffer and another in UI).
+    - Unify protocol Text (there's one in buffer and another in UI).
       - So that text operations are defined in a single protocol.
-    - Modify parsley in order to be able to find node index keeping log(n).
+    - Modify parsley in order to be able to find node index but keeping log(n).
 	- Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
 
   - Model
@@ -59,6 +56,9 @@ Done
         - Incremental.
         - Strings.
         - Comments.
+
+    - File Explorer
+      - Load directories lazily
 
   - Model
     - Complete Document
