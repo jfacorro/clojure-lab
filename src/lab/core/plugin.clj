@@ -36,8 +36,8 @@ so that plugins can add hooks."
 name(space) and requires the ns. The plugin's vars init!,
 keymap and hooks are searched and processed accordingly if 
 they exist."
-  [app plugin-name]
-  (require [plugin-name :reload true])
+  [app plugin-name & [reload]]
+  (require [plugin-name :reload reload])
   (let [plugin-ns                      (the-ns plugin-name)
         {:keys [init! hooks keymaps] :as plugin} (->> (ns-resolve plugin-ns 'plugin) deref)]
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
