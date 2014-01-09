@@ -77,16 +77,19 @@ tree. Returns a tree node."
   (when (= click-count 2)
     (open-document-tree app source)))
 
-(defn- open-document-tree-enter [app {:keys [event source description] :as e}]
+(defn- open-document-tree-enter
+  [app {:keys [event source description] :as e}]
   (when (and (= :pressed event) (= description :enter))
     (open-document-tree app source)))
 
-(defn- file-tree [app dir]
+(defn- file-tree
+  [app dir]
   (-> app
     (tpl/tab (.getName dir))
-    (ui/add [:tree {:on-click (partial #'open-document-tree-click app)
-                    :on-key (partial #'open-document-tree-enter app)}
-              (load-dir app dir)])))
+    (ui/add [:scroll {:border :none}
+              [:tree {:on-click (partial #'open-document-tree-click app)
+                      :on-key (partial #'open-document-tree-enter app)}
+                (load-dir app dir)]])))
 
 (defn- open-project
   [app _]

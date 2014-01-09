@@ -4,15 +4,13 @@
   (:import  [javax.swing JTabbedPane JScrollPane JPanel]
             [javax.swing.event ChangeListener ChangeEvent]))
 
-(defn- tab-initialize [c]
-  (if (ui/attr c :scroll)
-    (JScrollPane.)
-    (doto (JPanel.)
-      (.setLayout (java.awt.BorderLayout.)))))
+(defn- tab-init [c]
+  (doto (JPanel.)
+    (.setLayout (java.awt.BorderLayout.))))
 
 (ui/definitializations
   :tabs        JTabbedPane
-  :tab         tab-initialize)
+  :tab         tab-init)
 
 (extend-protocol Component
   JTabbedPane
@@ -50,7 +48,6 @@
   (:title [c _ _])
   (:tool-tip [c _ _])
   (:header [c _ _])
-  (:scroll [c _ _])
 
   :tabs
   (:on-tab-change [c _ handler]

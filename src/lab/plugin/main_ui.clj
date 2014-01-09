@@ -283,6 +283,7 @@ to the UI's main menu."
 (defn- text-editor-create [app doc]
   (let [id (ui/genid)]
     [:scroll {:vertical-increment 16
+              :border :none
               :margin-control (text-editor-line-number app doc)}
       [:panel {:border :none
                :layout :border}
@@ -301,8 +302,7 @@ to the UI's main menu."
                                  :border       :none
                                  :transparent  true
                                  :on-click     (partial #'close-document-button app id)}]]
-           :border    :none
-           :scroll    false}
+           :border    :none}
       (text-editor-create app doc)]))
 
 (defn app-window [app]

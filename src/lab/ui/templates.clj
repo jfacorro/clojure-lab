@@ -10,13 +10,12 @@
 (defn tab
   [app title]
   (ui/with-id id
-    [:tab {:scroll true
-           :header   [:panel {:transparent true}
-                             [:label {:text title}]
-                             [:button {:icon         "close-tab.png"
-                                       :border       :none
-                                       :transparent  true
-                                       :on-click     (partial #'close-tab-button app id)}]]}]))
+    [:tab {:header [:panel {:transparent true}
+                     [:label {:text title}]
+                       [:button {:icon         "close-tab.png"
+                                 :border       :none
+                                 :transparent  true
+                                 :on-click     (partial #'close-tab-button app id)}]]}]))
 
 (defn confirm
   [title message]
