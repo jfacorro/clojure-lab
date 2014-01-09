@@ -84,11 +84,9 @@ tree. Returns a tree node."
 (defn- file-tree [app dir]
   (-> app
     (tpl/tab (.getName dir))
-    (ui/add [:tree {:id      "file-tree"
-                    ;:on-expansion (partial println)
-                    :on-click (partial #'open-document-tree-click app)
+    (ui/add [:tree {:on-click (partial #'open-document-tree-click app)
                     :on-key (partial #'open-document-tree-enter app)}
-                    (load-dir app dir)])))
+              (load-dir app dir)])))
 
 (defn- open-project
   [app _]
