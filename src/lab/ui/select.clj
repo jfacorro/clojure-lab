@@ -6,7 +6,8 @@ mirrors CSS selectors."
   (:require [clojure.zip :as zip]
             [clojure.set :as set]))
 
-(declare tag= id= attr= attr? find-all-paths)
+(declare tag= id= attr= attr? all
+         find-all-paths)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Parsing
@@ -26,6 +27,9 @@ hash (#) sign which indicates its an id selector."
   (when-let [[x & _] (literal-selector? s)]
     (= x \#)))
 
+(defn- all? [s]
+  (= (literal-selector? s) "*"))
+
 (defn- tag?
   "Returns true if the string doesn't begin with a
 hash (#)."
@@ -33,19 +37,20 @@ hash (#)."
   (when-let [[x & _] (literal-selector? s)]
     (not= x \#)))
 
+(def ^:private apply-pred #(%1 %2))
+
 (defn- parse
-  "Takes a selector (keyword) and parses it identifying
+  "Takes a selector (keyword or string) and parses it identifying
 its type and value, returning it in a vector.
 For example:
   :#main [:id \"main\"]
   :label [:tag :label]"
   [s]
-  (cond (id? s)
-          [:id (->> s name rest (apply str))]
-        (tag? s)
-          [:tag s]
-        (fn? s)
-          [:fn s]))
+  (condp apply-pred s
+    id?  [:id (->> s name rest (apply str))]
+    all? [:all nil]
+    tag? [:tag s]
+    fn?  [:fn s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Compilation and search
@@ -63,6 +68,7 @@ For example:
       (condp = t
         :id  (id= v)
         :tag (tag= v)
+        :all (all)
         :fn  v))))
 
 (def ^:private memoized-compile (memoize compile))
@@ -175,6 +181,7 @@ is the value."
 
 (def select-all (memoize select-all*))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Selectors
 
 (defn tag=
@@ -202,3 +209,7 @@ is the value."
   (with-meta
     #(-> % :attrs attr)
     {:attr attr}))
+
+(defn all []
+  (constantly true))
+
