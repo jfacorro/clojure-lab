@@ -33,6 +33,7 @@ The handler should return falsey if the node was modified."
             (treeCollapsed [e])
             (treeExpanded [e] (#'on-node-expansion e)))]
     (doto (JTree.)
+      (.setModel (DefaultTreeModel. nil))
       (.addTreeExpansionListener l))))
 
 (ui/definitializations

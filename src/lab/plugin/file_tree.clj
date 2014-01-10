@@ -55,11 +55,11 @@ recursively."
     [:tree-node {:item file :leaf true}]))
 
 (defn load-dir
-  "Loads the directory tree for the given path. If its a file
+  "Loads the file tree for the given path. If its a file
 then the parent directory is considered the root of the 
 tree. Returns a tree node."
-  [app root-path]
-  (let [root  (io/file root-path)
+  [app root-dir]
+  (let [root  (file-proxy root-path)
         root  (if (.isDirectory root) root (.getParentFile root))]
     (tree-node-from-file app root false)))
 
