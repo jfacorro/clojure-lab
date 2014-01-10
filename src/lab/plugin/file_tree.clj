@@ -59,7 +59,7 @@ recursively."
 then the parent directory is considered the root of the 
 tree. Returns a tree node."
   [app root-dir]
-  (let [root  (file-proxy root-path)
+  (let [root  (file-proxy root-dir)
         root  (if (.isDirectory root) root (.getParentFile root))]
     (tree-node-from-file app root false)))
 
