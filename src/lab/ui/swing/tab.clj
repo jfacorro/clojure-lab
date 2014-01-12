@@ -1,8 +1,26 @@
 (ns lab.ui.swing.tab
   (:use     [lab.ui.protocols :only [Component abstract impl Selected selected to-map]])
   (:require [lab.ui.core :as ui])
-  (:import  [javax.swing JTabbedPane JScrollPane JPanel]
-            [javax.swing.event ChangeListener ChangeEvent]))
+  (:import  [javax.swing JTabbedPane JScrollPane JPanel UIManager]
+            [javax.swing.event ChangeListener ChangeEvent]
+            [java.awt Insets Color]))
+
+(doto (UIManager/getDefaults)
+  (.remove "TabbedPane.tabAreaInsets")
+  (.remove "TabbedPane.tabInsets")
+  (.remove "TabbedPane.selectedTabPadInsets")
+  (.remove "TabbedPane.contentBorderInsets")
+  (.remove "TabbedPane.tabsOverlapBorder")
+  
+  (.put "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
+  (.put "TabbedPane.tabInsets" (Insets. 0 0 0 0))
+  (.put "TabbedPane.selectedTabPadInsets" (Insets. 0 0 0 0))
+  (.put "TabbedPane.contentBorderInsets" (Insets. 0 0 0 0))
+  (.put "TabbedPane.tabsOverlapBorder" true)
+  (.put "TabbedPane.darkShadow" (Color. 0 0 0 0))
+  (.put "TabbedPane.highlight" (Color. 0 0 0 0))
+  (.put "TabbedPane.light" (Color. 0 0 0 0))
+  (.put "TabbedPane.shadow" (Color. 0 0 0 0)))
 
 (defn- tab-init [c]
   (doto (JPanel.)

@@ -10,8 +10,8 @@
 (defn tab
   [app title]
   (ui/with-id id
-    [:tab {:header [:panel {:transparent true}
-                     [:label {:text title}]
+    [:tab {:header [:panel {:transparent false :background 0x666666}
+                     [:label {:text title :color 0xFFFFFF}]
                        [:button {:icon         "close-tab.png"
                                  :border       :none
                                  :transparent  true

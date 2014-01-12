@@ -17,7 +17,8 @@
         title  (str "Error - " (or (.getMessage ex) ex))
         tab    (-> app
                  (tmplt/tab title)
-                 (ui/add [:text-area {:text (str sw) :read-only true :caret-position 0}]))]
+                 (ui/add [:scroll [:text-area {:text (str sw) :read-only true :caret-position 0}]]))]
+    (ui/update! ui (ui/parent "bottom-controls") ui/attr :divider-location 0.8)
     (ui/update! ui :#bottom-controls ui/add tab)))
 
 (defn- default-error-handler

@@ -305,6 +305,10 @@ to the UI's main menu."
            :border    :none}
       (text-editor-create app doc)]))
 
+(def ^:private split-style
+  {:border :none
+   :divider-size 3})
+
 (defn app-window [app]
   [:window {:id     "main"
             :title   (lab/config @app :name)
@@ -313,13 +317,14 @@ to the UI's main menu."
             :maximized true
             :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
             :menu    [:menu-bar]}
-    [:split {:orientation :vertical
-             :resize-weight 1
-             :border :none}
-      [:split {:resize-weight 0
-               :divider-location 150}
-        [:tabs {:id "left-controls"}]
-        [:split {:resize-weight 1}
+    [:split (assoc split-style
+             :orientation :vertical
+             :resize-weight 1)
+      [:split (assoc split-style
+               :resize-weight 0
+               :divider-location 150)
+        [:tabs {:id "left-controls" :border :none}]
+        [:split (assoc split-style :resize-weight 1)
           [:tabs {:id "documents"
                   :on-tab-change (partial #'switch-document-ui app)}]
           [:tabs {:id "right-controls"}]]]
