@@ -8,14 +8,17 @@
     (ui/update! ui (ui/parent id) ui/remove tab)))
 
 (defn tab
-  [app title]
-  (ui/with-id id
-    [:tab {:header [:panel {:transparent false :background 0x666666}
-                     [:label {:text title :color 0xFFFFFF}]
-                       [:button {:icon         "close-tab.png"
-                                 :border       :none
-                                 :transparent  true
-                                 :on-click     (partial #'close-tab-button app id)}]]}]))
+  ([app stylesheet]
+    (ui/with-id id
+      (tab app id stylesheet)))
+  ([app id stylesheet]
+    (-> [:tab {:header [:panel {:transparent false :background 0xCCCCCC}
+                          [:label {:color 0x000000}]
+                            [:button {:icon         "close-tab.png"
+                                      :border       :none
+                                      :transparent  true
+                                      :on-click     (partial #'close-tab-button app id)}]]}]
+      (ui/apply-stylesheet stylesheet))))
 
 (defn confirm
   [title message]

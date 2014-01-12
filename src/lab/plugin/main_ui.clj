@@ -5,7 +5,7 @@
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
-                    [templates :as tpl]
+                    [templates :as tplts]
                     swing]
             [lab.core [keymap :as km]
                       [plugin :as plugin]
@@ -89,7 +89,7 @@ should be closed and false otherwise."
   [app tab doc]
   (if-not (doc/modified? @doc)
     true
-    (let [dialog (ui/init (tpl/confirm "Save changes"
+    (let [dialog (ui/init (tplts/confirm "Save changes"
                                        "Do you want to save the changes made to this file before closing?"))
           result (ui/attr dialog :result)]
       (when (= result :ok)
@@ -294,16 +294,12 @@ to the UI's main menu."
                               :doc       doc})]]]))
 
 (defn- document-tab [app doc]
-  (ui/with-id id
-    [:tab {:tool-tip (doc/path @doc)
-           :header   [:panel {:transparent true}
-                       [:label {:text (doc/name @doc)}]
-                       [:button {:icon         "close-tab.png"
-                                 :border       :none
-                                 :transparent  true
-                                 :on-click     (partial #'close-document-button app id)}]]
-           :border    :none}
-      (text-editor-create app doc)]))
+  (let [id (ui/genid)
+        s  {:tab    {:id id :tool-tip (doc/path @doc)}
+            :label  {:text (doc/name @doc)}
+            :button {:on-click (partial #'close-document-button app id)}}]
+    (-> (tplts/tab app id s)
+      (ui/add (text-editor-create app doc)))))
 
 (def ^:private split-style
   {:border :none

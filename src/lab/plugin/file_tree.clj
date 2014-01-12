@@ -6,7 +6,7 @@ the specified root dir."
             [lab.core.keymap :as km]
             [lab.plugin.main-ui :as main]
             [lab.ui.core :as ui]
-            [lab.ui.templates :as tpl]
+            [lab.ui.templates :as tplts]
             [clojure.java.io :as io]))
 
 (declare tree-node-from-file)
@@ -85,7 +85,7 @@ tree. Returns a tree node."
 (defn- file-tree
   [app dir]
   (-> app
-    (tpl/tab (.getName dir))
+    (tplts/tab {:label {:text (.getName dir)}})
     (ui/add [:scroll {:border :none}
               [:tree {:on-click (partial #'open-document-tree-click app)
                       :on-key (partial #'open-document-tree-enter app)}

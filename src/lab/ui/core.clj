@@ -219,8 +219,10 @@ as well."
   ([c k v]
     (-> c
       (assoc-in [:attrs k] v)
-      (p/set-attr k v)
-      update-abstraction)))
+      (as-> c
+        (if (initialized? c)
+          (-> c (p/set-attr k v) update-abstraction)
+          c)))))
 
 (defn- check-missing-id
   "Makes sure the component is not
@@ -318,18 +320,18 @@ used in the component's definition (e.g. in event handlers)."
 ;; Stylesheets
 
 (defn- apply-class
-  [ui [selector attrs]]
-  (reduce (fn [ui [attr-name value]]
-            (update ui selector attr attr-name value))
-          ui
+  [c [selector attrs]]
+  (reduce (fn [c [attr-name value]]
+            (update c selector attr attr-name value))
+          c
           attrs))
 
 (defn apply-stylesheet
   "Takes an atom with the root of a (initialized abstract UI) component and
   a stylesheet (map where the key is a selector and the values a map of attributes
   and values) and applies it to the matching components."
-  [ui stylesheet]
-  (reduce apply-class ui stylesheet))
+  [c stylesheet]
+  (reduce apply-class (hiccup->component c) stylesheet))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Properties for all UI components implementation independent
