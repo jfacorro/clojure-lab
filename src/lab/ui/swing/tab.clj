@@ -5,22 +5,31 @@
             [javax.swing.event ChangeListener ChangeEvent]
             [java.awt Insets Color]))
 
-(doto (UIManager/getDefaults)
-  (.remove "TabbedPane.tabAreaInsets")
-  (.remove "TabbedPane.tabInsets")
-  (.remove "TabbedPane.selectedTabPadInsets")
-  (.remove "TabbedPane.contentBorderInsets")
-  (.remove "TabbedPane.tabsOverlapBorder")
+(defn- set-prop [m k v]
+  (doto m
+    (.remove k)
+    (.put k v)))
+
+(-> (UIManager/getDefaults)
+  (set-prop "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
+  (set-prop "TabbedPane.tabInsets" (Insets. 0 0 0 0))
+  (set-prop "TabbedPane.selectedTabPadInsets" (Insets. 0 0 0 0))
+  (set-prop "TabbedPane.contentBorderInsets" (Insets. 0 0 0 0))
   
-  (.put "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
-  (.put "TabbedPane.tabInsets" (Insets. 0 0 0 0))
-  (.put "TabbedPane.selectedTabPadInsets" (Insets. 0 0 0 0))
-  (.put "TabbedPane.contentBorderInsets" (Insets. 0 0 0 0))
-  (.put "TabbedPane.tabsOverlapBorder" true)
-  (.put "TabbedPane.darkShadow" (Color. 0 0 0 0))
-  (.put "TabbedPane.highlight" (Color. 0 0 0 0))
-  (.put "TabbedPane.light" (Color. 0 0 0 0))
-  (.put "TabbedPane.shadow" (Color. 0 0 0 0)))
+  (set-prop "TabbedPane.tabsOverlapBorder" true)
+  (set-prop "TabbedPane.selectionFollowsFocus" true)
+  (set-prop "TabbedPane.opaque" false)
+  (set-prop "TabbedPane.tabsOpaque" false)
+
+  (set-prop "TabbedPane.labelShift" 0)
+  (set-prop "TabbedPane.textIconGap" 0)
+  (set-prop "TabbedPane.tabRunOverlay" 0)
+  (set-prop "TabbedPane.selectedLabelShift" -1)
+
+  (set-prop "TabbedPane.darkShadow" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.highlight" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.light" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.shadow" (Color. 0 0 0 0)))
 
 (defn- tab-init [c]
   (doto (JPanel.)
