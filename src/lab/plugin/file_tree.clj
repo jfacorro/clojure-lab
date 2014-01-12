@@ -99,7 +99,7 @@ tree. Returns a tree node."
                                               :title          "Open Directory"
                                               :current-dir    (lab/config @app :current-dir)}])
         [result dir] (ui/attr file-dialog :result)
-        dir          (io/file (.getCanonicalPath dir))]
+        dir          (when dir (io/file (.getCanonicalPath dir)))]
     (when dir
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
       (ui/update! (:ui @app) :#left-controls ui/add (file-tree app dir)))))
