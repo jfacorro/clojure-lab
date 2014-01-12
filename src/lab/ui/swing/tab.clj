@@ -24,12 +24,23 @@
   (set-prop "TabbedPane.labelShift" 0)
   (set-prop "TabbedPane.textIconGap" 0)
   (set-prop "TabbedPane.tabRunOverlay" 0)
-  (set-prop "TabbedPane.selectedLabelShift" -1)
+  (set-prop "TabbedPane.selectedLabelShift" 0)
 
-  (set-prop "TabbedPane.darkShadow" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.darkShadow" (Color. 0 0 0 0))  
   (set-prop "TabbedPane.highlight" (Color. 0 0 0 0))
   (set-prop "TabbedPane.light" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.shadow" (Color. 0 0 0 0)))
+  (set-prop "TabbedPane.shadow" (Color. 0 0 0 0))
+  
+  (set-prop "TabbedPane.borderHightlightColor" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.selectHighlight" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.background" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.foreground" (Color. 0 0 0 0))
+  
+  (set-prop "TabbedPane.unselectedBackground" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.selected" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.tabAreaBackground" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.focus" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.contentAreaColor" (Color. 0 0 0 0)))
 
 (defn- tab-init [c]
   (doto (JPanel.)

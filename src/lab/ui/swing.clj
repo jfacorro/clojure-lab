@@ -24,7 +24,7 @@
 
 (alter-var-root #'lab.ui.core/ui-action-macro #(do % %2) 'lab.ui.swing/swing-action)
 ;;------------------- 
-(UIManager/setLookAndFeel (UIManager/getSystemLookAndFeelClassName))
+(UIManager/setLookAndFeel "javax.swing.plaf.metal.MetalLookAndFeel")
 ;;-------------------
   
 (extend-protocol p/Implementation
