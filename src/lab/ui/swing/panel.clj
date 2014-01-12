@@ -19,6 +19,8 @@
 
 (ui/defattributes
   :split
+    (:divider-background [c _ v]
+      (.setBackground (find-divider (impl c)) (util/color v)))
     (:border [c _ v]
       (let [v       (if (sequential? v) v [v])
             border  (apply util/border v)

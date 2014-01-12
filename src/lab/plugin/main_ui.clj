@@ -307,7 +307,9 @@ to the UI's main menu."
 
 (def ^:private split-style
   {:border :none
-   :divider-size 3})
+   :divider-size 3
+   :background 0x666666
+   :divider-background 0x999999})
 
 (defn app-window [app]
   [:window {:id     "main"

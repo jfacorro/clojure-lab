@@ -8,6 +8,8 @@
 
 (ui/defattributes
   :window
+    (:background [c _ v]
+      (.. (p/impl c) getRootPane (setBackground (util/color v))))
     (:fullscreen [c _ v]
       (util/fullscreen (when v (p/impl c))))
     (:title [c _ v]
