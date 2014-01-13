@@ -76,11 +76,13 @@ default configuration."
   (:current-document app))
 
 (defn switch-document
-  "Changes the current document to the one with the
-specified id."
+  "Changes the current document to the one specified.
+If doc is not nil then it checks if the document exists 
+within the opened documents."
   [{documents :documents :as app} doc]
-    (or (and doc (documents doc) (assoc app :current-document doc))
-        app))
+  (or (and (or (nil? doc) (documents doc))
+           (assoc app :current-document doc))
+      app))
 
 (defn find-doc-by
   "Returns the first document that satisfies pred."

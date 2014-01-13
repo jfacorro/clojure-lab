@@ -3,7 +3,7 @@
         [lab.test :only [->test ->is]]
         [clojure.test :only [deftest is run-tests use-fixtures]])
   (:require [clojure.java.io :as io]
-            [lab.model.document :as doc]))
+            [lab.model.document :as doc :reload true]))
 ;;------------------------------------
 (declare delete-file create-file tmp-files)
 ;;------------------------------------
@@ -32,33 +32,33 @@
     default-app
     
     (->is = 0 (comp count :documents))
-    (->is = nil :current-document)
+    (->is = nil current-document)
     
     (new-document)
     (->is = 1 (comp count :documents))
-    (->is not= nil :current-document)
-    (->is = "Untitled 1" (comp :name deref :current-document))
+    (->is not= nil current-document)
+    (->is = "Untitled 1" (comp doc/name deref current-document))
     
     (new-document)
     (->is = 2 (comp count :documents))
-    (->is = "Untitled 2" (comp :name deref :current-document))
+    (->is = "Untitled 2" (comp doc/name deref current-document))
     
     (as-> x (switch-document x (find-doc-by-name x "Untitled 1")))
-    (->is = "Untitled 1" (comp :name deref :current-document))
+    (->is = "Untitled 1" (comp doc/name deref current-document))
     
     (as-> x (close-document x (find-doc-by-name x "Untitled 1")))
     (->is = 1 (comp count :documents))
-    (->is = nil :current-document)
+    (->is = nil current-document)
     
     (open-document "./tmp")
     (->is = 2 (comp count :documents))
-    (->is not= nil :current-document)
-    (->is = "tmp" (comp :name deref :current-document))
+    (->is not= nil current-document)
+    (->is = "tmp" (comp doc/name deref current-document))
 
     (open-document "../tmp")
     (->is = 3 (comp count :documents))
-    (->is not= nil :current-document)
-    (->is = "tmp" (comp :name deref :current-document))
+    (->is not= nil current-document)
+    (->is = "tmp" (comp doc/name deref current-document))
 
     ; Open the same file with different paths
     ; and check it's still 3 documents.
