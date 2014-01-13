@@ -80,7 +80,7 @@ and call the app's open-document function."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Close
 
-(declare save-document-ui)
+(declare save-document-ui!)
 
 (defn- save-changes-before-closing
   "Asks the user for confirmation on whether to save a
@@ -93,7 +93,7 @@ should be closed and false otherwise."
                                        "Do you want to save the changes made to this file before closing?"))
           result (ui/attr dialog :result)]
       (when (= result :ok)
-        (save-document-ui app tab))
+        (save-document-ui! app tab))
       (not (#{:cancel :closed} result)))))
 
 (defn close-document-ui
@@ -136,7 +136,7 @@ associated to it."
         (doc/bind doc (.getCanonicalPath file) :new? true)
         doc))))
 
-(defn- save-document-ui [app tab]
+(defn- save-document-ui! [app tab]
   (let [ui      (:ui @app)
         tab-id  (ui/attr tab :id)
         doc     (-> tab (ui/find :text-editor) (ui/attr :doc))
@@ -151,7 +151,8 @@ associated to it."
   [app & _]
   (let [ui     (:ui @app)
         tab    (current-document-tab @ui)]
-    (save-document-ui app tab)))
+    (when tab
+      (save-document-ui! app tab))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Switch
