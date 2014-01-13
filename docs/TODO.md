@@ -15,8 +15,6 @@ TODO
     - Menu
       - Define a way to specify the order of the menu items.
 
-    - Unify protocol Text (there's one in buffer and another in UI).
-      - So that text operations are defined in a single protocol.
     - Modify parsley in order to be able to find node index but keeping log(n).
 	- Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
 
@@ -36,7 +34,7 @@ TODO
     - Link Document to ui/text-editor.
       a. Detect updates from Document and impact in editor. \__ Which one? Based on the test done in the prototype, (a) is the
       b. Detect updates form editor and impact in Document. /              one that works best, in (b) model and view can get out of sync.
-      - (a) is definitely the one to go:
+      - (a) is the way to go:
         - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
 Done
 ====
@@ -59,6 +57,9 @@ Done
 
     - File Explorer
       - Load directories lazily
+
+    - Unify protocol Text (there's one in buffer and another in UI).
+      - So that text operations are defined in a single protocol.
 
   - Model
     - Complete Document
