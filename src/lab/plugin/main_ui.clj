@@ -102,7 +102,10 @@ should be closed and false otherwise."
         tab    (ui/find @ui (ui/selector# id))
         editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)
-        close? (save-changes-before-closing app tab doc)]
+        close? (save-changes-before-closing app tab doc)
+        ;; Get the tab component in case the saving modified it
+        ;; TODO: maybe modify the remove so that it takes an id instead
+        tab    (ui/find @ui (ui/selector# id))]
     (when close?
       (ui/update! ui :#documents ui/remove tab)
       (swap! app lab/close-document doc))))
