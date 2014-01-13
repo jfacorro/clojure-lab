@@ -1,6 +1,7 @@
 (ns lab.plugin.clojure-lang
   "Clojure language specification."
-  (:require [lab.core :as lab]
+  (:require [clojure.zip :as zip]
+            [lab.core :as lab]
             [lab.core [plugin :as plugin]
                       [lang :as lang]]
             [lab.model.document :as doc]))
@@ -47,15 +48,28 @@
   :comment      {:color 0x999988 :bold true}
   :default      {:color 0xFFFFFF}})
 
+(defn- def? [node]
+  (and (-> node zip/node :tag (= :list))
+       (-> node zip/down zip/right zip/node 
+         (as-> x
+           (and (= (:tag x) :symbol)
+                (.startsWith (-> x :content first) "def"))))))
+
+(defn node->def [node]
+  {:offset (lang/offset node)
+   :name (-> node zip/down zip/right zip/right zip/right zip/down zip/node)})
+
 (def clojure
-  {:name     "Clojure"
-   :options  {:main      :expr*
-              :root-tag  ::root
-              :space :whitespace*
-              :make-node lang/make-node}
-   :grammar  grammar
-   :rank     (partial lang/file-extension? "clj")
-   :styles   styles})
+  {:name      "Clojure"
+   :options   {:main      :expr*
+               :root-tag  ::root
+               :space :whitespace*
+               :make-node lang/make-node}
+   :grammar   grammar
+   :rank      (partial lang/file-extension? "clj")
+   :styles    styles
+   :def?      def?
+   :node->def node->def})
 
 (defn init! [app]
   (swap! app assoc-in [:langs :clojure] clojure))

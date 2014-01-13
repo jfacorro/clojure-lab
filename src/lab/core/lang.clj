@@ -2,7 +2,7 @@
   "Languages are used to determine the structure and syntax of a Document.
 They also provide the functions to create and update a parse tree."
   (:require [lab.model.buffer :as buffer]
-            [clojure.zip :as z]))
+            [clojure.zip :as zip]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Languages resolution and predicates
@@ -84,7 +84,7 @@ parse tree with the modified nodes marked with node-group."
   "Builds a zipper using the root node in the document
 under the :parse-tree key."
   [root]
-  (z/zipper map? :content make-node root))
+  (zip/zipper map? :content make-node root))
 
 (defn- tokens*
   "Gets the limits for each string in the tree, ignoring
@@ -93,19 +93,19 @@ If node-group is false all tokens are returned, otherwise
 only the tokens from the last tree generation are returned."
   [loc node-group]
   (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
-    (let [nxt  (z/next loc)
-          node (z/node nxt)]
+    (let [nxt  (zip/next loc)
+          node (zip/node nxt)]
       (cond (string? node)
               (let [length     (.length ^String node)
                     new-offset (+ offset length)
-                    parent     (-> nxt z/up z/node)
+                    parent     (-> nxt zip/up zip/node)
                     tag        (tag parent)
                     {:keys [style group]} (meta parent)
                     limits     (if (and node-group (or (ignore? tag) (not (= group node-group))))
                                  limits
                                  (conj! limits [offset length style]))]
                 (recur nxt new-offset limits ignore?))
-            (z/end? nxt)
+            (zip/end? nxt)
               (persistent! limits)
             :else 
               (recur nxt offset limits ignore?)))))
@@ -115,3 +115,29 @@ only the tokens from the last tree generation are returned."
 generation that used the group-id identifier provided."
   [root node-group]
   (tokens* (code-zip root) node-group))
+
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Definitions
+
+(defn offset [node]
+  (loop [node node
+         offset 0]
+    (if-not node
+      offset
+      (let [x  (zip/node node)]
+        (recur (zip/prev node)
+               (if (string? x)
+                 (+ offset (.length x))
+                 offset))))))
+
+(defn definitions [lang root]
+  (let [{:keys [def? node->def]}  lang
+        node (zip/down (code-zip root))]
+    (when (and def? node->def)
+      (loop [node node, defs []]
+        (if-not node
+          defs
+          (recur (zip/right node)
+                 (if (def? node)
+                   (conj defs (node->def node))
+                   defs)))))))

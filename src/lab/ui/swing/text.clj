@@ -5,9 +5,7 @@
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
             [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
-  (:require [lab.model.document :as doc]
-            [lab.core.lang :as lang]
-            [lab.ui.core :as ui]
+  (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
                           [event :as event]]))
 
@@ -75,6 +73,8 @@
   :text-editor
     (:wrap [c _ _])
     (:doc [c _ doc])
+    (:content-type [c _ v]
+      (.setContentType ^JTextPane (impl c) v))
     (:on-change [c p handler]
       (let [listener (proxy [DocumentListener] []
                        (insertUpdate [e] (handler (to-map e)))
