@@ -20,7 +20,8 @@
   {:name          "Clojure Lab"
    :core-plugins  '[lab.plugin.main-ui
                     lab.plugin.notifier]
-   :plugins       '[lab.plugin.file-tree 
+   :plugins       '[lab.plugin.file-tree
+                    lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
                     lab.plugin.clojure-outline]
    :plugins-dir   "plugins"

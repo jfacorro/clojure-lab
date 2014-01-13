@@ -9,12 +9,20 @@
 
 ;; TODO: add link to files when displaying the stack trace.
 
+(defn truncate [n s]
+  (if (< n (.length s))
+    (str (.substring s 0 n) "...")
+    s))
+
 (defn- show-error-info
   [app ex]
   (let [ui     (@app :ui)
         sw     (java.io.StringWriter.)
         _      (.printStackTrace ex (java.io.PrintWriter. sw))
-        title  (str "Error - " (or (.getMessage ex) ex))
+        title  (->> (or (.getMessage ex) ex)
+                 str
+                 (truncate 50)
+                 (str "Error - "))
         tab    (-> app
                  (tplts/tab {:label {:text title}})
                  (ui/add [:scroll {:border :none} [:text-area {:text (str sw) :read-only true :caret-position 0}]]))]
