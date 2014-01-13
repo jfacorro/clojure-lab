@@ -28,7 +28,7 @@
                     (try (#'show-error-info app ex)
                     (catch Exception new-ex
                       (println "Exception handler threw an Exception :S")
-                      (repl/pst new-ex))))
+                      (repl/pst ex))))
                   (handle [ex]
                     (#'show-error-info app ex)))
        class-name (-> handler class .getName)]
