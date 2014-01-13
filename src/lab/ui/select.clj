@@ -117,7 +117,7 @@ For example:
   (let [x      (zip/node pnode)
         values (alts x)
         f      (fn [node & xs]
-                 (map #(concat (path-from-root pnode) (apply path xs) %)
+                 (map #(when % (concat (path-from-root pnode) (apply path xs) %))
                       (find-all-paths node preds alt-spec)))]
     (mapcat (partial apply f) values)))
 
@@ -127,11 +127,11 @@ in a map where the component is the key and the zipper node
 is the value."
   [node preds & [alt-spec]]
   (loop [node                node
-         [p & ps :as preds]  (reverse preds)
+         [p & ps :as rpreds]  (reverse preds)
          result              #{}]
      (if (and p (not (zip/end? node)))
        (if-not (zip/node node)
-         (recur (zip/next node) preds result)
+         (recur (zip/next node) rpreds result)
          (let [x      (zip/node node)
                result (if (and (p x) (parents-match? (zip/up node) ps))
                         (conj result (path-from-root node))
@@ -139,7 +139,7 @@ is the value."
                result (if alt-spec
                         (into result (check-alternatives node preds alt-spec))
                         result)]
-           (recur (zip/next node) preds result)))
+           (recur (zip/next node) rpreds result)))
        result)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -166,7 +166,7 @@ is the value."
 
 (def select (memoize select*))
 
-(defn- select-all*
+(defn select-all
   "Searches the whole component tree from the root and returns
   a sequence of the paths to the matched elements."
   [root selector & [alt-spec]]
@@ -179,7 +179,7 @@ is the value."
                        #{[]})]
       result)))
 
-(def select-all (memoize select-all*))
+;(def select-all (memoize select-all*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Selectors

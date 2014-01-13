@@ -10,13 +10,15 @@
                       :attr [:text-area {:id "text1"}]}
               [:label {:id "1"
                        :size [100 100]}]
-                [:button {:id "2"
-                          :attr [:text-area {:id "text2"}]}
-                  [:combo {:id "combo"
-                           :size [100 200]}]]
-                [:label {:id "3"
-                         :size [100 100]}]
-                [:tabs [:tab] [:tab] [:tab]]]))
+              [:button {:id "2"
+                        :attr [:text-area {:id "text2"}]}
+                [:combo {:id "combo"
+                         :size [100 200]
+                         :attr [:panel [:button]]}]]
+              [:label {:id "3"
+                       :size [100 100]}]
+              [:tabs [:tab] [:tab] [:tab]]
+              [:panel [:button]]]))
 
 (deftest ui-selection []
   (testing "single"
@@ -70,4 +72,5 @@
     #{[:content 3 :content 0] [:content 3 :content 1] [:content 3 :content 2]} :tab
     #{[:attrs :attr]} :#text1
     #{[:content 1 :attrs :attr]} :#text2
-    #{[:content 1 :attrs :attr] [:attrs :attr]} :text-area))
+    #{[:content 1 :attrs :attr] [:attrs :attr]} :text-area
+    #{[:content 1 :content 0 :attrs :attr :content 0] [:content 4 :content 0]} [:panel :button]))
