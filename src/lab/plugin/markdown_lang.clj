@@ -5,16 +5,21 @@
                       [lang :as lang]]
             [lab.model.document :as doc]))
 
-(def grammar [:expr- #{:title :html-tag :strong :em :bullet :code}
+(def grammar [:expr- #{:title :html-tag :strong :em :bullet :code :link}
               :title #{#"#{1,6}.+\n"
                        #".+\n[-=]+\n"}
               :strong #{#"\*\*(?<! ).+?(?! )\*\*"
                         #"__(?<! ).+?(?! )__"}
               :em #{#"(?<!\*)\*(?!\*)(?<! ).+?(?! )(?<!\*)\*(?!\*)"
                     #"(?<!_)_(?!\_)(?<! ).+?(?! )(?<!_)_(?!\_)"}
-              :html-tag #"(?s)</?[^ ][\w]+.*?/?>"
               :bullet #"[ \t]{0,3}([-\+\*]|\d+\.) "
-              :code #"^(?: {4,}|\t).*"
+              :link #{#"\[.+\]\(.+\)"
+                      #"\[.+\]\[.*\]"
+                      #" {0,3}\[.+\]:[ \t]+.+"}
+              :html-tag #"(?s)</?[^ ][\w]+.*?/?>"
+              :code #{#"^(?: {4,}|\t).*"
+                      #"(?<!`)`(?!`).+?(?<!`)`(?!`)"
+                      #"``.+?``"}
               :whitespace #"[\r\n]+"])
 
 (def styles
@@ -22,8 +27,9 @@
   :strong {:color 0x00FF00}
   :em {:color 0x00FFFF}
   :bullet {:color 0xFF6666 :bold true}
+  :link {:color 0xFFE64D}
   :html-tag {:color 0x64DCB3}
-  :code {:color 0xCCCCCC}
+  :code {:color 0x9566E5}
   :default {:color 0xFFFFFF}})
 
 (def markdown
