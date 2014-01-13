@@ -63,9 +63,12 @@ The handler should return falsey if the node was modified."
     (let [model (DefaultTreeModel. child)]
       (.setModel this model)
       this))
-  (remove [this child]
-    (.removeNodeFromParent ^DefaultTreeModel (.getModel this)
-                           ^DefaultMutableTreeNode child))
+  (remove [this ^TreeNode child]
+    (let [model ^DefaultTreeModel (.getModel this)]
+      (if (nil? (.getParent child))
+        (.setModel this nil)
+        (.removeNodeFromParent model ^DefaultMutableTreeNode child)))
+      this)
   (children [this]
     (.getComponents this))
 

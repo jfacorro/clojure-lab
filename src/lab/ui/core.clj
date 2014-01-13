@@ -141,6 +141,11 @@ as the abstraction of its implementation."
   (remove-binding [this ks]
     (let [implem (p/impl this)]
       (p/impl this (p/remove-binding implem ks)))))
+      
+(defn remove-all
+  "Takes a component and removes all of its children."
+  [c]
+  (reduce p/remove c (p/children c)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 

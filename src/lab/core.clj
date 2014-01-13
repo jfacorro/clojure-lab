@@ -21,7 +21,8 @@
    :core-plugins  '[lab.plugin.main-ui
                     lab.plugin.notifier]
    :plugins       '[lab.plugin.file-tree 
-                    lab.plugin.clojure-lang]
+                    lab.plugin.clojure-lang
+                    lab.plugin.clojure-outline]
    :plugins-dir   "plugins"
    :current-dir   "."})
 
@@ -113,7 +114,7 @@ collection and sets it as the current-document."
     (let [doc (atom (doc/document lang))]
       (-> app
         (update-in [:documents] conj doc)
-        (assoc :current-document doc)))))
+        (switch-document doc)))))
 
 (defn open-document
   "Opens a document from an existing file
@@ -130,7 +131,7 @@ and adds it to the openened documents map."
       (switch-document app opened-doc)
       (-> app
         (update-in [:documents] conj doc)
-        (assoc :current-document doc)
+        (switch-document doc)
         (config :current-dir path))))))
 
 (defn close-document
@@ -142,7 +143,7 @@ documents collection."
       (doc/close doc))
     (-> app
       (update-in [:documents] #(disj % doc))
-      (assoc :current-document current))))
+      (switch-document current))))
 
 (defn save-document
   "Saves a document to a file."

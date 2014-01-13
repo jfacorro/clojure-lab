@@ -16,7 +16,7 @@
 
 (defn- current-document-tab [ui]
   "Returns the currently selected document tab."
-  (-> @ui
+  (-> ui
     (ui/find :#documents)
     ui/selected))
 
@@ -117,7 +117,7 @@ should be closed and false otherwise."
 associated to it."
   [app & _]
   (let [ui     (:ui @app)
-        tab    (current-document-tab ui)
+        tab    (current-document-tab @ui)
         id     (ui/attr tab :id)]
     (when tab
       (close-document-ui app id))))
@@ -150,18 +150,19 @@ associated to it."
 (defn- save-document-menu
   [app & _]
   (let [ui     (:ui @app)
-        tab    (current-document-tab ui)]
+        tab    (current-document-tab @ui)]
     (save-document-ui app tab)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Switch
 
-(defn- switch-document-ui
+(defn- switch-document-ui!
   [app evt]
   (let [ui     (:ui @app)
-        editor (current-text-editor ui)
+        editor (current-text-editor @ui)
         doc    (ui/attr editor :doc)]
-    (swap! app lab/switch-document doc)))
+    (when doc
+      (swap! app lab/switch-document doc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text Change
@@ -280,6 +281,13 @@ to the UI's main menu."
                          :read-only true
                          :text numbers)]]))
 
+(defn handle-key [app e]
+  #_(let [ui   (:ui @app)
+        editor (:source e)
+        doc  (ui/attr editor :doc)
+        cmd  (doc/resolve-command doc app e)])
+  #_(println (-> e :source (ui/attr :doc) type)))
+
 (defn- text-editor-create [app doc]
   (let [id (ui/genid)]
     [:scroll {:vertical-increment 16
@@ -290,6 +298,7 @@ to the UI's main menu."
         [:text-editor (merge text-editor-style
                              {:id        id
                               :post-init (partial #'text-editor-post-init doc)
+                              :on-key    (partial #'handle-key app)
                               :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
                               :doc       doc})]]]))
 
@@ -324,7 +333,7 @@ to the UI's main menu."
         [:tabs {:id "left-controls" :border :none}]
         [:split (assoc split-style :resize-weight 1)
           [:tabs {:id "documents"
-                  :on-tab-change (partial #'switch-document-ui app)}]
+                  :on-tab-change (partial #'switch-document-ui! app)}]
           [:tabs {:id "right-controls"}]]]
       [:tabs {:id "bottom-controls"}]]])
 
