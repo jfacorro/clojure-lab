@@ -248,18 +248,23 @@ to the UI's main menu."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Controls
 
-(def text-editor-style
-  {:border      :none
-   :background  0x333333
-   :color       0xFFFFFF
-   :caret-color 0xFFFFFF
-   :font        [:name "Consolas" :size 14]})
+(def styles
+  {:*           {:font [:name "Consolas" :size 14]}
+   [:panel :text-area]
+                {:background  0x666666
+                 :color       0xFFFFFF
+                 :border      :none}
+   :text-editor {:border      :none
+                 :background  0x333333
+                 :color       0xFFFFFF
+                 :caret-color 0xFFFFFF}})
 
 (defn- text-editor-post-init [doc c]
   (-> c
     (ui/attr :text (doc/text @doc))
+    highlight
     (ui/attr :caret-position 0)
-    highlight))
+    (ui/attr :visible true)))
 
 (defn line-count-str [doc]
   (->> (doc/line-count doc)
@@ -271,7 +276,8 @@ to the UI's main menu."
 (defn update-line-numbers [app id key ref old-state new-state]
   (let [ui     (:ui @app)]
     (ui/action
-      (ui/update! ui (ui/selector# id) ui/attr :text (line-count-str new-state)))))
+      (ui/update! ui (ui/selector# id) 
+                  ui/attr :text (line-count-str new-state)))))
 
 (defn- text-editor-line-number [app doc]
   (let [id (ui/genid)
@@ -279,11 +285,7 @@ to the UI's main menu."
     (add-watch doc :update-numbers (partial #'update-line-numbers app id))
     [:panel {:layout :border
              :border [:line 0x666666 2]}
-      [:text-area (assoc text-editor-style
-                         :id id
-                         :background 0x666666
-                         :read-only true
-                         :text numbers)]]))
+      [:text-area {:id id, :read-only true, :text numbers}]]))
 
 (defn handle-key [app e]
   #_(let [ui   (:ui @app)
@@ -299,20 +301,23 @@ to the UI's main menu."
               :margin-control (text-editor-line-number app doc)}
       [:panel {:border :none
                :layout :border}
-        [:text-editor (merge text-editor-style
-                             {:id        id
-                              :post-init (partial #'text-editor-post-init doc)
-                              :on-key    (partial #'handle-key app)
-                              :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
-                              :doc       doc})]]]))
+        [:text-editor {:id        id
+                       :visible   false
+                       :post-init (partial #'text-editor-post-init doc)
+                       :on-key    (partial #'handle-key app)
+                       :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
+                       :doc       doc}]]]))
 
-(defn- document-tab [app doc]
+(defn- document-tab
+  "Creates a tab with an editor."
+  [app doc]
   (let [id (ui/genid)
         s  {:tab    {:id id :tool-tip (doc/path @doc)}
             :label  {:text (doc/name @doc)}
             :button {:on-click (partial #'close-document-button app id)}}]
     (-> (tplts/tab app id s)
-      (ui/add (text-editor-create app doc)))))
+      (ui/add (text-editor-create app doc))
+      (ui/apply-stylesheet styles))))
 
 (def ^:private split-style
   {:border :none
