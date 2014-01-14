@@ -1,16 +1,34 @@
 (ns lab.plugin.clojure-outline
   (:require [clojure.zip :as zip]
             [lab.core :as lab]
+            [lab.core.lang :as lang]
+            [lab.core.plugin :as plugin]
+            [lab.core.keymap :as km]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [lab.model.document :as doc]
-            [lab.core.lang :as lang]
-            [lab.core.plugin :as plugin]
-            [lab.core.keymap :as km]))
+            [lab.plugin.main-ui :as main-ui]))
 
-(defn- def-tree-node [def-info]
-  [:tree-node {:leaf true 
-               :item (:name def-info)}])
+(defn- node-tree-click
+  [app e]
+  (when (= 2 (:click-count e))
+    (let [ui     (:ui app)
+          node   (:source e)
+          info   (ui/attr node :info)
+          editor (#'main-ui/current-text-editor @ui)
+          id     (ui/attr editor :id)]
+      (when id
+        (ui/update! ui (ui/selector# id)
+          #(-> %
+            (ui/attr :caret-position (:offset info))
+            ui/focus))))))
+
+(defn- def-tree-node
+  [app def-info]
+  [:tree-node {:leaf true
+               :item (:name def-info)
+               :info def-info
+               :on-click (partial #'node-tree-click app)}])
 
 (defn- update-outline-tree!
   "Updates the outline using the document provided
@@ -22,24 +40,24 @@ or the current document if non is specified."
           outline    (ui/find @ui :#outline-tree)]
       (when outline
         (if-not doc
-          (when (seq (ui/children outline))
-            (ui/action (ui/update! ui :#outline-tree ui/remove-all)))
+          (ui/action (ui/update! ui :#outline-tree ui/remove-all))
           (let [lang       (doc/lang @doc)
                 parse-tree (lang/parse-tree @doc nil)
                 def-infos  (lang/definitions lang parse-tree)
                 root       (into [:tree-node {:item (doc/name @doc)}]
-                             (map def-tree-node def-infos))]
+                             (mapv (partial #'def-tree-node app) def-infos))]
             (ui/action
               (ui/update! ui :#outline-tree
                 #(-> % ui/remove-all (ui/add root))))))))))
 
 (defn- switch-document-hook
   "Hook for #'lab.core/switch-document:
-  Updates the outline tree based on the document's lang 
+  Updates the outline tree based on the document's lang
 and content"
   [f app doc]
-  (future (update-outline-tree! app doc))
-  (f app doc))
+  (let [app (f app doc)]
+    (future (#'update-outline-tree! app doc))
+    app))
 
 (defn- outline-tree [app]
   (->

@@ -1,10 +1,11 @@
 (ns lab.ui.swing.tree
+  (:use     [lab.ui.protocols :only [Component Selected Implementation impl abstract to-map]])
+  (:require [lab.ui.core :as ui])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
-            [javax.swing.event TreeSelectionListener
-                               TreeExpansionListener TreeExpansionEvent])
-  (:use     [lab.ui.protocols :only [Component Selected Implementation impl abstract]])
-  (:require [lab.ui.core :as ui]))
+            [javax.swing.event TreeSelectionListener TreeExpansionListener 
+                               TreeExpansionEvent]
+            [java.awt.event MouseAdapter]))
 
 (defn tree-node-init [c] 
   (let [ab        (atom nil)
@@ -22,19 +23,34 @@ The handler should return falsey if the node was modified."
   [^TreeExpansionEvent e]
   (let [tree ^JTree (.getSource e)
         node (.. e getPath getLastPathComponent)
-        ab   (abstract node)
-        f    (ui/attr ab :on-expansion)]
+        abs  (abstract node)
+        f    (ui/attr abs :on-expansion)
+        e    (assoc (to-map e) :source abs)]
+    (when (and f (f e))
+      ;; notify the model to reload the modified node
+      (.reload ^DefaultTreeModel (.getModel tree) node))))
+
+(defn- on-node-click
+  [e]
+  (let [tree ^JTree (.getSource e)
+        node (.getLastSelectedPathComponent tree)
+        abs  (abstract node)
+        f    (ui/attr abs :on-click)
+        e    (assoc (to-map e) :source abs)]
     (when (and f (f e))
       ;; notify the model to reload the modified node
       (.reload ^DefaultTreeModel (.getModel tree) node))))
 
 (defn tree-init [c]
-  (let [l (proxy [TreeExpansionListener] []
-            (treeCollapsed [e])
-            (treeExpanded [e] (#'on-node-expansion e)))]
+  (let [expansion (proxy [TreeExpansionListener] []
+                    (treeCollapsed [e])
+                    (treeExpanded [e] (#'on-node-expansion e)))
+        click     (proxy [MouseAdapter] []
+                       (mousePressed [e] (#'on-node-click e)))]
     (doto (JTree.)
       (.setModel (DefaultTreeModel. nil))
-      (.addTreeExpansionListener l))))
+      (.addTreeExpansionListener expansion)
+      (.addMouseListener click))))
 
 (ui/definitializations
   :tree        tree-init
@@ -87,13 +103,11 @@ The handler should return falsey if the node was modified."
                        (treeCollapsed [e])
                        (treeExpanded [e] (f e)))]
         (.addTreeExpansionListener ^JTree (impl c) listener)))
-    (:on-selected [c _ f]
-      (let [listener (proxy [TreeSelectionListener] []
-                       (valueChanged [e] (f (ui/selected c))))]
-        (.addTreeSelectionListener ^JTree (impl c) listener)))
   
   :tree-node
     (:leaf [c _ v])
-    (:on-expansion [c _ v])
     (:item [c attr item]
-      (.setUserObject ^DefaultMutableTreeNode (impl c) item)))
+      (.setUserObject ^DefaultMutableTreeNode (impl c) item))
+    (:info [c _ v])
+    (:on-expansion [c _ v])
+    (:on-click [c _ v]))
