@@ -210,6 +210,8 @@ is the value."
     #(-> % :attrs attr)
     {:attr attr}))
 
-(defn all []
+(defn all
+  "Returns a predicate that always returns true."
+  []
   (constantly true))
 
