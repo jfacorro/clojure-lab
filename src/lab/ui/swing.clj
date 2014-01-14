@@ -38,6 +38,8 @@
 
 (extend-protocol p/Component
   java.awt.Container
+  (children [this]
+    (.getComponents this))
   (add [this child]
     (.add this ^java.awt.Component child)
     (.validate this)
@@ -45,8 +47,12 @@
   (remove [this child]
     (.remove this ^java.awt.Component child)
     this)
+  (focus [this]
+    (.requestFocus this))
     
   JComponent
+  (children [this]
+    (.getComponents this))
   (add [this child]
     (.add this ^JComponent child)
     (.validate this)
@@ -54,25 +60,8 @@
   (remove [this ^JComponent child]
     (.remove this child)
     this)
-  (add-binding [this ks f]
-    (let [im   (.getInputMap this)
-          am   (.getActionMap this)
-          ks   (util/keystroke ks)
-          desc (or (-> f meta :name) (name (gensym "binding-")))
-          act  (proxy [AbstractAction] []
-                 (actionPerformed [e] (f e)))]
-      (.put im ks desc)
-      (.put am desc act)
-      this))
-  (remove-binding [this ks]
-    (let [im   (.getInputMap this)
-          am   (.getActionMap this)
-          ks   (util/keystroke ks)
-          desc (.get im ks)]
-      (when desc
-        (.remove im ks)
-        (.remove am desc))
-      this)))
+  (focus [this]
+    (.grabFocus this)))
 
 ;; Definition of attribute setters for each kind
 ;; of component in the hierarchy.

@@ -24,9 +24,11 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
 
 (declare init initialized? attr find genid selector# hiccup->component)
 
-(def ui-action-macro 
+(defn- ui-action-macro 
   "This var should be set by the UI implementation with a macro 
-that runs code in the UI thread.")
+that runs code in the UI thread."
+  [& xs]
+  (throw (Exception. "ui-action-macro has not been set by the implementation.")))
 
 (defmacro action
   "Macro that uses the UI aciton macro defined by the implementation."
@@ -133,14 +135,10 @@ as the abstraction of its implementation."
       (-> this
         (update-in [:content] util/remove-at i)
         update-abstraction
-        (p/impl (p/remove (p/impl this) (p/impl child))))))
-  (add-binding [this ks f]
-    (let [this    (init this)
-          implem  (p/impl this)]
-      (p/impl this (p/add-binding implem ks f))))
-  (remove-binding [this ks]
-    (let [implem (p/impl this)]
-      (p/impl this (p/remove-binding implem ks)))))
+        (p/impl (p/remove (p/impl this) (p/impl child))))))  
+  (focus [this]
+    (p/focus (p/impl this))
+    this))
       
 (defn remove-all
   "Takes a component and removes all of its children."
@@ -152,6 +150,7 @@ as the abstraction of its implementation."
 (def children #'p/children)
 (def add #'p/add)
 (def remove #'p/remove)
+(def focus #'p/focus)
 
 (def apply-style #'p/apply-style)
 
@@ -274,6 +273,8 @@ each child and the attributes that have a component as a value."
   "Builds an id selector."
   [^String id]
   (-> (str "#" id) keyword))
+
+(def attr= #'sel/attr=)
 
 (defn parent
   "Selects the parent of the component with the id."
