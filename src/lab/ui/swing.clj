@@ -1,4 +1,22 @@
 (ns lab.ui.swing
+  (:import [javax.swing SwingUtilities]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; First define macro to perform ui actions
+;; and alter the root binding of lab.ui.core/ui-action-macro.
+
+(defmacro swing-action
+  "Queues an action to the event queue."
+  [& body]
+  `(SwingUtilities/invokeLater 
+    (fn [] ~@body)))
+
+(alter-var-root #'lab.ui.core/ui-action-macro #(do % %2) 'lab.ui.swing/swing-action)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Then require components implementations
+
+(ns lab.ui.swing
   (:refer-clojure :exclude [remove])
   (:require [lab.ui.protocols :as p]
             [lab.ui.core :as ui]
@@ -15,17 +33,6 @@
   (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
            [java.awt Dimension]
            [java.awt.event MouseAdapter FocusAdapter KeyListener]))
-
-;;;;;;;;;;;;;;;;;;;;;;
-;; Define the macro to perform ui actions.
-
-(defmacro swing-action
-  "Queues an action to the event queue."
-  [& body]
-  `(SwingUtilities/invokeLater 
-    (fn [] ~@body)))
-
-(alter-var-root #'lab.ui.core/ui-action-macro #(do % %2) 'lab.ui.swing/swing-action)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Swing L&F
