@@ -6,10 +6,17 @@
                       [lang :as lang]]
             [lab.model.document :as doc]))
 
+(def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
+                     "try" "catch" "finally" "monitor-enter" "monitor-exit" #_"." "new" "set!"})
+
+(def core-vars 
+  "Gets all the names for the vars in the clojure.core namespace."
+  (->> (the-ns 'clojure.core) ns-interns keys (map str) set))
+
 (def grammar [:expr- #{:symbol :keyword :list :string :vector :set :map :regex
                        :number :comment :meta :fn :deref :quote :char}
               :symbol #"[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_]*"
-              :keyword #"::?#?[\w-_*+\?]+"
+              :keyword #"::?#?[\w-_*+\?/\.]+"
               :whitespace #"[ \t\r\n,]+"
               :list [#"(?<!\\)\(" :expr* #"(?<!\\)\)"]
               :vector ["[" :expr* "]"]
@@ -27,12 +34,26 @@
               :deref ["@" :expr]
               :fn ["#(" :expr* ")"]])
 
-(def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
-                     "try" "catch" "finally" "monitor-enter" "monitor-exit" "." "new" "set!"})
+(def styles-mapping
+  {:symbol #{[:special-form special-forms]
+             [:var core-vars]}})
 
-(def core-vars 
-  "Gets all the names for the vars in the clojure.core namespace."
-  (->> (the-ns 'clojure.core) ns-interns keys (map str) set))
+(defn- resolve-style [tag [content]]
+  (reduce (fn [x [style pred]]
+            (if (pred content) style x))
+    tag
+    (styles-mapping tag)))
+
+(defn- node-meta
+  "If the tag for the node is a symbol
+check if its one of the registered symbols."
+  [tag content]
+  {:style (resolve-style tag content)
+   :group #'lang/*node-group*})
+
+(defn- make-node [tag content]
+  (with-meta {:tag tag :content content}
+             (node-meta tag content)))
 
 (def styles
  {:special-form {:color 0xC800C8}
@@ -60,16 +81,17 @@
    :name (-> node zip/down zip/right zip/right zip/right zip/down zip/node)})
 
 (def clojure
-  {:name      "Clojure"
-   :options   {:main      :expr*
-               :root-tag  ::root
-               :space :whitespace*
-               :make-node lang/make-node}
-   :grammar   grammar
-   :rank      (partial lang/file-extension? "clj")
-   :styles    styles
-   :def?      def?
-   :node->def node->def})
+  (lang/map->Language
+    {:name      "Clojure"
+     :options   {:main      :expr*
+                 :root-tag  ::root
+                 :space :whitespace*
+                 :make-node make-node}
+     :grammar   grammar
+     :rank      (partial lang/file-extension? "clj")
+     :styles    styles
+     :def?      def?
+     :node->def node->def}))
 
 (defn init! [app]
   (swap! app assoc-in [:langs :clojure] clojure))
