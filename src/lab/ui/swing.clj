@@ -16,6 +16,9 @@
            [java.awt Dimension]
            [java.awt.event MouseAdapter FocusAdapter KeyListener]))
 
+;;;;;;;;;;;;;;;;;;;;;;
+;; Define the macro to perform ui actions.
+
 (defmacro swing-action
   "Queues an action to the event queue."
   [& body]
@@ -23,9 +26,14 @@
     (fn [] ~@body)))
 
 (alter-var-root #'lab.ui.core/ui-action-macro #(do % %2) 'lab.ui.swing/swing-action)
-;;------------------- 
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Swing L&F
+
 (UIManager/setLookAndFeel "javax.swing.plaf.metal.MetalLookAndFeel")
-;;-------------------
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; UI protocols implementation
   
 (extend-protocol p/Implementation
   JComponent
@@ -63,8 +71,9 @@
   (focus [this]
     (.grabFocus this)))
 
-;; Definition of attribute setters for each kind
-;; of component in the hierarchy.
+;;;;;;;;;;;;;;;;;;;;;;
+;; Common attributes for all components
+
 (ui/defattributes
   :component
     (:transparent [c _ v]
