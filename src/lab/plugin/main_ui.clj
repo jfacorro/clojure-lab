@@ -46,9 +46,12 @@ the open and new commands."
   [app doc]
   (let [ui  (:ui @app)
         tab (document-tab app doc)
-        id  (ui/attr tab :id)]
+        id  (ui/attr tab :id)
+        editor-id (-> tab (ui/find :text-editor) (ui/attr :id))]
     (add-watch doc (str :editor id) (partial #'doc-modified-update-title app id))
-    (ui/update! ui :#documents ui/add tab)))
+    (ui/action
+      (ui/update! ui :#documents ui/add tab)
+      (ui/update! ui (ui/selector# editor-id) ui/focus))))
 
 (defn open-document
   "Adds a new tab with the open document."
@@ -285,7 +288,9 @@ to the UI's main menu."
     (add-watch doc :update-numbers (partial #'update-line-numbers app id))
     [:panel {:layout :border
              :border [:line 0x666666 2]}
-      [:text-area {:id id, :read-only true, :text numbers}]]))
+      [:text-area {:id id
+                   :read-only true
+                   :text numbers}]]))
 
 (defn handle-key [app e]
   #_(let [ui   (:ui @app)
