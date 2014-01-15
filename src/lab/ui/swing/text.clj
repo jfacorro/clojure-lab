@@ -1,8 +1,8 @@
 (ns lab.ui.swing.text
   (:import  [javax.swing JTextArea JTextPane JScrollPane]
             [javax.swing.text JTextComponent Document]
-            [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType]
-            [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
+            [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType CaretListener]
+            [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet Highlighter$HighlightPainter]
             [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
   (:require [lab.ui.core :as ui]
@@ -55,30 +55,67 @@
        (.setDocument this doc)
        (.setCaretPosition this pos))))
 
+(defn- reset-highlight [text hl last-view]
+  (when @last-view
+    (ui/action
+      (let [offset     (.getCaretPosition text)
+            cur-view   (.modelToView text offset)
+            last-y     (.y @last-view)
+            cur-y      (.y cur-view)]
+        (when (not= last-y cur-y)
+          (.repaint text 0 last-y (.getWidth text) (.height @last-view))
+          (reset! last-view cur-view))))))
+
+;; Code taken from http://tips4java.wordpress.com/2008/10/29/line-painter/
+(defn- line-highlighter
+  [text color]
+  (let [last-view  (atom nil)
+        hl         (proxy [Highlighter$HighlightPainter CaretListener] []
+                     (paint [g p0 p1 bounds c]
+                       (let [r (.modelToView c (.getCaretPosition c))]
+                         (.setColor g color)
+                         (.fillRect g 0 (.y r) (.getWidth c) (.height r))
+                         (when-not @last-view
+                           (reset! last-view r))))
+                     (caretUpdate [e]
+                       (reset-highlight text this last-view)))]
+    (-> text .getHighlighter (.addHighlight 0 0 hl))
+    (.addCaretListener text hl)
+    text))
+
+(defn- text-editor-init [c]
+  (line-highlighter (JTextPane.) (util/color 0x444444)))
+
 (ui/definitializations
   :text-area   JTextArea
-  :text-editor JTextPane)
+  :text-editor #'text-editor-init)
 
 (ui/defattributes
   :text-area
     (:text [c _ v]
       (.setText ^JTextComponent (impl c) v)
-      (.updateUI (impl c)))
+      ; I'm commenting this since it reset highlights added 
+      ; to the highlighter, and can't remember why I added it :S
+      #_(.updateUI (impl c)))
     (:read-only [c _ v]
       (.setEditable ^JTextComponent (impl c) (not v)))
     (:caret-color [c _ v]
       (.setCaretColor ^JTextComponent (impl c) (util/color v)))
     (:caret-position [c _ v]
       (.setCaretPosition (impl c) v))
+    (:on-caret [c _ f]
+      (let [listener (proxy [CaretListener] []
+                       (caretUpdate [e] (f (to-map e))))]
+        (.addCaretListener ^JTextPane (impl c) listener)))
+    (:on-change [c _ f]
+      (let [listener (proxy [DocumentListener] []
+                       (insertUpdate [e] (f (to-map e)))
+                       (removeUpdate [e] (f (to-map e)))
+                       (changedUpdate [e] (f (to-map e))))
+            doc      (.getDocument ^JTextPane (impl c))]
+        (.addDocumentListener ^Document doc listener)))
   :text-editor
     (:wrap [c _ _])
     (:doc [c _ doc])
     (:content-type [c _ v]
-      (.setContentType ^JTextPane (impl c) v))
-    (:on-change [c p handler]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e] (handler (to-map e)))
-                       (removeUpdate [e] (handler (to-map e)))
-                       (changedUpdate [e] #_(handler (to-map e))))
-            doc      (.getDocument ^JTextPane (impl c))]
-        (.addDocumentListener ^Document doc listener))))
+      (.setContentType ^JTextPane (impl c) v)))
