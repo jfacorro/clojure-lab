@@ -3,7 +3,7 @@
             [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType CaretListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet Highlighter$HighlightPainter]
-            [java.awt.event ActionListener])
+            [java.awt.event ActionListener MouseListener MouseMotionListener])
   (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -70,7 +70,7 @@
 (defn- line-highlighter
   [text color]
   (let [last-view  (atom nil)
-        hl         (proxy [Highlighter$HighlightPainter CaretListener] []
+        hl         (proxy [Highlighter$HighlightPainter CaretListener MouseListener MouseMotionListener] []
                      (paint [g p0 p1 bounds c]
                        (let [r (.modelToView c (.getCaretPosition c))]
                          (.setColor g color)
@@ -78,9 +78,18 @@
                          (when-not @last-view
                            (reset! last-view r))))
                      (caretUpdate [e]
-                       (reset-highlight text this last-view)))]
+                       (reset-highlight text this last-view))
+                     (mousePressed [e] (reset-highlight text this last-view))
+                     (mouseClicked [e])
+                     (mouseEntered [e])
+                     (mouseExited [e])
+                     (mouseReleased [e])
+                     (mouseDragged [e] (reset-highlight text this last-view))
+                     (mouseMoved [e]))]
     (-> text .getHighlighter (.addHighlight 0 0 hl))
     (.addCaretListener text hl)
+    (.addMouseListener text hl)
+    (.addMouseMotionListener text hl)
     text))
 
 (defn- text-editor-init [c]
