@@ -5,6 +5,8 @@
                  [net.cgrand/parsley "0.9.2"]
                  [popen "0.3.0"]
                  [leiningen-core "2.3.4"]
+                 ; Classpath and dependencies loader
+                 [com.cemerick/pomegranate "0.2.0"]
                  ; Logging
                  [org.clojure/tools.logging "0.2.6"]
                  [org.slf4j/slf4j-log4j12 "1.7.5"]
@@ -13,6 +15,7 @@
                  ; gtk+
                  #_[local/gtk "4.1"]
                  #_[local/gtk-bindings "4.1"]]
+  :java-source-paths ["src-java"]
   :manifest {"SplashScreen-Image" "logo.png"}
   :aliases  {"build" ["do" "clean," "uberjar"]
              "build-aot" ["with-profile" "aot" "build"]}

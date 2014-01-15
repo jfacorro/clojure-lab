@@ -269,29 +269,6 @@ to the UI's main menu."
     (ui/attr :caret-position 0)
     (ui/attr :visible true)))
 
-(defn line-count-str [doc]
-  (->> (doc/line-count doc)
-    inc
-    (range 1)
-    (interpose "\n")
-    (apply str)))
-
-(defn update-line-numbers [app id key ref old-state new-state]
-  (let [ui     (:ui @app)]
-    (ui/action
-      (ui/update! ui (ui/selector# id) 
-                  ui/attr :text (line-count-str new-state)))))
-
-(defn- text-editor-line-number [app doc]
-  (let [id (ui/genid)
-        numbers (line-count-str @doc)]
-    (add-watch doc :update-numbers (partial #'update-line-numbers app id))
-    [:panel {:layout :border
-             :border [:line 0x666666 2]}
-      [:text-area {:id id
-                   :read-only true
-                   :text numbers}]]))
-
 (defn handle-key [app e]
   #_(let [ui   (:ui @app)
         editor (:source e)
@@ -300,18 +277,19 @@ to the UI's main menu."
   #_(println (-> e :source (ui/attr :doc) type)))
 
 (defn- text-editor-create [app doc]
-  (let [id (ui/genid)]
+  (let [id     (ui/genid)
+        editor (ui/init [:text-editor {:id        id
+                                       :visible   false
+                                       :post-init (partial #'text-editor-post-init doc)
+                                       :on-key    (partial #'handle-key app)
+                                       :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
+                                       :doc       doc}])]
     [:scroll {:vertical-increment 16
               :border :none
-              :margin-control (text-editor-line-number app doc)}
+              :margin-control [:line-number {:source editor}]}
       [:panel {:border :none
                :layout :border}
-        [:text-editor {:id        id
-                       :visible   false
-                       :post-init (partial #'text-editor-post-init doc)
-                       :on-key    (partial #'handle-key app)
-                       :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
-                       :doc       doc}]]]))
+        editor]]))
 
 (defn- document-tab
   "Creates a tab with an editor."

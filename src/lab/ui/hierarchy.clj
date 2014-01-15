@@ -26,6 +26,7 @@
                   :menu-bar :menu :menu-item :menu-separator 
                   ; text
                   :text-area
+                  :line-number
                   ; tabs
                   :tabs :tab
                   ; tree

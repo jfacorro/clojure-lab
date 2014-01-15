@@ -1,9 +1,11 @@
 (ns lab.ui.swing.text
-  (:import  [javax.swing JTextArea JTextPane JScrollPane]
+  (:import  [lab.ui.swing TextLineNumber]
+            [javax.swing JTextArea JTextPane JScrollPane]
             [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType CaretListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet Highlighter$HighlightPainter]
-            [java.awt.event ActionListener MouseListener MouseMotionListener])
+            [java.awt.event ActionListener MouseListener MouseMotionListener]
+            [java.awt Color])
   (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -68,6 +70,7 @@
 
 ;; Code taken from http://tips4java.wordpress.com/2008/10/29/line-painter/
 (defn- line-highlighter
+  "Creates a highighter for the text component."
   [text color]
   (let [last-view  (atom nil)
         hl         (proxy [Highlighter$HighlightPainter CaretListener MouseListener MouseMotionListener] []
@@ -92,20 +95,41 @@
     (.addMouseMotionListener text hl)
     text))
 
-(defn- text-editor-init [c]
-  (line-highlighter (JTextPane.) (util/color 0x444444)))
+(defn color-int [factor v]
+  (let [v (int (* factor v))]
+    (if (< 255 v ) 255 v)))
+
+(defn lighter-color [factor color]
+  (Color. (->> color .getRed (color-int factor))
+          (->> color .getGreen (color-int factor))
+          (->> color .getBlue (color-int factor))))
+
+(defn- line-number-init
+  [c]
+  (let [src       (ui/attr c :source)]
+    (when (or (nil? src) (nil? (impl src)))
+      (throw (Exception. "Source can't be null and has be initialized already.")))
+    (TextLineNumber. (impl src))))
+
+(defn- text-editor-init
+  [c]
+  (let [color (ui/attr c :line-highlight-color)
+        text  (JTextPane.)]
+    (line-highlighter text
+      (if color
+        (util/color color)
+        (lighter-color 0.4 (.getSelectionColor text))))))
 
 (ui/definitializations
   :text-area   JTextArea
-  :text-editor #'text-editor-init)
+  :text-editor #'text-editor-init
+  :line-number #'line-number-init)
 
 (ui/defattributes
   :text-area
     (:text [c _ v]
-      (.setText ^JTextComponent (impl c) v)
-      ; I'm commenting this since it reset highlights added 
-      ; to the highlighter, and can't remember why I added it :S
-      #_(.updateUI (impl c)))
+      (.setText ^JTextComponent (impl c) v))
+    (:line-highlight-color [c _ _])
     (:read-only [c _ v]
       (.setEditable ^JTextComponent (impl c) (not v)))
     (:caret-color [c _ v]
@@ -127,4 +151,6 @@
     (:wrap [c _ _])
     (:doc [c _ doc])
     (:content-type [c _ v]
-      (.setContentType ^JTextPane (impl c) v)))
+      (.setContentType ^JTextPane (impl c) v))
+  :line-number
+    (:source [c _ _]))
