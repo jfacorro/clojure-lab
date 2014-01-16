@@ -250,24 +250,24 @@ public class TextLineNumber extends JPanel
 		while (rowStartOffset <= endOffset)
 		{
 			try
-            {
-    			if (isCurrentLine(rowStartOffset))
-    				g.setColor( getCurrentLineForeground() );
-    			else
-    				g.setColor( getForeground() );
+			{
+    				if (isCurrentLine(rowStartOffset))
+    					g.setColor(getCurrentLineForeground());
+    				else
+	    				g.setColor(getForeground());
+	
+    				//  Get the line number as a string and then determine the
+    				//  "X" and "Y" offsets for drawing the string.
 
-    			//  Get the line number as a string and then determine the
-    			//  "X" and "Y" offsets for drawing the string.
-
-    			String lineNumber = getTextLineNumber(rowStartOffset);
-    			int stringWidth = fontMetrics.stringWidth( lineNumber );
-    			int x = getOffsetX(availableWidth, stringWidth) + insets.left;
+	    			String lineNumber = getTextLineNumber(rowStartOffset);
+    				int stringWidth = fontMetrics.stringWidth( lineNumber );
+    				int x = getOffsetX(availableWidth, stringWidth) + insets.left;
 				int y = getOffsetY(rowStartOffset, fontMetrics);
-    			g.drawString(lineNumber, x, y);
+	    			g.drawString(lineNumber, x, y);
 
-    			//  Move to the next row
+    				//  Move to the next row
 
-    			rowStartOffset = Utilities.getRowEnd(component, rowStartOffset) + 1;
+	    			rowStartOffset = Utilities.getRowEnd(component, rowStartOffset) + 1;
 			}
 			catch(Exception e) {break;}
 		}
