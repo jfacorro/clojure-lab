@@ -253,10 +253,9 @@ to the UI's main menu."
 
 (def styles
   {:*           {:font [:name "Consolas" :size 14]}
-   [:panel :text-area]
-                {:background  0x666666
+   :line-number {:background  0x666666
                  :color       0xFFFFFF
-                 :border      :none}
+                 :curren-line-color 0x00FFFF}
    :text-editor {:border      :none
                  :background  0x333333
                  :color       0xFFFFFF
