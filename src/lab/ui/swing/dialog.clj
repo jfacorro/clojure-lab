@@ -1,8 +1,8 @@
 (ns lab.ui.swing.dialog
-  (:import  [javax.swing JDialog JFileChooser JOptionPane])
   (:use     [lab.ui.protocols :only [abstract impl]])
   (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as util]))
+            [lab.ui.swing.util :as util])
+  (:import  [javax.swing JDialog JFileChooser JOptionPane]))
 
 (ui/definitializations
   :file-dialog   JFileChooser

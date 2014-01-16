@@ -1,15 +1,15 @@
 (ns lab.ui.swing.text
+  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
+  (:require [lab.ui.core :as ui]
+            [lab.ui.swing [util :as util]
+                          [event :as event]])
   (:import  [lab.ui.swing TextLineNumber LineHighlighter]
             [javax.swing JTextArea JTextPane JScrollPane]
             [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType CaretListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet Highlighter$HighlightPainter]
             [java.awt.event ActionListener MouseListener MouseMotionListener]
-            [java.awt Color])
-  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
-  (:require [lab.ui.core :as ui]
-            [lab.ui.swing [util :as util]
-                          [event :as event]]))
+            [java.awt Color]))
 
 (def ^:private event-types
   {DocumentEvent$EventType/INSERT  :insert

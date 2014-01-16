@@ -1,9 +1,9 @@
 (ns lab.ui.swing.menu
-  (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator]
-            [java.awt.event ActionListener])
   (:use     [lab.ui.protocols :only [impl to-map]])
   (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as util]))
+            [lab.ui.swing.util :as util])
+  (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator]
+            [java.awt.event ActionListener]))
 
 (ui/definitializations
   ;; Menu

@@ -1,8 +1,8 @@
 (ns lab.ui.swing.window
-  (:import  [javax.swing JFrame])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util]
-            [lab.ui.protocols :as p]))
+            [lab.ui.protocols :as p])
+  (:import  [javax.swing JFrame]))
 
 (ui/definitializations :window JFrame)
 

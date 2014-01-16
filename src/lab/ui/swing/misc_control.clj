@@ -1,9 +1,9 @@
 (ns lab.ui.swing.misc-control
-  (:import [javax.swing JButton JLabel]
-           [java.awt.event ActionListener])
   (:require [lab.ui.core :as ui]
             [lab.ui.protocols :as p]
-            [lab.ui.swing.util :as util]))
+            [lab.ui.swing.util :as util])
+  (:import [javax.swing JButton JLabel]
+           [java.awt.event ActionListener]))
 
 (ui/definitializations
   :button      JButton

@@ -1,12 +1,12 @@
 (ns lab.ui.gtk
-  (:import [org.gnome.gtk Gtk Window Window$DeleteEvent 
+  (:require [lab.ui [core :as ui]
+                    [protocols :as p]]
+            [lab.ui.gtk.window])
+  (:import [org.gnome.gtk Gtk Window Window$DeleteEvent
             VBox VPaned
             Label Button Notebook
             TextBuffer TextView
-            MenuBar MenuItem Menu])
-  (:require [lab.ui [core :as ui]
-                    [protocols :as p]]
-            [lab.ui.gtk.window]))
+            MenuBar MenuItem Menu]))
 
 (when (not (Gtk/isInitialized))
   (Gtk/init (make-array String 0)))
