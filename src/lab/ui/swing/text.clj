@@ -1,5 +1,5 @@
 (ns lab.ui.swing.text
-  (:import  [lab.ui.swing TextLineNumber]
+  (:import  [lab.ui.swing TextLineNumber LineHighlighter]
             [javax.swing JTextArea JTextPane JScrollPane]
             [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType CaretListener]
@@ -57,68 +57,20 @@
        (.setDocument this doc)
        (.setCaretPosition this pos))))
 
-(defn- reset-highlight [text hl last-view]
-  (when @last-view
-    (ui/action
-      (let [offset     (.getCaretPosition text)
-            cur-view   (.modelToView text offset)
-            last-y     (.y @last-view)
-            cur-y      (.y cur-view)]
-        (when (not= last-y cur-y)
-          (.repaint text 0 last-y (.getWidth text) (.height @last-view))
-          (reset! last-view cur-view))))))
-
-;; Code taken from http://tips4java.wordpress.com/2008/10/29/line-painter/
-(defn- line-highlighter
-  "Creates a highighter for the text component."
-  [text color]
-  (let [last-view  (atom nil)
-        hl         (proxy [Highlighter$HighlightPainter CaretListener MouseListener MouseMotionListener] []
-                     (paint [g p0 p1 bounds c]
-                       (let [r (.modelToView c (.getCaretPosition c))]
-                         (.setColor g color)
-                         (.fillRect g 0 (.y r) (.getWidth c) (.height r))
-                         (when-not @last-view
-                           (reset! last-view r))))
-                     (caretUpdate [e]
-                       (reset-highlight text this last-view))
-                     (mousePressed [e] (reset-highlight text this last-view))
-                     (mouseClicked [e])
-                     (mouseEntered [e])
-                     (mouseExited [e])
-                     (mouseReleased [e])
-                     (mouseDragged [e] (reset-highlight text this last-view))
-                     (mouseMoved [e]))]
-    (-> text .getHighlighter (.addHighlight 0 0 hl))
-    (.addCaretListener text hl)
-    (.addMouseListener text hl)
-    (.addMouseMotionListener text hl)
-    text))
-
-(defn color-int [factor v]
-  (let [v (int (* factor v))]
-    (if (< 255 v ) 255 v)))
-
-(defn lighter-color [factor color]
-  (Color. (->> color .getRed (color-int factor))
-          (->> color .getGreen (color-int factor))
-          (->> color .getBlue (color-int factor))))
-
-(defn- line-number-init
-  [c]
-  (let [src       (ui/attr c :source)]
-    (when (or (nil? src) (nil? (impl src)))
-      (throw (Exception. "Source can't be null and has be initialized already.")))
+(defn- line-number-init [c]
+  (let [src (ui/attr c :source)]
+    (when-not (and src (impl src))
+      (throw (Exception. "The source text component needs to be set and initialized.")))
     (TextLineNumber. (impl src))))
 
 (defn- text-editor-init
   [c]
   (let [color (ui/attr c :line-highlight-color)
         text  (JTextPane.)]
-    (line-highlighter text
-      (if color
-        (util/color color)
-        (lighter-color 0.4 (.getSelectionColor text))))))
+    (if color
+      (LineHighlighter. text (util/color color))
+      (LineHighlighter. text))
+    text))
 
 (ui/definitializations
   :text-area   JTextArea
