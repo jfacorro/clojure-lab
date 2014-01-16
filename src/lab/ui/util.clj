@@ -12,17 +12,3 @@
   "Converts a RGB triple to a single int value."
   (int (+ (* r 65536) (* g 256) b)))
 
-(defrecord FontStyle [])
-
-(defn font-style 
-  "Creates a map that represents a font style to apply
-to document text. Valid keys are:
-  :bold        bool
-  :underline   bool
-  :italic      bool
-  :size        int
-  :family      string
-  :background  [0xFFFFFF] | [255 255 255]
-  :color       [0xFFFFFF] | [255 255 255]"
-  [style]
-  (map->FontStyle style))
