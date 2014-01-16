@@ -49,7 +49,7 @@
 check if its one of the registered symbols."
   [tag content]
   {:style (resolve-style tag content)
-   :group #'lang/*node-group*})
+   :group lang/*node-group*})
 
 (defn- make-node [tag content]
   (with-meta {:tag tag :content content}

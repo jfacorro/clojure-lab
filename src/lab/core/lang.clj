@@ -36,7 +36,7 @@ equals ext, zero otherwise."
 
 (defrecord Language [name options grammar lang? styles])
 
-(def ^{:dynamic true :private true} *node-group*
+(def ^{:dynamic true} *node-group*
   "Determines the value that will be assigned to the nodes 
 created during the node generation when creating the parse
 tree.")
