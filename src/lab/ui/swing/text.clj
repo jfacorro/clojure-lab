@@ -105,4 +105,10 @@
     (:content-type [c _ v]
       (.setContentType ^JTextPane (impl c) v))
   :line-number
-    (:source [c _ _]))
+    (:source [c _ _])
+    (:update-font [c _ v]
+       (.setUpdateFont (impl c) v))
+    (:border-gap [c _ v]
+       (.setBorderGap (impl c) v))
+    (:curren-line-color [c _ v]
+       (.setCurrentLineForeground (impl c) (util/color v))))
