@@ -27,8 +27,8 @@
                  (tplts/tab)
                  (ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none} [:text-area {:text (str sw) :read-only true :caret-position 0}]]))]
-    (ui/update! ui (ui/parent "bottom-controls") ui/attr :divider-location 0.8)
-    (ui/update! ui :#bottom-controls ui/add tab)))
+    (ui/update! ui (ui/parent "bottom") ui/attr :divider-location 0.8)
+    (ui/update! ui :#bottom ui/add tab)))
 
 (defn- default-error-handler
   [app]

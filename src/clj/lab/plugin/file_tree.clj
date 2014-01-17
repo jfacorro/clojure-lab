@@ -103,7 +103,7 @@ tree. Returns a tree node."
         dir          (when dir (io/file (.getCanonicalPath dir)))]
     (when dir
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
-      (ui/update! (:ui @app) :#left-controls ui/add (file-tree app dir)))))
+      (ui/update! (:ui @app) :#left ui/add (file-tree app dir)))))
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)

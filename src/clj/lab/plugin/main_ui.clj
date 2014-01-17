@@ -17,7 +17,7 @@
 (defn- current-document-tab [ui]
   "Returns the currently selected document tab."
   (-> ui
-    (ui/find :#documents)
+    (ui/find :#center)
     ui/selected))
 
 (defn- current-text-editor
@@ -50,7 +50,7 @@ the open and new commands."
         editor-id (-> tab (ui/find :text-editor) (ui/attr :id))]
     (add-watch doc (str :editor id) (partial #'doc-modified-update-title app id))
     (ui/action
-      (ui/update! ui :#documents ui/add tab)
+      (ui/update! ui :#center ui/add tab)
       (ui/update! ui (ui/selector# editor-id) ui/focus))))
 
 (defn open-document
@@ -110,7 +110,7 @@ should be closed and false otherwise."
         ;; TODO: maybe modify the remove so that it takes an id instead
         tab    (ui/find @ui (ui/selector# id))]
     (when close?
-      (ui/update! ui :#documents ui/remove tab)
+      (ui/update! ui :#center ui/remove tab)
       (swap! app lab/close-document doc))))
 
 (defn close-document-button
@@ -315,12 +315,12 @@ to the UI's main menu."
       [:split (assoc split-style
                :resize-weight 0
                :divider-location 150)
-        [:tabs {:id "left-controls" :border :none}]
+        [:tabs {:id "left" :border :none}]
         [:split (assoc split-style :resize-weight 1)
-          [:tabs {:id "documents"
+          [:tabs {:id "center"
                   :on-tab-change (partial #'switch-document-ui! app)}]
-          [:tabs {:id "right-controls"}]]]
-      [:tabs {:id "bottom-controls"}]]])
+          [:tabs {:id "right"}]]]
+      [:tabs {:id "bottom"}]]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toogle Fullscreen
@@ -338,7 +338,8 @@ to the UI's main menu."
 
 (def styles
   {:*           {:font [:name "Consolas" :size 12]}
-   :line-number {:background  0x666666
+   :line-number {:font        [:name "Consolas" :size 14]
+                 :background  0x666666
                  :color       0xFFFFFF
                  :curren-line-color 0x00FFFF}
    :text-editor {:border      :none

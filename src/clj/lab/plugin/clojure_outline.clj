@@ -69,8 +69,8 @@ and content"
   (let [ui      (:ui @app)
         outline (ui/find @ui :#outline-tree)]
     (when-not outline
-      (ui/update! ui :#right-controls ui/add (outline-tree app))
-      (ui/update! ui (ui/parent "right-controls") ui/attr :divider-location 0.7)
+      (ui/update! ui :#right ui/add (outline-tree app))
+      (ui/update! ui (ui/parent "right") ui/attr :divider-location 0.7)
       (update-outline-tree! @app))))
 
 (def ^:private hooks
