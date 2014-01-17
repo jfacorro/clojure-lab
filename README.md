@@ -30,7 +30,7 @@ Even when I discovered [Counterclockwise][3] and [Light Table][5] was annouced ,
 
 ## Running the Application
 
-There are currently two runnable application: **proto**(type) and **lab**.
+There are currently two runnable applications, the **proto**(type) and **lab** proper.
 The entry points for each of these are in the namespaces `proto.main` and `lab.main` respectively.
 
     $ lein repl
