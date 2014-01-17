@@ -85,7 +85,8 @@ tree. Returns a tree node."
 (defn- file-tree
   [app dir]
   (-> app
-    (tplts/tab {:label {:text (.getName dir)}})
+    (tplts/tab)
+    (ui/update :label ui/attr :text (.getName dir))
     (ui/add [:scroll {:border :none}
               [:tree {:on-click (partial #'open-document-tree-click app)
                       :on-key (partial #'open-document-tree-enter app)}

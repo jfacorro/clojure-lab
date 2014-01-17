@@ -8,17 +8,17 @@
     (ui/update! ui (ui/parent id) ui/remove tab)))
 
 (defn tab
-  ([app stylesheet]
-    (ui/with-id id
-      (tab app id stylesheet)))
-  ([app id stylesheet]
-    (-> [:tab {:header [:panel {:transparent false :background 0xCCCCCC}
-                          [:label {:color 0x000000}]
+  "Creates a tab with a tab header as a panel that
+includes a label and a closing button."
+  [app]
+  (ui/with-id id
+    (-> [:tab {:header [:panel {:transparent false :background 0x333333}
+                          [:label {:color 0xFFFFFF}]
                             [:button {:icon         "close-tab.png"
                                       :border       :none
                                       :transparent  true
                                       :on-click     (partial #'close-tab-button app id)}]]}]
-      (ui/apply-stylesheet stylesheet))))
+      (ui/apply-stylesheet (:styles @app)))))
 
 (defn confirm
   [title message]

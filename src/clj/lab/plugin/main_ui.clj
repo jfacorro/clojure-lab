@@ -251,16 +251,6 @@ to the UI's main menu."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Controls
 
-(def styles
-  {:*           {:font [:name "Consolas" :size 14]}
-   :line-number {:background  0x666666
-                 :color       0xFFFFFF
-                 :curren-line-color 0x00FFFF}
-   :text-editor {:border      :none
-                 :background  0x333333
-                 :color       0xFFFFFF
-                 :caret-color 0xFFFFFF}})
-
 (defn- text-editor-post-init [doc c]
   (-> c
     (ui/attr :text (doc/text @doc))
@@ -293,13 +283,17 @@ to the UI's main menu."
 (defn- document-tab
   "Creates a tab with an editor."
   [app doc]
-  (let [id (ui/genid)
-        s  {:tab    {:id id :tool-tip (doc/path @doc)}
-            :label  {:text (doc/name @doc)}
-            :button {:on-click (partial #'close-document-button app id)}}]
-    (-> (tplts/tab app id s)
+  (let [id    (ui/genid)
+        title (doc/name @doc)
+        tool-tip (doc/path @doc)
+        btn-close (partial #'close-document-button app id)]
+    (-> (tplts/tab app)
+      (ui/update :tab #(-> % (ui/attr :id id)
+                             (ui/attr :tool-tip tool-tip)))
+      (ui/update [:panel :label] ui/attr :text title)
+      (ui/update [:panel :button] ui/attr :on-click btn-close)
       (ui/add (text-editor-create app doc))
-      (ui/apply-stylesheet styles))))
+      (ui/apply-stylesheet (:styles @app)))))
 
 (def ^:private split-style
   {:border :none
@@ -340,6 +334,20 @@ to the UI's main menu."
   app)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Default styles
+
+(def styles
+  {:*           {:font [:name "Consolas" :size 12]}
+   :line-number {:background  0x666666
+                 :color       0xFFFFFF
+                 :curren-line-color 0x00FFFF}
+   :text-editor {:border      :none
+                 :font        [:name "Consolas" :size 14]
+                 :background  0x333333
+                 :color       0xFFFFFF
+                 :caret-color 0xFFFFFF}})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Plugin definition
 
 (def ^:private hooks
@@ -357,7 +365,8 @@ to the UI's main menu."
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
   [app]
-  (swap! app assoc :ui (atom (ui/init (app-window app)))))
+  (swap! app assoc :ui (atom (ui/init (app-window app)))
+                   :styles styles))
 
 (plugin/defplugin lab.plugin.main-ui
   "Creates the UI for the application and hooks into

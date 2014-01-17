@@ -61,7 +61,8 @@ and content"
 
 (defn- outline-tree [app]
   (->
-    (tplts/tab app {:label {:text "Outline"}})
+    (tplts/tab app)
+    (ui/update :label ui/attr :text "Outline")
     (ui/add [:scroll [:tree {:id "outline-tree"}]])))
 
 (defn- create-outline-tree! [app & _]
