@@ -58,18 +58,25 @@ For example:
 (defn- compile
   "Takes a selector and returns a single arg predicate."
   [selector]
-  (if (sequential? selector)
+  (cond
     ; Conjunction predicate
-    (let [predicates (map compile selector)]
-      (fn [x]
-        (reduce #(and % (%2 x)) true predicates)))
+    (sequential? selector)
+      (let [predicates (map compile selector)]
+        (fn [x]
+          (reduce #(and % (%2 x)) true predicates)))
+    ; Disjuntction predicate
+    (set? selector)
+      (let [predicates (map compile selector)]
+        (fn [x]
+          (reduce #(or % (%2 x)) false predicates)))
     ; Simple predicate
-    (let [[t v] (parse selector)]
-      (condp = t
-        :id  (id= v)
-        :tag (tag= v)
-        :all (all)
-        :fn  v))))
+    :else
+      (let [[t v] (parse selector)]
+        (condp = t
+          :id  (id= v)
+          :tag (tag= v)
+          :all (all)
+          :fn  v))))
 
 (def ^:private memoized-compile (memoize compile))
 
@@ -145,7 +152,7 @@ is the value."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Public
 
-(defn- select*
+(defn select
   "Takes a selection expression and returns the path for the
   first matching component from root, which must be a component.
   
@@ -164,7 +171,7 @@ is the value."
                        [[] nil])]
       path)))
 
-(def select (memoize select*))
+;(def select (memoize select*))
 
 (defn select-all
   "Searches the whole component tree from the root and returns

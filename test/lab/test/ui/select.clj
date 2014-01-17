@@ -47,11 +47,17 @@
       [:content 1 :content 0] [:button :combo]
       nil          [:button :label]))
 
-  (testing "Conjunction"
+  (testing "Conjunction (and)"
     (are [x y] (= x (select root y))
       []           [[:window :#main]]
       nil          [[:window :label]]
-      [:content 0] [[:label :label]])))
+      [:content 0] [[:label :label]]))
+  
+  (testing "Disjunction (or)"
+    (are [x y] (= x (select root y))
+      []           #{:window :label}
+      nil          #{:x :y}
+      [:content 0] #{:label :button})))
 
 (deftest ui-select-all []
   (are [x y] (= x (select-all root y))
@@ -59,7 +65,9 @@
     #{[]} []
     #{[:content 0] [:content 2]} :label
     #{[:content 3 :content 0] [:content 3 :content 1] [:content 3 :content 2]} :tab
-    #{[]} :window))
+    #{[]} :window
+    #{[] [:content 0] [:content 2]} #{:window :label}
+    #{[] [:content 1] [:content 1 :content 0]} #{:window (attr? :attr)}))
 
 (deftest ui-select-all-with-spec []
   (are [x y] (= x (select-all root y attr-spec))
