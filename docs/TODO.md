@@ -32,8 +32,8 @@ TODO
       - How is a plugin's functionality encapsulated? Is it bound to a specific type of file/function/code?
         - Link plugin with text-editor based on arbitrary definitions.
     - Link Document to ui/text-editor.
-      a. Detect updates from Document and impact in editor. \__ Which one? Based on the test done in the prototype, (a) is the
-      b. Detect updates form editor and impact in Document. /              one that works best, in (b) model and view can get out of sync.
+      1. Detect updates from Document and impact in editor. \__ Which one? Based on the test done in the prototype, (1) is the
+      2. Detect updates form editor and impact in Document. /              one that works best, in (2) model and view can get out of sync.
       - (a) is the way to go:
         - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
 Done
