@@ -15,7 +15,8 @@
                  ; gtk+
                  #_[local/gtk "4.1"]
                  #_[local/gtk-bindings "4.1"]]
-  :java-source-paths ["src-java"]
+  :java-source-paths ["src/java"]
+  :source-paths ["src/clj"]
   :manifest {"SplashScreen-Image" "logo.png"}
   :aliases  {"build" ["do" "clean," "uberjar"]
              "build-aot" ["with-profile" "aot" "build"]}
