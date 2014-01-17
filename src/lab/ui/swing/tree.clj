@@ -34,10 +34,10 @@ The handler should return falsey if the node was modified."
   [e]
   (let [tree ^JTree (.getSource e)
         node (.getLastSelectedPathComponent tree)
-        abs  (abstract node)
+        abs  (and node (abstract node))
         f    (ui/attr abs :on-click)
         e    (assoc (to-map e) :source abs)]
-    (when (and f (f e))
+    (when (and node f (f e))
       ;; notify the model to reload the modified node
       (.reload ^DefaultTreeModel (.getModel tree) node))))
 
