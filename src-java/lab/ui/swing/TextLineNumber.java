@@ -234,7 +234,8 @@ public class TextLineNumber extends JPanel
 	public void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
-
+		
+		((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		//	Determine the width of the space available to draw the line number
 
 		FontMetrics fontMetrics = component.getFontMetrics( component.getFont() );

@@ -4,7 +4,7 @@
             [lab.core [plugin :as plugin]
                       [lang :as lang]]
             [lab.model.document :as doc]))
-(println (gensym))
+
 (def grammar [:expr- #{:title :strong :em :list :link
                        :html-tag :code :blockquote}
               :title #{#"#{1,6}.+\n"
