@@ -28,6 +28,19 @@ After some time of Clojure development three things happened that brought **Cloj
 
 Even when I discovered [Counterclockwise][3] and [Light Table][5] was annouced , I still decided to try and build an IDE that could cover as many of the features mentioned in [The Ideal Clojure Development Environment][1] as possible. The final goal is to have a powerful extensible tool, yet simple and accessible, that provides a reactive user interface with discoverable features (a lot easier said than done, right?).
 
+## Running the Application
+
+There are currently two runnable application: **proto**(type) and **lab**.
+The entry points for each of these are in the namespaces `proto.main` and `lab.main` respectively.
+
+    $ lein repl
+    user> (use 'proto.main)
+    user> (-main)
+
+    $ lein repl
+    user> (use 'lab.main)
+    user> (-main nil)
+
 ## Features
 
 Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment][1]:
