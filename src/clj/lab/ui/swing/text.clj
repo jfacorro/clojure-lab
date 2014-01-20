@@ -94,13 +94,13 @@
       (.setCaretPosition (impl c) v))
     (:on-caret [c _ f]
       (let [listener (proxy [CaretListener] []
-                       (caretUpdate [e] (f (to-map e))))]
+                       (caretUpdate [e] (ui/handle-event f e)))]
         (.addCaretListener ^JTextPane (impl c) listener)))
     (:on-change [c _ f]
       (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e] (f (to-map e)))
-                       (removeUpdate [e] (f (to-map e)))
-                       (changedUpdate [e] (f (to-map e))))
+                       (insertUpdate [e] (ui/handle-event f e))
+                       (removeUpdate [e] (ui/handle-event f e))
+                       (changedUpdate [e] (ui/handle-event f e)))
             doc      (.getDocument ^JTextPane (impl c))]
         (.addDocumentListener ^Document doc listener)))
   :text-editor

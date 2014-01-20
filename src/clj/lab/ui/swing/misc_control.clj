@@ -19,7 +19,7 @@
     (.setIcon ^JButton (p/impl c) (util/icon img)))
   (:on-click [c _ f]
     (let [action (reify ActionListener
-                    (actionPerformed [this e] (f (p/to-map e))))]
+                    (actionPerformed [this e] (ui/handle-event f e)))]
       (.addActionListener ^JButton (p/impl c) action)))
   :label
   (:text [c _ v]

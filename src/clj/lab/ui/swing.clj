@@ -102,21 +102,21 @@
       (.setVisible ^java.awt.Component (p/impl c) v))
 
     ;; Events
-    (:on-key [c _ handler]
+    (:on-key [c _ f]
       (let [listener (proxy [KeyListener] []
-                       (keyPressed [e] (handler (p/to-map e)))
-                       (keyReleased [e] (handler (p/to-map e)))
-                       (keyTyped [e] (handler (p/to-map e))))]
+                       (keyPressed [e] (ui/handle-event f e))
+                       (keyReleased [e] (ui/handle-event f e))
+                       (keyTyped [e] (ui/handle-event f e)))]
         (.addKeyListener ^JComponent (p/impl c) listener)))
-    (:on-focus [c _ handler]
+    (:on-focus [c _ f]
       (let [listener (proxy [FocusAdapter] []
-                       (focusGained [e] (handler (p/to-map e))))]
+                       (focusGained [e] (ui/handle-event f e)))]
         (.addFocusListener ^JComponent (p/impl c) listener)))
-    (:on-blur [c _ handler]
+    (:on-blur [c _ f]
       (let [listener (proxy [FocusAdapter] []
-                       (focusLost [e] (handler (p/to-map e))))]
+                       (focusLost [e] (ui/handle-event f e)))]
         (.addFocusListener ^JComponent (p/impl c) listener)))
-    (:on-click [c _ handler]
+    (:on-click [c _ f]
       (let [listener (proxy [MouseAdapter] []
-                       (mousePressed [e] (handler (p/to-map e))))]
+                       (mousePressed [e] (ui/handle-event f e)))]
         (.addMouseListener ^JComponent (p/impl c) listener))))

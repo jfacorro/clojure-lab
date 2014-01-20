@@ -24,7 +24,10 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
 
 (declare init initialized? attr find genid selector# hiccup->component)
 
-(defn- ui-action-macro 
+;;;;;;;;;;;;;;;;;;;;;;
+;; UI action macro
+
+(defn- ui-action-macro
   "This var should be set by the UI implementation with a macro 
 that runs code in the UI thread."
   [& xs]
@@ -34,6 +37,25 @@ that runs code in the UI thread."
   "Macro that uses the UI aciton macro defined by the implementation."
   [& body]
   `(~ui-action-macro ~@body))
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Event handler creation
+
+(defn- event-handler
+  "Default implementation for event handler, just passes the event
+over to the the handler function."
+  [f e]
+  (f e))
+
+(defn handle-event
+  "Used in the implementation's event handlers."
+  [f e]
+  (event-handler f (p/to-map e)))
+
+(defn register-event-handler!
+  "Available function to customize event handling."
+  [f]
+  (intern 'lab.ui.core 'event-handler f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Convenience macros for multimethod implementations
@@ -139,11 +161,19 @@ as the abstraction of its implementation."
   (focus [this]
     (p/focus (p/impl this))
     this))
-      
+
 (defn remove-all
   "Takes a component and removes all of its children."
   [c]
   (reduce p/remove c (p/children c)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Record for creating non-native UI event.
+
+(defrecord UIEvent [source event]
+  p/Event
+  (to-map [this] this))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 
@@ -243,8 +273,8 @@ missing an :id attribute."
   "Checks if there's a :post-init attribute
 and applies it to the component."
   [c]
-  (if-let [post-init (attr c :post-init)]
-    (post-init c)
+  (if-let [f (attr c :post-init)]
+    (handle-event f (map->UIEvent {:source c :event :post-init}))
     c))
 
 (defn init

@@ -88,7 +88,7 @@
   (:header [c _ _])
 
   :tabs
-  (:on-tab-change [c _ handler]
+  (:on-tab-change [c _ f]
     (let [listener (proxy [ChangeListener] []
-                     (stateChanged [e] (handler (to-map e))))]
+                     (stateChanged [e] (ui/handle-event f e)))]
       (.addChangeListener ^JTabbedPane (impl c) listener))))

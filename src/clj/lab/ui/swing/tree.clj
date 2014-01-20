@@ -26,7 +26,7 @@ The handler should return falsey if the node was modified."
         abs  (abstract node)
         f    (ui/attr abs :on-expansion)
         e    (assoc (to-map e) :source abs)]
-    (when (and f (f e))
+    (when (and f (#'ui/event-handler f e))
       ;; notify the model to reload the modified node
       (.reload ^DefaultTreeModel (.getModel tree) node))))
 
@@ -37,7 +37,7 @@ The handler should return falsey if the node was modified."
         abs  (and node (abstract node))
         f    (ui/attr abs :on-click)
         e    (assoc (to-map e) :source abs)]
-    (when (and node f (f e))
+    (when (and node f (#'ui/event-handler f e))
       ;; notify the model to reload the modified node
       (.reload ^DefaultTreeModel (.getModel tree) node))))
 
@@ -89,7 +89,7 @@ The handler should return falsey if the node was modified."
     (.getComponents this))
 
   Selected
-  (selected 
+  (selected
     ([this]
       (when-let [node (.getLastSelectedPathComponent this)]
         (ui/attr (abstract node) :id)))
@@ -97,13 +97,6 @@ The handler should return falsey if the node was modified."
       (throw (UnsupportedOperationException. "Set selected item for :tree UI implementation.")))))
 
 (ui/defattributes
-  :tree
-    (:on-expansion [c _ f]
-      (let [listener (proxy [TreeExpansionListener] []
-                       (treeCollapsed [e])
-                       (treeExpanded [e] (f e)))]
-        (.addTreeExpansionListener ^JTree (impl c) listener)))
-  
   :tree-node
     (:leaf [c _ v])
     (:item [c attr item]

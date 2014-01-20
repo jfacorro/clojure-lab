@@ -60,7 +60,7 @@ recursively."
         [:tree-node {:id id
                      :item file
                      :stuff {:file file}
-                     :on-expansion (partial #'lazy-add-to-dir app)}]))
+                     :on-expansion #'lazy-add-to-dir}]))
     [:tree-node {:item file :leaf true}]))
 
 (defn load-dir
@@ -97,8 +97,8 @@ tree. Returns a tree node."
     (tplts/tab)
     (ui/update :label ui/attr :text (.getName dir))
     (ui/add [:scroll {:border :none}
-              [:tree {:on-click (partial #'open-document-tree-click app)
-                      :on-key (partial #'open-document-tree-enter app)}
+              [:tree {:on-click #'open-document-tree-click
+                      :on-key #'open-document-tree-enter}
                 (load-dir app dir)]])))
 
 (defn- open-project

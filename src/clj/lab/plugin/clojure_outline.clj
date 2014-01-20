@@ -28,7 +28,7 @@
   [:tree-node {:leaf true
                :item (:name def-info)
                :info def-info
-               :on-click (partial #'node-tree-click app)}])
+               :on-click #'node-tree-click}])
 
 (defn- update-outline-tree!
   "Updates the outline using the document provided

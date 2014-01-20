@@ -22,7 +22,7 @@
     (.setText ^JMenuItem (impl c) v))
   (:on-click [c _ f]
     (let [action (reify ActionListener
-                   (actionPerformed [this e] (f (to-map e))))]
+                   (actionPerformed [this e] (ui/handle-event f e)))]
       (.addActionListener ^JMenuItem (impl c) action)))
   (:keystroke [c _ ks]
     (.setAccelerator ^JMenuItem (impl c) (util/keystroke ks))))
