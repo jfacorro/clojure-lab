@@ -215,7 +215,10 @@ attributes and sets their corresponding values."
 (defn attr
   "Uses the set-attr multimethod to set the attribute value 
 for the implementation and updates the abstract component
-as well."
+as well. It also gets the current attribute's value in the 
+abstraction regardless of its value in the implementation.
+
+TODO: define a way to get an updated value from the abstraction."
   ([c k]
     (if-let [v (get-in c [:attrs k])]
       v
@@ -347,4 +350,5 @@ used in the component's definition (e.g. in event handlers)."
     (:id [c _ v]
       (when (not= (attr c :id) v)
         (throw (Exception. (str "Can't change the :id once it is set: " c)))))
-    (:post-init [c _ _]))
+    (:post-init [c _ _])
+    (:stuff [c _ _]))
