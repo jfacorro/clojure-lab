@@ -25,16 +25,24 @@ name."
   [file]
   (-> file .getName (.startsWith ".")))
 
-(defn- file-node-children [app file]
+(defn- file-node-children
+  "Returns a vector of children nodes for the
+file specified, which should be a directory."
+  [app file]
   (->> file .listFiles
     (filter (comp not hidden?))
     (sort-by #(if (.isDirectory %) (str " " (.getName %)) (.getName %)))
     (map file-proxy)
     (mapv #(tree-node-from-file app % true))))
 
-(defn- lazy-add-to-dir [app id file e]
+(defn- lazy-add-to-dir
+  "Lazily add the file nodes to this node if it
+currently has no children."
+  [app e]
   (let [ui        (:ui @app)
-        node      (ui/find @ui (ui/selector# id))]
+        node      (:source e)
+        id        (ui/attr node :id)
+        file      (:file (ui/attr node :stuff))]
     (when (empty? (ui/children node))
       (ui/update! ui (ui/selector# id)
         #(reduce ui/add %1 %2)
@@ -51,7 +59,8 @@ recursively."
       (let [id       (ui/genid)]
         [:tree-node {:id id
                      :item file
-                     :on-expansion (partial #'lazy-add-to-dir app id file)}]))
+                     :stuff {:file file}
+                     :on-expansion (partial #'lazy-add-to-dir app)}]))
     [:tree-node {:item file :leaf true}]))
 
 (defn load-dir

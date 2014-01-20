@@ -115,8 +115,8 @@ should be closed and false otherwise."
 
 (defn close-document-button
   "Handles the tabs' close button when clicked."
-  [app id & _]
-  (close-document-ui app id))
+  [app e]
+  (close-document-ui app (-> (:source e) (ui/attr :stuff) :tab-id)))
 
 (defn- close-document-menu
   "Finds the currently selected tab, removes it and closes the document
@@ -220,17 +220,18 @@ generation."
 (defn text-editor-change
   "Handles changes in the control, updates the document
 and signals the highlighting process."
-  [app editor-id channel evt]
+  [app evt]
   (when (not= (:type evt) :change)
     (let [ui       (:ui @app)
-          editor   (ui/find @ui (ui/selector# editor-id))
+          id       (-> evt :source (ui/attr :id))
+          editor   (ui/find @ui (ui/selector# id))
+          channel  (:chan (ui/attr editor :stuff))
           doc      (ui/attr editor :doc)]
       (when editor
         (case (:type evt)
           :insert (swap! doc doc/insert (:offset evt) (:text evt))
           :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
-        (async/put! channel [app editor-id])
-        #_(assert (= (ui/text editor) (doc/text @doc)))))))
+        (async/put! channel [app id])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
@@ -255,24 +256,29 @@ to the UI's main menu."
   (-> c
     (ui/attr :text (doc/text @doc))
     highlight
-    (ui/attr :caret-position 0)
-    (ui/attr :visible true)))
+    (ui/attr :caret-position 0)))
 
 (defn handle-key [app e]
   #_(let [ui   (:ui @app)
         editor (:source e)
         doc  (ui/attr editor :doc)
-        cmd  (doc/resolve-command doc app e)])
+        ks   (-> [] (into (:modifiers e)) (conj (:description e)))
+        kstr (->> ks (map name) (interpose " ") (apply str))
+        cmd  (->> [(doc/keymap doc) (-> doc doc/lang :keymap) (@app :keymap)]
+              (map #(km/find % ks))
+              (drop-while nil?))]
+    (prn (dissoc e :source) ks kstr cmd))
   #_(println (-> e :source (ui/attr :doc) type)))
 
 (defn- text-editor-create [app doc]
   (let [id     (ui/genid)
+        ch     (timeout-channel 100 #'highlight-by-id)
         editor (ui/init [:text-editor {:id        id
-                                       :visible   false
+                                       :doc       doc
                                        :post-init (partial #'text-editor-post-init doc)
                                        :on-key    (partial #'handle-key app)
-                                       :on-change (partial #'text-editor-change app id (timeout-channel 100 #'highlight-by-id))
-                                       :doc       doc}])]
+                                       :on-change (partial #'text-editor-change app)
+                                       :stuff     {:chan ch}}])]
     [:scroll {:vertical-increment 16
               :border :none
               :margin-control [:line-number {:source editor}]}
@@ -286,11 +292,12 @@ to the UI's main menu."
   (let [id    (ui/genid)
         title (doc/name @doc)
         tool-tip (doc/path @doc)
-        btn-close (partial #'close-document-button app id)]
+        btn-close (partial #'close-document-button app)]
     (-> (tplts/tab app)
       (ui/update :tab #(-> % (ui/attr :id id)
                              (ui/attr :tool-tip tool-tip)))
       (ui/update [:panel :label] ui/attr :text title)
+      (ui/update [:panel :button] ui/attr :stuff {:tab-id id})
       (ui/update [:panel :button] ui/attr :on-click btn-close)
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
@@ -334,6 +341,13 @@ to the UI's main menu."
   app)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Undo/Redo
+
+(defn redo! [app e])
+
+(defn undo! [app e])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Default styles
 
 (def styles
@@ -361,7 +375,9 @@ to the UI's main menu."
               {:category "File" :name "Open" :fn #'open-document-menu :keystroke "ctrl O"}
               {:category "File" :name "Close" :fn #'close-document-menu :keystroke "ctrl W"}
               {:category "File" :name "Save" :fn #'save-document-menu :keystroke "ctrl S"}
-              {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"})])
+              {:category "View" :name "Fullscreen" :fn #'toggle-fullscreen :keystroke "F4"}
+              {:category "Edit" :name "Undo" :fn #'redo! :keystroke "ctrl Z"}
+              {:category "Edit" :name "Redo" :fn #'undo! :keystroke "ctrl Y"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."

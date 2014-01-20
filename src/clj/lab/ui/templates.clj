@@ -2,8 +2,9 @@
   (:require [lab.ui.core :as ui]))
 
 (defn- close-tab-button
-  [app id & _]
+  [app e]
   (let [ui  (:ui @app)
+        id  (ui/attr (:source e) :id)
         tab (ui/find @ui (ui/selector# id))]
     (ui/update! ui (ui/parent id) ui/remove tab)))
 
@@ -17,7 +18,7 @@ includes a label and a closing button."
                             [:button {:icon         "close-tab.png"
                                       :border       :none
                                       :transparent  true
-                                      :on-click     (partial #'close-tab-button app id)}]]}]
+                                      :on-click     (partial #'close-tab-button app)}]]}]
       (ui/apply-stylesheet (:styles @app)))))
 
 (defn confirm
