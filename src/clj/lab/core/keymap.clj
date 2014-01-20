@@ -1,4 +1,5 @@
-(ns lab.core.keymap)
+(ns lab.core.keymap
+  (:refer-clojure :exclude [find]))
 
 (defn add-command
   [km {ks :keystroke :as cmd}]
@@ -12,7 +13,7 @@
         km  (reduce add-command km cmds)]
     km))
 
-(defn find-command
+(defn find
   "Given a keystroke looks for the corresponding commands in
 the supplied keymap and if not found in its parent."
   [km ks]

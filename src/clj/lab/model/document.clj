@@ -128,13 +128,10 @@ buffer."
 (defn lang [doc]
   (:lang doc))
 
-(defn line-count
-  "Returns the number of lines in the document's content."
+(defn keymap
+  "Returns the local document keymap."
   [doc]
-  (->> (text doc)
-    (filter #{\newline})
-    count
-    inc))
+  (:keymap doc))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text operations
 
