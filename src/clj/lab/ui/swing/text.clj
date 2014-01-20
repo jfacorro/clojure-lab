@@ -1,14 +1,13 @@
 (ns lab.ui.swing.text
-  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor]])
+  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor abstract]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
                           [event :as event]])
   (:import  [lab.ui.swing TextLineNumber LineHighlighter]
-            [javax.swing JTextArea JTextPane JScrollPane]
+            [javax.swing JTextArea JTextPane]
             [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener DocumentEvent DocumentEvent$EventType CaretListener]
-            [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet Highlighter$HighlightPainter]
-            [java.awt.event ActionListener MouseListener MouseMotionListener]
+            [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
             [java.awt Color]))
 
 (def ^:private event-types
@@ -22,10 +21,12 @@
     (let [offset     (.getOffset this)
           length     (.getLength this)
           doc        (.getDocument this)
+          editor     (.getProperty doc :component)
           event-type (event-types (.getType this))
           text       (when (not= event-type :remove)
                        (.getText doc offset length))]
-      {:offset   offset
+      {:source   (abstract editor)
+       :offset   offset
        :length   length
        :text     text
        :type     event-type
@@ -66,7 +67,10 @@
 (defn- text-editor-init
   [c]
   (let [color (ui/attr c :line-highlight-color)
-        text  (JTextPane.)]
+        text  (JTextPane.)
+        doc   (.getDocument text)]
+    ;; Add the text editor as a property of the document
+    (.putProperty doc :component text)
     (if color
       (LineHighlighter. text (util/color color))
       (LineHighlighter. text))
