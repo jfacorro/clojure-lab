@@ -176,7 +176,13 @@ as the abstraction of its implementation."
     this)
   (delete [this start end]
     (mp/delete (p/impl this) start end)
-    this))
+    this)
+  (length [this]
+    (mp/length (p/impl this)))
+  (text [this]
+    (mp/text (p/impl this)))
+  (substring [this start end]
+    (mp/substring (p/impl this) start end)))
 
 (defn remove-all
   "Takes a component and removes all of its children."

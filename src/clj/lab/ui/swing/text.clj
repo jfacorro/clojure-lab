@@ -71,7 +71,13 @@
     (.setCaretPosition this (+ offset (count s))))
   (delete [this start end]
     (.remove (.getDocument this) start (- end start))
-    (.setCaretPosition this start)))
+    (.setCaretPosition this start))
+  (length [this]
+    (.getLength this))
+  (text [this]
+    (.getText this))
+  (substring [this start end]
+    (-> this .getText (.substring start end))))
 
 (defn- line-number-init [c]
   (let [src (ui/attr c :source)]
