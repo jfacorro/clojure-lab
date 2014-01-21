@@ -356,10 +356,10 @@ to the UI's main menu."
         hist   (doc/history @doc)]
     (swap! doc f)
     (swap! doc assoc :locked true)
-    ;(ui/update! ui (ui/selector# id) f hist)
-    (ui/update! ui (ui/selector# id) ui/attr :text (doc/text @doc))
+    (let [[editor hist] (f editor hist)]
+      (ui/update! ui (ui/selector# id) (constantly editor)))
     (swap! doc dissoc :locked)
-    (highlight-by-id app id)))
+    (highlight editor)))
 
 (defn redo! [app e]
   (undo-redo! app e doc/redo))

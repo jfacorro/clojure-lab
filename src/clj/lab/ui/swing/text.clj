@@ -1,6 +1,7 @@
 (ns lab.ui.swing.text
   (:use     [lab.ui.protocols :only [impl Event to-map TextEditor abstract insert]])
-  (:require [lab.ui.core :as ui]
+  (:require [lab.model.protocols :as mp]
+            [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
                           [event :as event]])
   (:import  [lab.ui.swing TextLineNumber LineHighlighter]
@@ -40,8 +41,8 @@
   ([^JTextPane txt ^SimpleAttributeSet stl]
     (.setCharacterAttributes txt stl true)))
 
-(extend-protocol TextEditor
-  JTextPane
+(extend-type JTextPane
+  TextEditor
   (apply-style
     [this regions styles]
     (let [styles (reduce (fn [m [k v]] (assoc m k (util/make-style v))) styles styles)
@@ -62,7 +63,15 @@
       (insert this (.getCaretPosition this) s))
     ([this offset s]
       (let [doc (.getDocument this)]
-        (.insertString doc offset s nil)))))
+        (.insertString doc offset s nil))))
+
+  mp/Text
+  (insert [this offset s]
+    (.insertString (.getDocument this) offset s nil)
+    (.setCaretPosition this (+ offset (count s))))
+  (delete [this start end]
+    (.remove (.getDocument this) start (- end start))
+    (.setCaretPosition this start)))
 
 (defn- line-number-init [c]
   (let [src (ui/attr c :source)]

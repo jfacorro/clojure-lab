@@ -18,6 +18,7 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
   (:refer-clojure :exclude [find remove])
   (:require [clojure.zip :as zip]
             [lab.util :as util]
+            [lab.model.protocols :as mp]
             [lab.ui.protocols :as p]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]))
@@ -167,6 +168,14 @@ as the abstraction of its implementation."
         (p/impl (p/remove (p/impl this) (p/impl child))))))  
   (focus [this]
     (p/focus (p/impl this))
+    this)
+
+  mp/Text
+  (insert [this offset s]
+    (mp/insert (p/impl this) offset s)
+    this)
+  (delete [this start end]
+    (mp/delete (p/impl this) start end)
     this))
 
 (defn remove-all

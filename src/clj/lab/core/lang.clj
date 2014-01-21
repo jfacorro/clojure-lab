@@ -1,7 +1,7 @@
 (ns lab.core.lang
   "Languages are used to determine the structure and syntax of a Document.
 They also provide the functions to create and update a parse tree."
-  (:require [lab.model.buffer :as buffer]
+  (:require [lab.model.protocols :as p]
             [clojure.zip :as zip]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -73,7 +73,7 @@ check if its one of the registered symbols."
 parse tree with the modified nodes marked with node-group."
   [doc node-group]
   (binding [*node-group* node-group]
-    (buffer/parse-tree (:buffer doc))))
+    (p/parse-tree doc)))
 
 (defn- tag
   "If the node is a map returns its :tag, otherwise the keyword :default."

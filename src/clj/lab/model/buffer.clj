@@ -3,15 +3,9 @@
 implementations."
   (:require [clojure.zip :as zip]
             [net.cgrand.parsley :as parsley]
-            [net.cgrand.parsley.tree :as tree])
+            [net.cgrand.parsley.tree :as tree]
+            [lab.model.protocols :as p])
   (:import  [net.cgrand.parsley.tree InnerNode Leaf]))
-
-(defprotocol Buffer
-  (insert     [this offset s] "Inserts s in offset.")
-  (delete     [this start end] "Delete the contents of the buffer from positions start to end.")
-  (length     [this] "Returns the length of the buffer.")
-  (text       [this] "Returns the contents of the buffer as a string.")
-  (parse-tree [this] "Returns a parse tree with each node being {:tag :tag-kw :content [node*]}"))
 
 (defn- node-children [^InnerNode x]
   (if (.c x)
@@ -35,7 +29,7 @@ implementations."
 ;;; Incremental Buffer implementation
 
 (defrecord IncrementalBuffer [buffer]
-  Buffer
+  p/Text
   (insert [this offset s]
     (assoc this :buffer (parsley/edit buffer offset 0 s)))
   (delete [this start end]
@@ -44,6 +38,10 @@ implementations."
     (-> buffer :buffer tree/len))
   (text [this]
     (-> buffer :buffer to-string))
+  (substring [this start end]
+    (-> buffer :buffer to-string (subs start end)))
+
+  p/Parsable
   (parse-tree [this]
     (parsley/parse-tree buffer)))
 
@@ -62,8 +60,8 @@ the parsing information from the language provided."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; StringBuffer implementation
 
-(extend-protocol Buffer
-  StringBuffer
+(extend-type StringBuffer
+  p/Text
   (insert [this offset s]
     (.insert this ^int offset ^String s))
   (delete [this start end]
@@ -71,7 +69,9 @@ the parsing information from the language provided."
   (length [this]
     (.length this))
   (text [this]
-    (.toString this)))
+    (.toString this))
+  (substring [this start end]
+    (.substring this start end)))
 
 (defn string-buffer
   "Return a native mutable java StringBuffer instance."

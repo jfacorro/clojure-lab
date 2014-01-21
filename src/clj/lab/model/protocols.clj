@@ -1,16 +1,11 @@
 (ns lab.model.protocols)
 
-(defprotocol File
-  (open [this path])
-  (save [this] [this path])
-  (close[this]))
+(defprotocol Text
+  (insert     [this offset s] "Inserts s in offset.")
+  (delete     [this start end] "Delete the contents of the buffer from positions start to end.")
+  (length     [this] "Returns the length of the buffer.")
+  (text       [this] "Returns the contents of the buffer as a string.")
+  (substring  [this start end] "Returns the substring from start to end offsets."))
 
-(defprotocol Project
-  (add-file [this doc])
-  (delete-file [this doc])
-  (exclude-file [this doc]))
-  
-(defprotocol Workspace
-  (add-project [this doc])
-  (remove-project [this doc]))
-
+(defprotocol Parsable
+  (parse-tree [this] "Returns a parse tree with each node being {:tag :tag-kw :content [node*]}"))

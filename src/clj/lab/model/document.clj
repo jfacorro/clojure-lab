@@ -5,11 +5,12 @@ holds not only a buffer for the string but additional information
 that may need to be computed or mantained)."
   (:refer-clojure :exclude [replace name])
   (:require [lab.model [buffer :as b]
-                       [history :as h]]
+                       [history :as h]
+                       [protocols :as p]]
             [lab.util :as util]
             [clojure.java.io :as io]))
 
-(declare modified? delete insert text)
+(declare modified?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; History
@@ -25,21 +26,19 @@ that may need to be computed or mantained)."
 (defrecord InsertText [offset s]
   h/Bijection
   (direct [this]
-    #(insert % offset s))
+    #(p/insert % offset s))
   (inverse [this]
-    #(delete % offset (+ offset (count s)))))
+    #(p/delete % offset (+ offset (count s)))))
 
 (defrecord DeleteText [start end s]
   h/Bijection
   (direct [this]
-    #(delete % start end))
+    #(p/delete % start end))
   (inverse [this]
-    #(insert % start s)))
+    #(p/insert % start s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Document Record
-
-(defrecord Document [name path modified buffer lang])
+;;; Default buffer implementation
 
 (defn- default-buffer
   "Returns a buffer implementation."
@@ -47,6 +46,41 @@ that may need to be computed or mantained)."
     (default-buffer lang ""))
   ([lang s]
     (b/incremental-buffer lang s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Document Record
+
+(defrecord Document [name path modified buffer lang]
+  p/Text
+  (insert [this offset s]
+    (let [ops [(->InsertText offset s)]]
+      (-> this
+        (update-in [:buffer] p/insert offset s)
+        (assoc-in [:modified] true)
+        (archive-operations ops))))
+  (delete [this start end]
+    (let [s   (p/substring buffer start end)
+          ops [(->DeleteText start end s)]]
+      (-> this
+        (archive-operations ops)
+        (update-in [:buffer] p/delete start end)
+        (assoc-in [:modified] true))))
+  (length [this]
+    (p/length buffer))
+  (text [this]
+    (p/text buffer))
+  (substring [this start end]
+    (p/substring buffer start end))
+
+  p/Parsable
+  (parse-tree [this]
+    (p/parse-tree buffer)))
+
+(def insert #'p/insert)
+(def delete #'p/delete)
+(def length #'p/length)
+(def text #'p/text)
+(def substring #'p/substring)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; IO operations
@@ -91,44 +125,12 @@ buffer."
     doc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Undo/Redo
-
-(defn undo [doc]
-  (let [hist    (:history doc)
-        ops     (h/current hist)
-        hist    (h/rewind hist)
-        inv-ops (->> ops (map h/inverse) reverse)]
-    (h/with-no-history
-      (-> (reduce #(%2 %) doc inv-ops)
-        (assoc :history hist)))))
-
-(defn redo [doc]
-  (let [old-hist (:history doc)
-        hist     (h/forward old-hist)
-        ops      (when (not= hist old-hist)
-                   (h/current hist))
-        inv-ops  (map h/direct ops)]
-    (h/with-no-history
-      (-> (reduce #(%2 %) doc inv-ops)
-        (assoc :history hist)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Properties 
 
 (defn name
   "Returns the document's name."
   [doc]
   (:name doc))
-
-(defn length
-  "Returns the document content's length."
-  [doc]
-  (b/length (:buffer doc)))
-
-(defn text
-  "Returns the document's content."
-  [doc]
-  (b/text (:buffer doc)))
 
 (defn path
   "Returns the path for the binded file if any."
@@ -154,35 +156,44 @@ buffer."
   "Returns the local document keymap."
   [doc]
   (:keymap doc))
+
+(defn history [doc]
+  (:history doc))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Undo/Redo
+
+(defn undo
+  ([x]
+    (let [[x hist] (undo x (:history x))]
+      (assoc x :history hist)))
+  ([x hist]
+    (let [ops     (h/current hist)
+          hist    (h/rewind hist)
+          inv-ops (->> ops (map h/inverse) reverse)]
+      (h/with-no-history
+        [(reduce #(%2 %) x inv-ops) hist]))))
+
+(defn redo 
+  ([x]
+    (let [[x hist] (redo x (:history x))]
+      (assoc x :history hist)))
+  ([x old-hist]
+    (let [hist     (h/forward old-hist)
+          ops      (when (not= hist old-hist)
+                     (h/current hist))
+          inv-ops  (map h/direct ops)]
+      (h/with-no-history
+        [(reduce #(%2 %) x inv-ops) hist]))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text operations
-
-(defn insert
-  "Inserts s at the document's offset position.
-  Returns the document."
-  [doc offset s]
-  (let [ops [(->InsertText offset s)]]
-    (-> doc
-      (update-in [:buffer] b/insert offset s)
-      (assoc-in [:modified] true)
-      (archive-operations ops))))
 
 (defn append
   "Appends s to the document's content.
   Returns the document."
   [doc s]
-  (insert doc (length doc) s))
-
-(defn delete
-  "Deletes the document's content from start to end position.
-  Returns the modified document."
-  [doc start end]
-  (let [s   (.substring ^String (text doc) start end)
-        ops [(->DeleteText start end s)]]
-    (-> doc
-      (archive-operations ops)
-      (update-in [:buffer] b/delete start end)
-      (assoc-in [:modified] true))))
+  (insert doc (p/length doc) s))
 
 (defn search
   "Find the matches for the expression in the document
