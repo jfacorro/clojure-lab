@@ -15,10 +15,10 @@
   "Gets all the names for the vars in the clojure.core namespace."
   (->> (the-ns 'clojure.core) ns-interns keys (map str) set))
 
-(def grammar [:expr- #{:symbol :keyword :list :string :vector :set :map :regex
-                       :number :comment :meta :fn :deref :quote :char}
-              :symbol #"[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_]*"
-              :keyword #"::?#?[\w-_*+\?/\.]+"
+(def grammar [:expr- #{:number :symbol :keyword :list :string :vector :set :map :regex
+                       :comment :meta :fn :reader-var :deref :quote :syntax-quote :unquote :char}
+              :symbol #"(?<!0x|0|0x[A-Fa-f\d]{42})[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_#]*"
+              :keyword #"::?#?[\w-_*+\?/\.!>]+"
               :whitespace #"[ \t\r\n,]+"
               :list [#"(?<!\\)\(" :expr* #"(?<!\\)\)"]
               :vector ["[" :expr* "]"]
@@ -28,12 +28,16 @@
               :meta ["^" :pair]
               :char #"\\."
               :quote ["'" :expr]
+              :syntax-quote ["`" :expr]
+              :unquote [#"~" :expr]
+              :unquote-splice ["~@" :expr]
               :regex #"#\"([^\"\\]*|(\\.))*\""
               :string #"(?s)(?<!#)\".*?(?<!\\)\""
               :char #"\\(.|newline|space|tab|backspace|formfeed|return|u([0-9a-fA-F]{4}|[0-7]{1,2}|[0-3][0-7]{2}))(?![a-zA-Z0-9!$%&*+\-\./:<=>?_#])"
-              :number #"\d+\.?\d*M?"
+              :number #"(0x[\dA-Fa-f]+|\d(?!x)\d*\.?\d*[MN]?)"
+              :reader-var ["#'" :symbol]
               :comment #"(#!|;).*[^\n\r]*"
-              :deref ["@" :expr]
+              :deref [#"(?<!~)@" :expr]
               :fn ["#(" :expr* ")"]])
 
 (def styles-mapping
@@ -69,7 +73,9 @@ check if its one of the registered symbols."
   :string       {:color 0xE61D43}
   :number       {:color 0xFFFFFF}
   :comment      {:color 0x999988 :bold true}
-  :default      {:color 0xFFFFFF}})
+  :default      {:color 0xFFFFFF}
+  :net.cgrand.parsley/unfinished  {:background 0xFF1111 :italic true}
+  :net.cgrand.parsley/unexpected  {:background 0xFF1111 :italic true}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Outline
@@ -116,7 +122,7 @@ check if its one of the registered symbols."
      :options   {:main      :expr*
                  :root-tag  ::root
                  :space :whitespace*
-                 :make-node make-node}
+                 :make-node #'make-node}
      :grammar   grammar
      :rank      (partial lang/file-extension? "clj")
      :styles    styles

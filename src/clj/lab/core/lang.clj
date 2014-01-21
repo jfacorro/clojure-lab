@@ -60,7 +60,7 @@ check if its one of the registered symbols."
      :options  {:main      :expr*
                 :root-tag  ::root
                 :make-node #'make-node}
-     :grammar  [:expr       #"[\s\S]+"]
+     :grammar  [:expr #"[\s\S]+"]
      :rank     (partial file-extension? "txt")
      :styles   {:default {:color 0xFFFFFF}
                 :expr    {:color 0xFFFFFF}}}))
