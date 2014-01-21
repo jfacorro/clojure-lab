@@ -2,8 +2,10 @@
   "Clojure language specification."
   (:require [clojure.zip :as zip]
             [lab.core :as lab]
+            [lab.ui.core :as ui]
             [lab.core [plugin :as plugin]
-                      [lang :as lang]]
+                      [lang :as lang]
+                      [keymap :as km]]
             [lab.model.document :as doc]))
 
 (def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
@@ -69,6 +71,9 @@ check if its one of the registered symbols."
   :comment      {:color 0x999988 :bold true}
   :default      {:color 0xFFFFFF}})
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Outline
+
 (defn- def? [node]
   (and (-> node zip/node :tag (= :list))
        (-> node zip/down zip/right zip/node 
@@ -79,6 +84,28 @@ check if its one of the registered symbols."
 (defn node->def [node]
   {:offset (lang/offset node)
    :name (-> node zip/down zip/right zip/right zip/right zip/down zip/node)})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Keymap commands
+
+(defn- insert-tab [app e]
+  (ui/insert (:source e) "  "))
+
+(def delimiters
+  {\( \)
+   \[ \]
+   \{ \}
+   \" \"})
+
+(defn- balance-delimiter [app e]
+  (let [editor  (:source e)
+        opening (:char e)
+        closing (delimiters opening)]
+    (ui/insert editor (str opening closing))
+    (ui/attr editor :caret-position dec)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Language definition
 
 (def clojure
   (lang/map->Language
@@ -91,7 +118,13 @@ check if its one of the registered symbols."
      :rank      (partial lang/file-extension? "clj")
      :styles    styles
      :def?      def?
-     :node->def node->def}))
+     :node->def node->def
+     :keymap    (km/keymap 'lab.plugin.clojure-lang :lang
+                  {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
+                  {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
+                  {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
+                  {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
+                  {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"})}))
 
 (defn init! [app]
   (swap! app assoc-in [:langs :clojure] clojure))

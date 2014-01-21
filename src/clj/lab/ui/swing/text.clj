@@ -1,5 +1,5 @@
 (ns lab.ui.swing.text
-  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor abstract]])
+  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor abstract insert]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
                           [event :as event]])
@@ -56,7 +56,13 @@
           ^SimpleAttributeSet (styles tag (:default styles))
           true))
        (.setDocument this doc)
-       (.setCaretPosition this pos))))
+       (.setCaretPosition this pos)))
+  (insert
+    ([this s]
+      (insert this (.getCaretPosition this) s))
+    ([this offset s]
+      (let [doc (.getDocument this)]
+        (.insertString doc offset s nil)))))
 
 (defn- line-number-init [c]
   (let [src (ui/attr c :source)]
@@ -91,7 +97,12 @@
     (:caret-color [c _ v]
       (.setCaretColor ^JTextComponent (impl c) (util/color v)))
     (:caret-position [c _ v]
-      (.setCaretPosition (impl c) v))
+      ;; When the value is a function update the caret position 
+      ;; applying it to the current  value.
+      (if (fn? v)
+        (let [pos (v (.getCaretPosition (impl c)))]
+          (.setCaretPosition (impl c) pos))
+        (.setCaretPosition (impl c) v)))
     (:on-caret [c _ f]
       (let [listener (proxy [CaretListener] []
                        (caretUpdate [e] (ui/handle-event f e)))]

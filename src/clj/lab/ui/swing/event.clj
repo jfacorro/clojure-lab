@@ -94,7 +94,11 @@ TODO: provide a map with merging functions."
 ;; Event Object
 
 (def event-object "Root implementation."
-  {:to-map (fn [this] {:source (p/abstract (.getSource ^java.util.EventObject this))})})
+  {:to-map (fn [this]
+             (-> {:source (p/abstract (.getSource ^java.util.EventObject this))}
+               ui/map->UIEvent
+               (p/impl this)))
+   :consume (fn [this] (.consume this))})
 
 (extend java.util.EventObject
   p/Event

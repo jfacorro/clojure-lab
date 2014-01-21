@@ -158,7 +158,11 @@ with Color instances."
 (defn keystroke
   "Returns a swing key stroke based on the string provided."
   [^String s]
-  (KeyStroke/getKeyStroke s))
+  (let [s (->> (.split s " ")
+            (map #(if-not (#{"ctrl" "shift" "alt"} %) (.toUpperCase %) %))
+            (interpose " ")
+            (apply str))]
+    (KeyStroke/getKeyStroke s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fullscreen

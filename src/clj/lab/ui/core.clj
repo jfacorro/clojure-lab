@@ -141,7 +141,11 @@ as the abstraction of its implementation."
 
   p/TextEditor
   (apply-style [this tokens styles]
-    (p/apply-style (p/impl this) tokens styles)))
+    (p/apply-style (p/impl this) tokens styles))
+  (insert [this s]
+    (p/insert (p/impl this) s))
+  (insert [this offset s]
+    (p/insert (p/impl this) offset s)))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -175,7 +179,12 @@ as the abstraction of its implementation."
 
 (defrecord UIEvent [source event]
   p/Event
-  (to-map [this] this))
+  (to-map [this] this)
+  (consume [this] (p/consume (p/impl this)))
+  
+  p/Abstract
+  (impl [this] (-> this meta :impl))
+  (impl [this x] (vary-meta this assoc :impl x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
@@ -186,8 +195,11 @@ as the abstraction of its implementation."
 (def focus #'p/focus)
 
 (def apply-style #'p/apply-style)
+(def insert #'p/insert)
 
 (def selected #'p/selected)
+
+(def consume #'p/consume)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Private supporting functions

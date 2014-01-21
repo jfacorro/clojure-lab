@@ -19,11 +19,13 @@
     "Returns the id of the selected child or sets the selected child abstract component."))
 
 (defprotocol Event
-  (to-map [this] "Serializes the event into a map."))
+  (to-map [this] "Serializes the event into a map.")
+  (consume [this] "Consumes this event, preventing it from bubbling up."))
 
 (defprotocol TextEditor
   (apply-style [this tokens styles] [this start length style]
-    "Applies a formatting style to the region defined by start and length."))
+    "Applies a formatting style to the region defined by start and length.")
+  (insert [this s] [this offset s] "Inserts the text at offset or at the current caret position if none is specified."))
 
 ;; Multi methods
 

@@ -261,15 +261,20 @@ to the UI's main menu."
       (ui/attr :caret-position 0))))
 
 (defn handle-key [app e]
-  #_(let [ui   (:ui @app)
+  (let [ui   (:ui @app)
         editor (:source e)
         doc  (ui/attr editor :doc)
         ks   (-> [] (into (:modifiers e)) (conj (:description e)))
         kstr (->> ks (map name) (interpose " ") (apply str))
-        cmd  (->> [(doc/keymap doc) (-> doc doc/lang :keymap) (@app :keymap)]
-              (map #(km/find % ks))
-              (drop-while nil?))]
-    (prn (dissoc e :source) ks kstr cmd)))
+        char-typed (-> e :char str)
+        cmd  (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
+              (map #(or (km/find % kstr) (km/find % char-typed)))
+              (drop-while nil?)
+              first)]
+    (when cmd
+      (ui/consume e)
+      (when (= :pressed (:event e))
+        (ui/handle-event (:fn cmd) e)))))
 
 (defn- text-editor-create [app doc]
   (let [id     (ui/genid)
@@ -389,13 +394,13 @@ inserting a fixed first parameter."
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
-              {:category "File", :name "New", :fn ::new-document, :keystroke "ctrl N"}
-              {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl O"}
-              {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl W"}
-              {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl S"}
-              {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "F4"}
-              {:category "Edit", :name "Undo", :fn ::redo!, :keystroke "ctrl Z"}
-              {:category "Edit", :name "Redo", :fn ::undo!, :keystroke "ctrl Y"})])
+              {:category "File", :name "New", :fn ::new-document, :keystroke "ctrl n"}
+              {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}
+              {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
+              {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
+              {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
+              {:category "Edit", :name "Undo", :fn ::redo!, :keystroke "ctrl z"}
+              {:category "Edit", :name "Redo", :fn ::undo!, :keystroke "ctrl y"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
