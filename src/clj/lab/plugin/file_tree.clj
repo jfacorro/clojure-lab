@@ -45,7 +45,7 @@ currently has no children."
         file      (:file (ui/attr node :stuff))]
     (when (empty? (ui/children node))
       (ui/update! ui (ui/selector# id)
-        #(reduce ui/add %1 %2)
+        (partial reduce ui/add)
         (file-node-children app file)))))
 
 (defn- tree-node-from-file

@@ -1,4 +1,5 @@
 (ns lab.ui.swing
+  (:require [lab.ui.core :as ui])
   (:import [javax.swing SwingUtilities]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -8,10 +9,10 @@
 (defmacro swing-action
   "Queues an action to the event queue."
   [& body]
-  `(SwingUtilities/invokeLater 
+  `(SwingUtilities/invokeLater
     (fn [] ~@body)))
 
-(alter-var-root #'lab.ui.core/ui-action-macro #(do % %2) 'lab.ui.swing/swing-action)
+(ui/register-action-macro! #'lab.ui.swing/swing-action)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Then require components implementations

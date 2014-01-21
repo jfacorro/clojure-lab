@@ -24,21 +24,24 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
 
 (declare init initialized? attr find genid selector# hiccup->component)
 
-;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; UI action macro
 
-(defn- ui-action-macro
+(defn- action-macro
   "This var should be set by the UI implementation with a macro 
 that runs code in the UI thread."
   [& xs]
   (throw (Exception. "ui-action-macro has not been set by the implementation.")))
 
+(defn register-action-macro! [x]
+  (intern 'lab.ui.core 'action-macro x))
+
 (defmacro action
   "Macro that uses the UI aciton macro defined by the implementation."
   [& body]
-  `(~ui-action-macro ~@body))
+  `(~action-macro ~@body))
 
-;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event handler creation
 
 (defn- event-handler
@@ -338,7 +341,7 @@ using (update-in root path-to-component f args)."
 (defn update!
   "Same as update but assumes root is an atom."
   [root selector f & args]
-  {:pre [(instance? clojure.lang.Atom root)]}
+  {:pre [(instance? clojure.lang.IRef root)]}
   (apply swap! root update selector f args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

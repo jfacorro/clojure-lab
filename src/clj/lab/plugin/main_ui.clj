@@ -244,7 +244,7 @@ to the UI's main menu."
     :global
       (let [ui    (:ui @app)
             cmds  (-> keymap :bindings vals)]
-        (ui/update! ui [] (partial reduce (partial menu/add-option app)) cmds))
+        (ui/update! ui [] (partial reduce menu/add-option) cmds))
      :lang  nil
      :local nil)
   (f app keymap))
