@@ -25,7 +25,7 @@
 (defprotocol TextEditor
   (apply-style [this tokens styles] [this start length style]
     "Applies a formatting style to the region defined by start and length.")
-  (insert [this s] [this offset s] "Inserts the text at offset or at the current caret position if none is specified."))
+  (caret-position [this] [this position] "Gets and sets the caret position for this text component."))
 
 ;; Multi methods
 

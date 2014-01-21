@@ -143,10 +143,11 @@ as the abstraction of its implementation."
   p/TextEditor
   (apply-style [this tokens styles]
     (p/apply-style (p/impl this) tokens styles))
-  (insert [this s]
-    (p/insert (p/impl this) s))
-  (insert [this offset s]
-    (p/insert (p/impl this) offset s)))
+  (caret-position [this]
+    (p/caret-position (p/impl this)))
+  (caret-position [this position]
+    (p/caret-position (p/impl this) position)
+    this))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -210,7 +211,7 @@ as the abstraction of its implementation."
 (def focus #'p/focus)
 
 (def apply-style #'p/apply-style)
-(def insert #'p/insert)
+(def caret-position #'p/caret-position)
 
 (def selected #'p/selected)
 

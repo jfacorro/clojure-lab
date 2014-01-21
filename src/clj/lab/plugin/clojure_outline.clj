@@ -20,7 +20,7 @@
       (when id
         (ui/update! ui (ui/selector# id)
           #(-> %
-            (ui/attr :caret-position (:offset info))
+            (ui/caret-position (:offset info))
             ui/focus))))))
 
 (defn- def-tree-node

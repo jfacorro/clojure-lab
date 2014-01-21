@@ -262,7 +262,7 @@ to the UI's main menu."
     (-> c
       (ui/attr :text (doc/text @doc))
       highlight
-      (ui/attr :caret-position 0))))
+      (ui/caret-position 0))))
 
 (defn handle-key [app e]
   (let [ui   (:ui @app)

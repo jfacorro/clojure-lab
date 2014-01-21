@@ -6,7 +6,7 @@
             [lab.core [plugin :as plugin]
                       [lang :as lang]
                       [keymap :as km]]
-            [lab.model.document :as doc]))
+            [lab.model.protocols :as model]))
 
 (def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
                      "try" "catch" "finally" "monitor-enter" "monitor-exit" #_"." "new" "set!"})
@@ -89,7 +89,9 @@ check if its one of the registered symbols."
 ;; Keymap commands
 
 (defn- insert-tab [app e]
-  (ui/insert (:source e) "  "))
+  (let [editor (:source e)
+        offset (ui/caret-position editor)]
+    (model/insert editor offset "  ")))
 
 (def delimiters
   {\( \)
@@ -100,9 +102,10 @@ check if its one of the registered symbols."
 (defn- balance-delimiter [app e]
   (let [editor  (:source e)
         opening (:char e)
-        closing (delimiters opening)]
-    (ui/insert editor (str opening closing))
-    (ui/attr editor :caret-position dec)))
+        closing (delimiters opening)
+        offset  (ui/caret-position editor)]
+    (model/insert editor offset (str opening closing))
+    (ui/caret-position editor (inc offset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language definition
