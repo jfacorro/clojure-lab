@@ -4,7 +4,6 @@
         [lab.test :onle [->test ->is]]
         lab.model.document)
   (:require [clojure.java.io :as io]
-            [lab.model.history :as h]
             [lab.core.lang :as lang]))
 ;---------------------------
 (def file-content "Temp file, should be deleted.")
@@ -37,7 +36,6 @@
         (->is = false modified?)
         (->is = "" text)
         (->is = 0 length)
-        (->is = 1 line-count)
         (->is = "Untitled 1" name)
 
         ; Bind the document to a file
@@ -63,13 +61,7 @@
         (->is not= (slurp tmp-file) text)
         (save)
         (->is = (slurp tmp-file) text)
-        (->is = false modified?)
-
-        ; Check line count
-        (append "\n")
-        (->is = 2 line-count)
-        (append "\n")
-        (->is = 3 line-count))))
+        (->is = false modified?))))
 ;---------------------------
 (deftest bind-non-existing-file
   (is (= "bla" (-> (document default-lang) (bind "./bla") name))))
@@ -93,33 +85,37 @@
 ;---------------------------
 (deftest undo-redo
   (->test (document default-lang)
-    (append "abc\nabc\nd")
+    ;; Undo in an empty history
+    (undo)
+    ;; Redo in an empty history
+    (redo)
 
+    (append "abc\nabc\nd")
     ; undo/redo replace
     (replace "b" "1")
     (replace "1" "bla")
-    (h/undo)
+    (undo)
     (->is = "a1c\na1c\nd" text)
-    (h/undo)
+    (undo)
     (->is = "abc\nabc\nd" text)
-    (h/redo)
+    (redo)
     (->is = "a1c\na1c\nd" text)
-    (h/redo)
+    (redo)
     (->is = "ablac\nablac\nd" text)
 
     ; undo/redo delete
     (delete 0 4)
     (->is = "c\nablac\nd" text)
-    (h/undo)
+    (undo)
     (->is = "ablac\nablac\nd" text)
-    (h/redo)
+    (redo)
     (->is = "c\nablac\nd" text)
 
     ; undo/redo insert
     (insert 1 "ba")
     (->is = "cba\nablac\nd" text)
-    (h/undo)
+    (undo)
     (->is = "c\nablac\nd" text)
-    (h/redo)
+    (redo)
     (->is = "cba\nablac\nd" text)))
 ;---------------------------

@@ -91,6 +91,28 @@ buffer."
     doc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Undo/Redo
+
+(defn undo [doc]
+  (let [hist    (:history doc)
+        ops     (h/current hist)
+        hist    (h/rewind hist)
+        inv-ops (->> ops (map h/inverse) reverse)]
+    (h/with-no-history
+      (-> (reduce #(%2 %) doc inv-ops)
+        (assoc :history hist)))))
+
+(defn redo [doc]
+  (let [old-hist (:history doc)
+        hist     (h/forward old-hist)
+        ops      (when (not= hist old-hist)
+                   (h/current hist))
+        inv-ops  (map h/direct ops)]
+    (h/with-no-history
+      (-> (reduce #(%2 %) doc inv-ops)
+        (assoc :history hist)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Properties 
 
 (defn name

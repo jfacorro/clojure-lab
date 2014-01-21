@@ -48,16 +48,18 @@
 (defn forward
   "Moves an operation from the future to the past."
   [h]
-  (let [x (-> h :future peek)]
+  (if-let [x (-> h :future peek)]
     (-> h (update-in [:past] conj x)
-          (update-in [:future] pop))))
+          (update-in [:future] pop))
+    h))
 
 (defn rewind
   "Moves an operation from the past to the future."
   [h]
-  (let [x (current h)]
+  (if-let [x (current h)]
     (-> h (update-in [:past] pop)
-          (update-in [:future] conj x))))
+          (update-in [:future] conj x))
+    h))
 
 (defn add
   "Adds an operation to the past of this history removing
@@ -81,23 +83,3 @@
   [h]
   (and (core/empty? (:past h))
        (core/empty? (:future h))))
-
-;; undo/redo
-
-(defn undo [x]
-  (let [hist    (:history x)
-        ops     (current hist)
-        hist    (rewind hist)
-        inv-ops (->> ops (map inverse) reverse)]
-    (with-no-history
-      (-> (reduce #(%2 %) x inv-ops)
-        (assoc :history hist)))))
-
-(defn redo [x]
-  (let [hist    (:history x)
-        hist    (forward hist)
-        ops     (current hist)
-        inv-ops (map direct ops)]
-    (with-no-history
-      (-> (reduce #(%2 %) x inv-ops)
-        (assoc :history hist)))))
