@@ -220,17 +220,17 @@ generation."
 (defn text-editor-change
   "Handles changes in the control, updates the document
 and signals the highlighting process."
-  [app evt]
-  (when (not= (:type evt) :change)
+  [app {:keys [type source offset text length] :as e}]
+  (when (not= type :change)
     (let [ui       (:ui @app)
-          id       (-> evt :source (ui/attr :id))
+          id       (ui/attr source :id)
           editor   (ui/find @ui (ui/selector# id))
           channel  (:chan (ui/attr editor :stuff))
           doc      (ui/attr editor :doc)]
-      (when editor
-        (case (:type evt)
-          :insert (swap! doc doc/insert (:offset evt) (:text evt))
-          :remove (swap! doc doc/delete (:offset evt) (+ (:offset evt) (:length evt))))
+      (when (and editor (not (:locked @doc)))
+        (case type
+          :insert (swap! doc doc/insert offset text)
+          :remove (swap! doc doc/delete offset (+ offset length)))
         (async/put! channel [app id])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -348,9 +348,24 @@ to the UI's main menu."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undo/Redo
 
-(defn redo! [app e])
+(defn undo-redo! [app e f]
+  (let [ui     (:ui @app)
+        editor (current-text-editor @ui)
+        id     (ui/attr editor :id)
+        doc    (ui/attr editor :doc)
+        hist   (doc/history @doc)]
+    (swap! doc f)
+    (swap! doc assoc :locked true)
+    ;(ui/update! ui (ui/selector# id) f hist)
+    (ui/update! ui (ui/selector# id) ui/attr :text (doc/text @doc))
+    (swap! doc dissoc :locked)
+    (highlight-by-id app id)))
 
-(defn undo! [app e])
+(defn redo! [app e]
+  (undo-redo! app e doc/redo))
+
+(defn undo! [app e]
+  (undo-redo! app e doc/undo))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event handler
@@ -399,8 +414,8 @@ inserting a fixed first parameter."
               {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
               {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
               {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
-              {:category "Edit", :name "Undo", :fn ::redo!, :keystroke "ctrl z"}
-              {:category "Edit", :name "Redo", :fn ::undo!, :keystroke "ctrl y"})])
+              {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
+              {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
