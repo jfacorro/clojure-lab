@@ -12,7 +12,7 @@
 (defn- node-tree-click
   [app e]
   (when (= 2 (:click-count e))
-    (let [ui     (:ui app)
+    (let [ui     (:ui @app)
           node   (:source e)
           info   (ui/attr node :info)
           editor (#'main-ui/current-text-editor @ui)
