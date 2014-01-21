@@ -1,5 +1,5 @@
-(ns lab.plugin.file-tree
-  "Add an global action that creates a tree control with the dirs and files of
+(ns lab.plugin.file-explorer
+  "Add a global action that creates a tree control with the dirs and files of
 the specified root dir."
   (:use [lab.core.plugin :only [defplugin]])
   (:require [lab.core :as lab]
@@ -119,5 +119,5 @@ tree. Returns a tree node."
               :global
               {:category "Project" :name "Open..." :fn #'open-project :keystroke "ctrl P"})])
 
-(defplugin file-tree
+(defplugin file-explorer
   :keymaps keymaps)
