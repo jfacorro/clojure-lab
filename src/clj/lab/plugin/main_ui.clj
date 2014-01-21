@@ -206,9 +206,12 @@ generation."
         node-group  (and incremental (gensym "group-"))
         lang        (doc/lang @doc)
         styles      (:styles lang)
-        parse-tree  (lang/parse-tree @doc node-group)]
+        parse-tree  (lang/parse-tree @doc node-group)
+        old-text    (doc/text editor)]
     (let [tokens (lang/tokens parse-tree node-group)]
-      (ui/action (ui/apply-style editor tokens styles))))
+      (ui/action
+          (when (= (doc/text editor) old-text)
+            (ui/apply-style editor tokens styles)))))
   editor)
 
 (defn highlight-by-id
@@ -227,10 +230,11 @@ and signals the highlighting process."
           editor   (ui/find @ui (ui/selector# id))
           channel  (:chan (ui/attr editor :stuff))
           doc      (ui/attr editor :doc)]
-      (when (and editor (not (:locked @doc)))
-        (case type
-          :insert (swap! doc doc/insert offset text)
-          :remove (swap! doc doc/delete offset (+ offset length)))
+      (when editor 
+        (when (not (:read-only @doc))
+          (case type
+            :insert (swap! doc doc/insert offset text)
+            :remove (swap! doc doc/delete offset (+ offset length))))
         (async/put! channel [app id])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -355,11 +359,11 @@ to the UI's main menu."
         doc    (ui/attr editor :doc)
         hist   (doc/history @doc)]
     (swap! doc f)
-    (swap! doc assoc :locked true)
+    ;; TODO: Fix this abominable scheme for undo/redo
+    (swap! doc assoc :read-only true)
     (let [[editor hist] (f editor hist)]
       (ui/update! ui (ui/selector# id) (constantly editor)))
-    (swap! doc dissoc :locked)
-    (highlight editor)))
+    (swap! doc dissoc :read-only)))
 
 (defn redo! [app e]
   (undo-redo! app e doc/redo))
