@@ -146,16 +146,17 @@ generation that used the group-id identifier provided."
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Definitions
 
-(defn offset [node]
-  (loop [node node
-         offset 0]
-    (if-not node
-      offset
-      (let [x  (zip/node node)]
-        (recur (zip/prev node)
-               (if (string? x)
-                 (+ offset (.length x))
-                 offset))))))
+(defn- node-length [node]
+  (if (string? node)
+    (.length node)
+    (:length node)))
+
+(defn offset [loc]
+  (loop [loc loc, n 0]
+    (if-not loc
+      n
+      (recur (zip/up loc)
+             (apply + n (map node-length (zip/lefts loc)))))))
 
 (defn definitions [lang root]
   (let [{:keys [def? node->def]}  lang
