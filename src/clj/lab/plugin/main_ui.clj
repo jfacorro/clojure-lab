@@ -196,11 +196,13 @@ wins. Returns a channel that takes the input events."
     c))
 
 (defn highlight
-  "Takes the app atom, the id for the current text 
-editor control and generates the parse tree. It then
-applies all the styles found in the document's language
-to the new tokens identified in the last parse tree
-generation."
+  "Takes the editor component and an optional argument
+that indicates if the highlight should be incremental
+or not.
+
+If it's incremental only the highlight modified since the
+last parse tree generation are update, otherwise all tokens
+are applied their highlight."
   [editor & [incremental]]
   (let [doc         (ui/attr editor :doc)
         node-group  (and incremental (gensym "group-"))
@@ -210,15 +212,12 @@ generation."
         old-text    (doc/text editor)]
     (let [tokens (lang/tokens parse-tree node-group)]
       (ui/action
+          ;; Before applying the styles check that the
+          ;; text is still the same, otherwise some tokens
+          ;; get messed up.
           (when (= (doc/text editor) old-text)
             (ui/apply-style editor tokens styles)))))
   editor)
-
-(defn highlight-by-id
-  [app id]
-  (let [ui          (:ui @app)
-        editor      (ui/find @ui (ui/selector# id))]
-    (highlight editor true)))
 
 (defn text-editor-change
   "Handles changes in the control, updates the document
@@ -235,7 +234,7 @@ and signals the highlighting process."
           (case type
             :insert (swap! doc doc/insert offset text)
             :remove (swap! doc doc/delete offset (+ offset length))))
-        (async/put! channel [app id])))))
+        (async/put! channel [editor])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
@@ -282,7 +281,7 @@ to the UI's main menu."
 
 (defn- text-editor-create [app doc]
   (let [id     (ui/genid)
-        ch     (timeout-channel 100 #'highlight-by-id)
+        ch     (timeout-channel 100 #'highlight)
         editor (ui/init [:text-editor {:id        id
                                        :doc       doc
                                        :post-init ::text-editor-post-init
