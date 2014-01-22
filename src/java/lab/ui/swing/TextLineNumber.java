@@ -393,13 +393,19 @@ public class TextLineNumber extends JPanel
 	@Override
 	public void changedUpdate(DocumentEvent e)
 	{
-		documentChanged();
+		//documentChanged();
 	}
 
 	@Override
 	public void insertUpdate(DocumentEvent e)
 	{
-		documentChanged();
+		try {
+			// Check for change in lines only if a newline
+			// character is inserted.
+			String insertion = e.getDocument().getText(e.getOffset(), e.getLength());
+			if(insertion.contains("\n"))
+				documentChanged();
+		} catch (BadLocationException ex) { /* nothing to do */ }
 	}
 
 	@Override
