@@ -349,6 +349,26 @@ to the UI's main menu."
   app)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Toogle Line Numbers
+
+(defn- toggle-line-numbers
+  "Hides and shows the line number for the currently active editor."
+  [app e]
+  (let [ui     (:ui @app)
+        tab    (current-document-tab @ui)
+        editor (ui/find tab :text-editor)]
+    (when (and tab editor)
+      (let [scroll       (ui/find tab :scroll)
+            id           (ui/attr scroll :id)
+            line-number  (ui/attr scroll :margin-control)]
+        (if line-number
+          (ui/update! ui (ui/selector# id) ui/attr :margin-control nil)
+          (as-> [:line-number {:source editor}] line-number
+            (ui/init line-number)
+            (ui/apply-stylesheet line-number (:styles @app))
+            (ui/update! ui (ui/selector# id) ui/attr :margin-control line-number)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undo/Redo
 
 (defn undo-redo! [app e f]
@@ -416,7 +436,10 @@ inserting a fixed first parameter."
               {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}
               {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
               {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
+
               {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
+              {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
+
               {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
               {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
 

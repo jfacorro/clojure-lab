@@ -41,6 +41,17 @@
   ([^JTextPane txt ^SimpleAttributeSet stl]
     (.setCharacterAttributes txt stl true)))
 
+(extend-type JTextArea
+  TextEditor
+  (apply-style [this regions styles]
+    (throw (Exception. "Should try to add style to a :text-area.")))
+  (caret-position
+    ([this]
+      (.getCaretPosition this))
+    ([this position]
+      (.setCaretPosition this position))))
+
+
 (extend-type JTextPane
   TextEditor
   (apply-style

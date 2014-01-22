@@ -191,6 +191,15 @@ as the abstraction of its implementation."
   (reduce p/remove c (p/children c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Abstract protocol implementation for nil
+
+(extend-type nil
+  p/Abstract
+  (impl
+    ([this] nil)
+    ([this x] nil)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Record for creating non-native UI event.
 
 (defrecord UIEvent [source event]
