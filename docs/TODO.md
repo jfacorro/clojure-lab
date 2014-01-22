@@ -7,23 +7,17 @@ TODO
   
     - Code Editor (or use RSyntaxTextArea and adapt it):
       - Indent code.
-      - Line numbers (show/hide).
       - Comment / Uncomment lines.
-      - Balance delimiters: ( \[ {
       - Mark corresponding delimiter.
+
+   - Rainbow parens
+   - Paredit
 
     - Clojure Syntax highlighting
       - Fix the definition of maps since a map with comments inside is parsed wrong.
 
     - Menu
       - Define a way to specify the order of the menu items.
-
-    - Modify parsley in order to be able to find node index but keeping log(n).
-    - Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
-
-  - Model
-    - Implement Project.
-    - Implement Environment.
     
   - App (Control)
     - Establish the way key bindings are defined.
@@ -54,12 +48,19 @@ Done
         - Incremental.
         - Strings.
         - Comments.
+      - Line numbers (show/hide).
+      - Balance delimiters: ( \[ {
 
     - File Explorer
       - Load directories lazily
 
     - Unify protocol Text (there's one in buffer and another in UI).
       - So that text operations are defined in a single protocol.
+
+    - Parsley
+      - Modify parsley in order to be able to find node index but keeping log(n).
+      - Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
+        - Didn't modify parsley but improved the way in which the tokens are searched incrementally.
 
   - Model
     - Complete Document
