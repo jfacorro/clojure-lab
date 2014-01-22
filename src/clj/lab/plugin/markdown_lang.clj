@@ -1,9 +1,24 @@
 (ns lab.plugin.markdown-lang
   "Markdown language specification."
-  (:require [lab.core :as lab]
+  (:require [clojure.zip :as zip]
+            [lab.core :as lab]
             [lab.core [plugin :as plugin]
                       [lang :as lang]]
             [lab.model.document :as doc]))
+
+(defn loc->def [loc]
+  {:offset (lang/offset loc)
+   :name (-> loc zip/down zip/node)})
+
+(defn defs [root]
+  (let [loc (lang/code-zip root)]
+    (loop [loc (zip/down loc), defs []]
+      (if (nil? loc)
+        defs
+        (recur (zip/right loc)
+               (if (= :title (-> loc zip/node :tag))
+                 (conj defs (loc->def loc))
+                 defs))))))
 
 (def grammar [:expr- #{:title :list :blockquote 
                        :paragraph :element}
@@ -47,6 +62,7 @@
               :space :whitespace*
               :make-node lang/make-node}
    :grammar  grammar
+   :definitions defs
    :rank     (partial lang/file-extension? "md")
    :styles   styles})
 
