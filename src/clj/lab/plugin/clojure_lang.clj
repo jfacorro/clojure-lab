@@ -16,7 +16,8 @@
   (->> (the-ns 'clojure.core) ns-interns keys (map str) set))
 
 (def grammar [:expr- #{:number :symbol :keyword :list :string :vector :set :map :regex
-                       :comment :meta :fn :reader-var :deref :quote :syntax-quote :unquote :char}
+                       :comment :meta :fn :reader-var :deref :char
+                       :quote :syntax-quote :unquote :unquote-splice}
               :symbol #"(?<!0x|0|0x[A-Fa-f\d]{42})[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_#]*"
               :keyword #"::?#?[\w-_*+\?/\.!>]+"
               :whitespace #"[ \t\r\n,]+"
@@ -29,7 +30,7 @@
               :char #"\\."
               :quote ["'" :expr]
               :syntax-quote ["`" :expr]
-              :unquote [#"~" :expr]
+              :unquote [#"~(?!@)" :expr]
               :unquote-splice ["~@" :expr]
               :regex #"#\"([^\"\\]*|(\\.))*\""
               :string #"(?s)(?<!#)\".*?(?<!\\)\""
@@ -37,7 +38,7 @@
               :number #"(0x[\dA-Fa-f]+|\d(?!x)\d*\.?\d*[MN]?)"
               :reader-var ["#'" :symbol]
               :comment #"(#!|;).*[^\n\r]*"
-              :deref [#"(?<!~)@" :expr]
+              :deref ["@" :expr]
               :fn ["#(" :expr* ")"]])
 
 (def styles-mapping
