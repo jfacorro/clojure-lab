@@ -83,7 +83,7 @@ parse tree with the modified nodes marked with node-group."
   [node]
   (or (and (map? node) (node :tag)) :default))
 
-(defn- code-zip
+(defn code-zip
   "Builds a zipper using the root node in the document
 under the :parse-tree key."
   [root]
@@ -165,21 +165,3 @@ only the tokens from the last tree generation are returned."
 generation that used the group-id identifier provided."
   [root node-group]
   (tokens* (code-zip root) node-group))
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;; Definitions
-
-(defn definitions
-  "Returns a sequence of definitions using the def? and node->def
-functions specified in the language."
-  [lang root]
-  (let [{:keys [def? node->def]}  lang
-        node (zip/down (code-zip root))]
-    (when (and def? node->def)
-      (loop [node node, defs []]
-        (if-not node
-          defs
-          (recur (zip/right node)
-                 (if (def? node)
-                   (conj defs (node->def node))
-                   defs)))))))

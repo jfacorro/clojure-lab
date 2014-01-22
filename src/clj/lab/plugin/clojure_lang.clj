@@ -82,16 +82,22 @@ check if its one of the registered symbols."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Outline
 
-(defn- def? [node]
-  (and (-> node zip/node :tag (= :list))
-       (-> node zip/down zip/right zip/node 
+(defn- def? [loc]
+  (and (-> loc zip/node :tag (= :list))
+       (-> loc zip/down zip/right zip/node
          (as-> x
            (and (= (:tag x) :symbol)
                 (.startsWith (-> x :content first) "def"))))))
 
-(defn node->def [node]
-  {:offset (lang/offset node)
-   :name (-> node zip/down zip/right zip/right zip/right zip/down zip/node)})
+(defn- find-symbol-to-right [loc]
+  (loop [loc loc]
+    (if (= :symbol (:tag (zip/node loc)))
+      (zip/down loc)
+      (recur (zip/right loc)))))
+
+(defn- loc->def [loc]
+  {:offset (lang/offset loc)
+   :name (-> loc zip/down zip/right zip/right find-symbol-to-right zip/node)})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap commands
@@ -116,6 +122,22 @@ check if its one of the registered symbols."
     (ui/caret-position editor (inc offset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Find definitions
+
+(defn definitions
+  "Returns a sequence of definitions using the def? and 
+loc->def functions specified in the language."
+  [root]
+  (let [loc (zip/down (lang/code-zip root))]
+    (loop [loc loc, defs []]
+      (if-not loc
+        defs
+        (recur (zip/right loc)
+               (if (def? loc)
+                 (conj defs (loc->def loc))
+                 defs))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language definition
 
 (def clojure
@@ -128,8 +150,7 @@ check if its one of the registered symbols."
      :grammar   grammar
      :rank      (partial lang/file-extension? "clj")
      :styles    styles
-     :def?      def?
-     :node->def node->def
+     :definitions definitions
      :keymap    (km/keymap 'lab.plugin.clojure-lang :lang
                   {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
                   {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
