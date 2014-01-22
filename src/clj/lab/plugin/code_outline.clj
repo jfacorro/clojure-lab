@@ -1,4 +1,4 @@
-(ns lab.plugin.clojure-outline
+(ns lab.plugin.code-outline
   (:require [clojure.zip :as zip]
             [lab.core :as lab]
             [lab.core.lang :as lang]
@@ -85,6 +85,6 @@ and content"
               :global
               {:category "View" :name "Outline" :fn #'create-outline-tree! :keystroke "alt O"})])
 
-(plugin/defplugin lab.plugin.clojure-outline
+(plugin/defplugin lab.plugin.code-outline
   :hooks hooks
   :keymaps keymaps)

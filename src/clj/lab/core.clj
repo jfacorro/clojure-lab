@@ -21,9 +21,9 @@
    :core-plugins  '[lab.plugin.main-ui
                     lab.plugin.notifier]
    :plugins       '[lab.plugin.file-explorer
+                    lab.plugin.code-outline
                     lab.plugin.markdown-lang
-                    lab.plugin.clojure-lang
-                    lab.plugin.clojure-outline]
+                    lab.plugin.clojure-lang]
    :plugins-dir   "plugins"
    :current-dir   "."})
 
