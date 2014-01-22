@@ -12,16 +12,16 @@ TODO
       - Balance delimiters: ( \[ {
       - Mark corresponding delimiter.
 
+    - Clojure Syntax highlighting
+      - Fix the definition of maps since a map with comments inside is parsed wrong.
+
     - Menu
       - Define a way to specify the order of the menu items.
 
     - Modify parsley in order to be able to find node index but keeping log(n).
-	- Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
+    - Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
 
   - Model
-    - Complete Document
-      - Keep track of changes:
-        - Allow incremental view updates.
     - Implement Project.
     - Implement Environment.
     
@@ -63,7 +63,9 @@ Done
 
   - Model
     - Complete Document
-      - Keep track of changes (implement history or some scheme where changes are registered and kept in a clojure ordered data structure)
+      - Keep track of changes (implement history or some scheme where changes are registered and kept in a clojure ordered data
+ structure)
+        - Allow incremental view updates.
         - Undo/Redo
 
   - App

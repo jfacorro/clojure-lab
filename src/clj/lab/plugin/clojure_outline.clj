@@ -9,7 +9,9 @@
             [lab.model.document :as doc]
             [lab.plugin.main-ui :as main-ui]))
 
-(defn- node-tree-click
+(defn- go-to-definition
+  "Handles the click in a tree node positioning the
+caret in the definition associated with the tree node."
   [app e]
   (when (= 2 (:click-count e))
     (let [ui     (:ui @app)
@@ -23,12 +25,12 @@
             (ui/caret-position (:offset info))
             ui/focus))))))
 
-(defn- def-tree-node
+(defn- def->tree-node
   [app def-info]
   [:tree-node {:leaf true
                :item (:name def-info)
                :info def-info
-               :on-click #'node-tree-click}])
+               :on-click #'go-to-definition}])
 
 (defn- update-outline-tree!
   "Updates the outline using the document provided
@@ -45,7 +47,7 @@ or the current document if non is specified."
                 parse-tree (lang/parse-tree @doc nil)
                 def-infos  (lang/definitions lang parse-tree)
                 root       (into [:tree-node {:item (doc/name @doc)}]
-                             (mapv (partial #'def-tree-node app) def-infos))]
+                             (map (partial #'def->tree-node app) def-infos))]
             (ui/action
               (ui/update! ui :#outline-tree
                 #(-> % ui/remove-all (ui/add root))))))))))
@@ -59,13 +61,15 @@ and content"
     (future (#'update-outline-tree! app doc))
     app))
 
-(defn- outline-tree [app]
+(defn- outline-tree
+  "Creates a new tab that contains a tree with id :#outline-tree."
+  [app]
   (->
     (tplts/tab app)
     (ui/update :label ui/attr :text "Outline")
     (ui/add [:scroll [:tree {:id "outline-tree"}]])))
 
-(defn- create-outline-tree! [app & _]
+(defn- create-outline-tree! [app _]
   (let [ui      (:ui @app)
         outline (ui/find @ui :#outline-tree)]
     (when-not outline
