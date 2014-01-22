@@ -281,7 +281,7 @@ to the UI's main menu."
 
 (defn- text-editor-create [app doc]
   (let [id     (ui/genid)
-        ch     (timeout-channel 100 #'highlight)
+        ch     (timeout-channel 100 #(#'highlight % true))
         editor (ui/init [:text-editor {:id        id
                                        :doc       doc
                                        :post-init ::text-editor-post-init

@@ -47,8 +47,11 @@ check if its one of the registered symbols."
   [tag content]
   {:style tag :group *node-group*})
 
+(defn length [content]
+  (reduce #(+ %1 (if (string? %2) (.length %2) (:length %2))) 0 content))
+
 (defn make-node [tag content]
-  (with-meta {:tag tag :content content}
+  (with-meta {:tag tag :length (length content) :content content}
              (node-meta tag content)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,29 +89,53 @@ under the :parse-tree key."
   [root]
   (zip/zipper map? :content make-node root))
 
+(def ^:private ignore? #{:whitespace})
+
+(defn- next-no-down
+  "Finds the next zipper location that's not a children.
+This is used by tokens* as part of a performance enhancement,
+which avoids visiting children of a node that is not in the
+generated node-group.
+
+Source code taken from clojure.zip/next function."
+  [loc]
+    (if (zip/end? loc)
+      loc
+      (or 
+       (zip/right loc)
+       (loop [p loc]
+         (if (zip/up p)
+           (or (zip/right (zip/up p))
+               (recur (zip/up p)))
+           [(zip/node p) :end])))))
+
 (defn- tokens*
   "Gets the limits for each string in the tree, ignoring
 the limits for the nodes with the tag specified by ignore?.
 If node-group is false all tokens are returned, otherwise
 only the tokens from the last tree generation are returned."
   [loc node-group]
-  (loop [loc loc, offset 0, limits (transient []), ignore? #{:whitespace}]
-    (let [nxt  (zip/next loc)
-          node (zip/node nxt)]
+  (loop [loc (zip/next loc), offset 0, limits (transient [])]
+    (let [node (zip/node loc)]
       (cond (string? node)
               (let [length     (.length ^String node)
                     new-offset (+ offset length)
-                    parent     (-> nxt zip/up zip/node)
+                    parent     (-> loc zip/up zip/node)
                     tag        (tag parent)
                     {:keys [style group]} (meta parent)
-                    limits     (if (and node-group (or (ignore? tag) (not (= group node-group))))
+                    limits     (if (and node-group
+                                        (or (ignore? tag) (not= group node-group)))
                                  limits
                                  (conj! limits [offset length style]))]
-                (recur nxt new-offset limits ignore?))
-            (zip/end? nxt)
+                (recur (zip/next loc) new-offset limits))
+            (zip/end? loc)
               (persistent! limits)
-            :else 
-              (recur nxt offset limits ignore?)))))
+            :else
+              (if (or (nil? node)
+                      (nil? node-group)
+                      (and node-group (= (-> node meta :group) node-group)))
+                (recur (zip/next loc) offset limits)
+                (recur (next-no-down loc) (+ offset (:length node)) limits))))))
 
 (defn tokens
   "Returns the tokens identified incrementally in the parse-tree 
