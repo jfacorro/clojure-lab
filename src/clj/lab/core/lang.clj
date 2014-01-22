@@ -47,11 +47,11 @@ check if its one of the registered symbols."
   [tag content]
   {:style tag :group *node-group*})
 
-(defn length [content]
+(defn calculate-length [content]
   (reduce #(+ %1 (if (string? %2) (.length %2) (:length %2))) 0 content))
 
 (defn make-node [tag content]
-  (with-meta {:tag tag :length (length content) :content content}
+  (with-meta {:tag tag :length (calculate-length content) :content content}
              (node-meta tag content)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,6 +89,29 @@ under the :parse-tree key."
   [root]
   (zip/zipper map? :content make-node root))
 
+(defn- node-length
+  "Returns the length of a node in the parse tree."
+  [node]
+  (cond (nil? node) 
+          0
+        (string? node)
+          (.length ^String node)
+        :else
+          (:length node)))
+
+(defn offset
+  "Finds the offset of the given zipper location
+by going right and up adding the lenghts of each
+node in the way to the root."
+  [loc]
+  (loop [loc loc, n 0]
+    (if-not loc
+      n
+      (recur (zip/up loc)
+             (->> (zip/lefts loc)
+               (map node-length)
+               (apply + n))))))
+
 (def ^:private ignore? #{:whitespace})
 
 (defn- next-no-down
@@ -116,10 +139,10 @@ If node-group is false all tokens are returned, otherwise
 only the tokens from the last tree generation are returned."
   [loc node-group]
   (loop [loc (zip/next loc), offset 0, limits (transient [])]
-    (let [node (zip/node loc)]
+    (let [node   (zip/node loc)
+          length (node-length node)]
       (cond (string? node)
-              (let [length     (.length ^String node)
-                    new-offset (+ offset length)
+              (let [new-offset (+ offset length)
                     parent     (-> loc zip/up zip/node)
                     tag        (tag parent)
                     {:keys [style group]} (meta parent)
@@ -135,7 +158,7 @@ only the tokens from the last tree generation are returned."
                       (nil? node-group)
                       (and node-group (= (-> node meta :group) node-group)))
                 (recur (zip/next loc) offset limits)
-                (recur (next-no-down loc) (+ offset (:length node)) limits))))))
+                (recur (next-no-down loc) (+ offset length) limits))))))
 
 (defn tokens
   "Returns the tokens identified incrementally in the parse-tree 
@@ -146,19 +169,10 @@ generation that used the group-id identifier provided."
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;; Definitions
 
-(defn- node-length [node]
-  (if (string? node)
-    (.length node)
-    (:length node)))
-
-(defn offset [loc]
-  (loop [loc loc, n 0]
-    (if-not loc
-      n
-      (recur (zip/up loc)
-             (apply + n (map node-length (zip/lefts loc)))))))
-
-(defn definitions [lang root]
+(defn definitions
+  "Returns a sequence of definitions using the def? and node->def
+functions specified in the language."
+  [lang root]
   (let [{:keys [def? node->def]}  lang
         node (zip/down (code-zip root))]
     (when (and def? node->def)

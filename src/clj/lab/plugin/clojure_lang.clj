@@ -60,7 +60,7 @@ check if its one of the registered symbols."
    :group lang/*node-group*})
 
 (defn- make-node [tag content]
-  (with-meta {:tag tag :length (lang/length content) :content content}
+  (with-meta {:tag tag :length (lang/calculate-length content) :content content}
              (node-meta tag content)))
 
 (def styles
