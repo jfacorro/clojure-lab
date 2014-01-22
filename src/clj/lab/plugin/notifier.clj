@@ -27,7 +27,7 @@
                  (tplts/tab)
                  (ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none}
-                           [:text-area {:text (str sw) :read-only true :post-init #(ui/caret-position % 0)}]]))]
+                           [:text-area {:text (str sw) :read-only true :post-init #(ui/caret-position (:source %2) 0)}]]))]
     (ui/update! ui (ui/parent "bottom") ui/attr :divider-location 0.8)
     (ui/update! ui :#bottom ui/add tab)))
 
@@ -37,7 +37,7 @@
                   (uncaughtException [thread ex]
                     (try (#'show-error-info app ex)
                     (catch Exception new-ex
-                      (println "Exception handler threw an Exception :S")
+                      (println "Exception handler threw an Exception :S " new-ex)
                       (repl/pst ex))))
                   (handle [ex]
                     (#'show-error-info app ex)))
