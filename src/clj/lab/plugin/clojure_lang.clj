@@ -27,8 +27,7 @@
               :map ["{" :pair* "}"]
               :set ["#{" :expr* "}"]
               :pair- [:expr :expr]
-              :meta [#"#?\^" #{:keyword :map}]
-              :char #"\\."
+              :meta [#"#?\^" #{:keyword :map :symbol :string}]
               :quote ["'" :expr]
               :syntax-quote ["`" :expr]
               :unquote [#"~(?!@)" :expr]
