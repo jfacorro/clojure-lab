@@ -1,5 +1,6 @@
 TODO
 ====
+
   - UI
     - Key Bindings
       - Remove all defaults and replace them all?
@@ -30,8 +31,10 @@ TODO
       2. Detect updates form editor and impact in Document. /              one that works best, in (2) model and view can get out of sync.
       - (a) is the way to go:
         - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
-Done
+
+DONE
 ====
+
   - UI
     - Abstraction for events
       - Define available events for each component (alla seesaw)
