@@ -76,8 +76,8 @@ check if its one of the registered symbols."
   :number       {:color 0xFFFFFF}
   :comment      {:color 0x999988 :bold true}
   :default      {:color 0xFFFFFF}
-  :net.cgrand.parsley/unfinished  {:background 0xFF1111 :italic true}
-  :net.cgrand.parsley/unexpected  {:background 0xFF1111 :italic true}})
+  :net.cgrand.parsley/unfinished  {:color 0xFF1111 :italic true}
+  :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Outline

@@ -212,11 +212,11 @@ are applied their highlight."
         old-text    (doc/text editor)]
     (let [tokens (lang/tokens parse-tree node-group)]
       (ui/action
-          ;; Before applying the styles check that the
-          ;; text is still the same, otherwise some tokens
-          ;; get messed up.
-          (when (= (doc/text editor) old-text)
-            (ui/apply-style editor tokens styles)))))
+        ;; Before applying the styles check that the
+        ;; text is still the same, otherwise some tokens
+        ;; get messed up.
+        (when (= (doc/text editor) old-text)
+          (ui/apply-style editor tokens styles)))))
   editor)
 
 (defn text-editor-change

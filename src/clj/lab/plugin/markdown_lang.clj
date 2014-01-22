@@ -5,10 +5,13 @@
                       [lang :as lang]]
             [lab.model.document :as doc]))
 
-(def grammar [:expr- #{:title :strong :em :list :link
-                       :html-tag :code :blockquote}
+(def grammar [:expr- #{:title :list :blockquote 
+                       :paragraph :element}
+              :element-   #{:strong :em :link :html :code :text}
+              :text      #"([^\s<>#\-+=\*_\[`\d]|\d+(?!\d*\.))\S*"
+              :paragraph [#"(?<=\n)[^-#]" :element* "\n"]
               :title #{#"#{1,6}.+\n"
-                       #".+\n[-=][-=^ ]+\n"}
+                       #"[-=][-=^ ]*\n"}
               :strong #{#"\*\*(?<! ).+?(?! )\*\*"
                         #"__(?<! ).+?(?! )__"}
               :em #{#"(?<!\*)\*(?!\*)(?<! ).+?(?! )(?<!\*)\*(?!\*)"
@@ -17,7 +20,7 @@
               :link #{#"\[.+?\]\(.+?\)"
                       #"\[.+?\]\[.*?\]"
                       #" {0,3}\[.+?\]:[ \t]+.+"}
-              :html-tag #"(?s)</?[^ ][\w]+.*?/?>"
+              :html #"(?s)</?[^ ][\w]+.*?/?>"
               :code #{#"(?: {4} *|\t+)(?! |[-\+\*]|\d+\.)(?<![-\+\*]|\d+\.).*"
                       #"(?<!`)`(?!`).+?(?<!`)`(?!`)"
                       #"``.+?``"}
@@ -30,10 +33,12 @@
   :em {:color 0x00FFFF}
   :list {:color 0xFF6666 :bold true}
   :link {:color 0xFFE64D}
-  :html-tag {:color 0x64DCB3}
+  :html {:color 0x64DCB3}
   :code {:color 0x9566E5}
   :blockquote {:color 0xAAAAAA}
-  :default {:color 0xFFFFFF}})
+  :default {:color 0xFFFFFF}
+  :net.cgrand.parsley/unfinished  {:color 0xFF1111 :italic true}
+  :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})
 
 (def markdown
   {:name     "Markdown"
