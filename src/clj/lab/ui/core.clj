@@ -142,7 +142,17 @@ as the abstraction of its implementation."
 
   p/TextEditor
   (apply-style [this tokens styles]
-    (p/apply-style (p/impl this) tokens styles))
+    (p/apply-style (p/impl this) tokens styles)
+    this)
+  (apply-style [this start len style]
+    (p/apply-style (p/impl this) start len style)
+    this)
+
+  (add-highlight [this start end color]
+    (p/add-highlight (p/impl this) start end color))
+  (remove-highlight [this id]
+    (p/remove-highlight (p/impl this) id))
+
   (caret-position [this]
     (p/caret-position (p/impl this)))
   (caret-position [this position]
@@ -220,6 +230,8 @@ as the abstraction of its implementation."
 (def focus #'p/focus)
 
 (def apply-style #'p/apply-style)
+(def add-highlight #'p/add-highlight)
+(def remove-highlight #'p/remove-highlight)
 (def caret-position #'p/caret-position)
 
 (def selected #'p/selected)

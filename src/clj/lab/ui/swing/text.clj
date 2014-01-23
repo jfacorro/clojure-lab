@@ -31,20 +31,35 @@
     ([this position]
       (.setCaretPosition this position))))
 
+(def ^:private blank-document (DefaultStyledDocument.))
+
+(defn- apply-style [^JTextPane this f]
+  (let [doc    (.getDocument this)
+        pos    (.getCaretPosition this)
+        listeners (.getCaretListeners this)]
+    (.setDocument this blank-document)
+    (f doc)
+    (.setDocument this doc)
+    ;; Remove caret listeners before resetting the caret position
+    (doseq [x listeners] (.removeCaretListener this x))
+    (.setCaretPosition this pos)
+    (doseq [x listeners] (.addCaretListener this x))))
 
 (extend-type JTextPane
   TextEditor
   (apply-style
     ([this regions styles]
-      (let [styles (reduce-kv #(assoc %1 %2 (util/make-style %3)) styles styles)
-            doc    ^DefaultStyledDocument (.getDocument this)
-            blank  (DefaultStyledDocument.)
-            pos    (.getCaretPosition this)]
-        (.setDocument this blank)
-        (doseq [[start length tag] regions]
-          (.setCharacterAttributes doc start length (styles tag (:default styles)) true))
-        (.setDocument this doc)
-        (.setCaretPosition this pos))))
+      (let [styles (reduce-kv #(assoc %1 %2 (util/make-style %3)) styles styles)]
+        (apply-style this
+          #(doseq [[start length tag] regions]
+            (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag (:default styles)) true)))))
+    ([this start len style]
+      (apply-style this
+        #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true))))
+  (add-highlight [this start end color]
+    (.. this getHighlighter (addHighlight start end (util/highlighter color))))
+  (remove-highlight [this id]
+    (.. this getHighlighter (removeHighlight id)))
   (caret-position
     ([this]
       (.getCaretPosition this))

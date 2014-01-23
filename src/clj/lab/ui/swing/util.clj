@@ -5,7 +5,7 @@
             [clojure.java.io :as io])
   (:import [java.awt Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon]
-           [javax.swing.text StyleConstants SimpleAttributeSet]))
+           [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
 
 (def ^Toolkit toolkit (Toolkit/getDefaultToolkit))
 
@@ -175,3 +175,9 @@ is null, no window is set and the current one (if any) shows fullscreen
 no more."
   [^Window window]
   (.setFullScreenWindow device window))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; Highlighter
+
+(defn highlighter [c]
+  (DefaultHighlighter$DefaultHighlightPainter. (color c)))

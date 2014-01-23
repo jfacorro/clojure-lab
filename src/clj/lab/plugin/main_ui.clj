@@ -253,17 +253,11 @@ to the UI's main menu."
   (f app keymap))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Controls
+;;; Text Editor 
 
-(defn- text-editor-post-init [app e]
-  (let [c   (:source e)
-        doc (ui/attr c :doc)]
-    (-> c
-      (ui/attr :text (doc/text @doc))
-      highlight
-      (ui/caret-position 0))))
+;; Key handle
 
-(defn handle-key [app e]
+(defn- handle-key [app e]
   (let [ui   (:ui @app)
         editor (:source e)
         doc  (ui/attr editor :doc)
@@ -279,21 +273,75 @@ to the UI's main menu."
       (when (= :pressed (:event e))
         (ui/handle-event (:fn cmd) e)))))
 
+;; Delimiter matching
+
+(defn- matching-delimiter [app e]
+  (let [ch (-> e :source (ui/attr :stuff) :match-chan)]
+    (async/put! ch [app e])))
+
+(defn- check-for-delimiters [app e highlights]
+  (let [editor    (:source e)
+        lang      (-> editor (ui/attr :doc) deref doc/lang)
+        txt       (doc/text editor)
+        delimiters {\[ {:closing \]}
+                    \] {:opening \[}
+                    \( {:closing \)}
+                    \) {:opening \(}}
+        pos       (:position e)
+        pos-next  (when (< pos (count txt)) pos)
+        pos-prev  (when (pos? pos) (dec pos))
+        [pos ch]  (->> [pos-next pos-prev]
+                    (map (juxt identity (partial get txt)))
+                    (filter (comp delimiters second))
+                    first)]
+  (ui/action
+    (doseq [x @highlights]
+      (swap! highlights disj)
+      (ui/remove-highlight editor x))
+    (when ch
+      (swap! highlights into (mapv #(ui/add-highlight editor % (inc %) 0x888888) [pos]))))))
+
+(defn- find-matching-delimiter []
+  (let [ch         (async/chan)
+        highlights (atom #{})]
+    (async/go-loop []
+      (let [[app e] (async/<! ch)]
+        (when e
+          (check-for-delimiters app e highlights)
+          (recur))))
+    ch))
+
+;; Text editor post init
+
+(defn- text-editor-post-init [app e]
+  (let [c   (:source e)
+        doc (ui/attr c :doc)]
+    (-> c
+      (ui/attr :text (doc/text @doc))
+      highlight
+      (ui/caret-position 0))))
+
+;; Text editor creation
+
 (defn- text-editor-create [app doc]
   (let [id     (ui/genid)
-        ch     (timeout-channel 100 #(#'highlight % true))
+        hl-ch  (timeout-channel 100 #(#'highlight % true))
+        mp-ch  (find-matching-delimiter)
         editor (ui/init [:text-editor {:id        id
                                        :doc       doc
                                        :post-init ::text-editor-post-init
                                        :on-key    ::handle-key
+                                       :on-caret  ::matching-delimiter
                                        :on-change ::text-editor-change
-                                       :stuff     {:chan ch}}])]
+                                       :stuff     {:chan hl-ch :match-chan mp-ch}}])]
     [:scroll {:vertical-increment 16
               :border :none
               :margin-control [:line-number {:source editor}]}
       [:panel {:border :none
                :layout :border}
         editor]]))
+
+;; Document tab creation
 
 (defn- document-tab
   "Creates a tab with an editor."
@@ -394,7 +442,8 @@ to the UI's main menu."
 ;;; Event handler
 
 (defn keyword->fn [k]
-  (intern (symbol (namespace k)) (symbol (name k))))
+  (or (-> k str (subs 1) symbol resolve)
+      (throw (Exception. (str "The keyword " k " does not resolve to a var.")))))
 
 (defn event-handler
   "Replaces the UI's default event-handler implementation, 
