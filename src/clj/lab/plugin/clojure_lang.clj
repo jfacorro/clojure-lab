@@ -24,7 +24,7 @@
               :whitespace #"[ \t\r\n,]+"
               :list [#"(?<!\\)\(" :expr* #"(?<!\\)\)"]
               :vector ["[" :expr* "]"]
-              :map ["{" :pair* "}"]
+              :map ["{" :expr* "}"]
               :set ["#{" :expr* "}"]
               :pair- [:expr :expr]
               :meta [#"#?\^" #{:keyword :map :symbol :string}]
