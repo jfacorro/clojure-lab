@@ -138,6 +138,29 @@ loc->def functions specified in the language."
                  defs))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Delimiters matching
+
+         #_[pos-next  (when (< pos (count txt)) pos)
+            pos-prev  (when (pos? pos) (dec pos))
+            [pos ch]  (->> [pos-next pos-prev]
+                        (map (juxt identity (partial get txt)))
+                        (filter (comp delimiters second))
+                        first)]
+
+(def delimiter? (set "()[]{}"))
+
+(defn- delimiter-match
+  "Checks that the character in offset is a delimiter
+and returns the offset of its matching delimiter."
+  [doc offset]
+  (let [root      (-> doc lang/parse-tree lang/code-zip)
+        [loc pos] (lang/location root offset)
+        ch        (when loc
+                    (-> (zip/node loc) (get (- offset pos))))]
+    (when (delimiter? ch)
+      [offset])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language definition
 
 (def clojure
@@ -150,7 +173,8 @@ loc->def functions specified in the language."
      :grammar   grammar
      :rank      (partial lang/file-extension? "clj")
      :styles    styles
-     :definitions definitions
+     :definitions #'definitions
+     :delimiter-match #'delimiter-match
      :keymap    (km/keymap 'lab.plugin.clojure-lang :lang
                   {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
                   {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}

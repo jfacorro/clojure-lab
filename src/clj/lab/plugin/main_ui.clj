@@ -281,25 +281,17 @@ to the UI's main menu."
 
 (defn- check-for-delimiters [app e highlights]
   (let [editor    (:source e)
-        lang      (-> editor (ui/attr :doc) deref doc/lang)
-        txt       (doc/text editor)
-        delimiters {\[ {:closing \]}
-                    \] {:opening \[}
-                    \( {:closing \)}
-                    \) {:opening \(}}
+        doc       (ui/attr editor :doc)
+        lang      (doc/lang @doc)
         pos       (:position e)
-        pos-next  (when (< pos (count txt)) pos)
-        pos-prev  (when (pos? pos) (dec pos))
-        [pos ch]  (->> [pos-next pos-prev]
-                    (map (juxt identity (partial get txt)))
-                    (filter (comp delimiters second))
-                    first)]
-  (ui/action
-    (doseq [x @highlights]
-      (swap! highlights disj)
-      (ui/remove-highlight editor x))
-    (when ch
-      (swap! highlights into (mapv #(ui/add-highlight editor % (inc %) 0x888888) [pos]))))))
+        delimiter-match (:delimiter-match lang)
+        delimiters (and delimiter-match (delimiter-match @doc pos))]
+    (ui/action
+      (doseq [x @highlights]
+        (swap! highlights disj)
+        (ui/remove-highlight editor x))
+      (when delimiters
+        (swap! highlights into (mapv #(ui/add-highlight editor % (inc %) 0x888888) delimiters))))))
 
 (defn- find-matching-delimiter []
   (let [ch         (async/chan)

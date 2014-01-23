@@ -74,9 +74,11 @@ check if its one of the registered symbols."
 (defn parse-tree
   "Parses the incremental buffer of a Document and returns the
 parse tree with the modified nodes marked with node-group."
-  [doc node-group]
-  (binding [*node-group* node-group]
-    (p/parse-tree doc)))
+  ([doc]
+    (parse-tree doc nil))
+  ([doc node-group]
+    (binding [*node-group* node-group]
+      (p/parse-tree doc))))
 
 (defn- tag
   "If the node is a map returns its :tag, otherwise the keyword :default."
@@ -111,6 +113,24 @@ node in the way to the root."
              (->> (zip/lefts loc)
                (map node-length)
                (apply + n))))))
+
+(defn location
+  "Finds the location that contains the offset,
+returns a vector with the location and the 
+offset of the begging of it."
+  [root offset]
+  (loop [loc (zip/down root), pos 0]
+    (when (and loc (not (zip/end? loc)))
+      (let [node    (zip/node loc)
+            len     (node-length node)
+            new-pos (+ pos len)]
+        (if (and (string? node) (<= pos offset))
+          (if (< offset new-pos)
+            [loc pos]
+            (recur (zip/next loc) new-pos))
+          (if (< new-pos offset)
+            (recur (zip/right loc) new-pos)
+            (recur (zip/down loc) pos)))))))
 
 (def ^:private ignore? #{:whitespace})
 
