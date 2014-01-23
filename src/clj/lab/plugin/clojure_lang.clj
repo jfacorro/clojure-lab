@@ -140,25 +140,34 @@ loc->def functions specified in the language."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Delimiters matching
 
-         #_[pos-next  (when (< pos (count txt)) pos)
-            pos-prev  (when (pos? pos) (dec pos))
-            [pos ch]  (->> [pos-next pos-prev]
-                        (map (juxt identity (partial get txt)))
-                        (filter (comp delimiters second))
-                        first)]
+(def ^:private delimiter? (set "()[]{}"))
 
-(def delimiter? (set "()[]{}"))
+(def ^:private closing? (set ")]}"))
+
+(defn- char-at [[offset [loc pos]]]
+  (when loc
+    (-> (zip/node loc) (get (- offset pos)))))
+
+(defn- find-matching-delimiter [loc closing?]
+  (if closing?
+    (-> loc zip/leftmost lang/offset)
+    (-> loc zip/rightmost lang/offset)))
 
 (defn- delimiter-match
   "Checks that the character in offset is a delimiter
 and returns the offset of its matching delimiter."
   [doc offset]
-  (let [root      (-> doc lang/parse-tree lang/code-zip)
-        [loc pos] (lang/location root offset)
-        ch        (when loc
-                    (-> (zip/node loc) (get (- offset pos))))]
-    (when (delimiter? ch)
-      [offset])))
+  (let [root        (-> doc lang/parse-tree lang/code-zip)
+        prev-offset (when (pos? offset) (dec offset))
+        next-offset (when (< offset (model/length doc)) offset)
+        [offset [loc pos]] (->> [next-offset prev-offset]
+                             (filter identity)
+                             (map (juxt identity (partial lang/location root)))
+                             (filter (comp delimiter? char-at))
+                             first)
+        delim       (when offset (char-at [offset [loc pos]]))]
+    (when delim
+      [offset (find-matching-delimiter loc (closing? delim))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language definition
