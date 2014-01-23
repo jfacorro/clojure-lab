@@ -3,6 +3,7 @@
             [lab.ui.core :as ui]
             lab.util)
   (:import [javax.swing UIManager JComponent AbstractAction]
+           [javax.swing.event DocumentEvent DocumentEvent$EventType CaretEvent]
            [java.awt Dimension]
            [java.awt.event InputEvent
                            KeyEvent
@@ -183,9 +184,48 @@ TODO: provide a map with merging functions."
 
 (def focus-event
   {:to-map (fn [^FocusEvent this]
-             {:previous  (.getOppositeComponent this)
+             {:event     :focus
+              :previous  (.getOppositeComponent this)
               :temporary (.isTemporary this)})})
 
 (extend FocusEvent
   p/Event
   (build-merged-impl event-object focus-event))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Caret Event
+
+(def caret-event
+  {:to-map (fn [^CaretEvent this]
+             {:event     :caret
+              :position  (.getDot this)
+              :end       (.getMark this)})})
+
+(extend CaretEvent
+  p/Event
+  (build-merged-impl event-object caret-event))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Document Event
+
+(def ^:private document-event-types
+  {DocumentEvent$EventType/INSERT  :insert
+   DocumentEvent$EventType/REMOVE  :remove
+   DocumentEvent$EventType/CHANGE  :change})
+
+(extend-protocol p/Event
+  DocumentEvent
+  (to-map [this]
+    (let [offset     (.getOffset this)
+          length     (.getLength this)
+          doc        (.getDocument this)
+          editor     (.getProperty doc :component)
+          event-type (document-event-types (.getType this))
+          text       (when (not= event-type :remove)
+                       (.getText doc offset length))]
+      {:source   (p/abstract editor)
+       :offset   offset
+       :length   length
+       :text     text
+       :type     event-type
+       :document doc})))
