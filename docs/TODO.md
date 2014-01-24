@@ -8,12 +8,14 @@
     - Code Editor (or use RSyntaxTextArea and adapt it):
       - Indent code.
       - Comment / Uncomment lines.
+      - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
+      - Listen for changes in opened files.
 
-   - Rainbow parens
-   - Paredit
+    - File Explorer
+      - Listen for changes in current dir structure.
 
-    - Clojure Syntax highlighting
-      - Fix the definition of maps since a map with comments inside is parsed wrong.
+    - Rainbow parens
+    - Paredit
 
     - Menu
       - Define a way to specify the order of the menu items.
