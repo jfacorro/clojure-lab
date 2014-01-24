@@ -37,12 +37,13 @@
   (let [doc    (.getDocument this)
         pos    (.getCaretPosition this)
         listeners (.getCaretListeners this)]
+    ;; Remove caret listeners before assigning a blank document since caret is set to 0.
+    (doseq [x listeners] (.removeCaretListener this x))
     (.setDocument this blank-document)
     (f doc)
     (.setDocument this doc)
-    ;; Remove caret listeners before resetting the caret position
-    (doseq [x listeners] (.removeCaretListener this x))
     (.setCaretPosition this pos)
+    ;; Add caret listeners after resetting the caret position
     (doseq [x listeners] (.addCaretListener this x))))
 
 (extend-type JTextPane

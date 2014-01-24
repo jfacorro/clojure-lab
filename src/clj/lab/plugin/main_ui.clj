@@ -208,15 +208,19 @@ are applied their highlight."
         node-group  (and incremental (gensym "group-"))
         lang        (doc/lang @doc)
         styles      (:styles lang)
+        old-text    (doc/text editor)
         parse-tree  (lang/parse-tree @doc node-group)
-        old-text    (doc/text editor)]
-    (let [tokens (lang/tokens parse-tree node-group)]
-      (ui/action
-        ;; Before applying the styles check that the
-        ;; text is still the same, otherwise some tokens
-        ;; get messed up.
-        (when (= (doc/text editor) old-text)
-          (ui/apply-style editor tokens styles)))))
+        tokens      (lang/tokens parse-tree node-group)
+        ;; If there are no tokens for this group then take the group from the root node.
+        tokens      (if (empty? tokens)
+                      (lang/tokens parse-tree (lang/node-group parse-tree))
+                      tokens)]
+    (ui/action
+      ;; Before applying the styles check that the
+      ;; text is still the same, otherwise some tokens
+      ;; get messed up.
+      (when (= (doc/text editor) old-text)
+        (ui/apply-style editor tokens styles))))
   editor)
 
 (defn text-editor-change
@@ -275,23 +279,19 @@ to the UI's main menu."
 
 ;; Delimiter matching
 
-(defn- matching-delimiter [app e]
-  (let [ch (-> e :source (ui/attr :stuff) :match-chan)]
-    (async/put! ch [app e])))
-
 (defn- check-for-delimiters [app e highlights]
   (let [editor    (:source e)
         doc       (ui/attr editor :doc)
         lang      (doc/lang @doc)
         pos       (:position e)
         delimiter-match (:delimiter-match lang)
-        delimiters (and delimiter-match (delimiter-match @doc pos))]
-    (ui/action
-      (doseq [x @highlights]
-        (swap! highlights disj)
-        (ui/remove-highlight editor x))
-      (when delimiters
-        (swap! highlights into (mapv #(ui/add-highlight editor % (inc %) 0x888888) delimiters))))))
+        add-hl    #(ui/add-highlight editor % (inc %) 0x888888)]
+    (when delimiter-match
+      (ui/action
+        (doseq [x @highlights]
+          (swap! highlights disj)
+          (ui/remove-highlight editor x))
+        (swap! highlights into (mapv add-hl (delimiter-match @doc pos)))))))
 
 (defn- find-matching-delimiter []
   (let [ch         (async/chan)
@@ -323,9 +323,9 @@ to the UI's main menu."
                                        :doc       doc
                                        :post-init ::text-editor-post-init
                                        :on-key    ::handle-key
-                                       :on-caret  ::matching-delimiter
+                                       :on-caret  #(async/put! mp-ch %&)
                                        :on-change ::text-editor-change
-                                       :stuff     {:chan hl-ch :match-chan mp-ch}}])]
+                                       :stuff     {:chan hl-ch}}])]
     [:scroll {:vertical-increment 16
               :border :none
               :margin-control [:line-number {:source editor}]}
