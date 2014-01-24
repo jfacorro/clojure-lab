@@ -78,11 +78,11 @@ check if its one of the registered symbols."
 
 (defn parse-tree
   "Parses the incremental buffer of a Document and returns the
-parse tree with the modified nodes marked with node-group."
+parse tree with the modified nodes marked with node group-id."
   ([doc]
     (parse-tree doc nil))
-  ([doc node-group]
-    (binding [*node-group* node-group]
+  ([doc group-id]
+    (binding [*node-group* group-id]
       (p/parse-tree doc))))
 
 (defn- tag
@@ -162,7 +162,7 @@ Source code taken from clojure.zip/next function."
 the limits for the nodes with the tag specified by ignore?.
 If group is false all tokens are returned, otherwise
 only the tokens from the last tree generation are returned."
-  [loc group]
+  [loc group-id]
   (loop [loc (zip/next loc), offset 0, limits (transient [])]
     (let [node   (zip/node loc)
           length (node-length node)]
@@ -171,8 +171,8 @@ only the tokens from the last tree generation are returned."
                     parent     (-> loc zip/up zip/node)
                     tag        (tag parent)
                     {:keys [style group]} (meta parent)
-                    limits     (if (and group
-                                        (or (ignore? tag) (not= group group)))
+                    limits     (if (and group-id
+                                        (or (ignore? tag) (not= group group-id)))
                                  limits
                                  (conj! limits [offset length style]))]
                 (recur (zip/next loc) new-offset limits))
@@ -180,13 +180,13 @@ only the tokens from the last tree generation are returned."
               (persistent! limits)
             :else
               (if (or (nil? node)
-                      (nil? group)
-                      (and group (= (group node) group)))
+                      (nil? group-id)
+                      (and group-id (= (node-group node) group-id)))
                 (recur (zip/next loc) offset limits)
                 (recur (next-no-down loc) (+ offset length) limits))))))
 
 (defn tokens
   "Returns the tokens identified incrementally in the parse-tree 
 generation that used the group-id identifier provided."
-  [root group]
-  (tokens* (code-zip root) group))
+  [root group-id]
+  (tokens* (code-zip root) group-id))

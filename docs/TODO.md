@@ -1,5 +1,4 @@
-TODO
-====
+## TODO
 
   - UI
     - Key Bindings
@@ -9,7 +8,6 @@ TODO
     - Code Editor (or use RSyntaxTextArea and adapt it):
       - Indent code.
       - Comment / Uncomment lines.
-      - Mark corresponding delimiter.
 
    - Rainbow parens
    - Paredit
@@ -32,8 +30,8 @@ TODO
       - (a) is the way to go:
         - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
 
-DONE
-====
+## DONE
+
 
   - UI
     - Abstraction for events
@@ -53,6 +51,7 @@ DONE
         - Comments.
       - Line numbers (show/hide).
       - Balance delimiters: ( \[ {
+      - Mark corresponding delimiter.
 
     - File Explorer
       - Load directories lazily
