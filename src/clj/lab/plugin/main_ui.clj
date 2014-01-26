@@ -233,7 +233,7 @@ and signals the highlighting process."
           editor   (ui/find @ui (ui/selector# id))
           channel  (:chan (ui/attr editor :stuff))
           doc      (ui/attr editor :doc)]
-      (when editor 
+      (when editor
         (when (not (:read-only @doc))
           (case type
             :insert (swap! doc doc/insert offset text)
@@ -439,7 +439,7 @@ to the UI's main menu."
 
 (defn event-handler
   "Replaces the UI's default event-handler implementation, 
-inserting a fixed first parameter."
+inserting a fixed first parameter, which is the app."
   [app f e]
   (cond
     (or (fn? f) (var? f))

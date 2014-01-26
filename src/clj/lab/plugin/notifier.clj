@@ -28,7 +28,7 @@
                  (ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none}
                            [:text-area {:text (str sw) :read-only true :post-init #(ui/caret-position (:source %2) 0)}]]))]
-    (ui/update! ui (ui/parent "bottom") ui/attr :divider-location 0.8)
+    (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 200)
     (ui/update! ui :#bottom ui/add tab)))
 
 (defn- default-error-handler

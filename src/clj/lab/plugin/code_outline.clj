@@ -67,16 +67,21 @@ and content"
   [app]
   (->
     (tplts/tab app)
+    (ui/attr :id "outline-tab")
     (ui/update :label ui/attr :text "Outline")
     (ui/add [:scroll [:tree {:id "outline-tree"}]])))
 
 (defn- create-outline-tree! [app _]
   (let [ui      (:ui @app)
         outline (ui/find @ui :#outline-tree)]
-    (when-not outline
-      (ui/update! ui :#right ui/add (outline-tree app))
-      (ui/update! ui (ui/parent "right") ui/attr :divider-location 0.7)
-      (update-outline-tree! @app))))
+    (if-not outline
+      (let [split (ui/find @ui (ui/parent "right"))]
+        (ui/update! ui :#right ui/add (outline-tree app))
+        (when-not (ui/attr split :divider-location-right)
+          (ui/update! ui (ui/parent "right") ui/attr :divider-location-right 150))
+        (update-outline-tree! @app))
+      (let [tab (ui/find @ui :#outline-tab)]
+        (ui/update! ui :#right ui/remove tab)))))
 
 (def ^:private hooks
   {#'lab.core/switch-document #'switch-document-hook})

@@ -32,6 +32,15 @@
       (.setResizeWeight ^JSplitPane (impl c) v))
     (:divider-location [c _ v]
       (.setDividerLocation ^JSplitPane (impl c) v))
+    (:divider-location-right [c _ v]
+      (let [split   ^JSplitPane (impl c)
+            orientation (.getOrientation split)
+            size    (if (= orientation (util/split-orientations :horizontal))
+                       (.getWidth split)
+                       (.getHeight split))]
+        (if (float? v)
+          (.setDividerLocation split (float (- 1 (/ v size))))
+          (.setDividerLocation split (- size v)))))
     (:divider-size [c _ v]
       (.setDividerSize ^JSplitPane (impl c) v))
     (:orientation [c attr value]
