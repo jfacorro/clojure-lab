@@ -121,6 +121,37 @@ check if its one of the registered symbols."
     (model/insert editor offset (str opening closing))
     (ui/caret-position editor (inc offset))))
 
+;; Comment
+
+(defn- find-start-of-line
+  "Finds the offset for the start of the current line,
+which is the offset after the first previous \\newline."
+  [offset text]
+  (loop [offset offset]
+    (if (or (zero? offset) (= (get text (dec offset)) \newline))
+      offset
+      (recur (dec offset)))))
+
+(defn- comment? [offset text]
+  (= (get text offset) \;))
+
+(defn- comment-length [offset text]
+  (let [n (count text)]
+    (loop [offset offset
+           len    0]
+      (if (or (>= offset n) (= (get text offset) \newline) (not= (get text offset) \;))
+        len
+        (recur (inc offset) (inc len))))))
+
+(defn- toggle-comment [app e]
+  (let [editor (:source e)
+        text   (model/text editor)
+        offset (-> editor ui/caret-position (find-start-of-line text))
+        len    (comment-length offset text)]
+    (if (pos? len)
+      (model/delete editor offset (+ offset len))
+      (model/insert editor offset ";;"))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Find definitions
 
@@ -170,6 +201,18 @@ and returns the offset of its matching delimiter."
       [offset (find-matching-delimiter loc (closing? delim))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Keymap
+
+(def ^:private keymap
+  (km/keymap 'lab.plugin.clojure-lang :lang
+    {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
+    {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
+    {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
+    {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
+    {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}
+    {:fn ::toggle-comment :keystroke "alt c" :name "Comment code"}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language definition
 
 (def clojure
@@ -184,12 +227,7 @@ and returns the offset of its matching delimiter."
      :styles    styles
      :definitions #'definitions
      :delimiter-match #'delimiter-match
-     :keymap    (km/keymap 'lab.plugin.clojure-lang :lang
-                  {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
-                  {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
-                  {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
-                  {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
-                  {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"})}))
+     :keymap    keymap}))
 
 (defn init! [app]
   (swap! app assoc-in [:langs :clojure] clojure))
