@@ -1,6 +1,7 @@
 (ns lab.plugin.clojure-lang
   "Clojure language specification."
   (:require [clojure.zip :as zip]
+            [clojure.string :as str]
             [lab.core :as lab]
             [lab.ui.core :as ui]
             [lab.core [plugin :as plugin]
@@ -127,7 +128,7 @@ check if its one of the registered symbols."
 
 ;; Comment
 
-(defn- find-start-of-line
+(defn- start-of-line
   "Finds the offset for the start of the current line,
 which is the offset after the first previous \\newline."
   [offset text]
@@ -136,39 +137,36 @@ which is the offset after the first previous \\newline."
       offset
       (recur (dec offset)))))
 
-(defn- find-end-of-line
+(defn- end-of-line
   "Finds the offset for the next position after the end of 
 the current line."
   [offset text]
   (loop [offset offset]
-    (if (or (>= offset (count text)) (= (get text (dec offset)) \newline))
-      offset
-      (recur (inc offset)))))
-
-(defn- comment? [offset text]
-  (= (get text offset) \;))
-
-(defn- comment-length [offset text]
-  (let [n (count text)]
-    (loop [offset offset
-           len    0]
-      (if (or (>= offset n) (= (get text offset) \newline) (not= (get text offset) \;))
-        len
-        (recur (inc offset) (inc len))))))
+    (cond
+      (>= offset (count text))
+        (count text)
+      (= (get text offset) \newline)
+        (dec offset)
+      :else
+        (recur (inc offset)))))
 
 (defn- toggle-comment [app e]
   (let [editor (:source e)
         text   (model/text editor)
-        pos    (ui/caret-position editor)
-        offset (find-start-of-line pos text)
-        len    (comment-length offset text)]
-    (if (pos? len)
-      (do 
-        (model/delete editor offset (+ offset len))
-        (ui/caret-position editor (- pos len)))
-      (do 
-        (model/insert editor offset ";;")
-        (ui/caret-position editor (+ pos 2))))))
+        [start end] (ui/selection editor)
+        sol    (start-of-line start text)
+        eol    (end-of-line end text)
+        text   (model/substring editor sol eol)
+        replacement (if (= \; (get text 0))
+                      (str/replace text #"(\n?\s*);;" "$1")
+                      (str ";;" (str/replace text "\n" "\n;;")))
+        delta  (- (count replacement) (count text))]
+    (ui/action
+      (model/delete editor sol eol)
+      (model/insert editor sol replacement)
+      (if (not= start end)
+        (ui/selection editor [sol (+ delta eol 1)])
+        (ui/caret-position editor (+ start delta))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Find definitions
