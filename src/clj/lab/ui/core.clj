@@ -127,12 +127,11 @@ as the abstraction of its implementation."
   (impl [component implementation]
     (vary-meta component assoc :impl implementation))
 
-  p/Selected
-  (selected [this]
-    (let [id (p/selected (p/impl this))]
-      (find this (selector# id))))
-  (selected [this selected]
-    (p/selected (p/impl this) (p/impl selected)))
+  p/Selection
+  (selection [this]
+    (p/selection (p/impl this)))
+  (selection [this selection]
+    (p/selection (p/impl this) (p/impl selection)))
 
   Object
   (toString [this]
@@ -234,7 +233,7 @@ as the abstraction of its implementation."
 (def remove-highlight #'p/remove-highlight)
 (def caret-position #'p/caret-position)
 
-(def selected #'p/selected)
+(def selection #'p/selection)
 
 (def consume #'p/consume)
 

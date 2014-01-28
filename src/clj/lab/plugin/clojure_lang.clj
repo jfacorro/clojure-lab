@@ -136,6 +136,15 @@ which is the offset after the first previous \\newline."
       offset
       (recur (dec offset)))))
 
+(defn- find-end-of-line
+  "Finds the offset for the next position after the end of 
+the current line."
+  [offset text]
+  (loop [offset offset]
+    (if (or (>= offset (count text)) (= (get text (dec offset)) \newline))
+      offset
+      (recur (inc offset)))))
+
 (defn- comment? [offset text]
   (= (get text offset) \;))
 
@@ -150,11 +159,16 @@ which is the offset after the first previous \\newline."
 (defn- toggle-comment [app e]
   (let [editor (:source e)
         text   (model/text editor)
-        offset (-> editor ui/caret-position (find-start-of-line text))
+        pos    (ui/caret-position editor)
+        offset (find-start-of-line pos text)
         len    (comment-length offset text)]
     (if (pos? len)
-      (model/delete editor offset (+ offset len))
-      (model/insert editor offset ";;"))))
+      (do 
+        (model/delete editor offset (+ offset len))
+        (ui/caret-position editor (- pos len)))
+      (do 
+        (model/insert editor offset ";;")
+        (ui/caret-position editor (+ pos 2))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Find definitions

@@ -14,9 +14,9 @@
 (defprotocol Implementation
   (abstract [this] [this the-abstract] "Gets or sets the asbtract component for the implementation."))
 
-(defprotocol Selected
-  (selected [this] [this selected]
-    "Returns the id of the selected child or sets the selected child abstract component."))
+(defprotocol Selection
+  (selection [this] [this selection]
+    "Gets or sets the selection of an abstract component."))
 
 (defprotocol Event
   (to-map [this] "Serializes the event into a map.")

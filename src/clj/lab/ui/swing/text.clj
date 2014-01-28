@@ -1,5 +1,5 @@
 (ns lab.ui.swing.text
-  (:use     [lab.ui.protocols :only [impl Event to-map TextEditor abstract]])
+  (:use     [lab.ui.protocols :only [Event to-map TextEditor impl abstract Selection]])
   (:require [lab.model.protocols :as mp]
             [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -66,6 +66,14 @@
       (.getCaretPosition this))
     ([this position]
       (.setCaretPosition this position)))
+
+  Selection
+  (selection
+    ([this]
+      [(.getSelectionStart this) (.getSelectionEnd this)])
+    ([this [start end]]
+      (.setSelectionStart this start)
+      (.setSelectionEnd this end)))
 
   mp/Text
   (insert [this offset s]

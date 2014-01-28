@@ -18,7 +18,7 @@
   "Returns the currently selected document tab."
   (-> ui
     (ui/find :#center)
-    ui/selected))
+    ui/selection))
 
 (defn- current-text-editor
   "Returns the currently selected text-editor."

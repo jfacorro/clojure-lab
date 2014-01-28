@@ -1,5 +1,5 @@
 (ns lab.ui.swing.tree
-  (:use     [lab.ui.protocols :only [Component Selected Implementation impl abstract to-map]])
+  (:use     [lab.ui.protocols :only [Component Selection Implementation impl abstract to-map]])
   (:require [lab.ui.core :as ui])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
@@ -88,13 +88,13 @@ The handler should return falsey if the node was modified."
   (children [this]
     (.getComponents this))
 
-  Selected
-  (selected
+  Selection
+  (selection
     ([this]
       (when-let [node (.getLastSelectedPathComponent this)]
-        (ui/attr (abstract node) :id)))
-    ([this selected]
-      (throw (UnsupportedOperationException. "Set selected item for :tree UI implementation.")))))
+        (abstract node)))
+    ([this selection]
+      (throw (UnsupportedOperationException. "Set selection item for :tree UI implementation.")))))
 
 (ui/defattributes
   :tree-node

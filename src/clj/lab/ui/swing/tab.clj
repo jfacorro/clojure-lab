@@ -1,5 +1,5 @@
 (ns lab.ui.swing.tab
-  (:use     [lab.ui.protocols :only [Component abstract impl Selected selected to-map]])
+  (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map]])
   (:require [lab.ui.core :as ui])
   (:import  [javax.swing JTabbedPane JScrollPane JPanel UIManager]
             [javax.swing.event ChangeListener ChangeEvent]
@@ -63,21 +63,21 @@
       (.addTab this title child)
       (when header (.setTabComponentAt this i header))
       (when tool-tip (.setToolTipTextAt this i tool-tip))
-      (selected this i))
+      (selection this i))
     this)
   (remove [this child]
     (.remove this child)
     this))
 
-(extend-protocol Selected
+(extend-protocol Selection
   JTabbedPane
-  (selected 
+  (selection 
     ([this]
       (let [index (.getSelectedIndex this)]
         (when (<= 0 index)
-          (-> (.getComponentAt this index)
-            abstract
-            (ui/attr :id)))))
+          (-> this
+            (.getComponentAt index)
+            abstract))))
     ([this index]
       (.setSelectedIndex this index))))
 
