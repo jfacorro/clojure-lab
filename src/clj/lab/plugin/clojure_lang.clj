@@ -89,11 +89,15 @@ check if its one of the registered symbols."
            (and (= (:tag x) :symbol)
                 (.startsWith (-> x :content first) "def"))))))
 
-(defn- find-symbol-to-right [loc]
-  (loop [loc loc]
-    (if (= :symbol (:tag (zip/node loc)))
-      (zip/down loc)
-      (recur (zip/right loc)))))
+(defn- find-symbol-to-right [init-loc]
+  (loop [loc init-loc]
+    (cond
+      (nil? loc)
+        (-> init-loc zip/left zip/down)
+      (= :symbol (:tag (zip/node loc)))
+        (zip/down loc)
+      :else
+        (recur (zip/right loc)))))
 
 (defn- loc->def [loc]
   {:offset (lang/offset loc)
