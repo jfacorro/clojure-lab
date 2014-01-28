@@ -1,6 +1,11 @@
 ## TODO
 
   - UI
+    - Move the following code editor features to their own plugin. 
+This could be done by adding a hook to the editor creation templates function.
+      - Syntax highlighting.
+      - Delimiter matching.
+
     - Key Bindings
       - Remove all defaults and replace them all?
       - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
@@ -10,16 +15,30 @@
       - Comment / Uncomment lines.
       - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
       - Listen for changes in opened files.
+      - Go to line.
+      - Wrap text.
 
     - File Explorer
       - Listen for changes in current dir structure.
+
+   - Outline:
+      - Add ENTER as a trigger for go-to-definition.
+      - When going to line, position the line in the top of the scroll.
+        - Depends on the implementation of the editor's Go to line.
+
+    - REPL
+      - Create plugin.
+      - Use nrepl.
 
     - Rainbow parens
     - Paredit
 
     - Menu
       - Define a way to specify the order of the menu items.
-    
+
+  - Document
+    - (?) Add a list of views to the document in order to be able to track them and update them (e.g. in the redo/undo scheme).
+
   - App (Control)
     - Establish the way key bindings are defined.
       - Are they always defined globally?
