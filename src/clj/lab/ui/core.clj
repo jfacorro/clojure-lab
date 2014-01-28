@@ -131,7 +131,8 @@ as the abstraction of its implementation."
   (selection [this]
     (p/selection (p/impl this)))
   (selection [this selection]
-    (p/selection (p/impl this) (p/impl selection)))
+    (p/selection (p/impl this) selection)
+    this)
 
   Object
   (toString [this]
@@ -139,7 +140,7 @@ as the abstraction of its implementation."
       (str tag " (#" id ")")
       tag))
 
-  p/TextEditor
+  p/StyledTextEditor
   (apply-style [this tokens styles]
     (p/apply-style (p/impl this) tokens styles)
     this)
@@ -147,8 +148,10 @@ as the abstraction of its implementation."
     (p/apply-style (p/impl this) start len style)
     this)
 
+  p/TextEditor
   (add-highlight [this start end color]
     (p/add-highlight (p/impl this) start end color))
+
   (remove-highlight [this id]
     (p/remove-highlight (p/impl this) id))
 

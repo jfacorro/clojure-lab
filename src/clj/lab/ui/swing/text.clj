@@ -1,5 +1,8 @@
 (ns lab.ui.swing.text
-  (:use     [lab.ui.protocols :only [Event to-map TextEditor impl abstract Selection]])
+  (:use     [lab.ui.protocols :only [impl abstract
+                                     Event to-map
+                                     TextEditor StyledTextEditor
+                                     Selection selection caret-position]])
   (:require [lab.model.protocols :as mp]
             [lab.ui.core :as ui]
             [lab.ui.swing [util :as util]
@@ -21,42 +24,8 @@
   ([^JTextPane txt ^SimpleAttributeSet stl]
     (.setCharacterAttributes txt stl true)))
 
-(extend-type JTextArea
+(extend-type JTextComponent
   TextEditor
-  (apply-style [this regions styles]
-    (throw (Exception. "Should try to add style to a :text-area.")))
-  (caret-position
-    ([this]
-      (.getCaretPosition this))
-    ([this position]
-      (.setCaretPosition this position))))
-
-(def ^:private blank-document (DefaultStyledDocument.))
-
-(defn- apply-style [^JTextPane this f]
-  (let [doc    (.getDocument this)
-        pos    (.getCaretPosition this)
-        listeners (.getCaretListeners this)]
-    ;; Remove caret listeners before assigning a blank document since caret is set to 0.
-    (doseq [x listeners] (.removeCaretListener this x))
-    (.setDocument this blank-document)
-    (f doc)
-    (.setDocument this doc)
-    (.setCaretPosition this pos)
-    ;; Add caret listeners after resetting the caret position
-    (doseq [x listeners] (.addCaretListener this x))))
-
-(extend-type JTextPane
-  TextEditor
-  (apply-style
-    ([this regions styles]
-      (let [styles (reduce-kv #(assoc %1 %2 (util/make-style %3)) styles styles)]
-        (apply-style this
-          #(doseq [[start length tag] regions]
-            (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag (:default styles)) true)))))
-    ([this start len style]
-      (apply-style this
-        #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true))))
   (add-highlight [this start end color]
     (.. this getHighlighter (addHighlight start end (util/highlighter color))))
   (remove-highlight [this id]
@@ -73,7 +42,36 @@
       [(.getSelectionStart this) (.getSelectionEnd this)])
     ([this [start end]]
       (.setSelectionStart this start)
-      (.setSelectionEnd this end)))
+      (.setSelectionEnd this end))))
+
+(def ^:private blank-document (DefaultStyledDocument.))
+
+(defn- apply-style [^JTextPane this f]
+  (let [doc    (.getDocument this)
+        pos    (.getCaretPosition this)
+        sel    (selection this)
+        listeners (.getCaretListeners this)]
+    ;; Remove caret listeners before assigning a blank document since caret is set to 0.
+    (doseq [x listeners] (.removeCaretListener this x))
+    (.setDocument this blank-document)
+    (f doc)
+    (.setDocument this doc)
+    (caret-position this pos)
+    (selection this sel)
+    ;; Add caret listeners after resetting the caret position
+    (doseq [x listeners] (.addCaretListener this x))))
+
+(extend-type JTextPane
+  StyledTextEditor
+  (apply-style
+    ([this regions styles]
+      (let [styles (reduce-kv #(assoc %1 %2 (util/make-style %3)) styles styles)]
+        (apply-style this
+          #(doseq [[start length tag] regions]
+            (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag (:default styles)) true)))))
+    ([this start len style]
+      (apply-style this
+        #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true))))
 
   mp/Text
   (insert [this offset s]

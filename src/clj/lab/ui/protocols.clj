@@ -22,9 +22,11 @@
   (to-map [this] "Serializes the event into a map.")
   (consume [this] "Consumes this event, preventing it from bubbling up."))
 
-(defprotocol TextEditor
+(defprotocol StyledTextEditor
   (apply-style [this tokens styles] [this start len style]
-    "Applies a formatting style to the region defined by start and length.")
+    "Applies a formatting style to the region defined by start and length."))
+
+(defprotocol TextEditor
   (add-highlight [this start end color] "Adds a highlight of the specified color from start to end and returns an identifier of the highlight.")
   (remove-highlight [this id] "Removed the highlight of the given id.")
   (caret-position [this] [this position] "Gets and sets the caret position for this text component."))
