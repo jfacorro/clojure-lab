@@ -1,7 +1,14 @@
 ## TODO
 
   - UI
-    - Move the following code editor features to their own plugin. 
+    - Tabs
+       - Higlight the current one.
+       - Change the default wrapping mode.
+
+    - Events
+      - Close the channels that listen to components that don't exist anymore.
+
+    - Move the following code editor features to their own plugin.
 This could be done by adding a hook to the editor creation templates function.
       - Syntax highlighting.
       - Delimiter matching.
@@ -12,9 +19,8 @@ This could be done by adding a hook to the editor creation templates function.
   
     - Code Editor (or use RSyntaxTextArea and adapt it):
       - Indent code.
-      - Comment / Uncomment lines.
       - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
-      - Listen for changes in opened files.
+      - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
       - Go to line.
       - Wrap text.
 
@@ -73,6 +79,7 @@ This could be done by adding a hook to the editor creation templates function.
       - Line numbers (show/hide).
       - Balance delimiters: ( \[ {
       - Mark corresponding delimiter.
+      - Comment / Uncomment lines.
 
     - File Explorer
       - Load directories lazily
