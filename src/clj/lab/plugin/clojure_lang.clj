@@ -220,7 +220,8 @@ and returns the offset of its matching delimiter."
 ;; Keymap
 
 (def ^:private keymap
-  (km/keymap 'lab.plugin.clojure-lang :lang
+  (km/keymap 'lab.plugin.clojure-lang
+    :lang :clojure
     {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
     {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
     {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
