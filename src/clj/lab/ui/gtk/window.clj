@@ -1,3 +1,5 @@
+(comment
+
 (ns lab.ui.gtk.window
   (:import  [org.gnome.gtk Gtk Window Window$DeleteEvent])
   (:require [lab.ui.core :as ui]
@@ -38,3 +40,5 @@
     ([this the-abstract]
       (.abstract this the-abstract)
       this)))
+
+)

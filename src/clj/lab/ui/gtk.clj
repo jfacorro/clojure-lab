@@ -1,3 +1,4 @@
+(comment
 (ns lab.ui.gtk
   (:require [lab.ui [core :as ui]
                     [protocols :as p]]
@@ -54,4 +55,5 @@
                      (onDeleteEvent [src, evt] (Gtk/mainQuit) false)))
   (Gtk/main))
 
+)
 )
