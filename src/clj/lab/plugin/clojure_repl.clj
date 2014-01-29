@@ -51,9 +51,11 @@ it. If not project file is supplied, a bare REPL is started."
   (let [ui          (:ui @app)
         editor      (:source e)
         [start end] (ui/selection editor)
-        selection   (model/substring editor start end)
+        selection   (if (= start end)
+                      (model/text editor)
+                      (model/substring editor start end))
         repl        (ui/find @ui [:#bottom :tab :scroll :text-area])
-        in          (ui/attr repl :stuff)]
+        in          (-> repl (ui/attr :stuff) :in)]
     (async/put! in selection)))
 
 (defn- wrap-output-stream-in-channel [stream out]
@@ -87,6 +89,18 @@ it. If not project file is supplied, a bare REPL is started."
         (recur)))
     in))
 
+(defn- close-tab-repl
+  [app e]
+  (let [ui   (:ui @app)
+        id   (-> (:source e) (ui/attr :stuff) :tab-id)
+        tab  (ui/find @ui (ui/selector# id))
+        repl (-> tab
+               (ui/find :text-area)
+               (ui/attr :stuff)
+               :repl)]
+    (popen/kill (:proc repl))
+    (ui/update! ui (ui/parent id) ui/remove tab)))
+
 (defn- repl-tab
   "Create the tab that contains the repl and add it
 to the ui in the bottom section."
@@ -95,8 +109,9 @@ to the ui in the bottom section."
         styles  (:styles @app)
         console (ui/init [:text-area {:read-only true}])
         in      (hook-up-repl repl console)
-        console (ui/attr console :stuff in)
+        console (ui/attr console :stuff {:in in :repl repl})
         tab     (-> (tplts/tab app)
+                  (ui/update :button ui/attr :on-click ::close-tab-repl)
                   (ui/update :label ui/attr :text (str "REPL: "(:name repl)))
                   (ui/add [:scroll console])
                   (ui/apply-stylesheet styles))]
