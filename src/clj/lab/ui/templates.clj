@@ -28,3 +28,23 @@ includes a label and a closing button."
                    :message message
                    :options :yes-no-cancel
                    :visible true}])
+
+(defn save-file-dialog
+  [dir]
+  [:file-dialog {:type :save
+                 :visible true
+                 :current-dir dir}])
+
+(defn open-file-dialog
+  [dir]
+  [:file-dialog {:type :open
+                 :visible true
+                 :current-dir dir}])
+
+(defn directory-dialog
+  [title dir]
+  [:file-dialog {:type           :open,
+                 :selection-type :dir-only,
+                 :visible        true,
+                 :title          title
+                 :current-dir    dir}])

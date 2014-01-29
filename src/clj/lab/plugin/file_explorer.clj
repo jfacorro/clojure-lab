@@ -103,14 +103,11 @@ tree. Returns a tree node."
 
 (defn- open-project
   [app _]
-  (let [file-dialog   (ui/init [:file-dialog {:type           :open, 
-                                              :selection-type :dir-only, 
-                                              :visible        true, 
-                                              :title          "Open Directory"
-                                              :current-dir    (lab/config @app :current-dir)}])
-        [result dir] (ui/attr file-dialog :result)
+  (let [dir          (lab/config @app :current-dir)
+        dir-dialog  (ui/init (tplts/directory-dialog "Open Directory" dir))
+        [result dir] (ui/attr dir-dialog :result)
         dir          (when dir (io/file (.getCanonicalPath dir)))]
-    (when dir
+    (when (= result :accept)
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
       (ui/update! (:ui @app) :#left ui/add (file-tree app dir)))))
 

@@ -64,9 +64,7 @@ the open and new commands."
 and call the app's open-document function."
   [app _]
   (let [curr-dir      (lab/config @app :current-dir)
-        file-dialog   (ui/init [:file-dialog {:type :open
-                                              :visible true 
-                                              :current-dir curr-dir}])
+        file-dialog   (ui/init (tplts/open-file-dialog curr-dir))
         [result file] (ui/attr file-dialog :result)]
     (when file
       (open-document app (.getCanonicalPath file)))))
@@ -136,7 +134,7 @@ associated to it."
   [doc current-dir]
   (if (doc/path doc)
     doc
-    (let [file-dialog   (ui/init [:file-dialog {:type :save :visible true :current-dir current-dir}])
+    (let [file-dialog   (ui/init (tplts/save-file-dialog current-dir))
           [result file] (ui/attr file-dialog :result)]
       (if file
         (doc/bind doc (.getCanonicalPath file) :new? true)
@@ -453,16 +451,22 @@ inserting a fixed first parameter, which is the app."
 ;;; Default styles
 
 (def styles
-  {:*           {:font [:name "Consolas" :size 12]}
+  {:*           {:font [:name "Consolas" :size 12]
+                 :border :none}
    :line-number {:font        [:name "Consolas" :size 14]
                  :background  0x666666
                  :color       0xFFFFFF
                  :curren-line-color 0x00FFFF}
-   :text-editor {:border      :none
+   #{:text-editor :text-area}
+                {:border      :none
                  :font        [:name "Consolas" :size 14]
                  :background  0x333333
                  :color       0xFFFFFF
-                 :caret-color 0xFFFFFF}})
+                 :caret-color 0xFFFFFF}
+   :split       {:border :none
+                 :divider-size 3
+                 :background 0x666666
+                 :divider-background 0x999999}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Plugin definition
