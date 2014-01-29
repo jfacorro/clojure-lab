@@ -80,27 +80,6 @@ For example:
 
 (def ^:private memoized-compile (memoize compile))
 
-(defn- find-path
-  "Returns the path to the child component that satisfies (pred component)."
-  [pred component]
-  (if (pred component)
-    []
-    (if-let [path (->> component
-                    :content
-                    (map-indexed #(vector %1 (find-path pred %2)))
-                    (filter second)
-                    first)]
-      (-> [:content] (concat path) flatten vec))))
-
-(defn- chain
-  "Reducer function used for applying selectors (pred) in a chain.
-  Uses find-path on root to get the next level in the of the path."
-  [[path root] pred]
-  (let [path' (find-path pred root)
-        path  (when path' (concat path path'))
-        root  (get-in root path)]
-    [path root]))
-
 (defn- path-from-root
   "Takes a node from a zipper and finds the vector path
   to it by traversing the tree backwards."
@@ -120,19 +99,19 @@ For example:
     true))
 
 (defn- check-alternatives
-  [pnode preds {:keys [alts path] :as alt-spec}]
+  [pnode preds single? {:keys [alts path] :as alt-spec}]
   (let [x      (zip/node pnode)
         values (alts x)
         f      (fn [node & xs]
                  (map #(when % (concat (path-from-root pnode) (apply path xs) %))
-                      (find-all-paths node preds alt-spec)))]
+                      (find-all-paths node preds single? alt-spec)))]
     (mapcat (partial apply f) values)))
 
 (defn- find-all-paths
   "Traverses the tree using a zipper and merging the results
 in a map where the component is the key and the zipper node
 is the value."
-  [node preds & [alt-spec]]
+  [node preds single? & [alt-spec]]
   (loop [node                node
          [p & ps :as rpreds]  (reverse preds)
          result              #{}]
@@ -144,10 +123,22 @@ is the value."
                         (conj result (path-from-root node))
                         result)
                result (if alt-spec
-                        (into result (check-alternatives node preds alt-spec))
+                        (into result (check-alternatives node preds single? alt-spec))
                         result)]
-           (recur (zip/next node) rpreds result)))
+           (if (and single? (seq result))
+             result
+             (recur (zip/next node) rpreds result))))
        result)))
+
+(defn- find-paths [root selector single? alt-spec]
+  (when selector
+    (let [selector   (if (sequential? selector) selector [selector])
+          predicates (map memoized-compile selector)
+          root       (zip/zipper map? :content identity root)
+          result     (if (-> predicates count pos?)
+                       (find-all-paths root predicates single? alt-spec)
+                       #{[]})]
+      result)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Public
@@ -163,28 +154,15 @@ is the value."
   tag         :tag-name
   predicate   (fn [c] true)"
   [root selector]
-  (when selector
-    (let [selector   (if (sequential? selector) selector [selector])
-          predicates (map memoized-compile selector)
-          [path _]   (if (-> predicates count pos?)
-                       (reduce chain [nil root] predicates)
-                       [[] nil])]
-      path)))
-
-;(def select (memoize select*))
+  (first (find-paths root selector true nil)))
 
 (defn select-all
   "Searches the whole component tree from the root and returns
-  a sequence of the paths to the matched elements."
+  a sequence of the paths to the matched elements.
+  
+  See select for more information."
   [root selector & [alt-spec]]
-  (when selector
-    (let [selector   (if (sequential? selector) selector [selector])
-          predicates (map memoized-compile selector)
-          root       (zip/zipper map? :content identity root)
-          result     (if (-> predicates count pos?)
-                       (find-all-paths root predicates alt-spec)
-                       #{[]})]
-      result)))
+  (find-paths root selector false alt-spec))
 
 ;(def select-all (memoize select-all*))
 
@@ -221,4 +199,3 @@ is the value."
   "Returns a predicate that always returns true."
   []
   (constantly true))
-

@@ -14,7 +14,9 @@
                         :attr [:text-area {:id "text2"}]}
                 [:combo {:id "combo"
                          :size [100 200]
-                         :attr [:panel [:button]]}]]
+                         :attr [:panel [:button]]}
+                  [:button]
+                  [:text]]]
               [:label {:id "3"
                        :size [100 100]}]
               [:tabs [:tab] [:tab] [:tab]]
@@ -45,6 +47,8 @@
       [:content 0] [:window :label]
       [:content 1] [:#main :#2]
       [:content 1 :content 0] [:button :combo]
+      [:content 1 :content 0] [:window :button :combo]
+      [:content 1 :content 0 :content 1] [:button :combo :text]
       nil          [:button :label]))
 
   (testing "Conjunction (and)"
