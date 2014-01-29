@@ -66,7 +66,7 @@ and call the app's open-document function."
   (let [curr-dir      (lab/config @app :current-dir)
         file-dialog   (ui/init (tplts/open-file-dialog curr-dir))
         [result file] (ui/attr file-dialog :result)]
-    (when file
+    (when (= result :accept)
       (open-document app (.getCanonicalPath file)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

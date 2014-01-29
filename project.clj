@@ -23,4 +23,4 @@
   :repositories [["local" "file:repo"]]
   :profiles {:aot {:aot :all}
              :uberjar {:main lab.main
-                       :aot :all}})
+                       :aot [lab.main]}})
