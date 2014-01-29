@@ -25,7 +25,7 @@
                   ; menu
                   :menu-bar :menu :menu-item :menu-separator 
                   ; text
-                  :text-area
+                  :text-field
                   :line-number
                   ; tabs
                   :tabs :tab
@@ -35,7 +35,8 @@
                   :button :label
                   ; dialogs
                   :dialog]
-    :dialog [:file-dialog :option-dialog]
-    :text-area [:text-editor]})
+    :dialog     [:file-dialog :option-dialog]
+    :text-field [:text-area]
+    :text-area  [:text-editor]})
 
 (def hierarchy (build-hierarchy hierarchy-description))

@@ -8,7 +8,7 @@
             [lab.ui.swing [util :as util]
                           [event :as event]])
   (:import  [lab.ui.swing TextLineNumber LineHighlighter]
-            [javax.swing JTextArea JTextPane]
+            [javax.swing JTextArea JTextPane JTextField]
             [javax.swing.text JTextComponent Document]
             [javax.swing.event DocumentListener CaretListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
@@ -42,7 +42,21 @@
       [(.getSelectionStart this) (.getSelectionEnd this)])
     ([this [start end]]
       (.setSelectionStart this start)
-      (.setSelectionEnd this end))))
+      (.setSelectionEnd this end)))
+  
+  mp/Text
+  (insert [this offset s]
+    (.insertString (.getDocument this) offset s nil)
+    (.setCaretPosition this (+ offset (count s))))
+  (delete [this start end]
+    (.remove (.getDocument this) start (- end start))
+    (.setCaretPosition this start))
+  (length [this]
+    (.getLength ^Document (.getDocument this)))
+  (text [this]
+    (.getText this))
+  (substring [this start end]
+    (-> this .getText (.substring start end))))
 
 (def ^:private blank-document (DefaultStyledDocument.))
 
@@ -71,21 +85,7 @@
             (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag (:default styles)) true)))))
     ([this start len style]
       (apply-style this
-        #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true))))
-
-  mp/Text
-  (insert [this offset s]
-    (.insertString (.getDocument this) offset s nil)
-    (.setCaretPosition this (+ offset (count s))))
-  (delete [this start end]
-    (.remove (.getDocument this) start (- end start))
-    (.setCaretPosition this start))
-  (length [this]
-    (.getLength ^Document (.getDocument this)))
-  (text [this]
-    (.getText this))
-  (substring [this start end]
-    (-> this .getText (.substring start end))))
+        #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true)))))
 
 (defn- line-number-init [c]
   (let [src (ui/attr c :source)]
@@ -106,15 +106,15 @@
     text))
 
 (ui/definitializations
+  :text-field  JTextField
   :text-area   JTextArea
   :text-editor #'text-editor-init
   :line-number #'line-number-init)
 
 (ui/defattributes
-  :text-area
+  :text-field
     (:text [c _ v]
       (.setText ^JTextComponent (impl c) v))
-    (:line-highlight-color [c _ _])
     (:read-only [c _ v]
       (.setEditable ^JTextComponent (impl c) (not v)))
     (:caret-color [c _ v]
@@ -122,17 +122,19 @@
     (:on-caret [c _ f]
       (let [listener (proxy [CaretListener] []
                        (caretUpdate [e] (ui/handle-event f e)))]
-        (.addCaretListener ^JTextPane (impl c) listener)))
+        (.addCaretListener ^JTextComponent (impl c) listener)))
     (:on-change [c _ f]
       (let [listener (proxy [DocumentListener] []
                        (insertUpdate [e] (ui/handle-event f e))
                        (removeUpdate [e] (ui/handle-event f e))
                        (changedUpdate [e] (ui/handle-event f e)))
-            doc      (.getDocument ^JTextPane (impl c))]
+            doc      (.getDocument ^JTextComponent (impl c))]
         (.addDocumentListener ^Document doc listener)))
+  :text-area
+    (:line-highlight-color [c _ _])
   :text-editor
     (:wrap [c _ _])
-    (:doc [c _ doc])
+    (:doc [c _ _])
     (:content-type [c _ v]
       (.setContentType ^JTextPane (impl c) v))
   :line-number
