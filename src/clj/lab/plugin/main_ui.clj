@@ -90,9 +90,8 @@ should be closed and false otherwise."
   [app tab doc]
   (if-not (doc/modified? @doc)
     true
-    (let [dialog (ui/init (tplts/confirm "Save changes"
-                                       "Do you want to save the changes made to this file before closing?"))
-          result (ui/attr dialog :result)]
+    (let [result (tplts/confirm "Save changes"
+                                "Do you want to save the changes made to this file before closing?")]
       (when (= result :ok)
         (save-document-ui! app tab))
       (not (#{:cancel :closed} result)))))

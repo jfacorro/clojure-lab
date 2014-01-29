@@ -24,10 +24,9 @@ includes a label and a closing button."
 
 (defn confirm
   [title message]
-  [:option-dialog {:title   title
-                   :message message
-                   :options :yes-no-cancel
-                   :visible true}])
+  (-> [:option-dialog {:title title, :message message, :options :yes-no-cancel, :visible true}]
+    ui/init
+    (ui/attr :result)))
 
 (defn save-file-dialog
   [dir]

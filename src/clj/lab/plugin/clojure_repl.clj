@@ -97,9 +97,13 @@ it. If not project file is supplied, a bare REPL is started."
         repl (-> tab
                (ui/find :text-area)
                (ui/attr :stuff)
-               :repl)]
-    (popen/kill (:proc repl))
-    (ui/update! ui (ui/parent id) ui/remove tab)))
+               :repl)
+        result (tplts/confirm "Closing REPL"
+                              (str "If you close this tab the REPL process will be killed."
+                                   "Do you want to conitnue?"))]
+    (when (= :ok result)
+      (popen/kill (:proc repl))
+      (ui/update! ui (ui/parent id) ui/remove tab))))
 
 (defn- repl-tab
   "Create the tab that contains the repl and add it
