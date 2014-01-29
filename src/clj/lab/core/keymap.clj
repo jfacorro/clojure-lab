@@ -8,9 +8,12 @@
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,
 :lang or :local) and any number of commands that are added as key-bindings."
-  [name type & cmds]
+  [name type & [lang & lang-cmds :as cmds]]
   (let [km  {:name name :type type :bindings {}}
-        km  (reduce add-command km cmds)]
+        km  (if (= type :lang)
+              (-> (reduce add-command km lang-cmds)
+                (assoc :lang lang))
+              (reduce add-command km cmds))]
     km))
 
 (defn find

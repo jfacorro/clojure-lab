@@ -23,7 +23,8 @@
    :plugins       '[lab.plugin.file-explorer
                     lab.plugin.code-outline
                     lab.plugin.markdown-lang
-                    lab.plugin.clojure-lang]
+                    lab.plugin.clojure-lang
+                    lab.plugin.clojure-repl]
    :plugins-dir   "plugins"
    :current-dir   "."})
 
