@@ -411,16 +411,17 @@ to the UI's main menu."
 
 (defn undo-redo! [app e f]
   (let [ui     (:ui @app)
-        editor (current-text-editor @ui)
-        id     (ui/attr editor :id)
-        doc    (ui/attr editor :doc)
-        hist   (doc/history @doc)]
-    (swap! doc f)
-    ;; TODO: Fix this abominable scheme for undo/redo
-    (swap! doc assoc :read-only true)
-    (let [[editor hist] (f editor hist)]
-      (ui/update! ui (ui/selector# id) (constantly editor)))
-    (swap! doc dissoc :read-only)))
+        editor (current-text-editor @ui)]
+    (when editor
+      (let [id     (ui/attr editor :id)
+            doc    (ui/attr editor :doc)
+            hist   (doc/history @doc)]
+        (swap! doc f)
+        ;; TODO: Fix this abominable scheme for undo/redo
+        (swap! doc assoc :read-only true)
+        (let [[editor hist] (f editor hist)]
+          (ui/update! ui (ui/selector# id) (constantly editor)))
+        (swap! doc dissoc :read-only)))))
 
 (defn redo! [app e]
   (undo-redo! app e doc/redo))
