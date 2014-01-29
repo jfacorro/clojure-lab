@@ -3,8 +3,10 @@
             [lab.ui.util :as util]
             [lab.ui.protocols :as uip]
             [clojure.java.io :as io])
-  (:import [java.awt Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window]
-           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon]
+  (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
+                     BorderLayout CardLayout FlowLayout GridBagLayout GridLayout]
+           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon
+                        BoxLayout GroupLayout SpringLayout]
            [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
 
 (def ^Toolkit toolkit (Toolkit/getDefaultToolkit))
@@ -15,6 +17,13 @@
 (def split-orientations
   "Split pane possible orientations."
   {:vertical JSplitPane/VERTICAL_SPLIT :horizontal JSplitPane/HORIZONTAL_SPLIT})
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; Dimension
+
+(defn dimension 
+  [w h]
+  (Dimension. w h))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Color
@@ -117,19 +126,21 @@ with Color instances."
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Layout
 
-(import [java.awt BorderLayout CardLayout FlowLayout
-                  GridBagLayout GridLayout])
-(import [javax.swing BoxLayout GroupLayout SpringLayout])
+(def ^:private box-layouts
+  {:x    BoxLayout/X_AXIS
+   :y    BoxLayout/Y_AXIS
+   :line BoxLayout/LINE_AXIS
+   :page BoxLayout/PAGE_AXIS})
 
-(defn layout [x]
+(defn layout [c [x & xs]]
   (case x
     :border   (BorderLayout.)
-    ;:box      (BoxLayout.)
+    :box      (BoxLayout. c (-> xs first box-layouts))
     :card     (CardLayout.)
     :flow     (FlowLayout.)
     :grid     (GridLayout.)
     :grid-bag (GridBagLayout.)
-    ;:group    (GroupLayout.)
+    :group    (GroupLayout. c)
     :spring   (SpringLayout.)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;

@@ -32,7 +32,6 @@
                           misc-control
                           event])
   (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
-           [java.awt Dimension]
            [java.awt.event MouseAdapter FocusAdapter KeyListener]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -87,7 +86,9 @@
     (:transparent [c _ v]
       (.setOpaque ^JComponent (p/impl c) (not v)))
     (:layout [c _ v]
-      (.setLayout (p/impl c) (util/layout v)))
+      (let [v (if (sequential? v) v [v])
+            c (p/impl c)]
+        (.setLayout c (util/layout c v))))
     (:border [c _ v]
       (let [v (if (sequential? v) v [v])]
         (.setBorder ^JComponent (p/impl c) (apply util/border v))))
@@ -98,7 +99,7 @@
     (:font [c _ v]
       (.setFont ^JComponent (p/impl c) (util/font v)))
     (:size [c attr [w h :as v]]
-      (.setPreferredSize ^JComponent (p/impl c) (Dimension. w h)))
+      (.setPreferredSize ^JComponent (p/impl c) (util/dimension w h)))
     (:visible [c _ v]
       (.setVisible ^java.awt.Component (p/impl c) v))
 
