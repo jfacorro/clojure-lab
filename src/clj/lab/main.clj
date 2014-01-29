@@ -1,14 +1,13 @@
 (ns lab.main
   "Entry point for the whole environment."
   (:use lab.core)
-  (:gen-class [:name lab.main
-               :main true]))
+  (:gen-class))
 
 (def app nil)
 ;;------------------------------
 (defn -main
   "Program startup function."
-  [config-path & _]
+  [& [config-path & _]]
   (let [app (init config-path)]
     (alter-var-root #'app #(do %2) app)))
 ;;------------------------------

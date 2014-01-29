@@ -22,5 +22,5 @@
              "build-aot" ["with-profile" "aot" "build"]}
   :repositories [["local" "file:repo"]]
   :profiles {:aot {:aot :all}
-             :uberjar {:main proto.main
-                       :aot  [proto.main]}})
+             :uberjar {:main lab.main
+                       :aot :all}})
