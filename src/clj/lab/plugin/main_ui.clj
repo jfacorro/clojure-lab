@@ -457,7 +457,7 @@ inserting a fixed first parameter, which is the app."
    :line-number {:font        [:name "Consolas" :size 14]
                  :background  0x666666
                  :color       0xFFFFFF
-                 :curren-line-color 0x00FFFF}
+                 :current-line-color 0x00FFFF}
    #{:text-editor :text-area}
                 {:border      :none
                  :font        [:name "Consolas" :size 14]

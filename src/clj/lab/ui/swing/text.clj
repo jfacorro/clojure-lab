@@ -143,5 +143,5 @@
        (.setUpdateFont ^TextLineNumber (impl c) v))
     (:border-gap [c _ v]
        (.setBorderGap ^TextLineNumber (impl c) v))
-    (:curren-line-color [c _ v]
+    (:current-line-color [c _ v]
        (.setCurrentLineForeground ^TextLineNumber (impl c) (util/color v))))
