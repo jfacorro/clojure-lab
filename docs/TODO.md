@@ -3,18 +3,19 @@
   - UI
     - Tabs
        - Higlight the current one.
-       - Change the default wrapping mode.
+       - Change the default wrapping mode: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
 
     - Events
       - Close the channels that listen to components that don't exist anymore.
 
     - Move the following code editor features to their own plugin.
-This could be done by adding a hook to the editor creation templates function.
+This could be done by adding a hook to an editor creation templates function.
       - Syntax highlighting.
       - Delimiter matching.
+      - Undo/redo (?)
 
     - Key Bindings
-      - Remove all defaults and replace them all?
+      - Remove all defaults and replace them all => not practical
       - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
   
     - Code Editor (or use RSyntaxTextArea and adapt it):
@@ -33,7 +34,6 @@ This could be done by adding a hook to the editor creation templates function.
         - Depends on the implementation of the editor's Go to line.
 
     - REPL
-      - Create plugin.
       - Use nrepl.
 
     - Rainbow parens
@@ -46,6 +46,9 @@ This could be done by adding a hook to the editor creation templates function.
     - (?) Add a list of views to the document in order to be able to track them and update them (e.g. in the redo/undo scheme).
 
   - App (Control)
+    - Plugin management:
+      - Unload a plugin.
+      - (?) Allow plugins to define their own dependencies.
     - Establish the way key bindings are defined.
       - Are they always defined globally?
         - Example from emacs -> set-global-key modifies the global-map (which contains all global key bindings).
@@ -91,6 +94,9 @@ This could be done by adding a hook to the editor creation templates function.
       - Modify parsley in order to be able to find node index but keeping log(n).
       - Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
         - Didn't modify parsley but improved the way in which the tokens are searched incrementally.
+
+    - REPL
+      - Create plugin.
 
   - Model
     - Complete Document
