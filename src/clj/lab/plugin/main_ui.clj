@@ -354,9 +354,15 @@ to the UI's main menu."
    :background 0x666666
    :divider-background 0x999999})
 
+(defn- exit! [app e]
+  (let [result (tplts/confirm "Bye bye" "Are you sure you want to leave this magical experience?")]
+    (if (= result :ok)
+        (System/exit 0))))
+
 (defn app-window [app]
   [:window {:id     "main"
             :title   (lab/config @app :name)
+            :on-closing ::exit!
             :visible true
             :size    [700 500]
             :maximized true
