@@ -16,9 +16,10 @@
 
 (defn- current-document-tab [ui]
   "Returns the currently selected document tab."
-  (-> ui
-    (ui/find :#center)
-    ui/selection))
+  (->> (ui/find ui :#center)
+    ui/selection
+    (ui/selector#)
+    (ui/find ui)))
 
 (defn- current-text-editor
   "Returns the currently selected text-editor."

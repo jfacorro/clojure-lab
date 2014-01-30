@@ -75,7 +75,7 @@ tree. Returns a tree node."
 (defn- open-document-tree [app tree]
   (let [ui      (:ui @app)
         tree    (ui/find @ui (ui/selector# (ui/attr tree :id)))
-        node    (ui/selection tree)
+        node    (ui/find @ui (ui/selector# (ui/selection tree)))
         ^java.io.File file (ui/attr node :item)]
     (when (and node (.isFile file))
       (main/open-document app (.getCanonicalPath file)))))

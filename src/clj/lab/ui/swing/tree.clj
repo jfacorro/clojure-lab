@@ -92,7 +92,7 @@ The handler should return falsey if the node was modified."
   (selection
     ([this]
       (when-let [node (.getLastSelectedPathComponent this)]
-        (abstract node)))
+        (-> node abstract (ui/attr :id))))
     ([this selection]
       (throw (UnsupportedOperationException. "Set selection item for :tree UI implementation.")))))
 

@@ -10,6 +10,8 @@
     (.remove k)
     (.put k v)))
 
+(def transparent (Color. 0 0 0 0))
+
 (-> (UIManager/getDefaults)
   (set-prop "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
   (set-prop "TabbedPane.tabInsets" (Insets. 0 0 0 0))
@@ -26,28 +28,32 @@
   (set-prop "TabbedPane.tabRunOverlay" 0)
   (set-prop "TabbedPane.selectedLabelShift" 0)
 
-  (set-prop "TabbedPane.darkShadow" (Color. 0 0 0 0))  
-  (set-prop "TabbedPane.highlight" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.light" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.shadow" (Color. 0 0 0 0))
+  (set-prop "TabbedPane.darkShadow" transparent)
+  (set-prop "TabbedPane.highlight" transparent)
+  (set-prop "TabbedPane.light" transparent)
+  (set-prop "TabbedPane.shadow" transparent)
+
+  (set-prop "TabbedPane.borderHightlightColor" transparent)
+  (set-prop "TabbedPane.selectHighlight" transparent)
+  (set-prop "TabbedPane.background" transparent)
+  (set-prop "TabbedPane.foreground" transparent)
   
-  (set-prop "TabbedPane.borderHightlightColor" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.selectHighlight" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.background" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.foreground" (Color. 0 0 0 0))
-  
-  (set-prop "TabbedPane.unselectedBackground" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.selected" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.tabAreaBackground" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.focus" (Color. 0 0 0 0))
-  (set-prop "TabbedPane.contentAreaColor" (Color. 0 0 0 0)))
+  (set-prop "TabbedPane.unselectedBackground" transparent)
+  (set-prop "TabbedPane.selected" transparent)
+  (set-prop "TabbedPane.tabAreaBackground" transparent)
+  (set-prop "TabbedPane.focus" transparent)
+  (set-prop "TabbedPane.contentAreaColor" transparent))
 
 (defn- tab-init [c]
   (doto (JPanel.)
     (.setLayout (java.awt.BorderLayout.))))
 
+(defn- tabs-init [c]
+  (doto (JTabbedPane.)
+    (.setTabLayoutPolicy JTabbedPane/WRAP_TAB_LAYOUT)))
+
 (ui/definitializations
-  :tabs        JTabbedPane
+  :tabs        tabs-init
   :tab         tab-init)
 
 (extend-protocol Component
@@ -77,7 +83,8 @@
         (when (<= 0 index)
           (-> this
             (.getComponentAt index)
-            abstract))))
+            abstract
+            (ui/attr :id)))))
     ([this index]
       (.setSelectedIndex this index))))
 

@@ -13,15 +13,13 @@
             [lab.core [plugin :as plugin]
                       [keymap :as km]]))
 
-(defn connect [url])
-
 (def ^:private running-jar 
   "Resolves the path to the current running jar file."
   (-> :keyword class (.. getProtectionDomain getCodeSource getLocation getPath)))
 
 (def ^:private clojure-repl-cmd
   "Builds the command to execute a Clojure repl not 
-  associated with any project."
+associated with any project."
   ["java" "-cp" running-jar "clojure.main"])
 
 (defn start-repl
@@ -38,7 +36,7 @@ it. If not project file is supplied, a bare REPL is started."
                     `((clojure.main/repl)))
           cmd     (eval/shell-command project (concat '(do) init main))
           proc    (popen/popen cmd :redirect true :dir dir)]
-      {:proc proc 
+      {:proc proc
        :cin (popen/stdin proc)
        :cout (popen/stdout proc)
        :file project-file
