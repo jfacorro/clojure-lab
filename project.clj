@@ -4,7 +4,7 @@
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  [net.cgrand/parsley "0.9.2"]
                  [popen "0.3.0"]
-                 [leiningen-core "2.3.4"]
+                 [leiningen "2.3.4"]
                  ; Classpath and dependencies loader
                  [com.cemerick/pomegranate "0.2.0"]
                  ; Logging
