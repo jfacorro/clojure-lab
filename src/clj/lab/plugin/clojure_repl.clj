@@ -54,7 +54,8 @@ it. If not project file is supplied, a bare REPL is started."
                       (model/substring editor start end))
         repl        (ui/find @ui [:#bottom :tab :scroll :text-area])
         in          (-> repl (ui/attr :stuff) :in)]
-    (async/put! in selection)))
+    (when repl
+      (async/put! in selection))))
 
 (defn- wrap-output-stream-in-channel [stream out]
   (async/go
@@ -98,7 +99,7 @@ it. If not project file is supplied, a bare REPL is started."
                :repl)
         result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."
-                                   "Do you want to conitnue?"))]
+                                   " Do you want to conitnue?"))]
     (when (= :ok result)
       (popen/kill (:proc repl))
       (ui/update! ui (ui/parent id) ui/remove tab))))
