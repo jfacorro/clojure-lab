@@ -1,51 +1,56 @@
 ## TODO
 
-  - UI
-    - Tabs
-       - Higlight the current one.
-       - Change the default wrapping mode: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
+### UI
 
-    - Events
-      - Close the channels that listen to components that don't exist anymore.
+#### Tabs
+  - Higlight the current one.
+  - Change the default wrapping mode: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
 
-    - Move the following code editor features to their own plugin.
+#### Events
+  - Close the channels that listen to components that don't exist anymore.
+  - Key Bindings
+    - Remove all defaults and replace them all => not practical
+    - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
+  - Implement listen/unlisten functions to add and remove event handlers from a component.
+#### Code Editor
+  - Move the following code editor features to their own plugin.
 This could be done by adding a hook to an editor creation templates function.
-      - Syntax highlighting.
-      - Delimiter matching.
-      - Undo/redo (?)
-
-    - Key Bindings
-      - Remove all defaults and replace them all => not practical
-      - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
+    - Syntax highlighting.
+    - Delimiter matching.
+    - Undo/redo (?)
   
-    - Code Editor (or use RSyntaxTextArea and adapt it):
-      - Indent code.
-      - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
-      - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
-      - Go to line.
-      - Wrap text.
+  - Features:
+    - Indent code.
+    - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
+    - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
+    - Go to line.
+    - Wrap text.
 
-    - File Explorer
-      - Listen for changes in current dir structure.
+#### File Explorer
+  - Listen for changes in current dir structure.
 
-   - Outline:
-      - Add ENTER as a trigger for go-to-definition.
-      - When going to line, position the line in the top of the scroll.
-        - Depends on the implementation of the editor's Go to line.
+#### Code Outline:
+  - Add ENTER as a trigger for go-to-definition.
+  - When going to line, position the line in the top of the scroll.
+    - Depends on the implementation of the editor's Go to line.
 
-    - REPL
-      - Use nrepl.
+#### REPL
+  - Use nrepl, not a process and its input/output streams.
 
-    - Rainbow parens
-    - Paredit
+#### Rainbow parens
+  - Implement.
 
-    - Menu
-      - Define a way to specify the order of the menu items.
+#### Paredit
+  - Implement.
 
+#### Menu
+  - Define a way to specify the order of the menu items.
+
+### Model
   - Document
     - (?) Add a list of views to the document in order to be able to track them and update them (e.g. in the redo/undo scheme).
 
-  - App (Control)
+### App (Control)
     - Plugin management:
       - Unload a plugin.
       - (?) Allow plugins to define their own dependencies.
@@ -61,7 +66,6 @@ This could be done by adding a hook to an editor creation templates function.
         - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
 
 ## DONE
-
 
   - UI
     - Abstraction for events

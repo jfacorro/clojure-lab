@@ -252,38 +252,10 @@ and signals the highlighting process."
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
 
-(def ^:private split-style
-  {:border :none
-   :divider-size 3
-   :background 0x666666
-   :divider-background 0x999999})
-
 (defn- exit! [app e]
   (let [result (tplts/confirm "Bye bye" "Are you sure you want to leave this magical experience?")]
     (if (= result :ok)
         (System/exit 0))))
-
-(defn app-window [app]
-  [:window {:id     "main"
-            :title   (lab/config @app :name)
-            :on-closing ::exit!
-            :visible true
-            :size    [700 500]
-            :maximized true
-            :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
-            :menu    [:menu-bar]}
-    [:split (assoc split-style
-             :orientation :vertical
-             :resize-weight 1)
-      [:split (assoc split-style
-               :resize-weight 0
-               :divider-location 150)
-        [:tabs {:id "left" :border :none}]
-        [:split (assoc split-style :resize-weight 1)
-          [:tabs {:id "center"
-                  :on-tab-change ::switch-document-ui!}]
-          [:tabs {:id "right"}]]]
-      [:tabs {:id "bottom"}]]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toogle Fullscreen
@@ -429,7 +401,13 @@ inserting a fixed first parameter, which is the app."
   "Builds the basic UI and adds it to the app under the key :ui."
   [app]
   (ui/register-event-handler! (partial #'event-handler app))
-  (swap! app assoc :ui (atom (ui/init (app-window app)))
+  (swap! app assoc :ui (-> @app
+                         (lab/config :name)
+                         tplts/app-window
+                         (ui/update :#main ui/attr :on-closing ::exit!)
+                         (ui/update :#center ui/attr :on-tab-change ::switch-document-ui!)
+                         (ui/apply-stylesheet styles)
+                         atom)
                    :styles styles))
 
 (plugin/defplugin lab.plugin.main-ui
