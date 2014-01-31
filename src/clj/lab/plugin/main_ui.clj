@@ -458,20 +458,19 @@ inserting a fixed first parameter, which is the app."
 ;;; Default styles
 
 (def styles
-  {:*           {:font [:name "Consolas" :size 12]
-                 :border :none}
+  {:*           {:font [:name "Consolas" :size 12]}
+   #{:text-editor :text-area :scroll :split :panel}
+                {:border :none}
    :line-number {:font        [:name "Consolas" :size 14]
                  :background  0x666666
                  :color       0xFFFFFF
                  :current-line-color 0x00FFFF}
    #{:text-editor :text-area}
-                {:border      :none
-                 :font        [:name "Consolas" :size 14]
+                {:font        [:name "Consolas" :size 14]
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}
-   :split       {:border :none
-                 :divider-size 3
+   :split       {:divider-size 3
                  :background 0x666666
                  :divider-background 0x999999}})
 
