@@ -339,7 +339,7 @@ to the UI's main menu."
   (let [id    (ui/genid)
         title (doc/name @doc)
         tool-tip (doc/path @doc)]
-    (-> (tplts/tab app)
+    (-> (tplts/tab)
       (ui/update :tab #(-> % (ui/attr :id id)
                              (ui/attr :tool-tip tool-tip)))
       (ui/update [:panel :label] ui/attr :text title)
@@ -458,7 +458,8 @@ inserting a fixed first parameter, which is the app."
 ;;; Default styles
 
 (def styles
-  {:*           {:font [:name "Consolas" :size 12]}
+  {#{:label :tree :button}
+                {:font [:name "Consolas" :size 12]}
    #{:text-editor :text-area :scroll :split :panel}
                 {:border :none}
    :line-number {:font        [:name "Consolas" :size 14]

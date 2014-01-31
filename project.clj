@@ -5,6 +5,7 @@
                  [net.cgrand/parsley "0.9.2"]
                  [popen "0.3.0"]
                  [leiningen "2.3.4"]
+                 [org.clojure/tools.namespace "0.2.4"]
                  ; Classpath and dependencies loader
                  [com.cemerick/pomegranate "0.2.0"]
                  ; Logging

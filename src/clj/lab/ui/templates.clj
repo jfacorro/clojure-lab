@@ -11,18 +11,18 @@
 (defn tab
   "Creates a tab with a tab header as a panel that
 includes a label and a closing button."
-  ([app]
-    (ui/with-id id (tab app id)))
-  ([app id]
-    (-> [:tab {:id id
-               :header [:panel {:transparent false :background 0x333333}
-                          [:label {:color 0xFFFFFF}]
-                            [:button {:icon         "close-tab.png"
-                                      :border       :none
-                                      :transparent  true
-                                      :stuff        {:tab-id id}
-                                      :on-click     ::close-tab-button}]]}]
-      (ui/apply-stylesheet (:styles @app)))))
+  ([]
+    (tab (ui/genid)))
+  ([id]
+    (ui/init
+      [:tab {:id id
+             :header [:panel {:transparent false :background 0x333333}
+                       [:label {:color 0xFFFFFF}]
+                       [:button {:icon         "close-tab.png"
+                                 :border       :none
+                                 :transparent  true
+                                 :stuff        {:tab-id id}
+                                 :on-click     ::close-tab-button}]]}])))
 
 (defn confirm
   [title message]

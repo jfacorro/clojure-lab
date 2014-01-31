@@ -23,8 +23,7 @@
                  str
                  (truncate 50)
                  (str "Error - "))
-        tab    (-> app
-                 (tplts/tab)
+        tab    (-> (tplts/tab)
                  (ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none}
                            [:text-area {:text (str sw) :read-only true :post-init #(ui/caret-position (:source %2) 0)}]]))]

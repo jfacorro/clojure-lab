@@ -8,6 +8,7 @@
             [clojure.core.async :as async]
             [lab.core :as lab]
             [lab.ui.core :as ui]
+            [lab.model.document :as doc]
             [lab.model.protocols :as model]
             [lab.ui.templates :as tplts]
             [lab.core [plugin :as plugin]
@@ -48,16 +49,22 @@ it. If not project file is supplied, a bare REPL is started."
 (defn- eval-in-repl! [app e]
   (let [ui          (:ui @app)
         editor      (:source e)
+        file-path   (-> (ui/attr editor :doc) deref doc/path)
         [start end] (ui/selection editor)
         selection   (if (= start end)
-                      (model/text editor)
+                      (if file-path
+                        (str "(load-file \"" (.replace file-path \\ \/) "\")")
+                        (model/text editor))
                       (model/substring editor start end))
         repl        (ui/find @ui [:#bottom :tab :scroll :text-area])
         in          (-> repl (ui/attr :stuff) :in)]
     (when repl
       (async/put! in selection))))
 
-(defn- wrap-output-stream-in-channel [stream out]
+(defn- wrap-output-stream-in-channel
+  "Hook up the output stream of the REPL process
+to the channel provided."
+  [stream out]
   (async/go
     (loop [input (.read stream)]
       (when (pos? input)
@@ -65,14 +72,20 @@ it. If not project file is supplied, a bare REPL is started."
         (recur (.read stream))))
     (async/close! out)))
 
-(defn- send-to-repl [console cin x]
+(defn- send-to-repl
+  "Send code to the input channel of the REPL process
+and print the sent code to the REPL console."
+  [console cin x]
   (let [x (if (not= (last x) \newline) (str x "\n") x)]
     (ui/action
       (model/insert console (model/length console) x)
       (.write cin (str/replace x #"\n+" "\n"))
       (.flush cin))))
 
-(defn- hook-up-repl [repl console]
+(defn- hook-up-repl
+  "Creates two channels that are hooked up to the
+output and input streams of the REPL process."
+  [repl console]
   (let [in   (async/chan)
         out  (async/chan)
         cout (:cout repl)
@@ -89,6 +102,8 @@ it. If not project file is supplied, a bare REPL is started."
     in))
 
 (defn- close-tab-repl
+  "Ask for confirmation before closing the REPL tab
+and killing the associated process."
   [app e]
   (let [ui   (:ui @app)
         id   (-> (:source e) (ui/attr :stuff) :tab-id)
@@ -113,18 +128,22 @@ to the ui in the bottom section."
         console (ui/init [:text-area {:read-only true}])
         in      (hook-up-repl repl console)
         console (ui/attr console :stuff {:in in :repl repl})
-        tab     (-> (tplts/tab app)
+        tab     (-> (tplts/tab)
                   (ui/update :button ui/attr :on-click ::close-tab-repl)
                   (ui/update :label ui/attr :text (str "REPL: "(:name repl)))
                   (ui/add [:scroll console])
-                  (ui/apply-stylesheet styles))]
+                  (ui/apply-stylesheet styles))
+        split   (ui/find @ui (ui/parent "bottom"))
+        div-loc (or (ui/attr split :divider-location-right) 0)]
+    (when (< div-loc 10)
+      (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 150))
     (ui/update! ui :#bottom ui/add tab)))
 
 (defn open-project-repl!
   "Ask the user to select a project file and fire a 
 child process with a running repl."
   [app e]
-  (let [dir          (lab/config @app :current-dir)
+  (let [dir           (lab/config @app :current-dir)
         file-dialog   (ui/init (tplts/open-file-dialog dir))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)

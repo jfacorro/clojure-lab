@@ -93,13 +93,13 @@ tree. Returns a tree node."
 
 (defn- file-tree
   [app dir]
-  (-> app
-    (tplts/tab)
+  (-> (tplts/tab)
     (ui/update :label ui/attr :text (.getName dir))
     (ui/add [:scroll {:border :none}
               [:tree {:on-click #'open-document-tree-click
                       :on-key #'open-document-tree-enter}
-                (load-dir app dir)]])))
+                (load-dir app dir)]])
+    (ui/apply-stylesheet (:styles @app))))
 
 (defn- open-project
   [app _]

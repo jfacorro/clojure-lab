@@ -65,10 +65,10 @@ and content"
 (defn- outline-tree
   "Creates a new tab that contains a tree with id :#outline-tree."
   [app]
-  (->
-    (tplts/tab app "outline-tab")
+  (-> (tplts/tab "outline-tab")
     (ui/update :label ui/attr :text "Outline")
-    (ui/add [:scroll [:tree {:id "outline-tree"}]])))
+    (ui/add [:scroll [:tree {:id "outline-tree"}]])
+    (ui/apply-stylesheet (:styles @app))))
 
 (defn- create-outline-tree! [app _]
   (let [ui      (:ui @app)
