@@ -1,8 +1,6 @@
 (ns lab.core
   (:refer-clojure :exclude [name])
-  (:require [lab.model [workspace :as ws]
-                       [project :as pj]
-                       [document :as doc]]
+  (:require [lab.model.document :as doc]
             [lab.core.keymap :as km]
             [lab.core.plugin :as pl]
             [lab.core.lang   :as lang]
