@@ -1,9 +1,15 @@
 (ns lab.core.keymap
-  (:refer-clojure :exclude [find]))
+  (:refer-clojure :exclude [find])
+  (:require [clojure.string :as str]))
+
+(defn ks->set [ks]
+  (-> ks
+    (str/split #" ")
+    set))
 
 (defn add-command
   [km {ks :keystroke :as cmd}]
-  (assoc-in km [:bindings ks] cmd))
+  (assoc-in km [:bindings (ks->set ks)] cmd))
 
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,

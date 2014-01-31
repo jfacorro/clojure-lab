@@ -234,5 +234,6 @@ component and its parents."
   [^JComponent x]
   (doseq [x (all-parents x)]
     (remove-key-binding x "ctrl TAB")
+    (remove-key-binding x "ctrl shift TAB")
     (.setFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS #{})
     (.setFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS #{})))

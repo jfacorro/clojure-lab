@@ -264,8 +264,8 @@ to the UI's main menu."
         editor (:source e)
         doc  (ui/attr editor :doc)
         ks   (-> [] (into (:modifiers e)) (conj (:description e)))
-        kstr (->> ks (map name) (interpose " ") (apply str))
-        char-typed (-> e :char str)
+        kstr (->> ks (map name) set)
+        char-typed (-> e :char str str vector set)
         cmd  (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
               (map #(or (km/find % kstr) (km/find % char-typed)))
               (drop-while nil?)
@@ -396,6 +396,28 @@ to the UI's main menu."
   (undo-redo! app e doc/undo))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Next/previous center tab
+
+(defn move-tab [app move]
+  (let [ui    (:ui @app)
+        tab   (current-document-tab @ui)
+        tabs  (ui/find @ui :#center)
+        children (ui/children tabs)
+        i     (->> children
+                (keep-indexed #(when (= tab %2) %1))
+                first
+                (move (count children)))]
+    (ui/update! ui :#center ui/selection i)))
+
+(defn next-tab [app e]
+  (move-tab app
+            (fn [total i] (if (< (inc i) total) (inc i) 0))))
+
+(defn prev-tab [app e]
+  (move-tab app
+            (fn [total i] (if (>= (dec i) 0) (dec i) (dec total)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event handler
 
 (defn keyword->fn [k]
@@ -451,6 +473,8 @@ inserting a fixed first parameter, which is the app."
 
               {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
               {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
+              {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
+              {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl shift tab"}
 
               {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
               {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
