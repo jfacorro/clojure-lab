@@ -3,8 +3,7 @@
             [lab.ui.core :as ui]
             [lab.model.document :as doc]
             [lab.core [plugin :as plugin]
-                      [lang :as lang]
-                      [keymap :as km]]))
+                      [lang :as lang]]))
 
 (defn- check-for-delimiters [app e highlights]
   (let [editor    (:source e)
@@ -33,7 +32,7 @@
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
         ch     (find-matching-delimiter)]
-    (ui/attr editor :on-caret #(async/put! ch %&))))
+    (ui/attr editor :on-caret ch)))
 
 (def ^:private hooks
   {#'lab.ui.templates/text-editor #'text-editor-hook})

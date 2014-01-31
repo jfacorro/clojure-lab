@@ -23,7 +23,8 @@
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
                     lab.plugin.clojure-repl
-                    lab.plugin.delimiter-matching]
+                    lab.plugin.delimiter-matching
+                    lab.plugin.syntax-highlighting]
    :plugins-dir   "plugins"
    :current-dir   "."})
 

@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [find])
   (:require [clojure.string :as str]))
 
-(defn ks->set [ks]
+(defn- ks->set [ks]
   (-> ks
     (str/split #" ")
     set))

@@ -1,7 +1,12 @@
 (ns lab.util
-  (:require [clojure [string :as str]
+  (:require [clojure.core.async.impl.protocols :as async-protocols]
+            [clojure [string :as str]
                      [reflect :as r]
                      [pprint :as p]]))
+
+(defn channel?
+  [x]
+  (satisfies? async-protocols/Channel x))
 
 (defn keywordize [^String s]
   (-> s

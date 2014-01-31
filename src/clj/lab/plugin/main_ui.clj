@@ -2,6 +2,7 @@
   "Builds the main UI window and components."
   (:require [clojure.core.async :as async]
             [lab.core :as lab]
+            [lab.util :as util]
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
@@ -170,75 +171,6 @@ associated to it."
       (swap! app lab/switch-document doc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Text Change
-
-(defn timeout-channel
-  "Creates a go block that works in two modes :wait and :recieve.
-When on ':wait' it blocks execution until a value is recieved
-from the channel, it then enters ':recieve' mode until the timeout
-wins. Returns a channel that takes the input events."
-  [timeout-ms f]
-  (let [c (async/chan)]
-    (async/go-loop [mode     :wait
-                    args     nil]
-      (condp = mode
-        :wait
-          (recur :recieve (async/<! c))
-        :recieve
-          (let [[_ ch] (async/alts! [c (async/timeout timeout-ms)])]
-            (if (= ch c)
-              (recur :recieve args)
-              (do
-                (async/thread (apply f args))
-                (recur :wait nil))))))
-    c))
-
-(defn highlight
-  "Takes the editor component and an optional argument
-that indicates if the highlight should be incremental
-or not.
-
-If it's incremental only the highlight modified since the
-last parse tree generation are update, otherwise all tokens
-are applied their highlight."
-  [editor & [incremental]]
-  (let [doc         (ui/attr editor :doc)
-        node-group  (and incremental (gensym "group-"))
-        lang        (doc/lang @doc)
-        styles      (:styles lang)
-        old-text    (doc/text editor)
-        parse-tree  (lang/parse-tree @doc node-group)
-        tokens      (lang/tokens parse-tree node-group)
-        ;; If there are no tokens for this group then take the group from the root node.
-        tokens      (if (empty? tokens)
-                      (lang/tokens parse-tree (lang/node-group parse-tree))
-                      tokens)]
-    (ui/action
-      ;; Before applying the styles check that the
-      ;; text is still the same, otherwise some tokens
-      ;; get messed up.
-      (when (= (doc/text editor) old-text)
-        (ui/apply-style editor tokens styles))))
-  editor)
-
-(defn text-editor-change
-  "Handles changes in the control, updates the document
-and signals the highlighting process."
-  [app {:keys [type source offset text length] :as e}]
-  (when (not= type :change)
-    (let [ui       (:ui @app)
-          id       (ui/attr source :id)
-          editor   (ui/find @ui (ui/selector# id))
-          channel  (:chan (ui/attr editor :stuff))
-          doc      (ui/attr editor :doc)]
-      (when editor
-        (when (not (:read-only @doc))
-          (case type
-            :insert (swap! doc doc/insert offset text)
-            :remove (swap! doc doc/delete offset (+ offset length))))
-        (async/put! channel [editor])))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
 
 (defn- register-keymap-hook
@@ -256,6 +188,21 @@ to the UI's main menu."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text Editor 
+
+;; Text Change
+
+(defn text-editor-change
+  "Handles changes in the control, updates the document
+and signals the highlighting process."
+  [app {:keys [type source offset text length] :as e}]
+  (when (not= type :change)
+    (let [editor   source
+          doc      (ui/attr editor :doc)]
+      (when (not (:read-only @doc))
+        (case type
+          :insert (swap! doc doc/insert offset text)
+          :remove (swap! doc doc/delete offset (+ offset length)))))))
+
 
 ;; Key handle
 
@@ -278,12 +225,9 @@ to the UI's main menu."
 ;; Text editor creation
 
 (defn- text-editor-create [app doc]
-  (let [hl-ch  (timeout-channel 100 #(#'highlight % true))
-        editor (-> (tplts/text-editor doc)
-                 highlight
+  (let [editor (-> (tplts/text-editor doc)
                  (ui/attr :on-key ::handle-key)
-                 (ui/attr :on-change ::text-editor-change)
-                 (ui/attr :stuff {:chan hl-ch}))]
+                 (ui/attr :on-change ::text-editor-change))]
     [:scroll {:vertical-increment 16
               :border :none
               :margin-control [:line-number {:source editor}]}
@@ -433,6 +377,8 @@ inserting a fixed first parameter, which is the app."
       (f app e)
     (keyword? f)
       ((keyword->fn f) app e)
+    (util/channel? f)
+      (async/put! f [app e])
     :else
       (throw (Exception. "Not supported event handler value, it must be a function or a ns qualified keyword."))))
 
