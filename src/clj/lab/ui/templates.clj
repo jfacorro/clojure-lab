@@ -1,5 +1,6 @@
 (ns lab.ui.templates
-  (:require [lab.ui.core :as ui]))
+  (:require [lab.ui.core :as ui]
+            [lab.model.document :as doc]))
 
 (defn- close-tab-button
   [app e]
@@ -23,6 +24,14 @@ includes a label and a closing button."
                                  :transparent  true
                                  :stuff        {:tab-id id}
                                  :on-click     ::close-tab-button}]]}])))
+
+(defn text-editor
+  "Creates a text editor with a document attached to it."
+  [doc]
+  (-> [:text-editor {:doc  doc}]
+    ui/init
+    (ui/attr :text (doc/text @doc))
+    (ui/caret-position 0)))
 
 (defn confirm
   [title message]

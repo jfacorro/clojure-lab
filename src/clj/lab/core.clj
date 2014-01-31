@@ -22,7 +22,8 @@
                     lab.plugin.code-outline
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
-                    lab.plugin.clojure-repl]
+                    lab.plugin.clojure-repl
+                    lab.plugin.delimiter-matching]
    :plugins-dir   "plugins"
    :current-dir   "."})
 

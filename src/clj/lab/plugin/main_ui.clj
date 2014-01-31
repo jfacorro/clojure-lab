@@ -275,55 +275,15 @@ to the UI's main menu."
       (when (= :pressed (:event e))
         (ui/handle-event (:fn cmd) e)))))
 
-;; Delimiter matching
-
-(defn- check-for-delimiters [app e highlights]
-  (let [editor    (:source e)
-        doc       (ui/attr editor :doc)
-        lang      (doc/lang @doc)
-        pos       (:position e)
-        delimiter-match (:delimiter-match lang)
-        add-hl    #(ui/add-highlight editor % (inc %) 0x888888)]
-    (when delimiter-match
-      (ui/action
-        (doseq [x @highlights]
-          (swap! highlights disj)
-          (ui/remove-highlight editor x))
-        (swap! highlights into (mapv add-hl (delimiter-match @doc pos)))))))
-
-(defn- find-matching-delimiter []
-  (let [ch         (async/chan)
-        highlights (atom #{})]
-    (async/go-loop []
-      (let [[app e] (async/<! ch)]
-        (when e
-          (check-for-delimiters app e highlights)
-          (recur))))
-    ch))
-
-;; Text editor post init
-
-(defn- text-editor-post-init [app e]
-  (let [c   (:source e)
-        doc (ui/attr c :doc)]
-    (-> c
-      (ui/attr :text (doc/text @doc))
-      highlight
-      (ui/caret-position 0))))
-
 ;; Text editor creation
 
 (defn- text-editor-create [app doc]
-  (let [id     (ui/genid)
-        hl-ch  (timeout-channel 100 #(#'highlight % true))
-        mp-ch  (find-matching-delimiter)
-        editor (ui/init [:text-editor {:id        id
-                                       :doc       doc
-                                       :post-init ::text-editor-post-init
-                                       :on-key    ::handle-key
-                                       :on-caret  #(async/put! mp-ch %&)
-                                       :on-change ::text-editor-change
-                                       :stuff     {:chan hl-ch}}])]
+  (let [hl-ch  (timeout-channel 100 #(#'highlight % true))
+        editor (-> (tplts/text-editor doc)
+                 highlight
+                 (ui/attr :on-key ::handle-key)
+                 (ui/attr :on-change ::text-editor-change)
+                 (ui/attr :stuff {:chan hl-ch}))]
     [:scroll {:vertical-increment 16
               :border :none
               :margin-control [:line-number {:source editor}]}
@@ -460,7 +420,7 @@ inserting a fixed first parameter, which is the app."
 (def styles
   {#{:label :tree :button}
                 {:font [:name "Consolas" :size 12]}
-   #{:text-editor :text-area :scroll :split :panel}
+   #{:text-editor :text-area :scroll :split :panel :tree}
                 {:border :none}
    :line-number {:font        [:name "Consolas" :size 14]
                  :background  0x666666
