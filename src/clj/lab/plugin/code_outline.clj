@@ -66,8 +66,7 @@ and content"
   "Creates a new tab that contains a tree with id :#outline-tree."
   [app]
   (->
-    (tplts/tab app)
-    (ui/attr :id "outline-tab")
+    (tplts/tab app "outline-tab")
     (ui/update :label ui/attr :text "Outline")
     (ui/add [:scroll [:tree {:id "outline-tree"}]])))
 
@@ -80,7 +79,7 @@ and content"
         (when-not (ui/attr split :divider-location-right)
           (ui/update! ui (ui/parent "right") ui/attr :divider-location-right 150))
         (update-outline-tree! @app))
-      (let [tab (ui/find @ui :#outline-tab)]
+      (when-let [tab (ui/find @ui :#outline-tab)]
         (ui/update! ui :#right ui/remove tab)))))
 
 (def ^:private hooks
