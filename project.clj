@@ -5,7 +5,6 @@
                  [net.cgrand/parsley "0.9.2"]
                  [popen "0.3.0"]
                  [leiningen "2.3.4"]
-                 [org.clojure/tools.namespace "0.2.4"]
                  ; Classpath and dependencies loader
                  [com.cemerick/pomegranate "0.2.0"]
                  ; Logging
@@ -19,9 +18,13 @@
   :java-source-paths ["src/java"]
   :source-paths ["src/clj"]
   :manifest {"SplashScreen-Image" "logo.png"}
-  :aliases  {"build" ["do" "clean," "uberjar"]
+  :aliases  {"dev" ["do" "clean," "javac," "run-dev"]
+             "run-dev" ["with-profile" "dev" "trampoline" "run"]
+             "build" ["do" "clean," "uberjar"]
              "build-aot" ["with-profile" "aot" "build"]}
   :repositories [["local" "file:repo"]]
-  :profiles {:aot {:aot :all}
+  :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.4"]]
+                   :main lab.main}
+             :aot {:aot :all}
              :uberjar {:main lab.main
                        :aot [lab.main]}})
