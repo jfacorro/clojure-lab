@@ -55,7 +55,8 @@ are applied their highlight."
   editor)
 
 (defn- text-editor-change! [app e]
-  (highlight! (:source e) true))
+  (if-not (= :change (:type e))
+    (highlight! (:source e) true)))
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
