@@ -1,5 +1,6 @@
 (ns lab.ui.swing
-  (:require [lab.ui.core :as ui])
+  (:require [lab.ui.core :as ui]
+            [lab.ui.swing.util :as util])
   (:import [javax.swing SwingUtilities]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,6 +59,7 @@
   (add [this child]
     (.add this ^java.awt.Component child)
     (.validate this)
+    (util/remove-focus-traversal child)
     this)
   (remove [this child]
     (.remove this ^java.awt.Component child)
@@ -71,6 +73,7 @@
   (add [this child]
     (.add this ^JComponent child)
     (.validate this)
+    (util/remove-focus-traversal child)
     this)
   (remove [this ^JComponent child]
     (.remove this child)

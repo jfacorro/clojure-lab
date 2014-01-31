@@ -4,8 +4,9 @@
             [lab.ui.protocols :as uip]
             [clojure.java.io :as io])
   (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
-                     BorderLayout CardLayout FlowLayout GridBagLayout GridLayout]
-           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon
+                     BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
+                     KeyboardFocusManager]
+           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent
                         BoxLayout GroupLayout SpringLayout]
            [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
 
@@ -192,3 +193,46 @@ no more."
 
 (defn highlighter [c]
   (DefaultHighlighter$DefaultHighlightPainter. (color c)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; Key Bindings
+
+(def input-map-modes [JComponent/WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+                      JComponent/WHEN_FOCUSED
+                      JComponent/WHEN_IN_FOCUSED_WINDOW])
+
+(defn- all-input-maps [ctrl]
+  (->> input-map-modes
+    (map #(.getInputMap ctrl %))
+    (filter (comp not nil?))))
+
+(defn remove-key-binding [ctrl key-stroke]
+  (when (instance? JComponent ctrl)
+    (let [ks     (KeyStroke/getKeyStroke key-stroke)
+          delete (fn [x] (when x (.remove x ks)))]
+      (loop [ims (all-input-maps ctrl)]
+        (when (seq ims)
+          (doall (map delete ims))
+          (recur (mapcat #(when % [(.getParent %)]) ims)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; Focus Traversal Keys
+
+(defn all-parents
+  "Returns a set of all parents of the component,
+including itself."
+  [^JComponent x]
+  (loop [ps #{x}
+         p  (.getParent x)]
+    (if (and p (not (contains? ps p)))
+      (recur (conj ps p) (.getParent x))
+      ps)))
+
+(defn remove-focus-traversal
+  "Remove all focus traversal key binginds for this
+component and its parents."
+  [^JComponent x]
+  (doseq [x (all-parents x)]
+    (remove-key-binding x "ctrl TAB")
+    (.setFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS #{})
+    (.setFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS #{})))

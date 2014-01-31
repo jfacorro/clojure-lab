@@ -1,6 +1,7 @@
 (ns lab.ui.swing.tab
   (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map]])
-  (:require [lab.ui.core :as ui])
+  (:require [lab.ui.core :as ui]
+            [lab.ui.swing.util :as util])
   (:import  [javax.swing JTabbedPane JScrollPane JPanel UIManager]
             [javax.swing.event ChangeListener ChangeEvent]
             [java.awt Insets Color]))
@@ -67,6 +68,7 @@
           tool-tip  (ui/attr child-abs :tool-tip)
           title     (ui/attr child-abs :title)]
       (.addTab this title child)
+      (util/remove-focus-traversal child)
       (when header (.setTabComponentAt this i header))
       (when tool-tip (.setToolTipTextAt this i tool-tip))
       (selection this i))

@@ -59,9 +59,11 @@
     (if (instance? JButton (.getTopComponent this))
       (.setTopComponent this child)
       (.setBottomComponent this child))
+    (util/remove-focus-traversal child)
     this)
 
   JScrollPane
   (add [this child]
     (.. this getViewport (add child nil))
+    (util/remove-focus-traversal child)
     this))
