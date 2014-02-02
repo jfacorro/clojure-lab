@@ -36,6 +36,11 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### REPL
   - Use nrepl, not a process and its input/output streams.
+  - Fix bug: when closing the REPL tab, even if the user enters no or cancel in the prompt, the
+  tab closes all the same, since the on-click handler from the template is used as well.
+    - Possible solutions:
+      1. Implement an event handlers map for each component and a listen! function for the UI.
+      2. Remove the init in the templates function, so that it only returns the hiccup style vector AND instead of just proxying the add protocol functions, have the function in lab.ui.core call hiccup->component.  
 
 #### Rainbow parens
   - Implement.
