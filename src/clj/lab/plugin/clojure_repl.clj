@@ -114,7 +114,7 @@ and killing the associated process."
                :repl)
         result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."
-                                   " Do you want to conitnue?"))]
+                                   " Do you want to continue?"))]
     (when (= :ok result)
       (popen/kill (:proc repl))
       (ui/update! ui (ui/parent id) ui/remove tab))))

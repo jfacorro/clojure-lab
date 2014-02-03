@@ -75,7 +75,7 @@ check if its one of the registered symbols."
   :namespace    {:color 0x960000}
   :string       {:color 0xE61D43}
   :number       {:color 0xFFFFFF}
-  :comment      {:color 0x999988 :bold true}
+  :comment      {:color 0x999988}
   :default      {:color 0xFFFFFF}
   :net.cgrand.parsley/unfinished  {:color 0xFF1111 :italic true}
   :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})
