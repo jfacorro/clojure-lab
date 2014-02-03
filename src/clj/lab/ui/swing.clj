@@ -40,6 +40,11 @@
 
 (UIManager/setLookAndFeel "javax.swing.plaf.metal.MetalLookAndFeel")
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Register Inconsolata font
+
+(util/register-font "Inconsolata.otf")
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; UI protocols implementation
   

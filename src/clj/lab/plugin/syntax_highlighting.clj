@@ -68,6 +68,6 @@ are applied their highlight."
 (def ^:private hooks
   {#'lab.ui.templates/text-editor #'text-editor-hook})
 
-(plugin/defplugin lab.plugin.delimiter-matching
+(plugin/defplugin lab.plugin.syntax-highlighting
   :hooks hooks)
 

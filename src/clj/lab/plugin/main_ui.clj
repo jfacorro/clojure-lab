@@ -27,13 +27,13 @@
   [ui]
   (ui/find (current-document-tab ui) :text-editor))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Open
-
 (defn- update-tab-title [tab title]
   (let [header (-> (ui/attr tab :header)
                   (ui/update :label ui/attr :text title))]
     (ui/attr tab :header header)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Open
 
 (defn- doc-modified-update-title [app id key doc old-state new-state]
   (when (not= (doc/modified? old-state) (doc/modified? new-state))
@@ -203,7 +203,6 @@ and signals the highlighting process."
           :insert (swap! doc doc/insert offset text)
           :remove (swap! doc doc/delete offset (+ offset length)))))))
 
-
 ;; Key handle
 
 (defn- handle-key [app e]
@@ -359,15 +358,15 @@ inserting a fixed first parameter, which is the app."
 
 (def styles
   {#{:label :tree :button}
-                {:font [:name "Consolas" :size 12]}
+                {:font [:name "Inconsolata" :size 14]}
    #{:text-editor :text-area :scroll :split :panel :tree}
                 {:border :none}
-   :line-number {:font        [:name "Consolas" :size 14]
+   :line-number {:font        [:name "Inconsolata" :size 16]
                  :background  0x666666
                  :color       0xFFFFFF
                  :current-line-color 0x00FFFF}
    #{:text-editor :text-area}
-                {:font        [:name "Consolas" :size 14]
+                {:font        [:name "Inconsolata" :size 16]
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}

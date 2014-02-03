@@ -76,6 +76,14 @@ all optional and creates a Font."
           (let [{:keys [name size style] :or {size 14 style :plain}} (apply hash-map args)]
             (Font. name (font-style style) size))))
 
+(defn register-font [font-path]
+  (let [ge   (GraphicsEnvironment/getLocalGraphicsEnvironment)
+        font-file (io/file (io/resource font-path))
+        font (Font/createFont Font/TRUETYPE_FONT (io/file font-file))]
+    (try 
+      (.registerFont ge font)
+      (catch Exception ex))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Document Style
 
