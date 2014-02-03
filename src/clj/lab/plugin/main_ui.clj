@@ -6,8 +6,8 @@
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
-                    [templates :as tplts]
-                    swing]
+                    [templates :as tplts]]
+            lab.ui.swing.core
             [lab.core [keymap :as km]
                       [plugin :as plugin]
                       [lang :as lang]]

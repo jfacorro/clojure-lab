@@ -1,4 +1,4 @@
-(ns lab.ui.swing
+(ns lab.ui.swing.core
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util])
   (:import [javax.swing SwingUtilities]))
@@ -13,7 +13,7 @@
   `(SwingUtilities/invokeLater
     (fn [] ~@body)))
 
-(ui/register-action-macro! #'lab.ui.swing/swing-action)
+(ui/register-action-macro! #'swing-action)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Then require components implementations
