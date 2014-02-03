@@ -5,7 +5,7 @@
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
             [javax.swing.event TreeSelectionListener TreeExpansionListener 
                                TreeExpansionEvent]
-            [java.awt.event MouseAdapter]))
+            [java.awt.event MouseAdapter KeyAdapter]))
 
 (defn tree-node-init [c] 
   (let [ab        (atom nil)
@@ -30,12 +30,16 @@ The handler should return falsey if the node was modified."
       ;; notify the model to reload the modified node
       (.reload ^DefaultTreeModel (.getModel tree) node))))
 
-(defn- on-node-click
-  [e]
+(defn- on-node-event
+  "Event handler for either click or key.
+event can be:
+  - :on-click
+  - :on-key"
+  [event e]
   (let [tree ^JTree (.getSource e)
         node (.getLastSelectedPathComponent tree)
         abs  (and node (abstract node))
-        f    (ui/attr abs :on-click)
+        f    (ui/attr abs event)
         e    (assoc (to-map e) :source abs)]
     (when (and node f (#'ui/event-handler f e))
       ;; notify the model to reload the modified node
@@ -46,11 +50,16 @@ The handler should return falsey if the node was modified."
                     (treeCollapsed [e])
                     (treeExpanded [e] (#'on-node-expansion e)))
         click     (proxy [MouseAdapter] []
-                       (mousePressed [e] (#'on-node-click e)))]
+                       (mousePressed [e] (#'on-node-event :on-click e)))
+        key       (proxy [KeyAdapter] []
+                    (keyPressed [e] (#'on-node-event :on-key e))
+                    (keyReleased [e] (#'on-node-event :on-key e))
+                    (keyTyped [e] (#'on-node-event :on-key e)))]
     (doto (JTree.)
       (.setModel (DefaultTreeModel. nil))
       (.addTreeExpansionListener expansion)
-      (.addMouseListener click))))
+      (.addMouseListener click)
+      (.addKeyListener key))))
 
 (ui/definitializations
   :tree        tree-init
@@ -102,5 +111,6 @@ The handler should return falsey if the node was modified."
     (:item [c attr item]
       (.setUserObject ^DefaultMutableTreeNode (impl c) item))
     (:info [c _ v])
+    (:on-key [c _ v])
     (:on-expansion [c _ v])
     (:on-click [c _ v]))

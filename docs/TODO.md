@@ -15,8 +15,6 @@
 #### Code Editor
   - Move the following code editor features to their own plugin.
 This could be done by adding a hook to an editor creation templates function.
-    - Syntax highlighting.
-    - Delimiter matching.
     - Undo/redo (?)
   
   - Features:
@@ -30,7 +28,6 @@ This could be done by adding a hook to an editor creation templates function.
   - Listen for changes in current dir structure.
 
 #### Code Outline:
-  - Add ENTER as a trigger for go-to-definition.
   - When going to line, position the line in the top of the scroll.
     - Depends on the implementation of the editor's Go to line.
 
@@ -72,47 +69,52 @@ This could be done by adding a hook to an editor creation templates function.
 
 ## DONE
 
-  - UI
-    - Abstraction for events
-      - Define available events for each component (alla seesaw)
-    - Generate hierarchy (ad-hoc?) for the different types of components so that common attributes share the same logic (and implementation code).
-    - Gracefuly resolve the properties that don't actually exist in the **implementation** but that we want to have in the **abstraction**.
-      - This would allow better component composition (i.e. header and title in the Tab class).
-    - Implement Enlive selectors.
-    - Modify the global atom created for the ui.
-    - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
-    - The abstraction value for the implementations should be updated with each modification to the abstraction.
+## UI
+  - Abstraction for events
+    - Define available events for each component (alla seesaw)
+  - Generate hierarchy (ad-hoc?) for the different types of components so that common attributes share the same logic (and implementation code).
+  - Gracefuly resolve the properties that don't actually exist in the **implementation** but that we want to have in the **abstraction**.
+    - This would allow better component composition (i.e. header and title in the Tab class).
+  - Implement Enlive selectors.
+  - Modify the global atom created for the ui.
+  - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
+  - The abstraction value for the implementations should be updated with each modification to the abstraction.
 
-    - Code Editor (or use RSyntaxTextArea and adapt it):
-      - Syntax high-lighting.
-        - Incremental.
-        - Strings.
-        - Comments.
-      - Line numbers (show/hide).
-      - Balance delimiters: ( \[ {
-      - Mark corresponding delimiter.
-      - Comment / Uncomment lines.
+#### Code Editor
+  - Syntax high-lighting.
+    - Incremental.
+    - Strings.
+    - Comments.
+  - Line numbers (show/hide).
+  - Balance delimiters: ( \[ {
+  - Mark corresponding delimiter.
+  - Comment / Uncomment lines.
+  - Move the following code editor features to their own plugin. This could be done by adding a hook to an editor creation templates function.
+    - Syntax highlighting.
+    - Delimiter matching.
+  - Unify protocol Text (there's one in buffer and another in UI).
+    - So that text operations are defined in a single protocol.
 
-    - File Explorer
-      - Load directories lazily
+#### File Explorer
+  - Load directories lazily
 
-    - Unify protocol Text (there's one in buffer and another in UI).
-      - So that text operations are defined in a single protocol.
+#### Parsley
+  - Modify parsley in order to be able to find node index but keeping log(n).
+  - Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
+    - Didn't modify parsley but improved the way in which the tokens are searched incrementally.
 
-    - Parsley
-      - Modify parsley in order to be able to find node index but keeping log(n).
-      - Modify parsley/or the document in order to get in O(1) the text from the incremental buffer.
-        - Didn't modify parsley but improved the way in which the tokens are searched incrementally.
+#### Code Outline:
+  - Add ENTER as a trigger for go-to-definition.
 
-    - REPL
-      - Create plugin.
+#### REPL
+  - Create plugin.
 
-  - Model
-    - Complete Document
-      - Keep track of changes (implement history or some scheme where changes are registered and kept in a clojure ordered data
+## Model
+  - Complete Document
+    - Keep track of changes (implement history or some scheme where changes are registered and kept in a clojure ordered data
  structure)
-        - Allow incremental view updates.
-        - Undo/Redo
+      - Allow incremental view updates.
+      - Undo/Redo
 
-  - App
+## App
     - Define the way plugins/add-ons are loaded.

@@ -9,28 +9,41 @@
             [lab.model.document :as doc]
             [lab.plugin.main-ui :as main-ui]))
 
-(defn- go-to-definition
+(defn- go-to-definition [ui line-number]
+  (let [editor (#'main-ui/current-text-editor @ui)
+        id     (ui/attr editor :id)]
+    (when id
+      (ui/update! ui (ui/selector# id)
+        #(-> %
+          (ui/caret-position line-number)
+          ui/focus)))))
+
+(defn- go-to-definition-enter
+  "Handles the enter press in a tree node positioning the
+caret in the definition associated with the tree node."
+  [app {:keys [source description event] :as e}]
+  (when (and (= :pressed event) (= :enter description))
+    (let [ui     (:ui @app)
+          info   (ui/attr source :info)]
+      (go-to-definition ui (:offset info)))))
+
+(defn- go-to-definition-click
   "Handles the click in a tree node positioning the
 caret in the definition associated with the tree node."
   [app e]
   (when (= 2 (:click-count e))
     (let [ui     (:ui @app)
           node   (:source e)
-          info   (ui/attr node :info)
-          editor (#'main-ui/current-text-editor @ui)
-          id     (ui/attr editor :id)]
-      (when id
-        (ui/update! ui (ui/selector# id)
-          #(-> %
-            (ui/caret-position (:offset info))
-            ui/focus))))))
+          info   (ui/attr node :info)]
+      (go-to-definition ui (:offset info)))))
 
 (defn- def->tree-node
   [app def-info]
   [:tree-node {:leaf true
                :item (:name def-info)
                :info def-info
-               :on-click #'go-to-definition}])
+               :on-key ::go-to-definition-enter
+               :on-click ::go-to-definition-click}])
 
 (defn- update-outline-tree!
   "Updates the outline using the document provided
