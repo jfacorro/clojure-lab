@@ -1,16 +1,53 @@
 (ns lab.ui.swing.util
   (:require [lab.ui.core :as ui]
             [lab.ui.util :as util]
+            [lab.ui.hierarchy :as h]
             [lab.ui.protocols :as uip]
             [clojure.java.io :as io])
   (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
                      BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
                      KeyboardFocusManager]
+           [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent
                         BoxLayout GroupLayout SpringLayout]
            [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
 
 (def ^Toolkit toolkit (Toolkit/getDefaultToolkit))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; SplitPane Orientations
+
+(defmulti create-listener
+  "Creates a swing listener based on the component and the event."
+  uip/tag-key-dispatch
+  :hierarchy #'h/hierarchy)
+
+(defmethod create-listener [:component :key]
+  [c _ f]
+  (proxy [KeyListener] []
+    (keyPressed [e] (f e))
+    (keyReleased [e] (f e))
+    (keyTyped [e] (f e))))
+
+(defmethod create-listener [:component :focus]
+  [c _ f]
+  (proxy [FocusAdapter] [] (focusGained [e] (f e))))
+
+(defmethod create-listener [:component :blur]
+  [c _ f]
+  (proxy [FocusAdapter] [] (focusLost [e] (f e))))
+
+(defmethod create-listener [:component :click]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mousePressed [e] (f e))))
+
+(defmethod create-listener [:button :click]
+  [c _ f]
+  (proxy [ActionListener] [] (actionPerformed [e] (f e))))
+
+(defmethod create-listener [:menu-item :click]
+  [c _ f]
+  (proxy [ActionListener] [] (actionPerformed [e] (f e))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SplitPane Orientations

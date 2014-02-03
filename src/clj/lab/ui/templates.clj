@@ -21,7 +21,6 @@
             [:tabs {:id "right"}]]]
         [:tabs {:id "bottom"}]]]))
 
-
 (defn- close-tab-button
   [app e]
   (let [ui  (:ui @app)
@@ -42,8 +41,8 @@ includes a label and a closing button."
                        [:button {:icon         "close-tab.png"
                                  :border       :none
                                  :transparent  true
-                                 :stuff        {:tab-id id}
-                                 :on-click     ::close-tab-button}]]}])))
+                                 :listen       [:click ::close-tab-button]
+                                 :stuff        {:tab-id id}}]]}])))
 
 (defn text-editor
   "Creates a text editor with a document attached to it."

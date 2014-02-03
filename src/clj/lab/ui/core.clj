@@ -96,9 +96,9 @@ And each attr-declaration is:
 
   (attr-name [c attr v] & body)"
   [& body]
-  (let [comps (->> body 
-                (partition-by keyword?) 
-                (partition 2) 
+  (let [comps (->> body
+                (partition-by keyword?)
+                (partition 2)
                 (map #(apply concat %)))
         f     (fn [tag & mthds]
                 (for [[attr [c _ _ :as args] & body] mthds]
@@ -226,17 +226,45 @@ as the abstraction of its implementation."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 
+;; Component
+
 (def children #'p/children)
 (def add #'p/add)
 (def remove #'p/remove)
 (def focus #'p/focus)
+
+(defn listeners [c event]
+  (-> c meta :listen event))
+
+(defn listen [c evt f]
+  (let [listener   (p/listen c evt (partial handle-event f))
+        f-meta     (with-meta [f] {:impl listener})
+        listeners  (get-in (meta c) [:listen evt] #{})]
+    (vary-meta c assoc-in [:listen evt] (conj listeners f-meta))))
+
+(defn ignore [c evt f]
+  (let [listener  (-> c listeners (get [f]) meta :impl)]
+    (p/ignore c evt listener)
+    (vary-meta c assoc-in [:listen evt] dissoc [f])))
+
+(defn ignore-all [c evt]
+  (let [listeners (->> (meta c) :listen evt)]
+    (doseq [listener (map (comp :impl meta) listeners)]
+      (p/ignore c evt listener))
+    (vary-meta c assoc-in [:listen evt] #{})))
+
+;; TextEditor
 
 (def apply-style #'p/apply-style)
 (def add-highlight #'p/add-highlight)
 (def remove-highlight #'p/remove-highlight)
 (def caret-position #'p/caret-position)
 
+;; Selection
+
 (def selection #'p/selection)
+
+;; Events 
 
 (def consume #'p/consume)
 

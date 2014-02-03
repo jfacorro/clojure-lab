@@ -42,8 +42,8 @@ caret in the definition associated with the tree node."
   [:tree-node {:leaf true
                :item (:name def-info)
                :info def-info
-               :on-key ::go-to-definition-enter
-               :on-click ::go-to-definition-click}])
+               :listen [:key ::go-to-definition-enter
+                        :click ::go-to-definition-click]}])
 
 (defn- update-outline-tree!
   "Updates the outline using the document provided

@@ -31,7 +31,11 @@
   (remove-highlight [this id] "Removed the highlight of the given id.")
   (caret-position [this] [this position] "Gets and sets the caret position for this text component."))
 
-;; Multi methods
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Multi methods
+
+(defn tag-key-dispatch [{:keys [tag]} k & _]
+  [tag k])
 
 (defmulti initialize
   "Creates a component instance based on its :tag."
@@ -41,7 +45,15 @@
 (defmulti set-attr
   "Sets the attribute value for this component and returns the
   modified component."
-  (fn [{tag :tag} k _]
-    [tag k])
+  tag-key-dispatch
   :hierarchy #'h/hierarchy)
 
+(defmulti listen
+  "Add an event handler for the event specified."
+  tag-key-dispatch
+  :hierarchy #'h/hierarchy)
+
+(defmulti ignore
+  "Remove an event handler for the event specified."
+  tag-key-dispatch
+  :hierarchy #'h/hierarchy)

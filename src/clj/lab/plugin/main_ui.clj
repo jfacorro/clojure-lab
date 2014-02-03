@@ -225,7 +225,7 @@ and signals the highlighting process."
 
 (defn- text-editor-create [app doc]
   (let [editor (-> (tplts/text-editor doc)
-                 (ui/attr :on-key ::handle-key)
+                 (ui/listen :key ::handle-key)
                  (ui/attr :on-change ::text-editor-change))]
     [:scroll {:vertical-increment 16
               :border :none
@@ -242,12 +242,11 @@ and signals the highlighting process."
   (let [id    (ui/genid)
         title (doc/name @doc)
         tool-tip (doc/path @doc)]
-    (-> (tplts/tab)
-      (ui/update :tab #(-> % (ui/attr :id id)
-                             (ui/attr :tool-tip tool-tip)))
-      (ui/update [:panel :label] ui/attr :text title)
-      (ui/update [:panel :button] ui/attr :stuff {:tab-id id})
-      (ui/update [:panel :button] ui/attr :on-click ::close-document-button)
+    (-> (tplts/tab id)
+      (ui/update :tab ui/attr :tool-tip tool-tip)
+      (ui/update :label ui/attr :text title)
+      (ui/update :button ui/attr :stuff {:tab-id id})
+      (ui/update :button ui/listen :click ::close-document-button)
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
 

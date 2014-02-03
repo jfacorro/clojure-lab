@@ -1,5 +1,6 @@
 (ns lab.ui.swing.tree
-  (:use     [lab.ui.protocols :only [Component Selection Implementation impl abstract to-map]])
+  (:use     [lab.ui.protocols :only [Component Selection Implementation impl abstract to-map
+                                     listen ignore]])
   (:require [lab.ui.core :as ui])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
@@ -16,45 +17,45 @@
         ([] @ab)
         ([x] (reset! ab x) this)))))
 
-(defn- on-node-expansion
+(defn- node-expansion
   "Takes a TreeExpansionEvent, looks for the expanded node
-and fires the :on-expansion handler in it, if there is one.
+and fires the :expansion handler in it, if there is one.
 The handler should return falsey if the node was modified."
   [^TreeExpansionEvent e]
   (let [tree ^JTree (.getSource e)
         node (.. e getPath getLastPathComponent)
         abs  (abstract node)
-        f    (ui/attr abs :on-expansion)
+        fns    (ui/listeners abs :expansion)
         e    (assoc (to-map e) :source abs)]
-    (when (and f (#'ui/event-handler f e))
-      ;; notify the model to reload the modified node
-      (.reload ^DefaultTreeModel (.getModel tree) node))))
+    (doseq [f fns]
+      (when (and f (#'ui/event-handler f e))
+        ;; notify the model to reload the modified node
+        (.reload ^DefaultTreeModel (.getModel tree) node)))))
 
-(defn- on-node-event
+(defn- node-event
   "Event handler for either click or key.
-event can be:
-  - :on-click
-  - :on-key"
+event can be :click or :key."
   [event e]
   (let [tree ^JTree (.getSource e)
         node (.getLastSelectedPathComponent tree)
         abs  (and node (abstract node))
-        f    (ui/attr abs event)
+        fns  (ui/listeners abs event)
         e    (assoc (to-map e) :source abs)]
-    (when (and node f (#'ui/event-handler f e))
-      ;; notify the model to reload the modified node
-      (.reload ^DefaultTreeModel (.getModel tree) node))))
+    (doseq [f fns]
+      (when (and node f (#'ui/event-handler f e))
+        ;; notify the model to reload the modified node
+        (.reload ^DefaultTreeModel (.getModel tree) node)))))
 
 (defn tree-init [c]
   (let [expansion (proxy [TreeExpansionListener] []
                     (treeCollapsed [e])
-                    (treeExpanded [e] (#'on-node-expansion e)))
+                    (treeExpanded [e] (#'node-expansion e)))
         click     (proxy [MouseAdapter] []
-                       (mousePressed [e] (#'on-node-event :on-click e)))
+                       (mousePressed [e] (#'node-event :click e)))
         key       (proxy [KeyAdapter] []
-                    (keyPressed [e] (#'on-node-event :on-key e))
-                    (keyReleased [e] (#'on-node-event :on-key e))
-                    (keyTyped [e] (#'on-node-event :on-key e)))]
+                    (keyPressed [e] (#'node-event :key e))
+                    (keyReleased [e] (#'node-event :key e))
+                    (keyTyped [e] (#'node-event :key e)))]
     (doto (JTree.)
       (.setModel (DefaultTreeModel. nil))
       (.addTreeExpansionListener expansion)
@@ -110,7 +111,13 @@ event can be:
     (:leaf [c _ v])
     (:item [c attr item]
       (.setUserObject ^DefaultMutableTreeNode (impl c) item))
-    (:info [c _ v])
-    (:on-key [c _ v])
-    (:on-expansion [c _ v])
-    (:on-click [c _ v]))
+    (:info [c _ v]))
+
+(defmethod listen [:tree-node :key] [c evt f])
+(defmethod ignore [:tree-node :key] [c evt f])
+
+(defmethod listen [:tree-node :expansion] [c evt f])
+(defmethod ignore [:tree-node :expansion] [c evt f])
+
+(defmethod listen [:tree-node :click] [c evt f])
+(defmethod ignore [:tree-node :click] [c evt f])
