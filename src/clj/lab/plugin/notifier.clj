@@ -9,13 +9,13 @@
 
 ;; TODO: add link to files when displaying the stack trace.
 
-(defn truncate [n s]
+(defn truncate [n ^String s]
   (if (< n (.length s))
     (str (.substring s 0 n) "...")
     s))
 
 (defn- show-error-info
-  [app ex]
+  [app ^Exception ex]
   (let [ui     (@app :ui)
         sw     (java.io.StringWriter.)
         _      (.printStackTrace ex (java.io.PrintWriter. sw))

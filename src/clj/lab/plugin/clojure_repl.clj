@@ -53,7 +53,7 @@ it. If not project file is supplied, a bare REPL is started."
         [start end] (ui/selection editor)
         selection   (if (= start end)
                       (if file-path
-                        (str "(load-file \"" (.replace file-path \\ \/) "\")")
+                        (str "(load-file \"" (str/replace file-path \\ \/) "\")")
                         (model/text editor))
                       (model/substring editor start end))
         repl        (ui/find @ui [:#bottom :tab :scroll :text-area])
@@ -64,7 +64,7 @@ it. If not project file is supplied, a bare REPL is started."
 (defn- wrap-output-stream-in-channel
   "Hook up the output stream of the REPL process
 to the channel provided."
-  [stream out]
+  [^java.io.BufferedReader stream out]
   (async/go
     (loop [input (.read stream)]
       (when (pos? input)
@@ -75,11 +75,12 @@ to the channel provided."
 (defn- send-to-repl
   "Send code to the input channel of the REPL process
 and print the sent code to the REPL console."
-  [console cin x]
-  (let [x (if (not= (last x) \newline) (str x "\n") x)]
+  [console ^java.io.BufferedWriter cin x]
+  (let [x      (if (not= (last x) \newline) (str x "\n") x)
+        output (str/replace x #"\n+" "\n")]
     (ui/action
       (model/insert console (model/length console) x)
-      (.write cin (str/replace x #"\n+" "\n"))
+      (.write cin output)
       (.flush cin))))
 
 (defn- hook-up-repl
@@ -148,7 +149,7 @@ child process with a running repl."
         file-dialog   (ui/init (tplts/open-file-dialog dir))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
-      (let [repl (start-repl (.getCanonicalPath file))]
+      (let [repl (start-repl (.getCanonicalPath ^java.io.File file))]
         (swap! app update-in [:repls] conj repl)
         (repl-tab app repl)))))
 

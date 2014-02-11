@@ -15,23 +15,24 @@ the specified root dir."
   "Creates a proxy that overrides the toString method
 for the File class so that it returns the (file/directory)'s
 name."
-  [file]
+  [^java.io.File file]
   (proxy [java.io.File] [(.getPath file)]
     (toString []
-      (.getName this))))
+      (.getName ^java.io.File this))))
 
 (defn- hidden?
   "Returns true for files or directories that begin with a dot."
-  [file]
+  [^java.io.File file]
   (-> file .getName (.startsWith ".")))
 
 (defn- file-node-children
   "Returns a vector of children nodes for the
 file specified, which should be a directory."
-  [app file]
-  (->> file .listFiles
+  [app ^java.io.File  file]
+  (->> file
+    .listFiles
     (filter (comp not hidden?))
-    (sort-by #(if (.isDirectory %) (str " " (.getName %)) (.getName %)))
+    (sort-by #(if (.isDirectory ^java.io.File %) (str " " (.getName ^java.io.File  %)) (.getName ^java.io.File %)))
     (map file-proxy)
     (mapv #(tree-node-from-file app % true))))
 
@@ -52,7 +53,7 @@ currently has no children."
   "Creates a tree node with the supplied file as its item.
 If the arg is a directory, all its children are added
 recursively."
-  [app file & [lazy]]
+  [app ^java.io.File   file & [lazy]]
   (if (.isDirectory file)
     (if-not lazy
       (into [:tree-node {:item file}] (file-node-children app file))
@@ -68,7 +69,7 @@ recursively."
 then the parent directory is considered the root of the 
 tree. Returns a tree node."
   [app root-dir]
-  (let [root  (file-proxy root-dir)
+  (let [root  ^java.io.File (file-proxy root-dir)
         root  (if (.isDirectory root) root (.getParentFile root))]
     (tree-node-from-file app root false)))
 
@@ -92,7 +93,7 @@ tree. Returns a tree node."
     (open-document-tree app source)))
 
 (defn- file-tree
-  [app dir]
+  [app ^java.io.File dir]
   (-> (tplts/tab)
     (ui/update :label ui/attr :text (.getName dir))
     (ui/add [:scroll {:border :none}
@@ -104,9 +105,9 @@ tree. Returns a tree node."
 (defn- open-project
   [app _]
   (let [dir          (lab/config @app :current-dir)
-        dir-dialog  (ui/init (tplts/directory-dialog "Open Directory" dir))
+        dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir))
         [result dir] (ui/attr dir-dialog :result)
-        dir          (when dir (io/file (.getCanonicalPath dir)))]
+        dir          ^java.io.File (when dir (io/file (.getCanonicalPath ^java.io.File dir)))]
     (when (= result :accept)
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
       (ui/update! (:ui @app) :#left ui/add (file-tree app dir)))))

@@ -88,7 +88,7 @@ check if its one of the registered symbols."
        (-> loc zip/down zip/right zip/node
          (as-> x
            (and (= (:tag x) :symbol)
-                (.startsWith (-> x :content first) "def"))))))
+                (.startsWith (-> x :content first str) "def"))))))
 
 (defn- find-symbol-to-right [init-loc]
   (loop [loc init-loc]

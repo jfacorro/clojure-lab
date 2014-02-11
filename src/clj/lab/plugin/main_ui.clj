@@ -69,7 +69,7 @@ and call the app's open-document function."
         file-dialog   (ui/init (tplts/open-file-dialog curr-dir))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
-      (open-document app (.getCanonicalPath file)))))
+      (open-document app (.getCanonicalPath ^java.io.File file)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; New
@@ -138,7 +138,7 @@ associated to it."
     (let [file-dialog   (ui/init (tplts/save-file-dialog current-dir))
           [result file] (ui/attr file-dialog :result)]
       (if file
-        (doc/bind doc (.getCanonicalPath file) :new? true)
+        (doc/bind doc (.getCanonicalPath ^java.io.File file) :new? true)
         doc))))
 
 (defn- save-document-ui! [app tab]
