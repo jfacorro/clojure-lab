@@ -114,9 +114,9 @@ all optional and creates a Font."
             (Font. name (font-style style) size))))
 
 (defn register-font [font-path]
-  (let [ge   (GraphicsEnvironment/getLocalGraphicsEnvironment)
-        font-file (io/file (io/resource font-path))
-        font (Font/createFont Font/TRUETYPE_FONT (io/file font-file))]
+  (let [ge          (GraphicsEnvironment/getLocalGraphicsEnvironment)
+        font-stream (-> font-path io/resource io/input-stream)
+        font        (Font/createFont Font/TRUETYPE_FONT font-stream)]
     (try 
       (.registerFont ge font)
       (catch Exception ex))))
