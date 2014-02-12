@@ -14,7 +14,7 @@
 (ui/defattributes
   :window
     (:background [c _ v]
-      (.. (p/impl c) getRootPane (setBackground (util/color v))))
+      (.. ^JFrame (p/impl c) getRootPane (setBackground (util/color v))))
     (:fullscreen [c _ v]
       (util/fullscreen (when v (p/impl c))))
     (:title [c _ v]
@@ -37,24 +37,24 @@
     (:on-closed [c _ f]
       (let [listener (proxy [WindowAdapter] []
                        (windowClosed [e] (ui/handle-event f e)))]
-        (.addWindowListener (p/impl c) listener)))
+        (.addWindowListener ^JFrame (p/impl c) listener)))
     (:on-closing [c _ f]
       (let [listener (proxy [WindowAdapter] []
                        (windowClosing [e] (ui/handle-event f e)))]
-        (.addWindowListener (p/impl c) listener)))
+        (.addWindowListener ^JFrame (p/impl c) listener)))
 
     (:on-opened [c _ f]
       (let [listener (proxy [WindowAdapter] []
                        (windowOpened [e] (ui/handle-event f e)))]
-        (.addWindowListener (p/impl c) listener)))
+        (.addWindowListener ^JFrame (p/impl c) listener)))
     (:on-minimized [c _ f]
       (let [listener (proxy [WindowAdapter] []
                        (windowIconified [e] (ui/handle-event f e)))]
-        (.addWindowListener (p/impl c) listener)))
+        (.addWindowListener ^JFrame (p/impl c) listener)))
     (:on-restored [c _ f]
       (let [listener (proxy [WindowAdapter] []
                        (windowDeiconified [e] (ui/handle-event f e)))]
-        (.addWindowListener (p/impl c) listener))))
+        (.addWindowListener ^JFrame (p/impl c) listener))))
 
 (extend-type JFrame
   p/Implementation

@@ -29,4 +29,4 @@
 
 (defmethod p/ignore [:button :click]
   [c _ listener]
-  (.removeActionListener (p/impl c) listener))
+  (.removeActionListener ^JButton (p/impl c) listener))

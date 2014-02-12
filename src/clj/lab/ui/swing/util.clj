@@ -8,7 +8,7 @@
                      BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
                      KeyboardFocusManager]
            [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener]
-           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent
+           [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent InputMap
                         BoxLayout GroupLayout SpringLayout]
            [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
 
@@ -216,10 +216,10 @@ with Color instances."
   "Returns a swing key stroke based on the string provided."
   [^String s]
   (let [s (->> (.split s " ")
-            (map #(if-not (#{"ctrl" "shift" "alt"} %) (.toUpperCase %) %))
+            (map #(if-not (#{"ctrl" "shift" "alt"} %) (.toUpperCase ^String %) %))
             (interpose " ")
             (apply str))]
-    (KeyStroke/getKeyStroke s)))
+    (KeyStroke/getKeyStroke ^String s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fullscreen
@@ -246,19 +246,19 @@ no more."
                       JComponent/WHEN_FOCUSED
                       JComponent/WHEN_IN_FOCUSED_WINDOW])
 
-(defn- all-input-maps [ctrl]
+(defn- all-input-maps [^JComponent ctrl]
   (->> input-map-modes
     (map #(.getInputMap ctrl %))
     (filter (comp not nil?))))
 
-(defn remove-key-binding [ctrl key-stroke]
+(defn remove-key-binding [ctrl ^String key-stroke]
   (when (instance? JComponent ctrl)
     (let [ks     (KeyStroke/getKeyStroke key-stroke)
-          delete (fn [x] (when x (.remove x ks)))]
+          delete (fn [^InputMap x] (when x (.remove x ks)))]
       (loop [ims (all-input-maps ctrl)]
         (when (seq ims)
           (doall (map delete ims))
-          (recur (mapcat #(when % [(.getParent %)]) ims)))))))
+          (recur (mapcat #(when % [(.getParent ^InputMap %)]) ims)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Focus Traversal Keys
@@ -277,7 +277,7 @@ including itself."
   "Remove all focus traversal key binginds for this
 component and its parents."
   [^JComponent x]
-  (doseq [x (all-parents x)]
+  (doseq [^JComponent x (all-parents x)]
     (remove-key-binding x "ctrl TAB")
     (remove-key-binding x "ctrl shift TAB")
     (.setFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS #{})

@@ -2,11 +2,12 @@
   (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util])
-  (:import  [javax.swing JTabbedPane JScrollPane JPanel UIManager]
+  (:import  [javax.swing JTabbedPane JScrollPane JPanel JComponent 
+                         UIManager UIDefaults]
             [javax.swing.event ChangeListener ChangeEvent]
             [java.awt Insets Color]))
 
-(defn- set-prop [m k v]
+(defn- set-prop [^UIDefaults m k v]
   (doto m
     (.remove k)
     (.put k v)))
@@ -74,7 +75,7 @@
       (selection this i))
     this)
   (remove [this child]
-    (.remove this child)
+    (.remove this ^JComponent child)
     this))
 
 (extend-protocol Selection

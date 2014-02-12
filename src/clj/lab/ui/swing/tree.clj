@@ -36,7 +36,7 @@ The handler should return falsey if the node was modified."
   "Event handler for either click or key.
 event can be :click or :key."
   [event e]
-  (let [tree ^JTree (.getSource e)
+  (let [tree ^JTree (.getSource ^java.util.EventObject e)
         node (.getLastSelectedPathComponent tree)
         abs  (and node (abstract node))
         fns  (ui/listeners abs event)

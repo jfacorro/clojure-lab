@@ -94,7 +94,7 @@
       (.setOpaque ^JComponent (p/impl c) (not v)))
     (:layout [c _ v]
       (let [v (if (sequential? v) v [v])
-            c (p/impl c)]
+            c ^JComponent (p/impl c)]
         (.setLayout c (util/layout c v))))
     (:border [c _ v]
       (let [v (if (sequential? v) v [v])]
@@ -116,39 +116,39 @@
 (defmethod p/listen [:component :key]
   [c evt f]
   (let [listener (util/create-listener c evt f)]
-    (.addKeyListener (p/impl c) listener)
+    (.addKeyListener ^JComponent (p/impl c) listener)
     listener))
 
 (defmethod p/ignore [:component :key]
   [c _ listener]
-  (.removeKeyListener (p/impl c) listener))
+  (.removeKeyListener ^JComponent (p/impl c) listener))
 
 (defmethod p/listen [:component :focus]
   [c evt f]
   (let [listener (util/create-listener c evt f)]
-    (.addFocusListener (p/impl c) listener)
+    (.addFocusListener ^JComponent(p/impl c) listener)
     listener))
 
 (defmethod p/ignore [:component :focus]
   [c _ listener]
-  (.removeFocusListener (p/impl c) listener))
+  (.removeFocusListener ^JComponent (p/impl c) listener))
 
 (defmethod p/listen [:component :blur]
   [c evt f]
   (let [listener (util/create-listener c evt f)]
-    (.addFocusListener (p/impl c) listener)
+    (.addFocusListener ^JComponent (p/impl c) listener)
     listener))
 
 (defmethod p/ignore [:component :blur]
   [c _ listener]
-  (.removeFocusListener (p/impl c) listener))
+  (.removeFocusListener ^JComponent (p/impl c) listener))
 
 (defmethod p/listen [:component :click]
   [c evt f]
   (let [listener (util/create-listener c evt f)]
-    (.addMouseListener (p/impl c) listener)
+    (.addMouseListener ^JComponent (p/impl c) listener)
     listener))
 
 (defmethod p/ignore [:component :click]
   [c _ listener]
-  (.removeMouseListener (p/impl c) listener))
+  (.removeMouseListener ^JComponent (p/impl c) listener))

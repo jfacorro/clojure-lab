@@ -70,7 +70,7 @@ and returns a vector with all the values that apply to it."
     (mapv first)))
 
 (defn- merge-results
-  "Takes two functions that returns a map and 
+  "Takes two functions that return a map and 
 merges both in a single one."
   [f1 f2]
   #(merge (f1 %) (f2 %)))
@@ -78,28 +78,38 @@ merges both in a single one."
 (defn- merge-impls
   "Given two protocol map implementations, it takes x and
 overrides the implementations present in y."
-  [x y]
+  [ks x y]
   (reduce 
-    (fn [x k] (update-in x [k] merge-results (k y)))
+    (fn [x k]
+      (if (contains? ks k)
+        (update-in x [k] merge-results (k y))
+	(assoc x [k] (k y))))
     x
     (keys y)))
 
 (defn- build-merged-impl
   "Receives maps with Event protocol implementations
-and merges the map returned by the to-map function.
-TODO: provide a map with merging functions."
-  [& impls]
-  (reduce merge-impls impls))
+and merges the implementation maps returned by the functions
+with key in ks. Other functions are just replaced with their 
+latest version."
+  [ks & impls]
+  (reduce (partial merge-impls ks) impls))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event Object
 
+(defn- consume [e]
+  "consume() is a protected method in AWTEvent, 
+only subclasses make it public, so this throws 
+a reflection warning."
+    #_(throw (UnsupportedOperationException. "Can't consume this type of event.")))
+
 (def event-object "Root implementation."
-  {:to-map (fn [this]
-             (-> {:source (p/abstract (.getSource ^java.util.EventObject this))}
+  {:to-map (fn [^java.util.EventObject this]
+             (-> {:source (p/abstract (.getSource this))}
                ui/map->UIEvent
                (p/impl this)))
-   :consume (fn [this] (.consume this))})
+   :consume consume})
 
 (extend java.util.EventObject
   p/Event
@@ -119,7 +129,8 @@ TODO: provide a map with merging functions."
    :ctrl   InputEvent/CTRL_MASK})
 
 (def input-event
-  {:to-map (fn [^InputEvent this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})})
+  {:to-map  (fn [^InputEvent this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})
+   :consume (fn [^InputEvent this] (.consume this))})
 
 (def key-event
   {:to-map (fn [^KeyEvent this]
@@ -130,7 +141,7 @@ TODO: provide a map with merging functions."
 
 (extend KeyEvent
   p/Event
-  (build-merged-impl event-object input-event key-event))
+  (build-merged-impl #{:to-map} event-object input-event key-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mouse Event
@@ -160,7 +171,7 @@ TODO: provide a map with merging functions."
 
 (extend MouseEvent
   p/Event
-  (build-merged-impl event-object input-event mouse-event))
+  (build-merged-impl #{:to-map} event-object input-event mouse-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Action Event
@@ -177,7 +188,7 @@ TODO: provide a map with merging functions."
 
 (extend ActionEvent
   p/Event
-  (build-merged-impl event-object action-event))
+  (build-merged-impl #{:to-map} event-object action-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Focus Event
@@ -190,7 +201,7 @@ TODO: provide a map with merging functions."
 
 (extend FocusEvent
   p/Event
-  (build-merged-impl event-object focus-event))
+  (build-merged-impl #{:to-map} event-object focus-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Caret Event
@@ -203,7 +214,7 @@ TODO: provide a map with merging functions."
 
 (extend CaretEvent
   p/Event
-  (build-merged-impl event-object caret-event))
+  (build-merged-impl #{:to-map} event-object caret-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Document Event
