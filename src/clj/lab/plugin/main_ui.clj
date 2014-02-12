@@ -195,13 +195,12 @@ to the UI's main menu."
   "Handles changes in the control, updates the document
 and signals the highlighting process."
   [app {:keys [type source offset text length] :as e}]
-  (when (not= type :change)
-    (let [editor   source
-          doc      (ui/attr editor :doc)]
-      (when (not (:read-only @doc))
-        (case type
-          :insert (swap! doc doc/insert offset text)
-          :remove (swap! doc doc/delete offset (+ offset length)))))))
+  (let [editor   source
+        doc      (ui/attr editor :doc)]
+    (when (not (:read-only @doc))
+      (case type
+        :insert (swap! doc doc/insert offset text)
+        :remove (swap! doc doc/delete offset (+ offset length))))))
 
 ;; Key handle
 
@@ -226,7 +225,8 @@ and signals the highlighting process."
 (defn- text-editor-create [app doc]
   (let [editor (-> (tplts/text-editor doc)
                  (ui/listen :key ::handle-key)
-                 (ui/attr :on-change ::text-editor-change))]
+                 (ui/listen :insert ::text-editor-change)
+                 (ui/listen :delete ::text-editor-change))]
     [:scroll {:vertical-increment 16
               :border :none
               :margin-control [:line-number {:source editor}]}
@@ -402,8 +402,8 @@ inserting a fixed first parameter, which is the app."
   (swap! app assoc :ui (-> @app
                          (lab/config :name)
                          tplts/app-window
-                         (ui/update :#main ui/attr :on-closing ::exit!)
-                         (ui/update :#center ui/attr :on-tab-change ::switch-document-ui!)
+                         (ui/update :#main ui/listen :closing ::exit!)
+                         (ui/update :#center ui/listen :change ::switch-document-ui!)
                          (ui/apply-stylesheet styles)
                          atom)
                    :styles styles))

@@ -32,7 +32,7 @@
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
         ch     (find-matching-delimiter)]
-    (ui/attr editor :on-caret ch)))
+    (ui/listen editor :caret ch)))
 
 (def ^:private hooks
   {#'lab.ui.templates/text-editor #'text-editor-hook})

@@ -1,10 +1,9 @@
 (ns lab.ui.swing.tab
-  (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map]])
+  (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map listen]])
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util])
   (:import  [javax.swing JTabbedPane JScrollPane JPanel JComponent 
                          UIManager UIDefaults]
-            [javax.swing.event ChangeListener ChangeEvent]
             [java.awt Insets Color]))
 
 (defn- set-prop [^UIDefaults m k v]
@@ -95,10 +94,9 @@
   :tab
   (:title [c _ _])
   (:tool-tip [c _ _])
-  (:header [c _ _])
+  (:header [c _ _]))
 
-  :tabs
-  (:on-tab-change [c _ f]
-    (let [listener (proxy [ChangeListener] []
-                     (stateChanged [e] (ui/handle-event f e)))]
-      (.addChangeListener ^JTabbedPane (impl c) listener))))
+(defmethod listen [:tabs :change]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+      (.addChangeListener ^JTabbedPane (impl c) listener)))

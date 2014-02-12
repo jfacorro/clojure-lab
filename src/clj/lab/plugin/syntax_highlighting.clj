@@ -63,7 +63,8 @@ are applied their highlight."
         hl-ch  (timeout-channel 100 #'text-editor-change!)]
     (-> editor
       highlight!
-      (ui/attr :on-change hl-ch))))
+      (ui/listen :insert hl-ch)
+      (ui/listen :delete hl-ch))))
 
 (def ^:private hooks
   {#'lab.ui.templates/text-editor #'text-editor-hook})

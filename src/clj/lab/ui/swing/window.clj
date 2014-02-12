@@ -31,33 +31,35 @@
       (.revalidate ^JFrame (p/impl c)))
     (:icons [c _ v]
       (let [icons (map util/image v)]
-        (.setIconImages ^JFrame (p/impl c) icons)))
-
-    ;; Events
-    (:on-closed [c _ f]
-      (let [listener (proxy [WindowAdapter] []
-                       (windowClosed [e] (ui/handle-event f e)))]
-        (.addWindowListener ^JFrame (p/impl c) listener)))
-    (:on-closing [c _ f]
-      (let [listener (proxy [WindowAdapter] []
-                       (windowClosing [e] (ui/handle-event f e)))]
-        (.addWindowListener ^JFrame (p/impl c) listener)))
-
-    (:on-opened [c _ f]
-      (let [listener (proxy [WindowAdapter] []
-                       (windowOpened [e] (ui/handle-event f e)))]
-        (.addWindowListener ^JFrame (p/impl c) listener)))
-    (:on-minimized [c _ f]
-      (let [listener (proxy [WindowAdapter] []
-                       (windowIconified [e] (ui/handle-event f e)))]
-        (.addWindowListener ^JFrame (p/impl c) listener)))
-    (:on-restored [c _ f]
-      (let [listener (proxy [WindowAdapter] []
-                       (windowDeiconified [e] (ui/handle-event f e)))]
-        (.addWindowListener ^JFrame (p/impl c) listener))))
+        (.setIconImages ^JFrame (p/impl c) icons))))
 
 (extend-type JFrame
   p/Implementation
   (abstract
     ([this] nil)
     ([this the-abstract] this)))
+
+(defn- event-listener-helper [c evt f]
+  (let [listener  (util/create-listener c evt f)]
+    (.addWindowListener ^JFrame (p/impl c) listener)
+    listener))
+
+(defmethod p/listen [:window :closed]
+  [c evt f]
+  (event-listener-helper c evt f))
+
+(defmethod p/listen [:window :closing]
+  [c evt f]
+  (event-listener-helper c evt f))
+
+(defmethod p/listen [:window :opened]
+  [c evt f]
+  (event-listener-helper c evt f))
+
+(defmethod p/listen [:window :minimized]
+  [c evt f]
+  (event-listener-helper c evt f))
+
+(defmethod p/listen [:window :restored]
+  [c evt f]
+  (event-listener-helper c evt f))

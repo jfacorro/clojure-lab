@@ -7,7 +7,8 @@
   (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
                      BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
                      KeyboardFocusManager]
-           [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener]
+           [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener WindowAdapter]
+           [javax.swing.event CaretListener DocumentListener ChangeListener]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent InputMap
                         BoxLayout GroupLayout SpringLayout]
            [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
@@ -48,6 +49,55 @@
 (defmethod create-listener [:menu-item :click]
   [c _ f]
   (proxy [ActionListener] [] (actionPerformed [e] (f e))))
+
+(defmethod create-listener [:text-field :caret]
+  [c _ f]
+  (proxy [CaretListener] [] (caretUpdate [e] (f e))))
+
+(defmethod create-listener [:text-field :insert]
+  [c _ f]
+  (proxy [DocumentListener] []
+    (insertUpdate [e] (f e))
+    (removeUpdate [e])
+    (changedUpdate [e])))
+
+(defmethod create-listener [:text-field :delete]
+  [c _ f]
+  (proxy [DocumentListener] []
+    (insertUpdate [e])
+    (removeUpdate [e] (f e))
+    (changedUpdate [e])))
+
+(defmethod create-listener [:text-field :change]
+  [c _ f]
+  (proxy [DocumentListener] []
+    (insertUpdate [e])
+    (removeUpdate [e])
+    (changedUpdate [e] (f e))))
+
+(defmethod create-listener [:tabs :change]
+  [c _ f]
+  (proxy [ChangeListener] [] (stateChanged [e] (f e))))
+
+(defmethod create-listener [:window :closed]
+  [c _ f]
+  (proxy [WindowAdapter] [] (windowClosed [e] (f e))))
+
+(defmethod create-listener [:window :closing]
+  [c _ f]
+  (proxy [WindowAdapter] [] (windowClosing [e] (f e))))
+
+(defmethod create-listener [:window :opened]
+  [c _ f]
+  (proxy [WindowAdapter] [] (windowOpened [e] (f e))))
+
+(defmethod create-listener [:window :minimized]
+  [c _ f]
+  (proxy [WindowAdapter] [] (windowIconified [e] (f e))))
+
+(defmethod create-listener [:window :restored]
+  [c _ f]
+  (proxy [WindowAdapter] [] (windowDeiconified [e] (f e))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SplitPane Orientations

@@ -1,6 +1,7 @@
 (ns lab.ui.swing.text
   (:use     [lab.ui.protocols :only [impl abstract
                                      Event to-map
+                                     listen
                                      TextEditor StyledTextEditor
                                      Selection selection caret-position]])
   (:require [lab.model.protocols :as mp]
@@ -13,8 +14,6 @@
             [javax.swing.event DocumentListener CaretListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
             [java.awt Color]))
-
-(set! *warn-on-reflection* true)
 
 (defn- apply-style
   "Applies the given style to the text
@@ -119,24 +118,16 @@
       (.setEditable ^JTextComponent (impl c) (not v)))
     (:caret-color [c _ v]
       (.setCaretColor ^JTextComponent (impl c) (util/color v)))
-    (:on-caret [c _ f]
-      (let [listener (proxy [CaretListener] []
-                       (caretUpdate [e] (ui/handle-event f e)))]
-        (.addCaretListener ^JTextComponent (impl c) listener)))
-    (:on-change [c _ f]
-      (let [listener (proxy [DocumentListener] []
-                       (insertUpdate [e] (ui/handle-event f e))
-                       (removeUpdate [e] (ui/handle-event f e))
-                       (changedUpdate [e] (ui/handle-event f e)))
-            doc      (.getDocument ^JTextComponent (impl c))]
-        (.addDocumentListener ^Document doc listener)))
+
   :text-area
     (:line-highlight-color [c _ _])
+
   :text-editor
     (:wrap [c _ _])
     (:doc [c _ _])
     (:content-type [c _ v]
       (.setContentType ^JTextPane (impl c) v))
+
   :line-number
     (:source [c _ _])
     (:update-font [c _ v]
@@ -145,3 +136,31 @@
        (.setBorderGap ^TextLineNumber (impl c) v))
     (:current-line-color [c _ v]
        (.setCurrentLineForeground ^TextLineNumber (impl c) (util/color v))))
+
+
+(defmethod listen [:text-field :caret]
+  [c evt f]
+  (let [listener  (util/create-listener c evt f)]
+    (.addCaretListener ^JTextComponent (impl c) listener)
+    listener))
+
+(defmethod listen [:text-field :insert]
+  [c evt f]
+  (let [listener  (util/create-listener c evt f)
+        doc      (.getDocument ^JTextComponent (impl c))]
+    (.addDocumentListener ^Document doc listener)
+    listener))
+
+(defmethod listen [:text-field :delete]
+  [c evt f]
+  (let [listener  (util/create-listener c evt f)
+        doc      (.getDocument ^JTextComponent (impl c))]
+    (.addDocumentListener ^Document doc listener)
+    listener))
+
+(defmethod listen [:text-field :change]
+  [c evt f]
+  (let [listener  (util/create-listener c evt f)
+        doc      (.getDocument ^JTextComponent (impl c))]
+    (.addDocumentListener ^Document doc listener)
+    listener))
