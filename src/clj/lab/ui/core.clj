@@ -234,24 +234,30 @@ as the abstraction of its implementation."
 (def focus #'p/focus)
 
 (defn listeners [c event]
-  (-> c meta :listen event))
+  (->> (meta c) :listen event (map first)))
 
 (defn listen [c evt f]
   (let [listener   (p/listen c evt (partial handle-event f))
         f-meta     (with-meta [f] {:impl listener})
         listeners  (get-in (meta c) [:listen evt] #{})]
-    (vary-meta c assoc-in [:listen evt] (conj listeners f-meta))))
+    (-> c
+      (vary-meta assoc-in [:listen evt] (conj listeners f-meta))
+      update-abstraction)))
 
 (defn ignore [c evt f]
   (let [listener  (-> c listeners (get [f]) meta :impl)]
     (p/ignore c evt listener)
-    (vary-meta c assoc-in [:listen evt] dissoc [f])))
+    (-> c
+      (vary-meta assoc-in [:listen evt] dissoc [f])
+      update-abstraction)))
 
 (defn ignore-all [c evt]
   (let [listeners (->> (meta c) :listen evt)]
     (doseq [listener (map (comp :impl meta) listeners)]
       (p/ignore c evt listener))
-    (vary-meta c assoc-in [:listen evt] #{})))
+    (-> c
+      (vary-meta assoc-in [:listen evt] #{})
+      update-abstraction)))
 
 ;; TextEditor
 
@@ -463,4 +469,7 @@ used in the component's definition (e.g. in event handlers)."
       (when (not= (attr c :id) v)
         (throw (Exception. (str "Can't change the :id once it is set: " c)))))
     (:post-init [c _ _])
-    (:stuff [c _ _]))
+    (:stuff [c _ _])
+    (:listen ^:modify [c _ events]
+      (assert (-> events count even?) "An even amount of items must be provided.")
+      (reduce (fn [c [evt f]] (listen c evt f)) c (partition 2 events))))

@@ -108,10 +108,7 @@
     (:size [c attr [w h :as v]]
       (.setPreferredSize ^JComponent (p/impl c) (util/dimension w h)))
     (:visible [c _ v]
-      (.setVisible ^java.awt.Component (p/impl c) v))
-    (:listen [c _ events]
-      (assert (-> events count even?) "An even amount of items must be provided.")
-      (reduce (fn [c [evt f]] (ui/listen c evt f)) c (partition 2 events))))
+      (.setVisible ^java.awt.Component (p/impl c) v)))
 
 (defmethod p/listen [:component :key]
   [c evt f]

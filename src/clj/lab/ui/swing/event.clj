@@ -83,7 +83,7 @@ overrides the implementations present in y."
     (fn [x k]
       (if (contains? ks k)
         (update-in x [k] merge-results (k y))
-	(assoc x [k] (k y))))
+        (assoc x k (k y))))
     x
     (keys y)))
 
@@ -102,7 +102,7 @@ latest version."
   "consume() is a protected method in AWTEvent, 
 only subclasses make it public, so this throws 
 a reflection warning."
-    #_(throw (UnsupportedOperationException. "Can't consume this type of event.")))
+  (throw (UnsupportedOperationException. "Can't consume this type of event.")))
 
 (def event-object "Root implementation."
   {:to-map (fn [^java.util.EventObject this]

@@ -25,7 +25,7 @@ The handler should return falsey if the node was modified."
   (let [tree ^JTree (.getSource e)
         node (.. e getPath getLastPathComponent)
         abs  (abstract node)
-        fns    (ui/listeners abs :expansion)
+        fns  (ui/listeners abs :expansion)
         e    (assoc (to-map e) :source abs)]
     (doseq [f fns]
       (when (and f (#'ui/event-handler f e))
