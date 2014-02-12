@@ -43,10 +43,10 @@
               :whitespace #"[\r\n]+"])
 
 (def styles
- {:title {:color 0xC800C8 :bold true}
+ {:title {:color 0xC800C8}
   :strong {:color 0x00FF00}
   :em {:color 0x00FFFF}
-  :list {:color 0xFF6666 :bold true}
+  :list {:color 0xFF6666}
   :link {:color 0xFFE64D}
   :html {:color 0x64DCB3}
   :code {:color 0x9566E5}
