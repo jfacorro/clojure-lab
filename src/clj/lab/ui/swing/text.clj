@@ -82,7 +82,8 @@
       (let [styles (reduce-kv #(assoc %1 %2 (util/make-style %3)) styles styles)]
         (apply-style this
           #(doseq [[start length tag] regions]
-            (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag (:default styles)) true)))))
+            (when (styles tag)
+              (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag) true))))))
     ([this start len style]
       (apply-style this
         #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true)))))

@@ -65,18 +65,34 @@ check if its one of the registered symbols."
              (node-meta tag content)))
 
 (def styles
- {:special-form {:color 0xC800C8}
-  :var          {:color 0x00FFFF}
+ {:whitespace   {:color 0xFFFFFF}
   :symbol       {:color 0x64DCB3}
-  :delimiter    {:color 0xFFFFFF}
-  :accesor      {:color 0x960000}
-  :regex        {:color 0xDF6443}
   :keyword      {:color 0x00FF00}
-  :namespace    {:color 0x960000}
+  :special-form {:color 0xC800C8}
+  :var          {:color 0x00FFFF}
+  
+  :meta         {:color 0xFFFFFF}
+  :quote        {:color 0xFFFFFF}
+  :syntax-quote {:color 0xFFFFFF}
+  :unquote      {:color 0xFFFFFF}
+  :unquote-splice {:color 0xFFFFFF}
+
+  :regex        {:color 0xDF6443}
   :string       {:color 0xE61D43}
   :char         {:color 0xE61D43}
   :number       {:color 0xFFFFFF}
+  :reader-var   {:color 0xFFFFFF}
+
+  :reader-discard {:color 0x999988}
   :comment      {:color 0x999988}
+
+  :deref        {:color 0xFFFFFF}
+  :fn           {:color 0xFFFFFF}
+  ;; Delimiters
+;;  :vector       {} ;{:color 0xFFFF00}
+;;  :list         {} ;{:color 0xFFFF00}
+;;  :map          {} ;{:color 0xFFFF00}
+;;  :set          {} ;{:color 0xFFFF00}
   :default      {:color 0xFFFFFF}
   :net.cgrand.parsley/unfinished  {:color 0xFF1111 :italic true}
   :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})

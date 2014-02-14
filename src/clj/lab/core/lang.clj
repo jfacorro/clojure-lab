@@ -90,8 +90,12 @@ parse tree with the modified nodes marked with node group-id."
   [node]
   (or (and (map? node) (node :tag)) :default))
 
+(defn parent-node
+  "Returns the parent tree node for the provided location."
+  [loc]
+  (-> loc zip/up zip/node))
+
 (defn location-tag
-  "If the node is a map returns its :tag, otherwise the keyword :default."
   [loc]
   (loop [loc loc]
     (if-not (map? (zip/node loc))
