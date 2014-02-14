@@ -74,6 +74,7 @@ check if its one of the registered symbols."
   :keyword      {:color 0x00FF00}
   :namespace    {:color 0x960000}
   :string       {:color 0xE61D43}
+  :char         {:color 0xE61D43}
   :number       {:color 0xFFFFFF}
   :comment      {:color 0x999988}
   :default      {:color 0xFFFFFF}
