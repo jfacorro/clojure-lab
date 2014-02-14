@@ -1,5 +1,6 @@
 (ns lab.ui.swing.window
   (:require [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util]
             [lab.ui.protocols :as p])
   (:import  [javax.swing JFrame WindowConstants]
@@ -9,9 +10,9 @@
   (doto (JFrame.)
     (.setDefaultCloseOperation WindowConstants/DO_NOTHING_ON_CLOSE)))
 
-(ui/definitializations :window window-init)
+(definitializations :window window-init)
 
-(ui/defattributes
+(defattributes
   :window
     (:background [c _ v]
       (.. ^JFrame (p/impl c) getRootPane (setBackground (util/color v))))

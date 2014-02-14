@@ -22,6 +22,7 @@
   (:refer-clojure :exclude [remove])
   (:require [lab.ui.protocols :as p]
             [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing [util :as util]
                           window
                           panel
@@ -88,7 +89,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Common attributes for all components
 
-(ui/defattributes
+(defattributes
   :component
     (:transparent [c _ v]
       (.setOpaque ^JComponent (p/impl c) (not v)))

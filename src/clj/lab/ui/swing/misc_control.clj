@@ -1,14 +1,15 @@
 (ns lab.ui.swing.misc-control
   (:require [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.protocols :as p]
             [lab.ui.swing.util :as util])
   (:import [javax.swing JButton JLabel]))
 
-(ui/definitializations
+(definitializations
   :button      JButton
   :label       JLabel)
 
-(ui/defattributes
+(defattributes
   :button
   (:text [c _ v]
     (.setText ^JButton (p/impl c) v))

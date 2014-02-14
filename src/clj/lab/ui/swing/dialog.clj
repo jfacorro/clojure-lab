@@ -1,10 +1,11 @@
 (ns lab.ui.swing.dialog
   (:use     [lab.ui.protocols :only [abstract impl]])
   (:require [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util])
   (:import  [javax.swing JDialog JFileChooser JOptionPane]))
 
-(ui/definitializations
+(definitializations
   :file-dialog   JFileChooser
   :option-dialog JOptionPane
   :dialog        JDialog)
@@ -57,7 +58,7 @@ is set before processing other attribute's code."
   [c k]
   (ui/attr c k (ui/attr c k)))
 
-(ui/defattributes
+(defattributes
   :dialog
   (:result [c _ _])
   (:title [c _ v]

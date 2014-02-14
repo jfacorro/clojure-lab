@@ -1,12 +1,13 @@
 (ns lab.ui.swing.panel
-  (:require [lab.ui.core :as ui]
-            [lab.ui.swing.util :as util])
   (:use     [lab.ui.protocols :only [Component impl]])
+  (:require [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
+            [lab.ui.swing.util :as util])
   (:import [javax.swing JPanel JSplitPane JScrollPane JButton JComponent]
            [java.awt BorderLayout]
            [javax.swing.plaf.basic BasicSplitPaneDivider]))
 
-(ui/definitializations
+(definitializations
   :split       JSplitPane
   :panel       JPanel
   :scroll      JScrollPane)
@@ -17,7 +18,7 @@
     (filter (partial instance? BasicSplitPaneDivider))
     first))
 
-(ui/defattributes
+(defattributes
   :split
     (:divider-background [c _ v]
       (.setBackground  ^BasicSplitPaneDivider (find-divider (impl c)) (util/color v)))

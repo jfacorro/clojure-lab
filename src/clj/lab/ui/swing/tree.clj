@@ -1,7 +1,8 @@
 (ns lab.ui.swing.tree
   (:use     [lab.ui.protocols :only [Component Selection Implementation impl abstract to-map
                                      listen ignore]])
-  (:require [lab.ui.core :as ui])
+  (:require [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
             [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
             [javax.swing.event TreeSelectionListener TreeExpansionListener 
@@ -62,7 +63,7 @@ event can be :click or :key."
       (.addMouseListener click)
       (.addKeyListener key))))
 
-(ui/definitializations
+(definitializations
   :tree        tree-init
   :tree-node   tree-node-init)
 
@@ -106,7 +107,7 @@ event can be :click or :key."
     ([this selection]
       (throw (UnsupportedOperationException. "Set selection item for :tree UI implementation.")))))
 
-(ui/defattributes
+(defattributes
   :tree-node
     (:leaf [c _ v])
     (:item [c attr item]

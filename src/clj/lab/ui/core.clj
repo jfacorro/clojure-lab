@@ -21,7 +21,8 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
             [lab.model.protocols :as mp]
             [lab.ui.protocols :as p]
             [lab.ui.select :as sel]
-            [lab.ui.hierarchy :as h]))
+            [lab.ui.hierarchy :as h]
+            [lab.ui.util :refer [defattributes definitializations]]))
 
 (declare init initialized? attr find genid selector# hiccup->component)
 
@@ -34,13 +35,16 @@ that runs code in the UI thread."
   [& xs]
   (throw (Exception. "ui-action-macro has not been set by the implementation.")))
 
-(defn register-action-macro! [x]
-  (intern 'lab.ui.core 'action-macro x))
-
 (defmacro action
-  "Macro that uses the UI aciton macro defined by the implementation."
+  "Macro that uses the UI action macro defined by the implementation."
   [& body]
   `(~action-macro ~@body))
+
+(defn register-action-macro!
+  "Registration of macro to be used to execute 
+code in the UI's implementation context."
+  [x]
+  (intern 'lab.ui.core 'action-macro x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event handler creation
@@ -60,55 +64,6 @@ over to the the handler function."
   "Available function to customize event handling."
   [f]
   (intern 'lab.ui.core 'event-handler f))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Convenience macros for multimethod implementations
-
-(defmacro definitializations
-  "Generates all the multimethod implementations
-for each of the entries in the map destrcutured
-from its args.
-  
-  :component-name ClassName or init-fn"
-  [& {:as m}]
-  `(do
-    ~@(for [[k c] m]
-      (if (and (not (seq? c)) (-> c resolve class?))
-        `(defmethod p/initialize ~k [c#]
-          (new ~c))
-        `(defmethod p/initialize ~k [x#]
-          (~c x#))))))
-
-(defmacro defattributes
-  "Convenience macro to define attribute setters for each component type. 
-
-The method implemented returns the first argument (which is the component 
-itself), UNLESS the `^:modify` metadata flag is true for the argument vector, 
-in which case the value from the last expression in the body is returned.
-
-  *attrs-declaration
-  
-Where each attrs-declaration is:
-
-  component-tag *attr-declaration
-    
-And each attr-declaration is:
-
-  (attr-name [c attr v] & body)"
-  [& body]
-  (let [comps (->> body
-                (partition-by keyword?)
-                (partition 2)
-                (map #(apply concat %)))
-        f     (fn [tag & mthds]
-                (for [[attr [c _ _ :as args] & body] mthds]
-                  (let [x (gensym)]
-                    (assert (not= c '_) "First arg symbol can't be _")
-                    `(defmethod p/set-attr [~tag ~attr]
-                      ~args
-                      (let [~x (do ~@body)]
-                        ~(if (-> args meta :modify) x c))))))]
-    `(do ~@(mapcat (partial apply f) comps))))
 
 (defn- update-abstraction
   "Takes a component and set its own value 
@@ -212,7 +167,7 @@ as the abstraction of its implementation."
     ([this x] nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Record for creating non-native UI event.
+;; UI event abstraction
 
 (defrecord UIEvent [source event]
   p/Event

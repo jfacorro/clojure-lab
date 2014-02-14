@@ -1,6 +1,7 @@
 (ns lab.ui.swing.tab
   (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map listen]])
   (:require [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util])
   (:import  [javax.swing JTabbedPane JScrollPane JPanel JComponent 
                          UIManager UIDefaults]
@@ -53,7 +54,7 @@
   (doto (JTabbedPane.)
     (.setTabLayoutPolicy JTabbedPane/WRAP_TAB_LAYOUT)))
 
-(ui/definitializations
+(definitializations
   :tabs        tabs-init
   :tab         tab-init)
 
@@ -90,7 +91,7 @@
     ([this index]
       (.setSelectedIndex this index))))
 
-(ui/defattributes
+(defattributes
   :tab
   (:title [c _ _])
   (:tool-tip [c _ _])

@@ -6,6 +6,7 @@
                                      Selection selection caret-position]])
   (:require [lab.model.protocols :as mp]
             [lab.ui.core :as ui]
+            [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing [util :as util]
                           [event :as event]])
   (:import  [lab.ui.swing TextLineNumber LineHighlighter]
@@ -104,13 +105,13 @@
       (LineHighlighter. text))
     text))
 
-(ui/definitializations
+(definitializations
   :text-field  JTextField
   :text-area   JTextArea
   :text-editor #'text-editor-init
   :line-number #'line-number-init)
 
-(ui/defattributes
+(defattributes
   :text-field
     (:text [c _ v]
       (.setText ^JTextComponent (impl c) v))
