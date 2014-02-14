@@ -90,13 +90,21 @@ parse tree with the modified nodes marked with node group-id."
   [node]
   (or (and (map? node) (node :tag)) :default))
 
+(defn location-tag
+  "If the node is a map returns its :tag, otherwise the keyword :default."
+  [loc]
+  (loop [loc loc]
+    (if-not (map? (zip/node loc))
+      (recur (zip/up loc))
+      (:tag (zip/node loc)))))
+
 (defn code-zip
   "Builds a zipper using the root node in the document
 under the :parse-tree key."
   [root]
   (zip/zipper map? :content make-node root))
 
-(defn- node-length
+(defn node-length
   "Returns the length of a node in the parse tree."
   [node]
   (cond (nil? node) 
@@ -122,9 +130,9 @@ node in the way to the root."
 (defn location
   "Finds the location that contains the offset,
 returns a vector with the location and the 
-offset of the begging of it."
-  [root offset]
-  (loop [loc (zip/down root), pos 0]
+offset of the beggining of it."
+  [root-loc offset]
+  (loop [loc (zip/down root-loc), pos 0]
     (when (and loc (not (zip/end? loc)))
       (let [node    (zip/node loc)
             len     (node-length node)
