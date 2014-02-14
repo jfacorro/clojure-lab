@@ -1,30 +1,10 @@
 (ns lab.plugin.syntax-highlighting
   (:require [clojure.core.async :as async]
+            [lab.util :refer [timeout-channel]]
             [lab.ui.core :as ui]
             [lab.model.document :as doc]
             [lab.core [plugin :as plugin]
                       [lang :as lang]]))
-
-(defn timeout-channel
-  "Creates a go block that works in two modes :wait and :recieve.
-When on ':wait' it blocks execution until a value is recieved
-from the channel, it then enters ':recieve' mode until the timeout
-wins. Returns a channel that takes the input events."
-  [timeout-ms f]
-  (let [c (async/chan)]
-    (async/go-loop [mode     :wait
-                    args     nil]
-      (condp = mode
-        :wait
-          (recur :recieve (async/<! c))
-        :recieve
-          (let [[_ ch] (async/alts! [c (async/timeout timeout-ms)])]
-            (if (= ch c)
-              (recur :recieve args)
-              (do
-                (async/thread (apply f args))
-                (recur :wait nil))))))
-    c))
 
 (defn highlight!
   "Takes the editor component and an optional argument
