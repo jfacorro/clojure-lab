@@ -7,7 +7,7 @@
            [java.awt Dimension]
            [java.awt.event InputEvent
                            KeyEvent
-                           MouseEvent
+                           MouseEvent MouseWheelEvent
                            FocusEvent
                            ActionEvent]))
 
@@ -67,7 +67,8 @@ and returns a vector with all the values that apply to it."
   [m n]
   (->> m 
     (filter #(pos? (bit-and n (second %))))
-    (mapv first)))
+    (map first)
+    set))
 
 (defn- merge-results
   "Takes two functions that return a map and 
@@ -144,7 +145,7 @@ a reflection warning."
   (build-merged-impl #{:to-map} event-object input-event key-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Mouse Event
+;; Mouse Events
 
 (def ^:private mouse-button
   {MouseEvent/BUTTON1  :button-1
@@ -169,9 +170,18 @@ a reflection warning."
               :point        (as-> (.getPoint this) p [(.getX p) (.getY p)])
               :event        (mouse-event-ids (.getID this))})})
 
+(def mouse-wheel-event
+  {:to-map (fn [^MouseWheelEvent this]
+             {:wheel-rotation  (.getWheelRotation this)
+              :scroll-amount   (.getScrollAmount this)})})
+
 (extend MouseEvent
   p/Event
   (build-merged-impl #{:to-map} event-object input-event mouse-event))
+
+(extend MouseWheelEvent
+  p/Event
+  (build-merged-impl #{:to-map} event-object input-event mouse-event mouse-wheel-event))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Action Event

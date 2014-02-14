@@ -220,6 +220,19 @@ and signals the highlighting process."
       (when (= :pressed (:event e))
         (ui/handle-event (:fn cmd) e)))))
 
+;; Change font size
+(defn change-font-size [app e]
+  (when (contains? (:modifiers e) :ctrl)
+    (let [ui     (:ui @app)
+          id     (-> (ui/find (:source e) :text-editor) (ui/attr :id))
+          editor (ui/find @ui (ui/selector# id))
+          op     (if (neg? (:wheel-rotation e)) inc dec)
+          font   (-> (apply hash-map (ui/attr editor :font))
+                   (update-in [:size] op)
+                   seq flatten vec)]
+      (ui/consume e)
+      (ui/update! ui (ui/selector# id) ui/attr :font font))))
+
 ;; Text editor creation
 
 (defn- text-editor-create [app doc]
@@ -229,7 +242,8 @@ and signals the highlighting process."
                  (ui/listen :delete ::text-editor-change))]
     [:scroll {:vertical-increment 16
               :border :none
-              :margin-control [:line-number {:source editor}]}
+              :listen [:mouse-wheel ::change-font-size]
+              :margin-control [:line-number {:source editor :update-font true}]}
       [:panel {:border :none
                :layout :border}
         editor]]))
@@ -357,15 +371,15 @@ inserting a fixed first parameter, which is the app."
 
 (def styles
   {#{:label :tree :button}
-                {:font [:name "Inconsolata" :size 14]}
+                {:font [:name "Consolas" :size 14]}
    #{:text-editor :text-area :scroll :split :panel :tree}
                 {:border :none}
-   :line-number {:font        [:name "Inconsolata" :size 16]
+   :line-number {:font        [:name "Consolas" :size 16]
                  :background  0x666666
                  :color       0xFFFFFF
                  :current-line-color 0x00FFFF}
    #{:text-editor :text-area}
-                {:font        [:name "Inconsolata" :size 16]
+                {:font        [:name "Consolas" :size 16]
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}

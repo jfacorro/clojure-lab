@@ -40,7 +40,35 @@
 
 (defmethod create-listener [:component :click]
   [c _ f]
+  (proxy [MouseAdapter] [] (mouseClicked [e] (f e))))
+
+(defmethod create-listener [:component :mouse-press]
+  [c _ f]
   (proxy [MouseAdapter] [] (mousePressed [e] (f e))))
+
+(defmethod create-listener [:component :mouse-release]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mouseReleased [e] (f e))))
+
+(defmethod create-listener [:component :mouse-enter]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mouseEntered [e] (f e))))
+
+(defmethod create-listener [:component :mouse-exit]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mouseExited [e] (f e))))
+
+(defmethod create-listener [:component :mouse-wheel]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mouseWheelMoved [e] (f e))))
+
+(defmethod create-listener [:component :mouse-move]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mouseMoved [e] (f e))))
+
+(defmethod create-listener [:component :mouse-drag]
+  [c _ f]
+  (proxy [MouseAdapter] [] (mouseDragged [e] (f e))))
 
 (defmethod create-listener [:button :click]
   [c _ f]

@@ -111,6 +111,9 @@
     (:visible [c _ v]
       (.setVisible ^java.awt.Component (p/impl c) v)))
 
+;;;;;;;;;;;;;;;;;
+;; Key
+
 (defmethod p/listen [:component :key]
   [c evt f]
   (let [listener (util/create-listener c evt f)]
@@ -120,6 +123,9 @@
 (defmethod p/ignore [:component :key]
   [c _ listener]
   (.removeKeyListener ^JComponent (p/impl c) listener))
+
+;;;;;;;;;;;;;;;;;
+;; Focus/Blur
 
 (defmethod p/listen [:component :focus]
   [c evt f]
@@ -141,6 +147,9 @@
   [c _ listener]
   (.removeFocusListener ^JComponent (p/impl c) listener))
 
+;;;;;;;;;;;;;;;;;
+;; Mouse
+
 (defmethod p/listen [:component :click]
   [c evt f]
   (let [listener (util/create-listener c evt f)]
@@ -150,3 +159,75 @@
 (defmethod p/ignore [:component :click]
   [c _ listener]
   (.removeMouseListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-press]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-press]
+  [c _ listener]
+  (.removeMouseListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-release]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-release]
+  [c _ listener]
+  (.removeMouseListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-enter]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-enter]
+  [c _ listener]
+  (.removeMouseListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-exit]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-exit]
+  [c _ listener]
+  (.removeMouseListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-wheel]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseWheelListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-wheel]
+  [c _ listener]
+  (.removeMouseWheelListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-move]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseMotionListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-move]
+  [c _ listener]
+  (.removeMouseMotionListener ^JComponent (p/impl c) listener))
+
+(defmethod p/listen [:component :mouse-drag]
+  [c evt f]
+  (let [listener (util/create-listener c evt f)]
+    (.addMouseMotionListener ^JComponent (p/impl c) listener)
+    listener))
+
+(defmethod p/ignore [:component :mouse-drag]
+  [c _ listener]
+  (.removeMouseMotionListener ^JComponent (p/impl c) listener))
+
+

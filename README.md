@@ -47,12 +47,12 @@ Most of the features in the following list were extracted from the post [The Ide
 
 ### Code Editing
 
-- Syntax highlighting
+- Syntax highlighting.
 - Brace, bracket, paren matching.
 - Paredit equivalency.
 - Easily-togglable rainbow parens.
 - S-expression navigation.
-- in-place popup macroexpansion
+- in-place popup macroexpansion.
 - Auto completion.
 
 ### Project Organization
