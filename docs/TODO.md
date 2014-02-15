@@ -11,7 +11,8 @@
   - Key Bindings
     - Remove all defaults and replace them all => not practical
     - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
-  - Implement listen/unlisten functions to add and remove event handlers from a component.
+  - Implement listen/ignore functions to add and remove event handlers from a component.
+
 #### Code Editor
   - Move the following code editor features to their own plugin.
 This could be done by adding a hook to an editor creation templates function.
@@ -40,11 +41,40 @@ This could be done by adding a hook to an editor creation templates function.
       2. Remove the init in the templates function, so that it only returns the hiccup style vector AND instead of just proxying the add protocol functions, have the function in lab.ui.core call hiccup->component.  
 
 #### Rainbow parens
-  - Implement.
+  - Improve performance: maybe avoid using or improve the performance of lang/location.
 
 #### Paredit
-  - Implement.
-
+  - Implement
+    - Basic Insertion Commands
+      - paredit-close-round )
+      - paredit-close-round-and-newline M-)
+      - paredit-close-square ]
+      - paredit-meta-doublequote M-"
+      - paredit-backslash \
+      - paredit-comment-dwim M-;
+      - paredit-newline C-j
+    - Deleting and killing
+      - paredit-forward-delete C-d, del
+      - paredit-backward-delete DEL
+      - paredit-kill C-k
+      - paredit-forward-kill-word M-d
+    - Movement & Navigation
+      - paredit-forward C-M-f
+      - paredit-backward C-M-b
+    - Depth-Changing Commands
+      - paredit-wrap-around M-(
+      - paredit-splice-sexp M-s
+      - paredit-splice-sexp-killing-backward M-<up>, ESC <up>
+      - paredit-splice-sexp-killing-forward M-<down>, ESC <down>
+      - paredit-raise-sexp M-r
+    - Barfage & Slurpage
+      - paredit-forward-slurp-sexp C-), C-<right>
+      - paredit-forward-barf-sexp C-g, C-<left>
+      - paredit-backward-slurp-sexp C-(, C-M-<left>, ESC C-<left>
+      - paredit-backward-barf-sexp C-f, C-M-<right>, ESC C-<right>
+    - Miscellaneous Commands
+      - paredit-split-sexp M-S
+      - paredit-join-sexp M-J
 #### Menu
   - Define a way to specify the order of the menu items.
 
@@ -108,6 +138,13 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### REPL
   - Create plugin.
+
+#### Rainbow parens
+  - Implement.
+
+#### Paredit
+  - Implement
+    - Delimiter Balance
 
 ## Model
   - Complete Document
