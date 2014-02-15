@@ -98,9 +98,10 @@ parse tree with the modified nodes marked with node group-id."
 (defn location-tag
   [loc]
   (loop [loc loc]
-    (if-not (map? (zip/node loc))
-      (recur (zip/up loc))
-      (:tag (zip/node loc)))))
+    (when loc
+      (if-not (map? (zip/node loc))
+        (recur (zip/up loc))
+        (:tag (zip/node loc))))))
 
 (defn code-zip
   "Builds a zipper using the root node in the document

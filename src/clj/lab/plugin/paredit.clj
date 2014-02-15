@@ -44,5 +44,5 @@
     {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
     {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}))
 
-(plugin/defplugin lab.plugin.rainbow-delimiters
+(plugin/defplugin lab.plugin.paredit
   :keymaps [keymap])

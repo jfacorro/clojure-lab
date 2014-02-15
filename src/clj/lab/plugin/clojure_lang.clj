@@ -33,8 +33,8 @@
               :syntax-quote ["`" :expr]
               :unquote [#"~(?!@)" :expr]
               :unquote-splice ["~@" :expr]
-              :regex #"#\"([^\"\\]*|(\\.))*\""
-              :string #"(?s)(?<!#)\".*?(?<!\\)\""
+              :regex #"#\".*?(?<!\\)\""                  ;; Doesn't handle \\" as a possible termination.
+              :string #"(?s)(?<!#)\".*?(?<!\\)\""        ;; Doesn't handle \\" as a possible termination.
               :char #"\\(.|newline|space|tab|backspace|formfeed|return|u([0-9a-fA-F]{4}|[0-7]{1,2}|[0-3][0-7]{2}))(?![a-zA-Z0-9!$%&*+\-\./:<=>?_#])"
               :number #"(0x[\dA-Fa-f]+|\d(?!x)\d*\.?\d*[MN]?)"
               :reader-var ["#'" :symbol]
@@ -221,10 +221,6 @@ and returns the offset of its matching delimiter."
   (km/keymap 'lab.plugin.clojure-lang
     :lang :clojure
     {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
-    {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
-    {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
-    {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
-    {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}
     {:fn ::toggle-comment :keystroke "alt c" :name "Comment code"}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
