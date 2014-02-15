@@ -25,7 +25,8 @@
                     lab.plugin.clojure-repl
                     lab.plugin.delimiter-matching
                     lab.plugin.syntax-highlighting
-                    lab.plugin.rainbow-delimiters]
+                    lab.plugin.rainbow-delimiters
+                    lab.plugin.paredit]
    :plugins-dir   "plugins"
    :current-dir   "."})
 

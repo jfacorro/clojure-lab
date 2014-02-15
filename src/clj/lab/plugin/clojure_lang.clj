@@ -10,7 +10,7 @@
             [lab.model.protocols :as model]))
 
 (def special-forms #{"def" "if" "do" "let" "quote" "var" "'" "fn" "loop" "recur" "throw"
-                     "try" "catch" "finally" "monitor-enter" "monitor-exit" #_"." "new" "set!"})
+                     "try" "catch" "finally" "monitor-enter" "monitor-exit" "." "new" "set!"})
 
 (def core-vars 
   "Gets all the names for the vars in the clojure.core namespace."
@@ -123,25 +123,6 @@ check if its one of the registered symbols."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap commands
-
-(defn- insert-tab [app e]
-  (let [editor (:source e)
-        offset (ui/caret-position editor)]
-    (model/insert editor offset "  ")))
-
-(def delimiters
-  {\( \)
-   \[ \]
-   \{ \}
-   \" \"})
-
-(defn- balance-delimiter [app e]
-  (let [editor  (:source e)
-        opening (:char e)
-        closing (delimiters opening)
-        offset  (ui/caret-position editor)]
-    (model/insert editor offset (str opening closing))
-    (ui/caret-position editor (inc offset))))
 
 ;; Comment
 

@@ -1,6 +1,5 @@
 (ns lab.plugin.rainbow-delimiters
-  (:require [clojure.core.async :as async]
-            [lab.ui.core :as ui]
+  (:require [lab.ui.core :as ui]
             [lab.util :refer [timeout-channel find-limits]]
             [lab.model.document :as doc]
             [lab.model.protocols :as model]
@@ -58,7 +57,7 @@
 (def all-delimiters "[\\(\\){}\\[\\]]")
 (def opening-delimiters #{"(" "{" "[" "#{"})
 
-(def ignore? #{:net.cgrand.parsley/unfinished 
+(def ignore? #{:net.cgrand.parsley/unfinished
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
 
@@ -68,7 +67,7 @@
          tokens []]
     (if-not start
       tokens
-      (let [[loc pos] (lang/location root-loc start)
+      (let [[loc pos] (lang/location root-loc start) ;; TODO: change the usage of location since it's killing performance.
             opening?  (opening-delimiters (clojure.zip/node loc))
             end       (when opening?
                         (-> loc lang/parent-node lang/node-length (+ pos -1)))
