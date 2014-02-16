@@ -1,5 +1,6 @@
 (ns lab.plugin.rainbow-delimiters
-  (:require [lab.ui.core :as ui]
+  (:require [clojure.zip :as zip]
+            [lab.ui.core :as ui]
             [lab.util :refer [timeout-channel find-limits]]
             [lab.model.document :as doc]
             [lab.model.protocols :as model]
@@ -55,38 +56,40 @@
 (def depths-count (count depths-styles))
 
 (def all-delimiters "[\\(\\){}\\[\\]]")
-(def opening-delimiters #{"(" "{" "[" "#{"})
+(def opening-delimiters #{\( \{ \[})
 
 (def ignore? #{:net.cgrand.parsley/unfinished
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
 
-(defn- delimiters-tokens [root-loc delimiters]
+(defn- delimiters-tokens [root-loc delimiters txt]
   (loop [depth  0
          [[start _] & delims] delimiters
          tokens []]
-    (if-not start
-      tokens
-      (let [[loc pos] (lang/location root-loc start) ;; TODO: change the usage of location since it's killing performance.
-            opening?  (opening-delimiters (clojure.zip/node loc))
-            end       (when opening?
-                        (-> loc lang/parent-node lang/node-length (+ pos -1)))
-            tag       (lang/location-tag loc)
-            mod-depth (inc (mod depth depths-count))
-            depth     (cond (ignore? tag) depth 
-                            opening? (inc depth)
-                            :else (dec depth))]
-        (recur depth delims
-               (if (or (ignore? tag) (not opening?))
-                 tokens
-                 (conj tokens [start 1 mod-depth] [end 1 mod-depth])))))))
+    (cond
+      (nil? start)
+        tokens
+      (not (opening-delimiters (get txt start)))
+        (recur (dec depth) delims tokens)
+      :else
+        (let [[loc pos] (lang/location root-loc start) ;; TODO: change the usage of location since it's killing performance.
+              len       (count (zip/node loc)) ;; In case the delimiter includes other characters
+              [start len] (if (= 1 len) [start 1] [pos len])
+              end       (-> loc lang/parent-node lang/node-length (+ pos -1))
+              tag       (lang/location-tag loc)
+              mod-depth (inc (mod depth depths-count))
+              depth     (if (ignore? tag) depth (inc depth))]
+          (recur depth delims
+                 (if (ignore? tag)
+                   tokens
+                   (conj tokens [start len mod-depth] [end 1 mod-depth])))))))
 
 (defn- color-delimiters! [editor]
   (let [doc   (ui/attr editor :doc)
         txt   (model/text editor)
         delimiters (find-limits all-delimiters txt)
         root  (lang/code-zip (lang/parse-tree @doc))
-        tokens (delimiters-tokens root delimiters)]
+        tokens (delimiters-tokens root delimiters txt)]
     (ui/action
       (when (= txt (model/text editor))
         (ui/apply-style editor tokens depths-styles))))

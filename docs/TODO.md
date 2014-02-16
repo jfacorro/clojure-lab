@@ -37,7 +37,6 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### Rainbow parens
   - Improve performance: maybe avoid using or improve the performance of lang/location.
-  - Using #() messes up the depth from then on.
 
 #### Paredit
   - Implement
@@ -142,6 +141,7 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### Rainbow parens
   - Implement.
+  - Using #() messes up the depth from then on.
 
 #### Paredit
   - Implement
