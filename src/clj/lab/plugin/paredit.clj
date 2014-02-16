@@ -8,11 +8,6 @@
                       [lang :as lang]
                       [keymap :as km]]))
 
-(defn- insert-tab [app e]
-  (let [editor (:source e)
-        offset (ui/caret-position editor)]
-    (model/insert editor offset "  ")))
-
 (def delimiters
   {\( \)
    \[ \]
@@ -76,7 +71,10 @@
     {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}
     ;; Movement & Navigation
     {:fn ::backward :keystroke "ctrl alt left" :name "Backward"}
-    {:fn ::forward :keystroke "ctrl alt right" :name "Forward"})])
+    {:fn ::forward :keystroke "ctrl alt right" :name "Forward"}
+    ;; Depth-Changing Commands
+
+)])
 
 (plugin/defplugin lab.plugin.paredit
   :keymaps keymaps)

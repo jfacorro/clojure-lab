@@ -124,6 +124,11 @@ check if its one of the registered symbols."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap commands
 
+(defn- insert-tab [app e]
+  (let [editor (:source e)
+        offset (ui/caret-position editor)]
+    (model/insert editor offset "  ")))
+
 ;; Comment
 
 (defn- start-of-line
