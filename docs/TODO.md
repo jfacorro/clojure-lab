@@ -58,9 +58,6 @@ This could be done by adding a hook to an editor creation templates function.
       - paredit-backward-delete DEL
       - paredit-kill C-k
       - paredit-forward-kill-word M-d
-    - Movement & Navigation
-      - paredit-forward C-M-f
-      - paredit-backward C-M-b
     - Depth-Changing Commands
       - paredit-wrap-around M-(
       - paredit-splice-sexp M-s
@@ -144,7 +141,11 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### Paredit
   - Implement
-    - Delimiter Balance
+    - Basic Insertion Commands
+      - Delimiter Balance
+    - Movement & Navigation
+      - paredit-forward C-M-f
+      - paredit-backward C-M-b
 
 ## Model
   - Complete Document
