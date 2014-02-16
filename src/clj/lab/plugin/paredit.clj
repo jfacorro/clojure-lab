@@ -8,18 +8,14 @@
                       [lang :as lang]
                       [keymap :as km]]))
 
-(def delimiters
-  {\( \)
-   \[ \]
-   \{ \}
-   \" \"})
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Basic Insertion Commands
+
+(def delimiters {\( \), \[ \], \{ \}, \" \"})
 
 (def ignore? #{:net.cgrand.parsley/unfinished
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Basic Insertion Commands
 
 (defn- balance-delimiter [app e]
   (let [editor    (:source e)
@@ -30,7 +26,7 @@
         [loc pos] (lang/location root-loc offset)
         tag       (lang/location-tag loc)
         s         (str opening (when-not (ignore? tag) closing))]
-      (model/insert editor offset s)
+    (model/insert editor offset s)
     (ui/caret-position editor (inc offset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,6 +55,54 @@
   (move app e #(-> % zip/up zip/right)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Movement & Navigation
+
+(defn- wrap-around
+  "Looks for the location under the current caret position,
+finds the leftmost sibling in order to get the offset of the
+current form and add a closing and opening parentheses around
+it."
+  [app e]
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        parent  (zip/up loc)
+        left    (-> loc zip/leftmost)
+        len     (-> parent zip/node lang/node-length)
+        i       (if (= left loc) i (lang/offset left))]
+    (when-not (lang/whitespace? parent)
+      (ui/action
+        (model/insert editor (+ i len) ")")
+        (model/insert editor i "(")))))
+
+(defn- list-parent
+  "Returns the first location that contains a parent :list node."
+  [loc]
+  (if (and loc (= :list (lang/location-tag loc)))
+    loc
+    (recur (zip/up loc))))
+
+(defn- splice-sexp
+  "Looks for the location under the current caret position,
+then gets the first parent list it finds and removes the wrapping
+parentheses by deleting and inserting the modified substring."
+  [app e]
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        parent  (list-parent loc)]
+    (when parent
+      (let [i   (lang/offset parent)
+            len (-> parent zip/node :length)
+            s   (model/substring editor i (+ i len))]
+        (model/delete editor i (+ i len))
+        (model/insert editor i (->> s rest butlast (apply str)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap
 
 (def ^:private keymaps
@@ -73,8 +117,8 @@
     {:fn ::backward :keystroke "ctrl alt left" :name "Backward"}
     {:fn ::forward :keystroke "ctrl alt right" :name "Forward"}
     ;; Depth-Changing Commands
-
-)])
+    {:fn ::wrap-around :keystroke "alt (" :name "Wrap around"}
+    {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"})])
 
 (plugin/defplugin lab.plugin.paredit
   :keymaps keymaps)

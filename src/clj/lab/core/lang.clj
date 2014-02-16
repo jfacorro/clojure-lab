@@ -96,6 +96,7 @@ parse tree with the modified nodes marked with node group-id."
   (-> loc zip/up zip/node))
 
 (defn location-tag
+  "Returns the tag for the location if any."
   [loc]
   (loop [loc loc]
     (when loc
@@ -106,8 +107,8 @@ parse tree with the modified nodes marked with node group-id."
 (defn code-zip
   "Builds a zipper using the root node in the document
 under the :parse-tree key."
-  [root]
-  (zip/zipper map? :content make-node root))
+  [root-node]
+  (zip/zipper map? :content make-node root-node))
 
 (defn node-length
   "Returns the length of a node in the parse tree."
@@ -134,8 +135,8 @@ node in the way to the root."
 
 (defn location
   "Finds the location that contains the offset,
-returns a vector with the location and the 
-offset of the beggining of it."
+returns a vector with the location and its start
+offset."
   [root-loc offset]
   (loop [loc (zip/down root-loc), pos 0]
     (when (and loc (not (zip/end? loc)))
@@ -149,6 +150,13 @@ offset of the beggining of it."
           (if (< new-pos offset)
             (recur (zip/right loc) new-pos)
             (recur (zip/down loc) pos)))))))
+
+(defn whitespace?
+  "Returns true if the zipper location
+contains a node that represents whitespace and
+false otherwise."
+  [loc]
+  (and loc (-> loc zip/node :tag #{:whitespace} boolean)))
 
 (def ^:private ignore? #{:whitespace})
 
