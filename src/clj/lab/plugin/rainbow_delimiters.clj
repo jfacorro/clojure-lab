@@ -56,7 +56,7 @@
 (def depths-count (count depths-styles))
 
 (def all-delimiters "[\\(\\){}\\[\\]]")
-(def opening-delimiters #{\( \{ \[})
+(def opening? #{\( \{ \[})
 
 (def ignore? #{:net.cgrand.parsley/unfinished
                :net.cgrand.parsley/unexpected
@@ -66,23 +66,24 @@
   (loop [depth  0
          [[start _] & delims] delimiters
          tokens []]
-    (cond
-      (nil? start)
-        tokens
-      (not (opening-delimiters (get txt start)))
-        (recur (dec depth) delims tokens)
-      :else
-        (let [[loc pos] (lang/location root-loc start) ;; TODO: change the usage of location since it's killing performance.
-              len       (count (zip/node loc)) ;; In case the delimiter includes other characters
-              [start len] (if (= 1 len) [start 1] [pos len])
-              end       (-> loc lang/parent-node lang/node-length (+ pos -1))
-              tag       (lang/location-tag loc)
-              mod-depth (inc (mod depth depths-count))
-              depth     (if (ignore? tag) depth (inc depth))]
-          (recur depth delims
-                 (if (ignore? tag)
-                   tokens
-                   (conj tokens [start len mod-depth] [end 1 mod-depth])))))))
+    (if-not start
+      tokens
+      (let [[loc pos] (lang/location root-loc start) ;; TODO: change the usage of location since it's killing performance.
+            opens?    (opening? (get txt start))
+
+            len       (count (zip/node loc)) ;; In case the delimiter includes other characters
+            [start len] (if (= 1 len) [start 1] [pos len])
+            end       (when opens? (-> loc lang/parent-node lang/node-length (+ pos -1)))
+
+            mod-depth (inc (mod depth depths-count))
+            tag       (lang/location-tag loc)
+            depth     (cond (ignore? tag) depth
+                            opens? (inc depth)
+                            :else  (dec depth))]
+        (recur depth delims
+               (if (or (ignore? tag) (not opens?))
+                 tokens
+                 (conj tokens [start len mod-depth] [end 1 mod-depth])))))))
 
 (defn- color-delimiters! [editor]
   (let [doc   (ui/attr editor :doc)
