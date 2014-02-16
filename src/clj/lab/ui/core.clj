@@ -178,6 +178,17 @@ as the abstraction of its implementation."
   (impl [this] (-> this meta :impl))
   (impl [this x] (vary-meta this assoc :impl x)))
 
+(defn memoized-key-stroke
+  "Expects a keystroke event with keys :modifiers, :char and
+:code."
+  [{:keys [char modifiers code description] :as e}]
+  (let [modif (->> (disj modifiers :shift) (map name) set)
+        desc  (name description)
+        ch    (str char)]
+   [(conj modif ch) (conj modif desc)]))
+
+(def key-stroke (memoize memoized-key-stroke))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Expose Protocol Functions
 

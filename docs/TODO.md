@@ -29,19 +29,15 @@ This could be done by adding a hook to an editor creation templates function.
   - Listen for changes in current dir structure.
 
 #### Code Outline:
-  - When going to line, position the line in the top of the scroll.
+  - When going to line, position the line in the top (or middle) of the scroll.
     - Depends on the implementation of the editor's Go to line.
 
 #### REPL
   - Use nrepl, not a process and its input/output streams.
-  - Fix bug: when closing the REPL tab, even if the user enters no or cancel in the prompt, the
-  tab closes all the same, since the on-click handler from the template is used as well.
-    - Possible solutions:
-      1. Implement an event handlers map for each component and a listen! function for the UI.
-      2. Remove the init in the templates function, so that it only returns the hiccup style vector AND instead of just proxying the add protocol functions, have the function in lab.ui.core call hiccup->component.  
 
 #### Rainbow parens
   - Improve performance: maybe avoid using or improve the performance of lang/location.
+  - Using #() messes up the depth from then on.
 
 #### Paredit
   - Implement
@@ -96,7 +92,7 @@ This could be done by adding a hook to an editor creation templates function.
 
 ## DONE
 
-## UI
+### UI
   - Abstraction for events
     - Define available events for each component (alla seesaw)
   - Generate hierarchy (ad-hoc?) for the different types of components so that common attributes share the same logic (and implementation code).
@@ -106,6 +102,9 @@ This could be done by adding a hook to an editor creation templates function.
   - Modify the global atom created for the ui.
   - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
   - The abstraction value for the implementations should be updated with each modification to the abstraction.
+
+#### Events
+  - Fixed bug when mapping keys in a JVM with a different language.
 
 #### Code Editor
   - Syntax high-lighting.
@@ -135,6 +134,11 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### REPL
   - Create plugin.
+  - Fix bug: when closing the REPL tab, even if the user enters no or cancel in the prompt, the
+  tab closes all the same, since the on-click handler from the template is used as well.
+    - Possible solutions:
+      1. Implement an event handlers map for each component and a listen! function for the UI.
+      2. Remove the init in the templates function, so that it only returns the hiccup style vector AND instead of just proxying the add protocol functions, have the function in lab.ui.core call hiccup->component.  
 
 #### Rainbow parens
   - Implement.

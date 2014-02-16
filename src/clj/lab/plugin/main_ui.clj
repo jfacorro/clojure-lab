@@ -208,11 +208,9 @@ and signals the highlighting process."
   (let [ui   (:ui @app)
         editor (:source e)
         doc  (ui/attr editor :doc)
-        ks   (-> [] (into (:modifiers e)) (conj (:description e)))
-        kstr (->> ks (map name) set)
-        char-typed (-> e :char str str vector set)
+        [x y](ui/key-stroke (dissoc e :source))
         cmd  (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
-              (map #(or (km/find % kstr) (km/find % char-typed)))
+              (map #(or (km/find % y) (km/find % x)))
               (drop-while nil?)
               first)]
     (when cmd

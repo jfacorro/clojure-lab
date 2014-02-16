@@ -1,5 +1,6 @@
 (ns lab.ui.swing.event
   (:require [lab.ui.protocols :as p]
+            [lab.ui.swing.keys :refer [swing-keys]]
             [lab.ui.core :as ui]
             lab.util)
   (:import [javax.swing UIManager JComponent AbstractAction]
@@ -137,7 +138,7 @@ a reflection warning."
   {:to-map (fn [^KeyEvent this]
              {:char         (.getKeyChar this)
               :code         (.getKeyCode this)
-              :description  (-> (.getKeyCode this) KeyEvent/getKeyText lab.util/keywordize)
+              :description  (swing-keys (.getKeyCode this))
               :event        (key-event-ids (.getID this))})})
 
 (extend KeyEvent
