@@ -61,7 +61,10 @@
   "Looks for the location under the current caret position,
 finds the leftmost sibling in order to get the offset of the
 current form and add a closing and opening parentheses around
-it."
+it.
+
+(foo |bar baz)
+(foo (|bar) baz)"
   [app e]
   (let [editor  (:source e)
         pos     (ui/caret-position editor)
@@ -88,7 +91,10 @@ it."
 (defn- splice-sexp
   "Looks for the location under the current caret position,
 then gets the first parent list it finds and removes the wrapping
-parentheses by deleting and inserting the modified substring."
+parentheses by deleting and inserting the modified substring.
+
+(foo (bar| baz) quux)
+(foo bar| baz quux)"
   [app e]
   (let [editor  (:source e)
         pos     (ui/caret-position editor)
@@ -98,17 +104,58 @@ parentheses by deleting and inserting the modified substring."
         parent  (list-parent loc)]
     (when parent
       (ui/action
-        (let [i   (lang/offset parent)
-              len (-> parent zip/node lang/node-length)
-              s   (model/substring editor i (+ i len))]
-          (model/delete editor i (+ i len))
-          (model/insert editor i (->> s rest butlast (apply str))))))))
+        (let [[start end] (lang/limits parent)
+              s   (model/substring editor start end)]
+          (model/delete editor start end)
+          (model/insert editor start (->> s rest butlast (apply str))))))))
 
-(defn- splice-sexp-killing-backward [app e]
-  (prn ::splice-sexp-killing-backward))
+(defn- splice-sexp-killing
+  "Looks for the location in the current caret position.
+If the node in the location is a list then it looks for the next list
+up in the tree, otherwise takes the first list as the parent. Then
+gets the offset limits for the location and the list's location, replacing
+the parent's text for the string returned by f.
+f is a function that takes the editor, the limits for the location and
+the limits for the parent list, returning the string that will replace
+the parent's list text."
+  [app e f]
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        tag     (lang/location-tag loc)
+        [loc parent]
+                (if (= :list tag)
+                  [(-> loc list-parent) (-> loc list-parent zip/up list-parent)]
+                  [loc (-> loc list-parent)])]
+    (when parent
+      (ui/action
+        (let [[start end]   (lang/limits loc)
+              [pstart pend] (lang/limits parent)
+              s             (f editor [start end] [pstart pend])]
+          (model/delete editor pstart pend)
+          (model/insert editor pstart s))))))
+
+(defn- splice-sexp-killing-backward
+  "(foo (let ((x 5)) |(sqrt n)) bar)
+   (foo |(sqrt n) bar)"
+  [app e]
+  (splice-sexp-killing app e
+    (fn [editor [start end] [pstart pend]]
+      (->> (model/substring editor start pend)
+        butlast
+        (apply str)))))
 
 (defn- splice-sexp-killing-forward [app e]
-  (prn ::splice-sexp-killing-forward))
+  "(a (b c| d e) f)
+   (a b c| f)"
+  [app e]
+  (splice-sexp-killing app e
+    (fn [editor [start end] [pstart pend]]
+      (->> (model/substring editor pstart start)
+        rest
+        (apply str)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap

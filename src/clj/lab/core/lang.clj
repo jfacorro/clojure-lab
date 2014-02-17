@@ -133,6 +133,13 @@ node in the way to the root."
                (map node-length)
                (apply + n))))))
 
+(defn limits
+  "Returns the start and end offset for the location."
+  [loc]
+  (let [start (offset loc)
+        end   (+ start (-> loc zip/node node-length))]
+    [start end]))
+
 (defn location
   "Finds the location that contains the offset,
 returns a vector with the location and its start
