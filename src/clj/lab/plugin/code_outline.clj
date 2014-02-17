@@ -4,6 +4,7 @@
             [lab.core.lang :as lang]
             [lab.core.plugin :as plugin]
             [lab.core.keymap :as km]
+            [lab.util :as util]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [lab.model.document :as doc]
@@ -100,10 +101,11 @@ and content"
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
-        g      (fn [app _] (#'update-outline-tree! @app doc))]
+        g      (fn [app _] (#'update-outline-tree! @app doc))
+        ch     (util/timeout-channel 500 g)]
     (-> editor
-      (ui/listen :insert g)
-      (ui/listen :delete g))))
+      (ui/listen :insert ch)
+      (ui/listen :delete ch))))
 
 (def ^:private hooks
   {#'lab.core/switch-document #'switch-document-hook
