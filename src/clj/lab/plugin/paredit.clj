@@ -80,7 +80,7 @@ it."
 (defn- list-parent
   "Returns the first location that contains a parent :list node."
   [loc]
-  (if (and loc (= :list (lang/location-tag loc)))
+  (if (or (nil? loc) (= :list (-> loc zip/node :tag)))
     loc
     (recur (zip/up loc))))
 
@@ -96,11 +96,18 @@ parentheses by deleting and inserting the modified substring."
         [loc i] (lang/location tree pos)
         parent  (list-parent loc)]
     (when parent
-      (let [i   (lang/offset parent)
-            len (-> parent zip/node :length)
-            s   (model/substring editor i (+ i len))]
-        (model/delete editor i (+ i len))
-        (model/insert editor i (->> s rest butlast (apply str)))))))
+      (ui/action
+        (let [i   (lang/offset parent)
+              len (-> parent zip/node lang/node-length)
+              s   (model/substring editor i (+ i len))]
+          (model/delete editor i (+ i len))
+          (model/insert editor i (->> s rest butlast (apply str))))))))
+
+(defn- splice-sexp-killing-backward [app e]
+  (prn ::splice-sexp-killing-backward))
+
+(defn- splice-sexp-killing-forward [app e]
+  (prn ::splice-sexp-killing-forward))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap
@@ -118,7 +125,9 @@ parentheses by deleting and inserting the modified substring."
     {:fn ::forward :keystroke "ctrl alt right" :name "Forward"}
     ;; Depth-Changing Commands
     {:fn ::wrap-around :keystroke "alt (" :name "Wrap around"}
-    {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"})])
+    {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"}
+    {:fn ::splice-sexp-killing-backward :keystroke "alt up" :name "Splice sexp"}
+    {:fn ::splice-sexp-killing-forward :keystroke "alt down" :name "Splice sexp"})])
 
 (plugin/defplugin lab.plugin.paredit
   :keymaps keymaps)
