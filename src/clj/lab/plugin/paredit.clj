@@ -278,7 +278,6 @@ parentheses by deleting and inserting the modified substring.
   [(km/keymap 'lab.plugin.paredit
     :lang :clojure
     {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
-    {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
     {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
     {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
     {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}
