@@ -128,14 +128,15 @@ the parent's list text."
         [loc parent]
                 (if (= :list tag)
                   [(-> loc list-parent) (-> loc list-parent zip/up list-parent)]
-                  [loc (-> loc list-parent)])]
-    (when parent
+                  [(zip/up loc) (-> loc list-parent)])]
+    (when (and parent (not (lang/whitespace? loc)))
       (ui/action
         (let [[start end]   (lang/limits loc)
               [pstart pend] (lang/limits parent)
               s             (f editor [start end] [pstart pend])]
           (model/delete editor pstart pend)
-          (model/insert editor pstart s))))))
+          (model/insert editor pstart s)
+          (ui/caret-position editor pstart))))))
 
 (defn- splice-sexp-killing-backward
   "(foo (let ((x 5)) |(sqrt n)) bar)
@@ -157,6 +158,11 @@ the parent's list text."
         rest
         (apply str)))))
 
+(defn- raise-sexp [app e]
+  (splice-sexp-killing app e
+    (fn [editor [start end] [pstart pend]]
+      (model/substring editor start end))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap
 
@@ -174,8 +180,9 @@ the parent's list text."
     ;; Depth-Changing Commands
     {:fn ::wrap-around :keystroke "alt (" :name "Wrap around"}
     {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"}
-    {:fn ::splice-sexp-killing-backward :keystroke "alt up" :name "Splice sexp"}
-    {:fn ::splice-sexp-killing-forward :keystroke "alt down" :name "Splice sexp"})])
+    {:fn ::splice-sexp-killing-backward :keystroke "alt up" :name "Splice sexp backward"}
+    {:fn ::splice-sexp-killing-forward :keystroke "alt down" :name "Splice sexp forward"}
+    {:fn ::raise-sexp :keystroke "alt r" :name "Raise sexp"})])
 
 (plugin/defplugin lab.plugin.paredit
   :keymaps keymaps)

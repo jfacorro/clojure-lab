@@ -163,7 +163,7 @@ offset."
 contains a node that represents whitespace and
 false otherwise."
   [loc]
-  (and loc (-> loc zip/node :tag #{:whitespace} boolean)))
+  (and loc (-> loc location-tag #{:whitespace} boolean)))
 
 (def ^:private ignore? #{:whitespace})
 
