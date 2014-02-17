@@ -227,16 +227,49 @@ parentheses by deleting and inserting the modified substring.
 (defn- backward-slurp-sexp
   "(foo bar (baz| quux) zot)
 (foo (bar| baz quux) zot)
+
 (a b ((c| d)) e f)
 (a (b (c| d) e) f)"
   [app e]
-  (prn ::backward-slurp-sexp))
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        [parent next-loc]
+                (loop [parent   (list-parent loc)
+                       next-loc (adjacent-loc parent zip/left)]
+                  (if next-loc
+                    [parent next-loc]
+                    (when-let [parent (-> parent zip/up list-parent)]
+                      (recur parent (adjacent-loc parent zip/left)))))]
+    (when (and parent next-loc)
+      (let [[pstart pend] (lang/limits parent)
+            [start end]   (lang/limits next-loc)]
+        (model/delete editor pstart (inc pstart))
+        (model/insert editor start "(")
+        (ui/caret-position editor pos)))))
 
 (defn- backward-barf-sexp
   "(foo (bar baz |quux) zot)
 (foo bar (baz |quux) zot)"
   [app e]
-  (prn ::backward-barf-sexp))
+  (let [editor   (:source e)
+        pos      (ui/caret-position editor)
+        doc      (ui/attr editor :doc)
+        tree     (lang/code-zip (lang/parse-tree @doc))
+        [loc i]  (lang/location tree pos)
+        parent   (list-parent loc)
+        next-loc (-> parent zip/down zip/leftmost
+                   (adjacent-loc zip/right)
+                   (adjacent-loc zip/right))]
+    (when (and parent next-loc)
+      (let [[pstart pend] (lang/limits parent)
+            [start end]   (lang/limits next-loc)]
+        (when (> pos (dec start))
+          (model/delete editor pstart (inc pstart))
+          (model/insert editor (dec start) "(")
+          (ui/caret-position editor pos))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap
