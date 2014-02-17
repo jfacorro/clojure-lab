@@ -41,9 +41,7 @@ This could be done by adding a hook to an editor creation templates function.
 #### Paredit
   - Implement
     - Basic Insertion Commands
-      - paredit-close-round )
       - paredit-close-round-and-newline M-)
-      - paredit-close-square ]
       - paredit-meta-doublequote M-"
       - paredit-backslash \
       - paredit-comment-dwim M-;
@@ -53,9 +51,6 @@ This could be done by adding a hook to an editor creation templates function.
       - paredit-backward-delete backsapce
       - paredit-kill C-k
       - paredit-forward-kill-word M-d
-    - Barfage & Slurpage
-      - paredit-backward-slurp-sexp C-(, C-M-<left>, ESC C-<left>
-      - paredit-backward-barf-sexp C-f, C-M-<right>, ESC C-<right>
     - Miscellaneous Commands
       - paredit-split-sexp M-S
       - paredit-join-sexp M-J
@@ -139,7 +134,12 @@ This could be done by adding a hook to an editor creation templates function.
 #### Paredit
   - Implement
     - Basic Insertion Commands
-      - Delimiter Balance
+      - paredit-open-round (
+	  - paredit-open-bracket \[
+	  - paredit-open-curly {
+	  - paredit-close-round )
+	  - paredit-close-bracket ]
+	  - paredit-close-curly }
     - Movement & Navigation
       - paredit-forward C-M-f
       - paredit-backward C-M-b
@@ -152,6 +152,8 @@ This could be done by adding a hook to an editor creation templates function.
     - Barfage & Slurpage
       - paredit-forward-slurp-sexp C-), C-<right>
       - paredit-forward-barf-sexp C-g, C-<left>
+      - paredit-backward-slurp-sexp C-(, C-M-<left>, ESC C-<left>
+      - paredit-backward-barf-sexp C-f, C-M-<right>, ESC C-<right>
 
 ## Model
   - Complete Document
