@@ -88,27 +88,6 @@ it.
     loc
     (recur (zip/up loc))))
 
-(defn- splice-sexp
-  "Looks for the location under the current caret position,
-then gets the first parent list it finds and removes the wrapping
-parentheses by deleting and inserting the modified substring.
-
-(foo (bar| baz) quux)
-(foo bar| baz quux)"
-  [app e]
-  (let [editor  (:source e)
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
-        parent  (list-parent loc)]
-    (when parent
-      (ui/action
-        (let [[start end] (lang/limits parent)
-              s   (model/substring editor start end)]
-          (model/delete editor start end)
-          (model/insert editor start (->> s rest butlast (apply str))))))))
-
 (defn- splice-sexp-killing
   "Looks for the location in the current caret position.
 If the node in the location is a list then it looks for the next list
@@ -137,6 +116,21 @@ the parent's list text."
           (model/delete editor pstart pend)
           (model/insert editor pstart s)
           (ui/caret-position editor pstart))))))
+
+(defn- splice-sexp
+  "Looks for the location under the current caret position,
+then gets the first parent list it finds and removes the wrapping
+parentheses by deleting and inserting the modified substring.
+
+(foo (bar| baz) quux)
+(foo bar| baz quux)"
+  [app e]
+  (splice-sexp-killing app e
+    (fn [editor _ [pstart pend]]
+      (->> (model/substring editor pstart pend)
+        rest
+        butlast
+        (apply str)))))
 
 (defn- splice-sexp-killing-backward
   "(foo (let ((x 5)) |(sqrt n)) bar)
