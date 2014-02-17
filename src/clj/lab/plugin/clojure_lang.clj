@@ -149,7 +149,7 @@ the current line."
       (>= offset (count text))
         (count text)
       (= (get text offset) \newline)
-        (dec offset)
+        offset
       :else
         (recur (inc offset)))))
 
