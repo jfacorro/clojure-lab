@@ -49,24 +49,17 @@ This could be done by adding a hook to an editor creation templates function.
       - paredit-comment-dwim M-;
       - paredit-newline C-j
     - Deleting and killing
-      - paredit-forward-delete C-d, del
-      - paredit-backward-delete DEL
+      - paredit-forward-delete C-d, delete
+      - paredit-backward-delete backsapce
       - paredit-kill C-k
       - paredit-forward-kill-word M-d
-    - Depth-Changing Commands
-      - paredit-wrap-around M-(
-      - paredit-splice-sexp M-s
-      - paredit-splice-sexp-killing-backward M-<up>, ESC <up>
-      - paredit-splice-sexp-killing-forward M-<down>, ESC <down>
-      - paredit-raise-sexp M-r
     - Barfage & Slurpage
-      - paredit-forward-slurp-sexp C-), C-<right>
-      - paredit-forward-barf-sexp C-g, C-<left>
       - paredit-backward-slurp-sexp C-(, C-M-<left>, ESC C-<left>
       - paredit-backward-barf-sexp C-f, C-M-<right>, ESC C-<right>
     - Miscellaneous Commands
       - paredit-split-sexp M-S
       - paredit-join-sexp M-J
+
 #### Menu
   - Define a way to specify the order of the menu items.
 
@@ -150,6 +143,15 @@ This could be done by adding a hook to an editor creation templates function.
     - Movement & Navigation
       - paredit-forward C-M-f
       - paredit-backward C-M-b
+    - Depth-Changing Commands
+      - paredit-wrap-around M-(
+      - paredit-splice-sexp M-s
+      - paredit-splice-sexp-killing-backward M-<up>, ESC <up>
+      - paredit-splice-sexp-killing-forward M-<down>, ESC <down>
+      - paredit-raise-sexp M-r
+    - Barfage & Slurpage
+      - paredit-forward-slurp-sexp C-), C-<right>
+      - paredit-forward-barf-sexp C-g, C-<left>
 
 ## Model
   - Complete Document

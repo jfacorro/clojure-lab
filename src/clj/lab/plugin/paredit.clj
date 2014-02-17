@@ -26,8 +26,9 @@
         [loc pos] (lang/location root-loc offset)
         tag       (lang/location-tag loc)
         s         (str opening (when-not (ignore? tag) closing))]
-    (model/insert editor offset s)
-    (ui/caret-position editor (inc offset))))
+    (ui/action
+      (model/insert editor offset s)
+      (ui/caret-position editor (inc offset)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement & Navigation
@@ -55,7 +56,7 @@
   (move app e #(-> % zip/up zip/right)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Movement & Navigation
+;; Depth-Changing Commands
 
 (defn- wrap-around
   "Looks for the location under the current caret position,
@@ -142,7 +143,7 @@ parentheses by deleting and inserting the modified substring.
         butlast
         (apply str)))))
 
-(defn- splice-sexp-killing-forward [app e]
+(defn- splice-sexp-killing-forward
   "(a (b c| d e) f)
    (a b c| f)"
   [app e]
@@ -152,10 +153,90 @@ parentheses by deleting and inserting the modified substring.
         rest
         (apply str)))))
 
-(defn- raise-sexp [app e]
+(defn- raise-sexp
+  "(dynamic-wind in (lambda [] |body) out)
+(dynamic-wind in |body out)
+|body"
+  [app e]
   (splice-sexp-killing app e
     (fn [editor [start end] [pstart pend]]
       (model/substring editor start end))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Barfage & Slurpage
+
+(defn- select-location [loc dir p]
+  (if (p loc)
+    loc
+    (recur (dir loc) dir p)))
+
+(defn- adjacent-loc [loc dir]
+  (select-location (dir loc)
+    dir
+    #(and (not (lang/whitespace? %))
+          (not (lang/loc-string? %)))))
+
+(defn- forward-slurp-sexp
+  "(foo (bar |baz) quux zot)
+(foo (bar |baz quux) zot)
+
+(a b ((c| d)) e f)
+(a b ((c| d) e) f)
+(a b ((c| d e)) f)"
+  [app e]
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        [parent next-loc]
+                (loop [parent   (list-parent loc)
+                       next-loc (adjacent-loc parent zip/right)]
+                  (if next-loc
+                    [parent next-loc]
+                    (when-let [parent (-> parent zip/up list-parent)]
+                      (recur parent (adjacent-loc parent zip/right)))))]
+    (when (and parent next-loc)
+      (let [[pstart pend] (lang/limits parent)
+            [start end]   (lang/limits next-loc)]
+        (model/delete editor (dec pend) pend)
+        (model/insert editor (dec end) ")")
+        (ui/caret-position editor pos)))))
+
+(defn- forward-barf-sexp
+  "(foo (bar |baz quux) zot)
+(foo (bar |baz) quux zot)"
+  [app e]
+  (let [editor   (:source e)
+        pos      (ui/caret-position editor)
+        doc      (ui/attr editor :doc)
+        tree     (lang/code-zip (lang/parse-tree @doc))
+        [loc i]  (lang/location tree pos)
+        parent   (list-parent loc)
+        next-loc (-> parent zip/down zip/rightmost
+                   (adjacent-loc zip/left)
+                   (adjacent-loc zip/left))]
+    (when (and parent next-loc)
+      (let [[pstart pend] (lang/limits parent)
+            [start end]   (lang/limits next-loc)]
+        (when (< pos end)
+          (model/delete editor (dec pend) pend)
+          (model/insert editor end ")")
+          (ui/caret-position editor pos))))))
+
+(defn- backward-slurp-sexp
+  "(foo bar (baz| quux) zot)
+(foo (bar| baz quux) zot)
+(a b ((c| d)) e f)
+(a (b (c| d) e) f)"
+  [app e]
+  (prn ::backward-slurp-sexp))
+
+(defn- backward-barf-sexp
+  "(foo (bar baz |quux) zot)
+(foo bar (baz |quux) zot)"
+  [app e]
+  (prn ::backward-barf-sexp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap
@@ -169,14 +250,19 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
     {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}
     ;; Movement & Navigation
-    {:fn ::backward :keystroke "ctrl alt left" :name "Backward"}
-    {:fn ::forward :keystroke "ctrl alt right" :name "Forward"}
+    {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
+    {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}
     ;; Depth-Changing Commands
     {:fn ::wrap-around :keystroke "alt (" :name "Wrap around"}
     {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"}
     {:fn ::splice-sexp-killing-backward :keystroke "alt up" :name "Splice sexp backward"}
     {:fn ::splice-sexp-killing-forward :keystroke "alt down" :name "Splice sexp forward"}
-    {:fn ::raise-sexp :keystroke "alt r" :name "Raise sexp"})])
+    {:fn ::raise-sexp :keystroke "alt r" :name "Raise sexp"}
+    ;; Barfage & Slurpage
+    {:fn ::forward-slurp-sexp :keystroke "ctrl right" :name "forward-slurp-sexp"}
+    {:fn ::forward-barf-sexp :keystroke "ctrl left" :name "forward-barf-sexp"}
+    {:fn ::backward-slurp-sexp :keystroke "ctrl alt left" :name "backward-slurp-sexp"}
+    {:fn ::backward-barf-sexp :keystroke "ctrl alt right" :name "backward-barf-sexp"})])
 
 (plugin/defplugin lab.plugin.paredit
   :keymaps keymaps)

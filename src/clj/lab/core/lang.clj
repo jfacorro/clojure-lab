@@ -165,6 +165,12 @@ false otherwise."
   [loc]
   (and loc (-> loc location-tag #{:whitespace} boolean)))
 
+(defn loc-string?
+  "Returns true if the zipper location
+contains a string and false otherwise."
+  [loc]
+  (and loc (-> loc zip/node string?)))
+
 (def ^:private ignore? #{:whitespace})
 
 (defn- next-no-down
