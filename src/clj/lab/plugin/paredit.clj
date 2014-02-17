@@ -9,6 +9,34 @@
                       [keymap :as km]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Util
+
+(defn- select-location [loc dir p]
+  (if (p loc)
+    loc
+    (recur (dir loc) dir p)))
+
+(defn- list-parent
+  "Returns the first location that contains a parent :list node."
+  [loc]
+  (select-location loc zip/up
+                   #(or (nil? %)
+                        (= :list (-> % zip/node :tag)))))
+
+(defn- coll-parent
+  "Returns the first location that contains a parent :list node."
+  [loc]
+  (select-location loc zip/up
+                   #(or (nil? %)
+                        (#{:list :vector :map :set :fn} (-> % zip/node :tag)))))
+
+(defn- adjacent-loc [loc dir]
+  (select-location (dir loc)
+    dir
+    #(and (not (lang/whitespace? %))
+          (not (lang/loc-string? %)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Basic Insertion Commands
 
 (def delimiters {\( \), \[ \], \{ \}, \" \"})
@@ -17,7 +45,7 @@
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
 
-(defn- balance-delimiter [app e]
+(defn- open-delimiter [app e]
   (let [editor    (:source e)
         opening   (:char e)
         closing   (delimiters opening)
@@ -29,6 +57,22 @@
     (ui/action
       (model/insert editor offset s)
       (ui/caret-position editor (inc offset)))))
+
+(defn- close-delimiter [app e]
+  (let [editor (:source e)
+        pos    (ui/caret-position editor)
+        ch     (:char e)
+        doc    (ui/attr editor :doc)
+        tree   (lang/code-zip (lang/parse-tree @doc))
+        [loc i](lang/location tree pos)
+        tag    (lang/location-tag loc)]
+    (if (ignore? tag)
+      (ui/action (model/insert editor pos (str ch)))
+      (let [parent (coll-parent loc)
+            [start end] (and parent (lang/limits parent))
+            delim  (get (model/text editor) (dec end))]
+        (when (and start (= delim ch))
+          (ui/action (ui/caret-position editor end)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement & Navigation
@@ -81,13 +125,6 @@ it.
           (ui/action
             (model/insert editor (+ i len) ")")
             (model/insert editor i "(")))))))
-
-(defn- list-parent
-  "Returns the first location that contains a parent :list node."
-  [loc]
-  (if (or (nil? loc) (= :list (-> loc zip/node :tag)))
-    loc
-    (recur (zip/up loc))))
 
 (defn- splice-sexp-killing
   "Looks for the location in the current caret position.
@@ -164,17 +201,6 @@ parentheses by deleting and inserting the modified substring.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Barfage & Slurpage
-
-(defn- select-location [loc dir p]
-  (if (p loc)
-    loc
-    (recur (dir loc) dir p)))
-
-(defn- adjacent-loc [loc dir]
-  (select-location (dir loc)
-    dir
-    #(and (not (lang/whitespace? %))
-          (not (lang/loc-string? %)))))
 
 (defn- forward-slurp-sexp
   "(foo (bar |baz) quux zot)
@@ -277,10 +303,14 @@ parentheses by deleting and inserting the modified substring.
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.paredit
     :lang :clojure
-    {:fn ::balance-delimiter :keystroke "(" :name "Balance parenthesis"}
-    {:fn ::balance-delimiter :keystroke "{" :name "Balance curly brackets"}
-    {:fn ::balance-delimiter :keystroke "[" :name "Balance square brackets"}
-    {:fn ::balance-delimiter :keystroke "\"" :name "Balance double quotes"}
+    {:fn ::open-delimiter :keystroke "(" :name "Open round"}
+    {:fn ::close-delimiter :keystroke ")" :name "Close round"}
+    {:fn ::close-delimiter-and-newline :keystroke "alt )" :name "Close round and newline"}
+    {:fn ::open-delimiter :keystroke "{" :name "Balance curly brackets"}
+    {:fn ::close-delimiter :keystroke "}" :name "Close curly brackets"}
+    {:fn ::open-delimiter :keystroke "[" :name "Balance square brackets"}
+    {:fn ::close-delimiter :keystroke "]" :name "Close square brackets"}
+    {:fn ::open-delimiter :keystroke "\"" :name "Balance double quotes"}
     ;; Movement & Navigation
     {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
     {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}
