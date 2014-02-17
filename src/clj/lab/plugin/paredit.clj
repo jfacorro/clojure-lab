@@ -67,15 +67,16 @@ it."
         pos     (ui/caret-position editor)
         doc     (ui/attr editor :doc)
         tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
-        parent  (zip/up loc)
-        left    (-> loc zip/leftmost)
-        len     (-> parent zip/node lang/node-length)
-        i       (if (= left loc) i (lang/offset left))]
-    (when-not (lang/whitespace? parent)
-      (ui/action
-        (model/insert editor (+ i len) ")")
-        (model/insert editor i "(")))))
+        [loc i] (lang/location tree pos)]
+    (when loc
+      (let [parent  (zip/up loc)
+            left    (-> loc zip/leftmost)
+            len     (-> parent zip/node lang/node-length)
+            i       (if (= left loc) i (lang/offset left))]
+        (when-not (lang/whitespace? parent)
+          (ui/action
+            (model/insert editor (+ i len) ")")
+            (model/insert editor i "(")))))))
 
 (defn- list-parent
   "Returns the first location that contains a parent :list node."
