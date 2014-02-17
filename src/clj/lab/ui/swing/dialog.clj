@@ -1,14 +1,20 @@
 (ns lab.ui.swing.dialog
-  (:use     [lab.ui.protocols :only [abstract impl]])
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]]
+            [lab.ui.protocols :refer [abstract impl]]
             [lab.ui.swing.util :as util])
   (:import  [javax.swing JDialog JFileChooser JOptionPane]))
+
+(defn- dialog-init [c]
+  (let [abs (atom nil)] 
+    (proxy [JDialog lab.ui.protocols.Implementation] []
+      (abstract ([] @abs)
+                ([x] (reset! abs x) this)))))
 
 (definitializations
   :file-dialog   JFileChooser
   :option-dialog JOptionPane
-  :dialog        JDialog)
+  :dialog        dialog-init)
 
 (def ^:private options-result
   {JOptionPane/OK_OPTION      :ok
@@ -61,10 +67,12 @@ is set before processing other attribute's code."
 (defattributes
   :dialog
   (:result [c _ _])
+  (:size [c _ [w h]]
+    (.setSize ^JDialog (impl c) (util/dimension w h)))
   (:title [c _ v]
-    (.setDialogTitle ^JFileChooser (impl c) v))
-  :file-dialog
+    (.setTitle ^JDialog (impl c) v))
 
+  :file-dialog
   (:type [c _ v])
   (:current-dir [c _ ^String v]
     (when v
