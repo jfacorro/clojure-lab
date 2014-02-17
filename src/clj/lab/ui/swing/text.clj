@@ -94,21 +94,31 @@
       (throw (Exception. "The source text component needs to be set and initialized.")))
     (TextLineNumber. (impl src))))
 
+(defn- add-component-to-document [^JTextComponent text]
+  ;; Add the text editor as a property of the document
+  (.putProperty (.getDocument text) :component text)
+  text)
+
+(defn- text-field-init
+  [c]
+  (add-component-to-document (JTextField.)))
+
+(defn- text-area-init
+  [c]
+  (add-component-to-document (JTextArea.)))
+
 (defn- text-editor-init
   [c]
   (let [color (ui/attr c :line-highlight-color)
-        text  (JTextPane.)
-        doc   (.getDocument text)]
-    ;; Add the text editor as a property of the document
-    (.putProperty doc :component text)
+        text  (add-component-to-document (JTextPane.))]
     (if color
       (LineHighlighter. text (util/color color))
       (LineHighlighter. text))
     text))
 
 (definitializations
-  :text-field  JTextField
-  :text-area   JTextArea
+  :text-field  #'text-field-init
+  :text-area   #'text-area-init
   :text-editor #'text-editor-init
   :line-number #'line-number-init)
 

@@ -67,12 +67,16 @@ is set before processing other attribute's code."
 (defattributes
   :dialog
   (:result [c _ _])
+  (:modal [c _ v]
+    (.setModal ^JDialog (impl c) v))
   (:size [c _ [w h]]
     (.setSize ^JDialog (impl c) (util/dimension w h)))
   (:title [c _ v]
     (.setTitle ^JDialog (impl c) v))
 
   :file-dialog
+  (:title [c _ v]
+    (.setDialogTitle ^JFileChooser (impl c) v))
   (:type [c _ v])
   (:current-dir [c _ ^String v]
     (when v
