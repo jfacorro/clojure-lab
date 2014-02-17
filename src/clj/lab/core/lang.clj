@@ -53,7 +53,7 @@ check if its one of the registered symbols."
   {:style tag :group *node-group*})
 
 (defn calculate-length [content]
-  (reduce #(+ %1 (if (string? %2) (.length %2) (:length %2))) 0 content))
+  (reduce #(+ %1 (if (string? %2) (.length ^String %2) (:length %2))) 0 content))
 
 (defn make-node [tag content]
   (with-meta {:tag tag :length (calculate-length content) :content content}

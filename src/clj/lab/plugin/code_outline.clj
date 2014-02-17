@@ -66,15 +66,6 @@ or the current document if non is specified."
               (ui/update! ui :#outline-tree
                 #(-> % ui/remove-all (ui/add root))))))))))
 
-(defn- switch-document-hook
-  "Hook for #'lab.core/switch-document:
-  Updates the outline tree based on the document's lang
-and content"
-  [f app doc]
-  (let [app (f app doc)]
-    (future (#'update-outline-tree! app doc))
-    app))
-
 (defn- outline-tree
   "Creates a new tab that contains a tree with id :#outline-tree."
   [app]
@@ -95,8 +86,28 @@ and content"
       (when-let [tab (ui/find @ui :#outline-tab)]
         (ui/update! ui :#right ui/remove tab)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hooks
+
+(defn- switch-document-hook
+  "Hook for #'lab.core/switch-document:
+  Updates the outline tree based on the document's lang
+and content"
+  [f app doc]
+  (let [app (f app doc)]
+    (future (#'update-outline-tree! app doc))
+    app))
+
+(defn- text-editor-hook [f doc]
+  (let [editor (f doc)
+        g      (fn [app _] (#'update-outline-tree! @app doc))]
+    (-> editor
+      (ui/listen :insert g)
+      (ui/listen :delete g))))
+
 (def ^:private hooks
-  {#'lab.core/switch-document #'switch-document-hook})
+  {#'lab.core/switch-document #'switch-document-hook
+   #'lab.ui.templates/text-editor #'text-editor-hook})
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
