@@ -41,7 +41,6 @@ This could be done by adding a hook to an editor creation templates function.
 #### Paredit
   - Implement
     - Basic Insertion Commands
-      - paredit-close-round-and-newline M-)
       - paredit-meta-doublequote M-"
       - paredit-backslash \
       - paredit-comment-dwim M-;
@@ -135,11 +134,12 @@ This could be done by adding a hook to an editor creation templates function.
   - Implement
     - Basic Insertion Commands
       - paredit-open-round (
-	  - paredit-open-bracket \[
-	  - paredit-open-curly {
-	  - paredit-close-round )
-	  - paredit-close-bracket ]
-	  - paredit-close-curly }
+      - paredit-open-bracket \[
+      - paredit-open-curly {
+      - paredit-close-round )
+      - paredit-close-bracket ]
+      - paredit-close-curly }
+      - paredit-close-round-and-newline M-)
     - Movement & Navigation
       - paredit-forward C-M-f
       - paredit-backward C-M-b

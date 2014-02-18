@@ -70,11 +70,29 @@
         tag    (lang/location-tag loc)]
     (if (ignore? tag)
       (ui/action (model/insert editor pos (str ch)))
-      (let [parent (coll-parent loc)
+      (let [parent  (coll-parent loc)
             [start end] (and parent (lang/limits parent))
-            delim  (when end (get (model/text editor) (dec end)))]
+            end-loc (and parent (-> parent zip/down zip/rightmost zip/left))
+            [wstart wend] (when (lang/whitespace? end-loc) (lang/limits end-loc))
+            delim   (when end (get (model/text editor) (dec end)))]
+        ;; When there's a coll parent and the
+        ;; char inserted is the closing delim.
         (when (and start (= delim ch))
-          (ui/action (ui/caret-position editor end)))))))
+          (ui/action
+            (when wstart (model/delete editor wstart wend))
+            (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
+
+(defn- insert-newline [app e]
+  (let [editor (:source e)]
+    (ui/action
+      (model/insert editor (ui/caret-position editor) "\n"))))
+
+(defn- close-delimiter-and-newline [app e]
+  (close-delimiter app e)
+  (insert-newline app e))
+
+(defn- comment-dwin [app e]
+  (prn ::comment-dwin))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement & Navigation
@@ -313,6 +331,8 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::open-delimiter :keystroke "[" :name "Balance square brackets"}
     {:fn ::close-delimiter :keystroke "]" :name "Close square brackets"}
     {:fn ::open-delimiter :keystroke "\"" :name "Balance double quotes"}
+    {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
+    {:fn ::insert-newline :keystroke "ctrl j" :name "Newline"}
     ;; Movement & Navigation
     {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
     {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}
