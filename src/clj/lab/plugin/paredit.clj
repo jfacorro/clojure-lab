@@ -53,7 +53,9 @@
         root-loc  (-> @(ui/attr editor :doc) lang/parse-tree lang/code-zip)
         [loc pos] (lang/location root-loc offset)
         tag       (lang/location-tag loc)
-        s         (str opening (when-not (and (ignore? tag) (not= pos offset)) closing))]
+        s         (str opening
+                       (when-not (and (ignore? tag) (not= pos offset))
+                         closing))]
     (ui/action
       (model/insert editor offset s)
       (ui/caret-position editor (inc offset)))))
