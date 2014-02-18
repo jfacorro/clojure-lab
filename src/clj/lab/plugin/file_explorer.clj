@@ -53,7 +53,7 @@ currently has no children."
   "Creates a tree node with the supplied file as its item.
 If the arg is a directory, all its children are added
 recursively."
-  [app ^java.io.File   file & [lazy]]
+  [app ^java.io.File file & [lazy]]
   (if (.isDirectory file)
     (if-not lazy
       (into [:tree-node {:item file}] (file-node-children app file))
@@ -73,7 +73,9 @@ tree. Returns a tree node."
         root  (if (.isDirectory root) root (.getParentFile root))]
     (tree-node-from-file app root false)))
 
-(defn- open-document-tree [app tree]
+(defn- open-document-tree
+  "Opens the document that's selected in the tree."
+  [app tree]
   (let [ui      (:ui @app)
         tree    (ui/find @ui (ui/selector# (ui/attr tree :id)))
         node    (ui/find @ui (ui/selector# (ui/selection tree)))
@@ -92,30 +94,46 @@ tree. Returns a tree node."
   (when (and (= :pressed event) (= description :enter))
     (open-document-tree app source)))
 
-(defn- file-tree
-  [app ^java.io.File dir]
-  (-> (tplts/tab)
-    (ui/update :label ui/attr :text (.getName dir))
+(defn- file-explorer
+  [app]
+  (-> (tplts/tab "file-explorer")
+    (ui/update :label ui/attr :text "File Explorer")
     (ui/add [:scroll {:border :none}
-              [:tree {:listen [:click ::open-document-tree-click 
+              [:tree {:hide-root true
+                      :listen [:click ::open-document-tree-click
                                :key ::open-document-tree-enter]}
-                (load-dir app dir)]])
+                [:tree-node {:id "file-explorer-root" :item ::root}]]])
     (ui/apply-stylesheet (:styles @app))))
 
-(defn- open-project
+(defn- add-dir [tab app dir]
+  (let [root   (ui/find tab :#file-explorer-root)]
+    ;; Since the root is not updated automatically when
+    ;; nodes are added, we need to remove the root and add
+    ;; it again.
+    (-> tab
+      (ui/update :tree ui/remove root)
+      (ui/update :tree ui/add (ui/add root (load-dir app dir))))))
+
+(defn- open-directory
+  "Create the file explorer tab if it doesn't exist and add
+the directory structure to it, otherwise just add the directory
+structure."
   [app _]
-  (let [dir          (lab/config @app :current-dir)
+  (let [ui           (:ui @app)
+        dir          (lab/config @app :current-dir)
         dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir))
         [result dir] (ui/attr dir-dialog :result)
         dir          ^java.io.File (when dir (io/file (.getCanonicalPath ^java.io.File dir)))]
     (when (= result :accept)
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
-      (ui/update! (:ui @app) :#left ui/add (file-tree app dir)))))
+      (if (ui/find @ui :#file-explorer)
+        (ui/update! ui :#file-explorer add-dir app dir)
+        (ui/update! ui :#left ui/add (-> (file-explorer app) (add-dir app dir)))))))
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
-              {:category "Project" :name "Open..." :fn #'open-project :keystroke "ctrl P"})])
+              {:category "Project" :name "Open..." :fn #'open-directory :keystroke "ctrl P"})])
 
-(defplugin file-explorer
+(defplugin lab.plugin.file-explorer
   :keymaps keymaps)

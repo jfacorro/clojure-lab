@@ -108,12 +108,18 @@ event can be :click or :key."
       (throw (UnsupportedOperationException. "Set selection item for :tree UI implementation.")))))
 
 (defattributes
+  :tree
+  (:hide-root [c _ v]
+    (.setRootVisible ^JTree (impl c) (not v)))
   :tree-node
     (:leaf [c _ v])
     (:item [c attr item]
       (.setUserObject ^DefaultMutableTreeNode (impl c) item))
     (:info [c _ v]))
 
+;; Since the implementation of these events for the tree nodes
+;; actually works through the tree events, there's nothing to do
+;; here.
 (defmethod listen [:tree-node :key] [c evt f])
 (defmethod ignore [:tree-node :key] [c evt f])
 
