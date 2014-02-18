@@ -5,7 +5,7 @@
 
 ## paredit
 
-- open-delimiter in comment inserts a closing delimiter.
+ 
 
 ## document tabs
 
