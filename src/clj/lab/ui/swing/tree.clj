@@ -4,7 +4,7 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
-            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel]
+            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel TreePath]
             [javax.swing.event TreeSelectionListener TreeExpansionListener 
                                TreeExpansionEvent]
             [java.awt.event MouseAdapter KeyAdapter]))
@@ -102,10 +102,11 @@ event can be :click or :key."
   Selection
   (selection
     ([this]
-      (when-let [node (.getLastSelectedPathComponent this)]
+      (when-let [node ^lab.ui.protocols.Implementation (.getLastSelectedPathComponent this)]
         (-> node abstract (ui/attr :id))))
-    ([this selection]
-      (throw (UnsupportedOperationException. "Set selection item for :tree UI implementation.")))))
+    ([this row]
+      (.setSelectionRow this row)
+      this)))
 
 (defattributes
   :tree

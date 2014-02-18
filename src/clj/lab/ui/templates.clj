@@ -85,7 +85,8 @@ includes a label and a closing button."
     [:panel {:layout [:box :page]}
       [:text-field]
       [:panel {:layout :border}
-        [:scroll [:tree {:hide-root true}]]]]])
+        [:scroll [:tree {:hide-root true}
+                   [:tree-node {:item :root}]]]]]])
 
 (defn search-text-dialog [title]
   [:dialog {:title title
@@ -96,4 +97,5 @@ includes a label and a closing button."
         [:text-field]
         [:button {:text "Search"}]]
       [:panel {:layout :border}
-        [:scroll [:tree {:hide-root true}]]]]])
+        [:scroll [:tree {:hide-root true}
+                   [:tree-node {:item :root}]]]]]])

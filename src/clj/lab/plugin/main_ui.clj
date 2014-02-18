@@ -210,7 +210,7 @@ and signals the highlighting process."
         doc  (ui/attr editor :doc)
         [x y](ui/key-stroke (dissoc e :source))
         cmd  (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
-              (map #(or (km/find % y) (km/find % x)))
+              (map #(km/find-or % y x))
               (drop-while nil?)
               first)]
     (when cmd

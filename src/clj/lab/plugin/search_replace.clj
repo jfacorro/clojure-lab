@@ -25,6 +25,19 @@
 (defn- file-label [^File file]
   (str (.getName file) " - [" (.getPath file) "]"))
 
+(defn- file-explorer-current-dirs
+  "Looks for the File Explorer tree root. If it is
+found then the concatenated file-seqs for the loaded
+directories are returnes. Otherwise the file-seq for the
+\".\" directory is returned."
+  [app]
+  (let [root  (ui/find @(:ui @app) :#file-explorer-root)
+        dirs  (when root (->> (ui/children root)
+                           (map #(ui/attr % :item))))]
+    (if-not dirs
+      (file-seq (io/file "."))
+      (apply concat (map file-seq dirs)))))
+
 (defn- search-file
   "Checks the search text in the field and finds the 
 files for which any part of its full path matches the
@@ -50,32 +63,49 @@ and adds new found ones."
           (ui/update! dialog :tree ui/remove-all)
           (ui/update! dialog :tree ui/add root))))))
 
-(defn- file-explorer-current-dirs
-  "Looks for the File Explorer tree root. If it is
-found then the concatenated file-seqs for the loaded
-directories are returnes. Otherwise the file-seq for the
-\".\" directory is returned."
-  [app]
-  (let [root  (ui/find @(:ui @app) :#file-explorer-root)
-        dirs  (when root (->> (ui/children root)
-                           (map #(ui/attr % :item))))]
-    (if-not dirs
-      (file-seq (io/file "."))
-      (apply concat (map file-seq dirs)))))
+(defn selected-index
+  "Returns the index for the currently selected item 
+in the children's tree root node."
+  [tree]
+  (let [sel-id (ui/selection tree)
+        root   (first (ui/children tree))
+        node   (ui/find root (ui/selector# sel-id))]
+    (when sel-id
+      (.indexOf (ui/children root) node))))
+
+(defn select-next-node [dialog app e]
+  (let [tree   (ui/find @dialog :tree)
+        root   (first (ui/children tree))
+        index  (inc (or (selected-index tree) -1))]
+    (when (<= index (dec (count (ui/children root))))
+      (ui/update! dialog :tree ui/selection index))))
+
+(defn select-prev-node [dialog app e]
+  (let [tree   (ui/find @dialog :tree)
+        index  (dec (or (selected-index tree) 1))]
+    (when (>= index 0)
+      (ui/update! dialog :tree ui/selection index))))
+
+(defn open-selected-node [dialog app e]
+  (let [tree   (ui/find @dialog :tree)
+        sel-id (ui/selection tree)
+        node   (ui/find tree (ui/selector# sel-id))]
+    (when node
+      (open-document app (assoc e :source node)))))
 
 (def file-open-keymap
   (km/keymap 'file-open-dialog
     :local
-    {:keystroke "down" :fn #(prn (dissoc %2 :source)) :name "Select next node"}
-    {:keystroke "up" :fn #(prn (dissoc %2 :source)) :name "Select previous node"}
-    {:keystroke "enter" :fn #(prn (dissoc %2 :source)) :name "Select previous node"}))
+    {:keystroke "down" :fn #'select-next-node :name "Select next node"}
+    {:keystroke "up" :fn #'select-prev-node :name "Select previous node"}
+    {:keystroke "enter" :fn #'open-selected-node :name "Open selected node"}))
 
 (defn handle-key [dialog app e]
   (when (= :pressed (:event e))
     (let [kss  (ui/key-stroke (dissoc e :source))
           cmd  (apply km/find-or file-open-keymap kss)]
       (when cmd
-        ((:fn cmd) app e)))))
+        ((:fn cmd) dialog app e)))))
 
 (defn- search-open-file [app e]
   ;; Add ESC as an exit dialog key.
