@@ -43,8 +43,16 @@
           (ui/update! dialog :tree ui/remove-all)
           (ui/update! dialog :tree ui/add root))))))
 
+(defn- file-explorer-current-dirs [app]
+  (let [root  (ui/find @(:ui @app) :#file-explorer-root)
+        dirs  (when root (->> (ui/children root)
+                           (map #(ui/attr % :item))))]
+    (if-not dirs
+      (file-seq (io/file "."))
+      (apply concat (map file-seq dirs)))))
+
 (defn- search-and-open-file [app e]
-  (let [files  (file-seq (io/file "."))
+  (let [files  (file-explorer-current-dirs app)
         dialog (atom nil)
         ch     (util/timeout-channel 500 (partial #'search-file dialog files))]
     (ui/action 

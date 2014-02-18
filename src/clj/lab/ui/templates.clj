@@ -85,4 +85,4 @@ includes a label and a closing button."
     [:panel {:layout [:box :page]}
       [:text-field]
       [:panel {:layout :border}
-        [:scroll [:tree]]]]])
+        [:scroll [:tree {:hide-root true}]]]]])
