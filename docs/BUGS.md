@@ -6,3 +6,7 @@
 ## paredit
 
 - open-delimiter in comment inserts a closing delimiter.
+
+## document tabs
+
+- When the same document is opened several times and it has been modified, the tabs opened after the modification don't show the modified mark in the tab title.

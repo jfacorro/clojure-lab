@@ -19,10 +19,13 @@
    :core-plugins  '[lab.plugin.main-ui
                     lab.plugin.notifier]
    :plugins       '[lab.plugin.file-explorer
+                    lab.plugin.search-replace
                     lab.plugin.code-outline
+
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
                     lab.plugin.clojure-repl
+
                     lab.plugin.delimiter-matching
                     lab.plugin.syntax-highlighting
                     lab.plugin.rainbow-delimiters

@@ -101,13 +101,15 @@
       (let [v (if (sequential? v) v [v])]
         (.setBorder ^JComponent (p/impl c) (apply util/border v))))
     (:background [c _ v]
-      (.setBackground ^JComponent (p/impl c) (util/color v)))
+      (.setBackground ^java.awt.Component (p/impl c) (util/color v)))
     (:color [c _ v]
-      (.setForeground ^JComponent (p/impl c) (util/color v)))
+      (.setForeground ^java.awt.Component (p/impl c) (util/color v)))
     (:font [c _ v]
-      (.setFont ^JComponent (p/impl c) (util/font v)))
+      (.setFont ^java.awt.Component (p/impl c) (util/font v)))
     (:size [c attr [w h :as v]]
-      (.setPreferredSize ^JComponent (p/impl c) (util/dimension w h)))
+      (.setPreferredSize ^java.awt.Component (p/impl c) (util/dimension w h)))
+    (:location [c _ [x y]]
+      (.setLocation ^java.awt.Component (p/impl c) x y))
     (:visible [c _ v]
       (.setVisible ^java.awt.Component (p/impl c) v)))
 

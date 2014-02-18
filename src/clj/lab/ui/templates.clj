@@ -77,3 +77,12 @@ includes a label and a closing button."
                  :visible        true,
                  :title          title
                  :current-dir    dir}])
+
+(defn search-file-dialog [title]
+  [:dialog {:title title
+            :size [500 150]
+            :modal true}
+    [:panel {:layout [:box :page]}
+      [:text-field]
+      [:panel {:layout :border}
+        [:scroll [:tree]]]]])
