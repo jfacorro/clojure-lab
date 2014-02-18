@@ -5,8 +5,10 @@
             [lab.model.protocols :as model]
             [lab.util :as util]
             [lab.ui.core :as ui]
-            [lab.ui.templates :as tplts])
-  (:import  [java.nio.file FileSystems]))
+            [lab.ui.templates :as tplts]
+            lab.plugin.main-ui)
+  (:import  [java.nio.file FileSystems]
+            [java.io File ]))
 
 (defn- open-document [app e]
   (when (or (= 2 (:click-count e)) 
@@ -14,13 +16,13 @@
     (let [node   (:source e)
           stuff  (ui/attr node :stuff)
           dialog (:dialog stuff)
-          file   ^java.io.File (:file stuff)]
+          file   ^File (:file stuff)]
     (when file
       (ui/action
         (ui/update! dialog :dialog ui/attr :visible false)
         (lab.plugin.main-ui/open-document app (.getCanonicalPath file)))))))
 
-(defn- file-label [^java.io.File file]
+(defn- file-label [^File file]
   (str (.getName file) " - [" (.getPath file) "]"))
 
 (defn- search-file [dialog files app e]
@@ -28,12 +30,12 @@
         s      (model/text editor)]
     (when (< 2 (count s))
       (let [re     (re-pattern s)
-            result (filter #(->> % .getName (re-find re)) files)
+            result (filter #(->> (.getName ^File %) (re-find re)) files)
 
             node   [:tree-node {:leaf true
                                 :listen [:click ::open-document
                                          :key ::open-document]}]
-            root   (ui/init [:tree-node {:item "Found files"}])
+            root   (ui/init [:tree-node {:item ::root}])
             root   (->> result
                      (map #(-> (ui/init node)
                              (ui/attr :item (file-label %))
@@ -51,7 +53,7 @@
       (file-seq (io/file "."))
       (apply concat (map file-seq dirs)))))
 
-(defn- search-and-open-file [app e]
+(defn- search-open-file [app e]
   (let [files  (file-explorer-current-dirs app)
         dialog (atom nil)
         ch     (util/timeout-channel 500 (partial #'search-file dialog files))]
@@ -62,14 +64,14 @@
               (ui/update :text-field ui/listen :insert ch)
               (ui/update :text-field ui/listen :delete ch)))
       ;; Show the modal dialog without modifying the atom so that
-      ;; there's no retry when the compare-and-set is done.
+      ;; there's no retry when the compare-and-set! is done on the atom.
       (ui/update @dialog :dialog ui/attr :visible true))))
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.search-replace
      :global
-     {:category "Search" :fn ::search-document :keystroke "ctrl f" :name "Text..."}
-     {:category "Search" :fn ::search-and-open-file :keystroke "ctrl alt o" :name "File..."})])
+     {:category "Search" :fn ::search-text :keystroke "ctrl f" :name "Text..."}
+     {:category "Search" :fn ::search-open-file :keystroke "ctrl alt o" :name "File..."})])
 
 (plugin/defplugin lab.plugin.search-replace
   :keymaps keymaps)
