@@ -22,7 +22,7 @@
     (ui/selector#)
     (ui/find ui)))
 
-(defn- current-text-editor
+(defn current-text-editor
   "Returns the currently selected text-editor."
   [ui]
   (ui/find (current-document-tab ui) :text-editor))

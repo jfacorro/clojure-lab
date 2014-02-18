@@ -31,6 +31,15 @@ the supplied keymap and if not found in its parent."
       cmd
       (recur (:parent km) ks))))
 
+(defn find-or
+  "Takes a keymap and any number of keystrokes.
+Looks for the first keystroke that maps to a command 
+and returns this command."
+  [km & kss]
+  (->> (map (partial find km) kss)
+    (drop-while nil?)
+    first))
+
 (defn append
   "Append a child keymap to an existinig one. If either one 
 is nil the other is returned."

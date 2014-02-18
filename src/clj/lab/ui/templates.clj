@@ -86,3 +86,14 @@ includes a label and a closing button."
       [:text-field]
       [:panel {:layout :border}
         [:scroll [:tree {:hide-root true}]]]]])
+
+(defn search-text-dialog [title]
+  [:dialog {:title title
+            :size [500 150]
+            :modal true}
+    [:panel {:layout [:box :page]}
+      [:panel {:layout [:box :line]}
+        [:text-field]
+        [:button {:text "Search"}]]
+      [:panel {:layout :border}
+        [:scroll [:tree {:hide-root true}]]]]])
