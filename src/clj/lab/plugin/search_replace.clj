@@ -71,7 +71,7 @@ in the children's tree root node."
         root   (first (ui/children tree))
         node   (ui/find root (ui/selector# sel-id))]
     (when sel-id
-      (.indexOf (ui/children root) node))))
+      (util/index-of (ui/children root) node))))
 
 (defn select-next-node [dialog app e]
   (let [tree   (ui/find @dialog :tree)

@@ -129,7 +129,7 @@ as the abstraction of its implementation."
         update-abstraction
         (p/impl (p/add (p/impl this) (p/impl child))))))
   (remove [this child]
-    (let [i (.indexOf ^java.util.List (p/children this) child)]
+    (let [i (util/index-of (p/children this) child)]
       (-> this
         (update-in [:content] util/remove-at i)
         update-abstraction

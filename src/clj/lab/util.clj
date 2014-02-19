@@ -53,6 +53,11 @@ wins. Returns a channel that takes the input events."
   [v i]
   (vec (concat (subvec v 0 i) (subvec v (inc i) (count v)))))
 
+(defn index-of
+  "Takes a vector and returns the index of x."
+  [^clojure.lang.PersistentVector v x]
+  (.indexOf v x))
+
 ;; Reflection
 
 (defmulti class-info (fn [_ info] info))
