@@ -8,10 +8,6 @@
 
 #### Events
   - Close the channels that listen to components that don't exist anymore.
-  - Key Bindings
-    - Remove all defaults and replace them all => not practical
-    - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
-  - Implement listen/ignore functions to add and remove event handlers from a component.
 
 #### Code Editor
   - Move the following code editor features to their own plugin.
@@ -22,7 +18,6 @@ This could be done by adding a hook to an editor creation templates function.
     - Indent code.
     - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
     - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
-    - Go to line.
     - Wrap text.
 
 #### File Explorer
@@ -91,6 +86,10 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### Events
   - Fixed bug when mapping keys in a JVM with a different language.
+  - Key Bindings
+    - Remove all defaults and replace them all => not practical
+    - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
+  - Implement listen/ignore functions to add and remove event handlers from a component.
 
 #### Code Editor
   - Syntax high-lighting.
@@ -101,6 +100,7 @@ This could be done by adding a hook to an editor creation templates function.
   - Balance delimiters: ( \[ {
   - Mark corresponding delimiter.
   - Comment / Uncomment lines.
+  - Go to line.
   - Move the following code editor features to their own plugin. This could be done by adding a hook to an editor creation templates function.
     - Syntax highlighting.
     - Delimiter matching.

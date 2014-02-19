@@ -11,7 +11,8 @@
             [lab.core [keymap :as km]
                       [plugin :as plugin]
                       [lang :as lang]]
-            [lab.model.document :as doc]))
+            [lab.model.document :as doc]
+            [lab.model.protocols :as model]))
 
 (declare document-tab)
 
@@ -344,6 +345,35 @@ and signals the highlighting process."
             (fn [total i] (if (>= (dec i) 0) (dec i) (dec total)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 
+
+(defn- goto-line-ok [app e]
+  (let [dialog (ui/attr (:source e) :stuff)
+        txt    (-> @dialog (ui/find :text-field) model/text)]
+    (when (re-matches #"\d*" txt)
+      (ui/update! dialog [] ui/attr :result :ok)
+      (ui/update! dialog [] ui/attr :visible false))))
+
+(defn- goto-line-cancel [app e]
+  (let [dialog (ui/attr (:source e) :stuff)]
+    (ui/update! dialog [] ui/attr :result :cancel)
+    (ui/update! dialog [] ui/attr :visible false)))
+
+(defn- goto-line! [app e]
+  (let [ui     (:ui @app)
+        editor (current-text-editor @ui)
+        dialog (atom nil)]
+    (when editor
+      (reset! dialog (-> (tplts/line-number-dialog) 
+                       ui/init
+                       (ui/update :button ui/attr :stuff dialog)
+                       (ui/update :#ok ui/listen :click ::goto-line-ok)
+                       (ui/update :#cancel ui/listen :click ::goto-line-cancel)))
+      (ui/attr @dialog :visible true)
+      (when (= :ok (ui/attr @dialog :result))
+        (ui/goto-line editor (-> @dialog (ui/find :text-field) model/text read-string))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event handler
 
 (defn keyword->fn [k]
@@ -402,8 +432,9 @@ inserting a fixed first parameter, which is the app."
               {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
               {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
               {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
-              {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl shift tab"}
+              {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"}
 
+              {:category "Edit", :name "Goto line..." :fn ::goto-line! :keystroke "ctrl g"}
               {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
               {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
 

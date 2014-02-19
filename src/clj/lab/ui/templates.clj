@@ -99,3 +99,13 @@ includes a label and a closing button."
       [:panel {:layout :border}
         [:scroll [:tree {:hide-root true}
                    [:tree-node {:item :root}]]]]]])
+
+(defn line-number-dialog []
+  [:dialog {:title "Enter Line Number"
+            :size [300 85]
+            :modal true}
+    [:panel {:layout [:box :page]}
+      [:text-field {:border :none}]
+      [:panel {:layout :flow}
+        [:button {:id "ok" :text "Ok"}]
+        [:button {:id "cancel" :text "Cancel"}]]]])

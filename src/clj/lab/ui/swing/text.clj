@@ -35,6 +35,13 @@
       (.getCaretPosition this))
     ([this position]
       (.setCaretPosition this position)))
+  (goto-line [this n]
+    (let [root  (.. this getDocument getDefaultRootElement)
+          n     (cond (<= n 0) 1
+                      (> n (.getElementCount root)) (.getElementCount root)
+                      :else n)
+          i (.. this getDocument getDefaultRootElement (getElement (dec n)) getStartOffset)]
+      (caret-position this i)))
 
   Selection
   (selection

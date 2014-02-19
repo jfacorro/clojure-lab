@@ -114,7 +114,9 @@ as the abstraction of its implementation."
     (p/caret-position (p/impl this)))
   (caret-position [this position]
     (p/caret-position (p/impl this) position)
-    this))
+    this)
+  (goto-line [this n]
+    (p/goto-line (p/impl this) n)))
 
 ;; Have to use this since remove is part of the java.util.Map interface.
 (extend-type UIComponent
@@ -233,6 +235,7 @@ as the abstraction of its implementation."
 (def add-highlight #'p/add-highlight)
 (def remove-highlight #'p/remove-highlight)
 (def caret-position #'p/caret-position)
+(def goto-line #'p/goto-line)
 
 ;; Selection
 
