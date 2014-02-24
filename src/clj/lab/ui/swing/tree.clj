@@ -98,6 +98,8 @@ event can be :click or :key."
       this)
   (children [this]
     (.getComponents this))
+  (focus [this]
+    (.requestFocusInWindow this))
 
   Selection
   (selection

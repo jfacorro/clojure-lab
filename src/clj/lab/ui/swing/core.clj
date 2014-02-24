@@ -84,7 +84,7 @@
     (.remove this child)
     this)
   (focus [this]
-    (.grabFocus this)))
+    (.requestFocusInWindow this)))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Common attributes for all components
