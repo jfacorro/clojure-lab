@@ -24,6 +24,7 @@
                   :window :panel :split :scroll
                   ; menu
                   :menu-bar :menu :menu-item :menu-separator 
+                  :pop-up-menu
                   ; text
                   :text-field
                   :line-number

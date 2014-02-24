@@ -111,7 +111,9 @@
     (:location [c _ [x y]]
       (.setLocation ^java.awt.Component (p/impl c) x y))
     (:visible [c _ v]
-      (.setVisible ^java.awt.Component (p/impl c) v)))
+      (.setVisible ^java.awt.Component (p/impl c) v))
+    (:popup-menu [c _ popup]
+      (.setComponentPopupMenu (p/impl c) (p/impl popup))))
 
 ;;;;;;;;;;;;;;;;;
 ;; Key

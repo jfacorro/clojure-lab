@@ -3,7 +3,7 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util])
-  (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator]
+  (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator JPopupMenu]
             [java.awt.event ActionListener]))
 
 (definitializations
@@ -11,12 +11,22 @@
   :menu-bar    JMenuBar
   :menu        JMenu
   :menu-item   JMenuItem
-  :menu-separator JSeparator)
+  :menu-separator JSeparator
+  :pop-up-menu JPopupMenu)
   
 (defattributes
   :menu
   (:text [c _ v]
     (.setText ^JMenu (impl c) v))
+
+  :pop-up-menu
+  (:visible [c _ v]
+    (when v
+      (let [invoker (impl (ui/attr c :source))
+            [x y]   (ui/attr c :location)]
+        (.show (impl c) invoker x y))))
+  (:source [c _ v]
+    (.setInvoker (impl c) (impl v)))
 
   :menu-item
   (:text [c _ v]
