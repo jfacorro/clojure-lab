@@ -8,8 +8,15 @@
 
 ## Syntax highlighting (SH) w/ Rainbow Delimiters (RD)
 - If a :default is used for SH or there's a style defined for the delimiters, then they
-  start flickering when RD is active.
+start flickering when RD is active.
+  - By removing the default new inserted text is colored in whatever.
+
+## Plugins
+  - Rainbow delimiters and other plugins should **only** be activated explicitly.
 
 ## Rainbow Delimiters
 - Should no be active for all langs. Therefore adding it via a hook to the editor creation function
   is not the correct option.
+
+## Document
+- When saving a document, cancelling the saving is not effective.

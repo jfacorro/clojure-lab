@@ -2,12 +2,16 @@
 
 ### UI
 
+### Ref used in app
+  - Change the atom for an agent.
+
 #### Tabs
   - Higlight the current one.
   - Change the default wrapping mode: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
 
 #### Events
   - Close the channels that listen to components that don't exist anymore.
+  - Create a :keymap attribute for components so that keymaps can be registered to them.
 
 #### Code Editor
   - Move the following code editor features to their own plugin.
@@ -16,7 +20,7 @@ This could be done by adding a hook to an editor creation templates function.
   
   - Features:
     - Indent code.
-    - Find/replace (in an open file, in all files from the file explorer, in all file of a selected folder).
+    - Find/replace (in an open file, in all files from the file explorer, in all files of a selected folder).
     - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
     - Wrap text.
 
