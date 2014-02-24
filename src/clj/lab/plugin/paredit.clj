@@ -11,30 +11,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Util
 
-(defn- select-location [loc dir p]
-  (if (p loc)
-    loc
-    (recur (dir loc) dir p)))
-
 (defn- list-parent
-  "Returns the first location that contains a parent :list node."
+  "Returns the first location that contains a parent :list node
+or nil if there's not parent list."
   [loc]
-  (select-location loc zip/up
+  (lang/select-location loc zip/up
                    #(or (nil? %)
                         (= :list (-> % zip/node :tag)))))
 
 (defn- coll-parent
   "Returns the first location that contains a parent :list node."
   [loc]
-  (select-location loc zip/up
+  (lang/select-location loc zip/up
                    #(or (nil? %)
                         (#{:list :vector :map :set :fn} (-> % zip/node :tag)))))
 
 (defn- adjacent-loc [loc dir]
-  (select-location (dir loc)
+  (lang/select-location (dir loc)
     dir
-    #(and (not (lang/whitespace? %))
-          (not (lang/loc-string? %)))))
+    #(not (or (lang/whitespace? %)
+              (lang/loc-string? %)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Basic Insertion Commands
@@ -82,10 +78,26 @@
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
 
+(defn- format-list [app e]
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        lst-loc (list-parent loc)]
+    (when lst-loc
+      (let [[start end] (lang/limits lst-loc)
+            s     (model/substring editor start end)
+            sfmt  s #_(lang/format (doc/lang @doc) s)]
+        (ui/action 
+          (model/delete editor start end)
+          (model/insert editor start sfmt)
+          (ui/caret-position editor pos))))))
+
 (defn- insert-newline [app e]
-  (let [editor (:source e)]
-    (ui/action
-      (model/insert editor (ui/caret-position editor) "\n"))))
+  (let [editor  (:source e)]
+    (ui/action (model/insert editor (ui/caret-position editor) "\n")
+    (format-list app e))))
 
 (defn- close-delimiter-and-newline [app e]
   (close-delimiter app e)

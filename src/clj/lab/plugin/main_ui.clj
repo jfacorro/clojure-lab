@@ -20,7 +20,7 @@
   "Returns the currently selected document tab."
   (->> (ui/find ui :#center)
     ui/selection
-    (ui/selector#)
+    ui/selector#
     (ui/find ui)))
 
 (defn current-text-editor

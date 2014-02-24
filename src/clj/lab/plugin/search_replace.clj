@@ -49,7 +49,7 @@ and adds new found ones."
     (when (< 2 (count s))
       (let [files  (file-explorer-current-dirs app)
             re     (re-pattern s)
-            result (filter #(re-find re (.getName ^File %)) files)
+            result (filter #(re-find re (.getCanonicalPath ^File %)) files)
 
             node   [:tree-node {:leaf true
                                 :listen [:click ::open-document

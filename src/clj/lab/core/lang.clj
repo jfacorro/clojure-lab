@@ -171,6 +171,11 @@ contains a string and false otherwise."
   [loc]
   (and loc (-> loc zip/node string?)))
 
+(defn select-location [loc dir p]
+  (if (p loc)
+    loc
+    (recur (dir loc) dir p)))
+
 (def ^:private ignore? #{:whitespace})
 
 (defn- next-no-down
@@ -190,6 +195,14 @@ Source code taken from clojure.zip/next function."
            (or (zip/right (zip/up p))
                (recur (zip/up p)))
            [(zip/node p) :end])))))
+
+(defn search [loc p]
+  (loop [loc loc
+         res []]
+    (if (zip/end? loc)
+      res
+      (recur (zip/next loc)
+             (if (p loc) (conj res loc) res)))))
 
 (defn- tokens*
   "Gets the limits for each string in the tree, ignoring
