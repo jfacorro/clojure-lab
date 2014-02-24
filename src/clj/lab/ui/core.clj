@@ -115,6 +115,8 @@ as the abstraction of its implementation."
   (caret-position [this position]
     (p/caret-position (p/impl this) position)
     this)
+  (caret-location [this]
+    (p/caret-location (p/impl this)))
   (goto-line [this n]
     (p/goto-line (p/impl this) n)))
 
@@ -235,6 +237,7 @@ as the abstraction of its implementation."
 (def add-highlight #'p/add-highlight)
 (def remove-highlight #'p/remove-highlight)
 (def caret-position #'p/caret-position)
+(def caret-location #'p/caret-location)
 (def goto-line #'p/goto-line)
 
 ;; Selection

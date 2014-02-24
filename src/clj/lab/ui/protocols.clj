@@ -30,6 +30,7 @@
   (add-highlight [this start end color] "Adds a highlight of the specified color from start to end and returns an identifier of the highlight.")
   (remove-highlight [this id] "Removed the highlight of the given id.")
   (caret-position [this] [this position] "Gets and sets the caret position for this text component.")
+  (caret-location [this] "Returns the caret's location coordinates.")
   (goto-line [this n] "Positions the caret at the beggining of line n."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -35,6 +35,9 @@
       (.getCaretPosition this))
     ([this position]
       (.setCaretPosition this position)))
+  (caret-location [this]
+    (when-let [rect (.modelToView this (.getCaretPosition this))]
+      [(.x rect) (+ (.y rect) (.height rect))]))
   (goto-line [this n]
     (let [root  (.. this getDocument getDefaultRootElement)
           n     (cond (<= n 0) 1
