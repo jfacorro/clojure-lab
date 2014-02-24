@@ -102,11 +102,11 @@
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
-        hl-ch  (timeout-channel 100 #'text-editor-change!)]
+        ch     (timeout-channel 100 #'text-editor-change!)]
     (-> editor
       color-delimiters!
-      (ui/listen :insert hl-ch)
-      (ui/listen :delete hl-ch))))
+      (ui/listen :insert ch)
+      (ui/listen :delete ch))))
 
 (def ^:private hooks
   {#'lab.ui.templates/text-editor #'text-editor-hook})
