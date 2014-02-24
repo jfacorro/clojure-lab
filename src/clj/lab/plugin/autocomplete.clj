@@ -4,7 +4,8 @@
             [lab.core [plugin :as plugin]
                       [keymap :as km]
                       [lang :as lang]]
-            [lab.ui.core :as ui]))
+            [lab.ui.core :as ui]
+            [lab.ui.templates :as tplts]))
 
 (defn popup-menu [app e]
   (let [ui     (:ui @app)
@@ -18,7 +19,6 @@
                      [:scroll {:size [150 100] :border :none}
                        [:tree]]]
                 ui/init)]
-    (ui/update! ui (ui/selector# id) ui/attr :popup-menu popup)
     (ui/attr popup :visible true)))
 
 (defn- autocomplete [app {:keys [event description modifiers] :as e}]
