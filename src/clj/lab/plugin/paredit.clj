@@ -347,8 +347,8 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
     {:fn ::insert-newline :keystroke "ctrl j" :name "Newline"}
     ;; Movement & Navigation
-    {:fn ::backward :keystroke "ctrl alt left" :name "Backward"}
-    {:fn ::forward :keystroke "ctrl alt right" :name "Forward"}
+    {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
+    {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}
     ;; Depth-Changing Commands
     {:fn ::wrap-around :keystroke "alt (" :name "Wrap around"}
     {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"}
