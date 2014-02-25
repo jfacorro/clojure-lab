@@ -178,7 +178,7 @@ contains a string and false otherwise."
   (and loc (-> loc zip/node string?)))
 
 (defn select-location [loc dir p]
-  (if (p loc)
+  (if (or (nil? loc) (p loc))
     loc
     (recur (dir loc) dir p)))
 
