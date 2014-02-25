@@ -1,8 +1,5 @@
 # BUGS
 
-## Events
-- After removing :shift from the :modifiers set the "ctrl shift tab" to move to a prev tab is not working, obviously.
-
 ## Document Tabs
 - When the same document is opened several times and it has been modified, the tabs opened after the modification don't show the modified mark in the tab title.
 
@@ -18,5 +15,8 @@ start flickering when RD is active.
 - Should no be active for all langs. Therefore adding it via a hook to the editor creation function
   is not the correct option.
 
-## Document
-- When saving a document, cancelling the saving is not effective.
+# Fixed
+
+## Events
+- After removing :shift from the :modifiers set the "ctrl shift tab" to move to a prev tab is not working, obviously.
+  - 

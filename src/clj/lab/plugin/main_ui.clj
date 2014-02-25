@@ -95,9 +95,9 @@ should be closed and false otherwise."
     true
     (let [result (tplts/confirm "Save changes"
                                 "Do you want to save the changes made to this file before closing?")]
-      (when (= result :ok)
-        (save-document-ui! app tab))
-      (not (#{:cancel :closed} result)))))
+      (if (= result :ok)
+        (save-document-ui! app tab)
+        result))))
 
 (defn close-document-ui
   [app id]
@@ -105,11 +105,9 @@ should be closed and false otherwise."
         tab    (ui/find @ui (ui/selector# id))
         editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)
-        close? (save-changes-before-closing app tab doc)
-        ;; Get the tab component in case the saving modified it
-        ;; TODO: maybe modify the remove so that it takes an id instead
+        result (save-changes-before-closing app tab doc)
         tab    (ui/find @ui (ui/selector# id))]
-    (when close?
+    (when (not (#{:cancel :closed :no} result))
       (ui/update! ui :#center ui/remove tab)
       (swap! app lab/close-document doc))))
 
@@ -131,27 +129,28 @@ associated to it."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Save
 
-(defn- assign-path
+(defn- assign-path!
   "When saving, if the document doesn't have a path, get one from the user."
   [doc current-dir]
   (if (doc/path doc)
     doc
     (let [file-dialog   (ui/init (tplts/save-file-dialog current-dir))
           [result file] (ui/attr file-dialog :result)]
-      (if file
-        (doc/bind doc (.getCanonicalPath ^java.io.File file) :new? true)
-        doc))))
+      (when (= result :ok)
+        (swap! doc doc/bind (.getCanonicalPath ^java.io.File file) :new? true))
+      result)))
 
 (defn- save-document-ui! [app tab]
   (let [ui      (:ui @app)
         tab-id  (ui/attr tab :id)
         doc     (-> tab (ui/find :text-editor) (ui/attr :doc))
-        cur-dir (lab/config @app :current-dir)]
-    (swap! doc assign-path cur-dir)
+        cur-dir (lab/config @app :current-dir)
+        result  (assign-path! doc cur-dir)]
     (when (doc/path @doc)
         (ui/update! ui (ui/selector# tab-id)
                     update-tab-title (doc/name @doc))
-        (swap! app lab/save-document doc))))
+        (swap! app lab/save-document doc))
+    result))
 
 (defn- save-document-menu
   [app & _]

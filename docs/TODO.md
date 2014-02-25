@@ -17,7 +17,7 @@
   - Move the following code editor features to their own plugin.
 This could be done by adding a hook to an editor creation templates function.
     - Undo/redo (?)
-  
+
   - Features:
     - Indent code.
     - Find/replace (in an open file, in all files from the file explorer, in all files of a selected folder).
