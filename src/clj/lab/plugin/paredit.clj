@@ -335,6 +335,7 @@ parentheses by deleting and inserting the modified substring.
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.paredit
     :lang :clojure
+    ;; Basic Insertion Commands
     {:fn ::open-delimiter :keystroke "(" :name "Open round"}
     {:fn ::close-delimiter :keystroke ")" :name "Close round"}
     {:fn ::close-delimiter-and-newline :keystroke "alt )" :name "Close round and newline"}
@@ -346,8 +347,8 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
     {:fn ::insert-newline :keystroke "ctrl j" :name "Newline"}
     ;; Movement & Navigation
-    {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
-    {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}
+    {:fn ::backward :keystroke "ctrl alt left" :name "Backward"}
+    {:fn ::forward :keystroke "ctrl alt right" :name "Forward"}
     ;; Depth-Changing Commands
     {:fn ::wrap-around :keystroke "alt (" :name "Wrap around"}
     {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp"}

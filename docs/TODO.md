@@ -4,6 +4,7 @@
 
 ### Ref used in app
   - Change the atom for an agent.
+    - This has some deeper implications since all UI actions won't be executed in the UI thread but in the agent's.
 
 #### Tabs
   - Higlight the current one.
@@ -55,10 +56,7 @@ This could be done by adding a hook to an editor creation templates function.
 
 #### Menu
   - Define a way to specify the order of the menu items.
-
-### Model
-  - Document
-    - (?) Add a list of views to the document in order to be able to track them and update them (e.g. in the redo/undo scheme).
+    - Menu item information can be defined as the meta of the command function.
 
 ### App (Control)
     - Plugin management:
@@ -69,11 +67,6 @@ This could be done by adding a hook to an editor creation templates function.
         - Example from emacs -> set-global-key modifies the global-map (which contains all global key bindings).
       - How is a plugin's functionality encapsulated? Is it bound to a specific type of file/function/code?
         - Link plugin with text-editor based on arbitrary definitions.
-    - Link Document to ui/text-editor.
-      1. Detect updates from Document and impact in editor. \__ Which one? Based on the test done in the prototype, (1) is the
-      2. Detect updates form editor and impact in Document. /              one that works best, in (2) model and view can get out of sync.
-      - (a) is the way to go:
-        - Default keystrokes handlers from editor should be overriden/hijacked/short-circuited.
 
 ## DONE
 
@@ -168,3 +161,4 @@ This could be done by adding a hook to an editor creation templates function.
 
 ## App
     - Define the way plugins/add-ons are loaded.
+    - Link Document to ui/text-editor.
