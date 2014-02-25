@@ -35,9 +35,6 @@ This could be done by adding a hook to an editor creation templates function.
 #### REPL
   - Use nrepl, not a process and its input/output streams.
 
-#### Rainbow parens
-  - Improve performance: maybe avoid using or improve the performance of lang/location.
-
 #### Paredit
   - Implement
     - Basic Insertion Commands
@@ -126,6 +123,7 @@ This could be done by adding a hook to an editor creation templates function.
 #### Rainbow parens
   - Implement.
   - Using #() messes up the depth from then on.
+  - Improve performance: maybe avoid using or improve the performance of lang/location.
 
 #### Paredit
   - Implement
