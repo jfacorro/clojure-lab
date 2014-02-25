@@ -132,7 +132,7 @@ associated to it."
 (defn- assign-path!
   "When saving, if the document doesn't have a path, get one from the user."
   [doc current-dir]
-  (if (doc/path doc)
+  (if (doc/path @doc)
     doc
     (let [file-dialog   (ui/init (tplts/save-file-dialog current-dir))
           [result file] (ui/attr file-dialog :result)]
