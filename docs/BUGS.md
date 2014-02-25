@@ -6,17 +6,8 @@
 ## Syntax highlighting (SH) w/ Rainbow Delimiters (RD)
 - If a :default is used for SH or there's a style defined for the delimiters, then they
 start flickering when RD is active.
-  - By removing the default new inserted text is colored in whatever.
-
-## Plugins
-  - Rainbow delimiters and other plugins should **only** be activated explicitly.
+  - By removing the default new inserted text is colored in whatever style.
 
 ## Rainbow Delimiters
 - Should no be active for all langs. Therefore adding it via a hook to the editor creation function
   is not the correct option.
-
-# Fixed
-
-## Events
-- After removing :shift from the :modifiers set the "ctrl shift tab" to move to a prev tab is not working, obviously.
-  - 
