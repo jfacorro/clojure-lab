@@ -120,6 +120,12 @@ under the :parse-tree key."
         :else
           (:length node)))
 
+(defn location-length
+  [loc]
+  (if loc
+    (-> loc zip/node node-length)
+    0))
+
 (defn offset
   "Finds the offset of the given zipper location
 by going right and up adding the lenghts of each

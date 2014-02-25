@@ -442,6 +442,7 @@ used in the component's definition (e.g. in event handlers)."
     (:id [c _ v]
       (when (not= (attr c :id) v)
         (throw (Exception. (str "Can't change the :id once it is set: " c)))))
+    (:keymap [c _ v])
     (:post-init [c _ _])
     (:stuff [c _ _])
     (:listen ^:modify [c _ events]
