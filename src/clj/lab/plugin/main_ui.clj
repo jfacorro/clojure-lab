@@ -107,7 +107,7 @@ should be closed and false otherwise."
         doc    (ui/attr editor :doc)
         result (save-changes-before-closing app tab doc)
         tab    (ui/find @ui (ui/selector# id))]
-    (when (not (#{:cancel :closed :no} result))
+    (when (not (#{:cancel :closed} result))
       (ui/update! ui :#center ui/remove tab)
       (swap! app lab/close-document doc))))
 
