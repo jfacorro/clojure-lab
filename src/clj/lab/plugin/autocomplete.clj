@@ -14,10 +14,10 @@
     dir
     lang/loc-string?))
 
-(defn- select-autocomplete [loc app e]
+(defn- select-autocomplete [app e]
   (let [node   (:source e)
         txt    (ui/attr node :item)
-        editor (ui/attr node :stuff)
+        {:keys [editor loc popup]} (ui/attr node :stuff)
         [start end] (lang/limits loc)
         ws?     (lang/whitespace? loc)
         offset (if ws?
@@ -25,9 +25,11 @@
                  start)]
     (when (not ws?)
       (model/delete editor start end))
-    (model/insert editor offset txt)
-    (ui/focus editor)
-    (ui/caret-position editor (+ offset (count txt)))))
+    (ui/attr popup :visible false)
+    (-> editor
+      (model/insert offset txt)
+      (ui/caret-position (+ offset (count txt)))
+      ui/focus)))
 
 (defn handle-keymap [km app e]
   (let [[x y](ui/key-stroke (dissoc e :source))
@@ -37,30 +39,33 @@
       (when (= :pressed (:event e))
         (ui/handle-event (:fn cmd) e)))))
 
-(defn sym-tree-node [editor km sym-name]
+(defn sym-tree-node [stuff km sym-name]
   [:tree-node {:item sym-name
                :leaf true
-               :stuff editor
+               :stuff stuff
                :listen [:key (partial handle-keymap km)]}])
 
-(defn- matches-nodes [editor matches km]
+(defn- matches-nodes [stuff matches km]
   (-> [:tree-node {:item :root}]
-    (into (map (partial sym-tree-node editor km) matches))))
+    (into (map (partial sym-tree-node stuff km) matches))))
 
 (defn popup-menu [editor loc matches]
   (let [location (ui/caret-location editor)
         km    (km/keymap :autocomplete :local
-                {:fn (partial select-autocomplete loc) :keystroke "enter"})
-        popup    (-> [:pop-up-menu {:location location
-                                    :source   editor
-                                    :border   :none}
-                       [:scroll {:size [250 100]
-                                 :border :none}
-                         [:tree {:hide-root true}
-                           (matches-nodes editor matches km)]]]
-                  ui/init)]
-    (ui/attr popup :visible true)
-    (ui/update popup :tree ui/focus)))
+                {:fn ::select-autocomplete :keystroke "enter"})
+        popup (-> [:pop-up-menu {:location location
+                                 :source   editor
+                                 :border   :none}
+                    [:scroll {:size [250 100]
+                              :border :none}
+                      [:tree {:hide-root true}]]]
+                ui/init)
+        stuff {:editor editor :loc loc :popup popup}
+        root  (matches-nodes stuff matches km)]
+    (-> popup
+      (ui/update :tree ui/add root)
+      (ui/attr :visible true)
+      (ui/update :tree ui/focus))))
 
 (defn- autocomplete [app {:keys [event description modifiers] :as e}]
   (when (and (= :pressed event) (= description :space) (modifiers :ctrl))

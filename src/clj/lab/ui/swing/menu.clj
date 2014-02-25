@@ -21,10 +21,12 @@
 
   :pop-up-menu
   (:visible [c _ v]
-    (when v
-      (let [invoker (impl (ui/attr c :source))
-            [x y]   (ui/attr c :location)]
-        (.show ^JPopupMenu (impl c) invoker x y))))
+    (let [invoker (impl (ui/attr c :source))
+          [x y]   (ui/attr c :location)
+          menu    ^JPopupMenu (impl c)]
+      (if v
+        (.show  menu invoker x y))
+        (.setVisible menu v)))
   (:source [c _ v]
     (let [popup ^JPopupMenu (impl c)
           component ^JComponent (impl v)]
