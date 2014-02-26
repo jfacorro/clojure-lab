@@ -41,7 +41,14 @@ or nil if there's not parent list."
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
 
-(defn- open-delimiter [app e]
+(defn- open-delimiter
+  "Opens a delimiter and inserts the closing one.
+
+(a b |c d)
+(a b (|) c d)
+(foo \"bar |baz\" quux)
+(foo \"bar |(baz\" quux)"
+  [app e]
   (let [editor    (:source e)
         opening   (:char e)
         closing   (delimiters opening)
@@ -56,7 +63,16 @@ or nil if there's not parent list."
       (model/insert editor offset s)
       (ui/caret-position editor (inc offset)))))
 
-(defn- close-delimiter [app e]
+(defn- close-delimiter
+  "Moves the caret to the closest closing delimiter
+and removes all whitespace between the last element
+and the closing delimiter.
+
+(a b |c )
+(a b c)|
+; Hello,| world!
+; Hello,)| world!"
+  [app e]
   (let [editor (:source e)
         pos    (ui/caret-position editor)
         ch     (:char e)
@@ -71,14 +87,17 @@ or nil if there's not parent list."
             end-loc (and parent (-> parent zip/down zip/rightmost zip/left))
             [wstart wend] (when (lang/whitespace? end-loc) (lang/limits end-loc))
             delim   (when end (get (model/text editor) (dec end)))]
-        ;; When there's a coll parent and the
+        ;; When there's a parent with delimiters and the
         ;; char inserted is the closing delim.
         (when (and start (= delim ch))
           (ui/action
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
 
-(defn- format-list [app e]
+(defn format-code [s pos]
+  (let []))
+
+(defn- format-code [app e]
   (let [editor  (:source e)
         pos     (ui/caret-position editor)
         doc     (ui/attr editor :doc)
@@ -89,18 +108,34 @@ or nil if there's not parent list."
       (let [[start end] (lang/limits lst-loc)
             s     (model/substring editor start end)
             sfmt  s #_(lang/format (doc/lang @doc) s)]
-        (ui/action 
+        (ui/action
           (model/delete editor start end)
           (model/insert editor start sfmt)
           (ui/caret-position editor pos))))))
 
-(defn- insert-newline [app e]
+(defn- insert-newline
+  "Inserts a newline and formats the following lines.
+
+(let ((n (frobbotz))) |(display (+n 1)
+  port))
+(let ((n (frobbotz)))
+  |(display (+n 1)
+            port))"
+  [app e]
   (let [editor  (:source e)]
     (ui/action
       (model/insert editor (ui/caret-position editor) "\n")
-      (format-list app e))))
+      (format-code app e))))
 
-(defn- close-delimiter-and-newline [app e]
+(defn- close-delimiter-and-newline
+  "Closes a delimiter and inserts a newline.
+
+(defun f (x|  ))
+(defun f (x)
+  |)
+; (Foo.|
+; (Foo.)|"
+  [app e]
   (close-delimiter app e)
   (insert-newline app e))
 
@@ -126,10 +161,26 @@ or nil if there's not parent list."
     (-> loc zip/up zip/left)
     (-> loc zip/left)))
 
-(defn- backward [app e]
+(defn- backward
+  "Moves the caret to the start of the current
+form or the end of the next one.
+
+(foo (bar baz)| quux)
+(foo |(bar baz) quux)
+(|(foo) bar)
+|((foo) bar)"
+  [app e]
   (move app e move-back))
 
-(defn- forward [app e]
+(defn- forward
+  "Moves the caret to the end of the current 
+form or the start of the next one.
+
+(foo |(bar baz) quux)
+(foo (bar baz)| quux)
+(foo (bar baz)|)
+(foo (bar baz))|"
+  [app e]
   (move app e #(-> % zip/up zip/right)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -342,8 +393,10 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::close-delimiter-and-newline :keystroke "alt )" :name "Close round and newline"}
     {:fn ::open-delimiter :keystroke "{" :name "Open curly brackets"}
     {:fn ::close-delimiter :keystroke "}" :name "Close curly brackets"}
+    {:fn ::close-delimiter-and-newline :keystroke "alt }" :name "Close curly brackets and newline"}
     {:fn ::open-delimiter :keystroke "[" :name "Open square brackets"}
     {:fn ::close-delimiter :keystroke "]" :name "Close square brackets"}
+    {:fn ::close-delimiter-and-newline :keystroke "alt ]" :name "Close square brackets and newline"}
     {:fn ::open-delimiter :keystroke "\"" :name "Open double quotes"}
     {:fn ::close-delimiter :keystroke "alt \"" :name "Close double quotes"}
     {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
