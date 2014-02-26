@@ -19,12 +19,12 @@ or nil if there's not parent list."
                    #(or (nil? %)
                         (= :list (-> % zip/node :tag)))))
 
-(defn- coll-parent
+(defn- delim-parent
   "Returns the first location that contains a parent :list node."
   [loc]
   (lang/select-location loc zip/up
                    #(or (nil? %)
-                        (#{:list :vector :map :set :fn} (-> % zip/node :tag)))))
+                        (#{:list :vector :map :set :fn :string} (-> % zip/node :tag)))))
 
 (defn- adjacent-loc [loc dir]
   (lang/select-location (dir loc)
@@ -64,9 +64,9 @@ or nil if there's not parent list."
         tree   (lang/code-zip (lang/parse-tree @doc))
         [loc i](lang/location tree pos)
         tag    (lang/location-tag loc)]
-    (if (ignore? tag)
+    (if (and (ignore? tag) (not= \" ch))
       (ui/action (model/insert editor pos (str ch)))
-      (let [parent  (coll-parent loc)
+      (let [parent  (delim-parent loc)
             [start end] (and parent (lang/limits parent))
             end-loc (and parent (-> parent zip/down zip/rightmost zip/left))
             [wstart wend] (when (lang/whitespace? end-loc) (lang/limits end-loc))
@@ -96,8 +96,9 @@ or nil if there's not parent list."
 
 (defn- insert-newline [app e]
   (let [editor  (:source e)]
-    (ui/action (model/insert editor (ui/caret-position editor) "\n")
-    (format-list app e))))
+    (ui/action
+      (model/insert editor (ui/caret-position editor) "\n")
+      (format-list app e))))
 
 (defn- close-delimiter-and-newline [app e]
   (close-delimiter app e)
@@ -339,11 +340,12 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::open-delimiter :keystroke "(" :name "Open round"}
     {:fn ::close-delimiter :keystroke ")" :name "Close round"}
     {:fn ::close-delimiter-and-newline :keystroke "alt )" :name "Close round and newline"}
-    {:fn ::open-delimiter :keystroke "{" :name "Balance curly brackets"}
+    {:fn ::open-delimiter :keystroke "{" :name "Open curly brackets"}
     {:fn ::close-delimiter :keystroke "}" :name "Close curly brackets"}
-    {:fn ::open-delimiter :keystroke "[" :name "Balance square brackets"}
+    {:fn ::open-delimiter :keystroke "[" :name "Open square brackets"}
     {:fn ::close-delimiter :keystroke "]" :name "Close square brackets"}
-    {:fn ::open-delimiter :keystroke "\"" :name "Balance double quotes"}
+    {:fn ::open-delimiter :keystroke "\"" :name "Open double quotes"}
+    {:fn ::close-delimiter :keystroke "alt \"" :name "Close double quotes"}
     {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
     {:fn ::insert-newline :keystroke "ctrl j" :name "Newline"}
     ;; Movement & Navigation
