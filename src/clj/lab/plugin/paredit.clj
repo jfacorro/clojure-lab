@@ -23,11 +23,15 @@ or nil if there's not parent list."
 (defn- delim-parent
   "Returns the first location that contains a parent :list node."
   [loc]
-  (lang/select-location loc zip/up
+  (lang/select-location (zip/up loc) zip/up
                    #(or (nil? %)
-                        (#{:list :vector :map :set :fn :string} (-> % zip/node :tag)))))
+                        (#{:list :vector :map :set :fn} (-> % zip/node :tag)))))
 
-(defn- adjacent-loc [loc dir]
+(defn- adjacent
+  "Returns the first sibling location in the direction
+specified that's not a whitespace or that contains a 
+string node."
+  [loc dir]
   (lang/select-location (dir loc)
     dir
     #(not (or (lang/whitespace? %)
@@ -83,7 +87,9 @@ and the closing delimiter.
         tag    (lang/location-tag loc)]
     (if (and (ignore? tag) (not= \" ch))
       (ui/action (model/insert editor pos (str ch)))
-      (let [parent  (delim-parent loc)
+      (let [parent  (or (delim-parent loc)
+                        (as-> (zip/up loc) p
+                          (and (= :string (lang/location-tag p)) p) ))
             [start end] (and parent (lang/limits parent))
             end-loc (and parent (-> parent zip/down zip/rightmost zip/left))
             [wstart wend] (when (lang/whitespace? end-loc) (lang/limits end-loc))
@@ -95,7 +101,7 @@ and the closing delimiter.
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
 
-(defn find-char
+(defn- find-char
   "Finds the next char in s for which pred is true,
   starting to look from position cur, in the direction 
   specified by dt (1 or -1)."
@@ -105,12 +111,19 @@ and the closing delimiter.
         :else (recur s (+ cur dt) pred dt)))
 
 (defn- indentation
-  [tag index start delim snd]
-  (match [tag index]
-    [:list 1] (inc (- delim start))
-    [:list 2] (+ (- delim start) 2)
-    [:list _] (- snd start)
-    [(:or :vector :set :map) _] (inc (- delim start))))
+  [editor ploc loc]
+  (let [s     (model/text editor)
+        tag   (lang/location-tag ploc)
+        delim (lang/offset ploc)
+        snd-loc (-> ploc zip/down (adjacent zip/right) (adjacent zip/right))
+        snd   (lang/offset snd-loc)
+        start (inc (or (find-char s delim #{\newline} -1) 0))
+        index (location-index loc)]
+    (match [tag index]
+      [:list 1] (inc (- delim start))
+      [:list 2] (+ (- delim start) 2)
+      [:list _] (- snd start)
+      [(:or :vector :set :map) _] (inc (- delim start)))))
 
 (defn- location-index [loc]
   (loop [loc loc
@@ -127,18 +140,16 @@ and the closing delimiter.
         tree    (lang/code-zip (lang/parse-tree @doc))
         pos     (ui/caret-position editor)
         [loc i] (lang/location tree pos)
+        loc     (if (lang/whitespace? loc)
+                  (or (adjacent (zip/up loc) zip/right)
+                      (adjacent (zip/up loc) zip/left))
+                  loc)
         ploc    (delim-parent loc)
         tag     (lang/location-tag ploc)]
     (when (and ploc (not (ignore? tag)))
-      (let [s     (model/text editor)
-            delim (lang/offset ploc)
-            snd-loc (-> ploc zip/down (adjacent-loc zip/right) (adjacent-loc zip/right))
-            snd   (lang/offset snd-loc)
-            start (inc (or (find-char s delim #{\newline} -1) 0))
-            index (location-index (zip/up loc))
-            indent(indentation tag index start delim snd)
+      (let [indent(indentation editor ploc loc)
             spc   (apply str (repeat indent " "))]
-        (ui/action (model/insert editor pos spc))))))
+        (model/insert editor pos spc)))))
 
 (defn- insert-newline
   "Inserts a newline and formats the following lines.
@@ -313,6 +324,25 @@ parentheses by deleting and inserting the modified substring.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Barfage & Slurpage
 
+(defn- slurp-sexp
+  [editor dir dirmost f]
+  (let [pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        tree    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location tree pos)
+        [parent next-loc]
+                (loop [parent   (delim-parent loc)
+                       next-loc (adjacent parent dir)]
+                  (if next-loc
+                    [parent next-loc]
+                    (when-let [parent (-> parent zip/up delim-parent)]
+                      (recur parent (adjacent parent dir)))))]
+    (when (and parent next-loc)
+      (let [[pstart pend] (lang/limits parent)
+            delim         (-> parent zip/down dirmost zip/node)
+            [start end]   (lang/limits next-loc)]
+        (f editor pos [pstart pend] [start end] delim)))))
+
 (defn- forward-slurp-sexp
   "(foo (bar |baz) quux zot)
 (foo (bar |baz quux) zot)
@@ -321,45 +351,11 @@ parentheses by deleting and inserting the modified substring.
 (a b ((c| d) e) f)
 (a b ((c| d e)) f)"
   [app e]
-  (let [editor  (:source e)
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
-        [parent next-loc]
-                (loop [parent   (list-parent loc)
-                       next-loc (adjacent-loc parent zip/right)]
-                  (if next-loc
-                    [parent next-loc]
-                    (when-let [parent (-> parent zip/up list-parent)]
-                      (recur parent (adjacent-loc parent zip/right)))))]
-    (when (and parent next-loc)
-      (let [[pstart pend] (lang/limits parent)
-            [start end]   (lang/limits next-loc)]
-        (model/delete editor (dec pend) pend)
-        (model/insert editor (dec end) ")")
-        (ui/caret-position editor pos)))))
-
-(defn- forward-barf-sexp
-  "(foo (bar |baz quux) zot)
-(foo (bar |baz) quux zot)"
-  [app e]
-  (let [editor   (:source e)
-        pos      (ui/caret-position editor)
-        doc      (ui/attr editor :doc)
-        tree     (lang/code-zip (lang/parse-tree @doc))
-        [loc i]  (lang/location tree pos)
-        parent   (list-parent loc)
-        next-loc (-> parent zip/down zip/rightmost
-                   (adjacent-loc zip/left)
-                   (adjacent-loc zip/left))]
-    (when (and parent next-loc)
-      (let [[pstart pend] (lang/limits parent)
-            [start end]   (lang/limits next-loc)]
-        (when (< pos end)
-          (model/delete editor (dec pend) pend)
-          (model/insert editor end ")")
-          (ui/caret-position editor pos))))))
+  (slurp-sexp (:source e) zip/right zip/rightmost
+              (fn [editor pos [pstart pend] [start end] delim]
+                (model/delete editor (dec pend) pend)
+                (model/insert editor (dec end) delim)
+                (ui/caret-position editor pos))))
 
 (defn- backward-slurp-sexp
   "(foo bar (baz| quux) zot)
@@ -368,45 +364,50 @@ parentheses by deleting and inserting the modified substring.
 (a b ((c| d)) e f)
 (a (b (c| d) e) f)"
   [app e]
-  (let [editor  (:source e)
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
-        [parent next-loc]
-                (loop [parent   (list-parent loc)
-                       next-loc (adjacent-loc parent zip/left)]
-                  (if next-loc
-                    [parent next-loc]
-                    (when-let [parent (-> parent zip/up list-parent)]
-                      (recur parent (adjacent-loc parent zip/left)))))]
+  (slurp-sexp (:source e) zip/left zip/leftmost
+              (fn [editor pos [pstart pend] [start end] delim]
+                (model/delete editor pstart (inc pstart))
+                (model/insert editor start delim)
+                (ui/caret-position editor pos))))
+
+(defn- barf-sexp
+  [editor dir dirmost f]
+  (let [pos      (ui/caret-position editor)
+        doc      (ui/attr editor :doc)
+        tree     (lang/code-zip (lang/parse-tree @doc))
+        [loc i]  (lang/location tree pos)
+        parent   (delim-parent loc)
+        next-loc (when parent
+                   (-> parent zip/down dirmost
+                     (adjacent dir)
+                     (adjacent dir)))]
     (when (and parent next-loc)
-      (let [[pstart pend] (lang/limits parent)
-            [start end]   (lang/limits next-loc)]
-        (model/delete editor pstart (inc pstart))
-        (model/insert editor start "(")
-        (ui/caret-position editor pos)))))
+      (let [plims (lang/limits parent)
+            delim (-> parent zip/down dirmost zip/node)
+            lims  (lang/limits next-loc)]
+        (f editor pos plims lims delim)))))
+
+(defn- forward-barf-sexp
+  "(foo (bar |baz quux) zot)
+(foo (bar |baz) quux zot)"
+  [app e]
+  (barf-sexp (:source e) zip/left zip/rightmost
+             (fn [editor pos [pstart pend] [start end] delim]
+               (when (<= pos end)
+                 (model/delete editor (dec pend) pend)
+                 (model/insert editor end delim)
+                 (ui/caret-position editor pos)))))
 
 (defn- backward-barf-sexp
   "(foo (bar baz |quux) zot)
 (foo bar (baz |quux) zot)"
   [app e]
-  (let [editor   (:source e)
-        pos      (ui/caret-position editor)
-        doc      (ui/attr editor :doc)
-        tree     (lang/code-zip (lang/parse-tree @doc))
-        [loc i]  (lang/location tree pos)
-        parent   (list-parent loc)
-        next-loc (-> parent zip/down zip/leftmost
-                   (adjacent-loc zip/right)
-                   (adjacent-loc zip/right))]
-    (when (and parent next-loc)
-      (let [[pstart pend] (lang/limits parent)
-            [start end]   (lang/limits next-loc)]
-        (when (> pos (dec start))
-          (model/delete editor pstart (inc pstart))
-          (model/insert editor (dec start) "(")
-          (ui/caret-position editor pos))))))
+  (barf-sexp (:source e) zip/right zip/leftmost
+             (fn [editor pos [pstart pend] [start end] delim]
+               (when (>= pos (dec start))
+                 (model/delete editor pstart (inc pstart))
+                 (model/insert editor (dec start) delim)
+                 (ui/caret-position editor pos)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap
