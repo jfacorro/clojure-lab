@@ -1,6 +1,7 @@
 (defproject clojure-lab "0.0.1-SNAPSHOT"
   :description "Clojure Lab - A development environment for Clojure in Clojure."
   :dependencies [[org.clojure/clojure "1.5.1"]
+                 [org.clojure/core.match "0.2.1"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
                  [net.cgrand/parsley "0.9.2"]
                  [popen "0.3.0"]

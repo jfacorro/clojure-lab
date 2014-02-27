@@ -1,5 +1,6 @@
 (ns lab.plugin.paredit
   (:require [clojure.zip :as zip]
+            [clojure.core.match :refer [match]]
             [lab.ui.core :as ui]
             [lab.util :refer [timeout-channel find-limits]]
             [lab.model.document :as doc]
@@ -94,32 +95,58 @@ and the closing delimiter.
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
 
-(defn format-code [s pos]
-  (let []))
+(defn find-char
+  "Finds the next char in s for which pred is true,
+  starting to look from position cur, in the direction 
+  specified by dt (1 or -1)."
+  [s cur pred dt]
+  (cond (or (neg? cur) (<= (.length s) cur)) nil
+        (pred (get s cur)) cur
+        :else (recur s (+ cur dt) pred dt)))
+
+(defn- indentation
+  [tag index start delim snd]
+  (match [tag index]
+    [:list 1] (inc (- delim start))
+    [:list 2] (+ (- delim start) 2)
+    [:list _] (- snd start)
+    [(:or :vector :set :map) _] (inc (- delim start))))
+
+(defn- location-index [loc]
+  (loop [loc loc
+         i 0]
+    (if-not loc
+      i
+      (recur (zip/left loc)
+             (if-not (or (lang/whitespace? loc) (lang/loc-string? loc))
+               (inc i) i)))))
 
 (defn- format-code [app e]
   (let [editor  (:source e)
-        pos     (ui/caret-position editor)
         doc     (ui/attr editor :doc)
         tree    (lang/code-zip (lang/parse-tree @doc))
+        pos     (ui/caret-position editor)
         [loc i] (lang/location tree pos)
-        lst-loc (list-parent loc)]
-    (when lst-loc
-      (let [[start end] (lang/limits lst-loc)
-            s     (model/substring editor start end)
-            sfmt  s #_(lang/format (doc/lang @doc) s)]
-        (ui/action
-          (model/delete editor start end)
-          (model/insert editor start sfmt)
-          (ui/caret-position editor pos))))))
+        ploc    (delim-parent loc)
+        tag     (lang/location-tag ploc)]
+    (when (and ploc (not (ignore? tag)))
+      (let [s     (model/text editor)
+            delim (lang/offset ploc)
+            snd-loc (-> ploc zip/down (adjacent-loc zip/right) (adjacent-loc zip/right))
+            snd   (lang/offset snd-loc)
+            start (inc (or (find-char s delim #{\newline} -1) 0))
+            index (location-index (zip/up loc))
+            indent(indentation tag index start delim snd)
+            spc   (apply str (repeat indent " "))]
+        (ui/action (model/insert editor pos spc))))))
 
 (defn- insert-newline
   "Inserts a newline and formats the following lines.
 
-(let ((n (frobbotz))) |(display (+n 1)
+(let ((n frobbotz)) | (display (+ n 1)
   port))
-(let ((n (frobbotz)))
-  |(display (+n 1)
+(let ((n frobbotz))
+  |(display (+ n 1)
             port))"
   [app e]
   (let [editor  (:source e)]
