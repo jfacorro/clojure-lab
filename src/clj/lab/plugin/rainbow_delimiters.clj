@@ -101,7 +101,7 @@
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
-        ch     (timeout-channel 100 #'text-editor-change!)]
+        ch     (timeout-channel 500 #'text-editor-change!)]
     (-> editor
       color-delimiters!
       (ui/listen :insert ch)

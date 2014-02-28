@@ -40,7 +40,7 @@ are applied their highlight."
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
-        hl-ch  (timeout-channel 100 #'text-editor-change!)]
+        hl-ch  (timeout-channel 250 #'text-editor-change!)]
     (-> editor
       highlight!
       (ui/listen :insert hl-ch)

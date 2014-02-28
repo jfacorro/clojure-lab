@@ -46,7 +46,7 @@ string node."
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
 
-(defn- open-delimiter
+(defn open-delimiter
   "Opens a delimiter and inserts the closing one.
 
 (a b |c d)
@@ -68,7 +68,7 @@ string node."
       (model/insert editor offset s)
       (ui/caret-position editor (inc offset)))))
 
-(defn- close-delimiter
+(defn close-delimiter
   "Moves the caret to the closest closing delimiter
 and removes all whitespace between the last element
 and the closing delimiter.
@@ -106,9 +106,18 @@ and the closing delimiter.
   starting to look from position cur, in the direction 
   specified by dt (1 or -1)."
   [s cur pred dt]
-  (cond (or (neg? cur) (<= (.length s) cur)) nil
+  (cond (or (neg? cur) (<= (count s) cur)) nil
         (pred (get s cur)) cur
         :else (recur s (+ cur dt) pred dt)))
+
+(defn- location-index [loc]
+  (loop [loc loc
+         i 0]
+    (if-not loc
+      i
+      (recur (zip/left loc)
+             (if-not (or (lang/whitespace? loc) (lang/loc-string? loc))
+               (inc i) i)))))
 
 (defn- indentation
   [editor ploc loc]
@@ -125,33 +134,34 @@ and the closing delimiter.
       [:list _] (- snd start)
       [(:or :vector :set :map) _] (inc (- delim start)))))
 
-(defn- location-index [loc]
-  (loop [loc loc
-         i 0]
-    (if-not loc
-      i
-      (recur (zip/left loc)
-             (if-not (or (lang/whitespace? loc) (lang/loc-string? loc))
-               (inc i) i)))))
-
 (defn- format-code [app e]
   (let [editor  (:source e)
         doc     (ui/attr editor :doc)
         tree    (lang/code-zip (lang/parse-tree @doc))
         pos     (ui/caret-position editor)
         [loc i] (lang/location tree pos)
+        delim?  (and (lang/loc-string? loc) (-> loc zip/left nil? not))
+        loc     (if delim? loc (zip/up loc))
         loc     (if (lang/whitespace? loc)
-                  (or (adjacent (zip/up loc) zip/right)
-                      (adjacent (zip/up loc) zip/left))
+                  (or (adjacent loc zip/right)
+                      (-> loc zip/down zip/rightmost))
                   loc)
         ploc    (delim-parent loc)
         tag     (lang/location-tag ploc)]
     (when (and ploc (not (ignore? tag)))
       (let [indent(indentation editor ploc loc)
-            spc   (apply str (repeat indent " "))]
-        (model/insert editor pos spc)))))
+            spc   (apply str (repeat indent " "))
+            [wstart wend] (when (-> loc zip/left lang/whitespace?) (-> loc zip/left lang/limits))]
+        (if wstart
+          (let [ws (->> (model/substring editor wstart wend)
+                     (remove #{\space})
+                     (apply str))]
+            (model/delete editor wstart wend)
+            (model/insert editor wstart ws)
+            (model/insert editor (+ wstart (count ws)) spc))
+          (model/insert editor pos spc))))))
 
-(defn- insert-newline
+(defn insert-newline
   "Inserts a newline and formats the following lines.
 
 (let ((n frobbotz)) | (display (+ n 1)
@@ -165,7 +175,7 @@ and the closing delimiter.
       (model/insert editor (ui/caret-position editor) "\n")
       (format-code app e))))
 
-(defn- close-delimiter-and-newline
+(defn close-delimiter-and-newline
   "Closes a delimiter and inserts a newline.
 
 (defun f (x|  ))
@@ -177,7 +187,7 @@ and the closing delimiter.
   (close-delimiter app e)
   (insert-newline app e))
 
-(defn- comment-dwin [app e]
+(defn comment-dwin [app e]
   (prn ::comment-dwin))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -194,12 +204,12 @@ and the closing delimiter.
   (when pos
     (ui/action (ui/caret-position editor pos)))))
 
-(defn move-back [loc]
+(defn- move-back [loc]
   (if (or (zip/right loc) (nil? (zip/left loc)))
     (-> loc zip/up zip/left)
     (-> loc zip/left)))
 
-(defn- backward
+(defn backward
   "Moves the caret to the start of the current
 form or the end of the next one.
 
@@ -210,7 +220,7 @@ form or the end of the next one.
   [app e]
   (move app e move-back))
 
-(defn- forward
+(defn forward
   "Moves the caret to the end of the current 
 form or the start of the next one.
 
@@ -224,7 +234,7 @@ form or the start of the next one.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Depth-Changing Commands
 
-(defn- wrap-around
+(defn wrap-around
   "Looks for the location under the current caret position,
 finds the leftmost sibling in order to get the offset of the
 current form and add a closing and opening parentheses around
@@ -277,7 +287,7 @@ the parent's list text."
           (model/insert editor pstart s)
           (ui/caret-position editor pstart))))))
 
-(defn- splice-sexp
+(defn splice-sexp
   "Looks for the location under the current caret position,
 then gets the first parent list it finds and removes the wrapping
 parentheses by deleting and inserting the modified substring.
@@ -292,7 +302,7 @@ parentheses by deleting and inserting the modified substring.
         butlast
         (apply str)))))
 
-(defn- splice-sexp-killing-backward
+(defn splice-sexp-killing-backward
   "(foo (let ((x 5)) |(sqrt n)) bar)
    (foo |(sqrt n) bar)"
   [app e]
@@ -302,7 +312,7 @@ parentheses by deleting and inserting the modified substring.
         butlast
         (apply str)))))
 
-(defn- splice-sexp-killing-forward
+(defn splice-sexp-killing-forward
   "(a (b c| d e) f)
    (a b c| f)"
   [app e]
@@ -312,7 +322,7 @@ parentheses by deleting and inserting the modified substring.
         rest
         (apply str)))))
 
-(defn- raise-sexp
+(defn raise-sexp
   "(dynamic-wind in (lambda [] |body) out)
 (dynamic-wind in |body out)
 |body"
@@ -343,7 +353,7 @@ parentheses by deleting and inserting the modified substring.
             [start end]   (lang/limits next-loc)]
         (f editor pos [pstart pend] [start end] delim)))))
 
-(defn- forward-slurp-sexp
+(defn forward-slurp-sexp
   "(foo (bar |baz) quux zot)
 (foo (bar |baz quux) zot)
 
@@ -357,7 +367,7 @@ parentheses by deleting and inserting the modified substring.
                 (model/insert editor (dec end) delim)
                 (ui/caret-position editor pos))))
 
-(defn- backward-slurp-sexp
+(defn backward-slurp-sexp
   "(foo bar (baz| quux) zot)
 (foo (bar| baz quux) zot)
 
@@ -370,7 +380,7 @@ parentheses by deleting and inserting the modified substring.
                 (model/insert editor start delim)
                 (ui/caret-position editor pos))))
 
-(defn- barf-sexp
+(defn barf-sexp
   [editor dir dirmost f]
   (let [pos      (ui/caret-position editor)
         doc      (ui/attr editor :doc)
@@ -387,7 +397,7 @@ parentheses by deleting and inserting the modified substring.
             lims  (lang/limits next-loc)]
         (f editor pos plims lims delim)))))
 
-(defn- forward-barf-sexp
+(defn forward-barf-sexp
   "(foo (bar |baz quux) zot)
 (foo (bar |baz) quux zot)"
   [app e]
@@ -398,7 +408,7 @@ parentheses by deleting and inserting the modified substring.
                  (model/insert editor end delim)
                  (ui/caret-position editor pos)))))
 
-(defn- backward-barf-sexp
+(defn backward-barf-sexp
   "(foo (bar baz |quux) zot)
 (foo bar (baz |quux) zot)"
   [app e]
