@@ -89,7 +89,7 @@ and the closing delimiter.
       (ui/action (model/insert editor pos (str ch)))
       (let [parent  (or (delim-parent loc)
                         (as-> (zip/up loc) p
-                          (and (= :string (lang/location-tag p)) p) ))
+                          (when (= :string (lang/location-tag p)) p) ))
             [start end] (and parent (lang/limits parent))
             end-loc (and parent (-> parent zip/down zip/rightmost zip/left))
             [wstart wend] (when (lang/whitespace? end-loc) (lang/limits end-loc))
