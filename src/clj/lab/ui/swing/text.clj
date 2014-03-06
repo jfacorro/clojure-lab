@@ -64,7 +64,8 @@
   (length [this]
     (.getLength ^Document (.getDocument this)))
   (text [this]
-    (.getText this))
+    (let [doc ^Document (.getDocument this)]
+      (.getText doc 0 (.getLength doc))))
   (substring [this start end]
     (-> this .getText (.substring start end))))
 

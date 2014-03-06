@@ -131,19 +131,26 @@ loaded, otherwise the '.' directory is used."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Text
 
-(defn- search-channel []
-  (let [ch (async/chan)]
+(defn- search-channel [hls]
+  (let [ch  (async/chan)]
     (async/go-loop []
-      (let [[app e] (async/<! ch)
-            {:keys [editor dialog]} (ui/attr (:source e) :stuff)
-            ptrn    (-> (ui/find @dialog :text-field) model/text)
-            txt     (model/text editor)
-            results (util/find-limits ptrn txt)]
-        (ui/action
-          (doseq [[start end] results]
-            (ui/add-highlight editor start end 0x888888)))
-        (recur)))
+      (when-let [[app e :as _] (async/<! ch)]
+        (let [{:keys [editor dialog]} (ui/attr (:source e) :stuff)
+              ptrn    (-> (ui/find @dialog :text-field) model/text)
+              txt     (model/text editor)
+              results (util/find-limits ptrn txt)]
+          (ui/action
+            (doseq [hl @hls] (ui/remove-highlight editor hl))
+            (reset! hls (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888)) results)))
+          (recur))))
     ch))
+
+(defn- close-search-text
+  "Closes the channel and removes all highlights from the editor."
+  [ch hls app e]
+  (let [editor (-> (ui/find (:source e) :button) (ui/attr :stuff) :editor)]
+    (ui/action (doseq [hl @hls] (ui/remove-highlight editor hl)))
+    (async/close! ch)))
 
 (defn- search-text-in-editor
   "Looks for matches of the entered text in the current editor."
@@ -152,9 +159,11 @@ loaded, otherwise the '.' directory is used."
         editor  (main-ui/current-text-editor @ui)]
     (when editor
       (let [dialog (atom nil)
-            ch     (search-channel)]
+            hls    (atom nil)
+            ch     (search-channel hls)]
         (reset! dialog (-> (tplts/search-text-dialog @ui "Search Text")
                          ui/init
+                         (ui/update :dialog ui/listen :closing (partial #'close-search-text ch hls))
                          (ui/update :button ui/attr :stuff {:dialog dialog :editor editor})
                          (ui/update :button ui/listen :click ch)))
         (ui/attr @dialog :visible true)))))

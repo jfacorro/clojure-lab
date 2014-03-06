@@ -33,9 +33,8 @@
                   ; tree
                   :tree :tree-node
                   ; misc
-                  :button :label
-                  ; dialogs
-                  :dialog]
+                  :button :label]
+    :window     [:dialog]
     :dialog     [:file-dialog :option-dialog]
     :text-field [:text-area]
     :text-area  [:text-editor]})
