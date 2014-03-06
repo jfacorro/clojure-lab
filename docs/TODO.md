@@ -5,6 +5,7 @@
 ### Ref used in app
   - Change the atom for an agent.
     - This has some deeper implications since all UI actions won't be executed in the UI thread but in the agent's.
+    - Unless the ui/action macro is not part of the API but is used in the library internally.
 
 #### Tabs
   - Higlight the current one.
@@ -38,7 +39,6 @@ This could be done by adding a hook to an editor creation templates function.
 #### Paredit
   - Implement
     - Basic Insertion Commands
-      - paredit-meta-doublequote M-"
       - paredit-backslash \
       - paredit-comment-dwim M-;
       - paredit-newline C-j
@@ -59,11 +59,6 @@ This could be done by adding a hook to an editor creation templates function.
     - Plugin management:
       - Unload a plugin.
       - (?) Allow plugins to define their own dependencies.
-    - Establish the way key bindings are defined.
-      - Are they always defined globally?
-        - Example from emacs -> set-global-key modifies the global-map (which contains all global key bindings).
-      - How is a plugin's functionality encapsulated? Is it bound to a specific type of file/function/code?
-        - Link plugin with text-editor based on arbitrary definitions.
 
 ## DONE
 
@@ -135,6 +130,7 @@ This could be done by adding a hook to an editor creation templates function.
       - paredit-close-bracket ]
       - paredit-close-curly }
       - paredit-close-round-and-newline M-)
+      - paredit-meta-doublequote M-"
     - Movement & Navigation
       - paredit-forward C-M-f
       - paredit-backward C-M-b
@@ -160,3 +156,4 @@ This could be done by adding a hook to an editor creation templates function.
 ## App
     - Define the way plugins/add-ons are loaded.
     - Link Document to ui/text-editor.
+    - Establish the way key bindings are defined.
