@@ -1,5 +1,6 @@
 (ns lab.plugin.search-replace
   (:require [clojure.java.io :as io]
+            [clojure.core.async :as async]
             [lab.core.plugin :as plugin]
             [lab.core.keymap :as km]
             [lab.model.protocols :as model]
@@ -107,13 +108,18 @@ in the children's tree root node."
       (when cmd
         ((:fn cmd) dialog app e)))))
 
-(defn- search-open-file [app e]
+(defn- search-open-file
+  "Creates a dialog with a text field that allows to search
+for files whose complete path match the text provided. If the
+File Explorer is open then the files are searched in the directories
+loaded, otherwise the '.' directory is used."
+  [app e]
   ;; Add ESC as an exit dialog key.
   (let [dialog (atom nil)
         ch     (util/timeout-channel 500 (partial #'search-file dialog))]
     (ui/action
       (reset! dialog
-            (-> (tplts/search-file-dialog "Search & Open File")
+            (-> (tplts/search-file-dialog (-> @app :ui deref) "Search & Open File")
               ui/init
               (ui/update :text-field ui/listen :key (partial #'handle-key dialog))
               (ui/update :text-field ui/listen :insert ch)
@@ -122,19 +128,42 @@ in the children's tree root node."
       ;; there's no retry when the compare-and-set! is done on the atom.
       (ui/update @dialog :dialog ui/attr :visible true))))
 
-(defn- search-text [app e]
+;;;;;;;;;;;;;;;;;;;;;;
+;; Search Text
+
+(defn- search-channel []
+  (let [ch (async/chan)]
+    (async/go-loop []
+      (let [[app e] (async/<! ch)
+            {:keys [editor dialog]} (ui/attr (:source e) :stuff)
+            ptrn    (-> (ui/find @dialog :text-field) model/text)
+            txt     (model/text editor)
+            results (util/find-limits ptrn txt)]
+        (ui/action
+          (doseq [[start end] results]
+            (ui/add-highlight editor start end 0x888888)))
+        (recur)))
+    ch))
+
+(defn- search-text-in-editor
+  "Looks for matches of the entered text in the current editor."
+  [app e]
   (let [ui      (:ui @app)
         editor  (main-ui/current-text-editor @ui)]
     (when editor
-      (let [dialog (ui/init (tplts/search-text-dialog "Search Text"))]
-        (ui/attr dialog :visible true)
-        (prn ::search-text)))))
+      (let [dialog (atom nil)
+            ch     (search-channel)]
+        (reset! dialog (-> (tplts/search-text-dialog @ui "Search Text")
+                         ui/init
+                         (ui/update :button ui/attr :stuff {:dialog dialog :editor editor})
+                         (ui/update :button ui/listen :click ch)))
+        (ui/attr @dialog :visible true)))))
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.search-replace
      :global
-     {:category "Search" :fn ::search-text :keystroke "ctrl f" :name "Text..."}
-     {:category "Search" :fn ::search-open-file :keystroke "ctrl alt o" :name "File..."})])
+     {:category "Search" :fn ::search-text-in-editor :keystroke "ctrl f" :name "Text"}
+     {:category "Search" :fn ::search-open-file :keystroke "ctrl alt o" :name "File"})])
 
 (plugin/defplugin lab.plugin.search-replace
   :keymaps keymaps)

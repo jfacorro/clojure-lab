@@ -78,23 +78,25 @@ includes a label and a closing button."
                  :title          title
                  :current-dir    dir}])
 
-(defn search-file-dialog [title]
+(defn search-file-dialog [owner title]
   [:dialog {:title title
-            :size [500 150]
-            :modal true}
+            :size  [500 150]
+            :modal true
+            :owner owner}
     [:panel {:layout [:box :page]}
       [:text-field]
       [:panel {:layout :border}
         [:scroll [:tree {:hide-root true}
                    [:tree-node {:item :root}]]]]]])
 
-(defn search-text-dialog [title]
+(defn search-text-dialog [owner title]
   [:dialog {:title title
-            :size [500 150]
-            :modal true}
+            :size  [500 150]
+            :modal false
+            :owner owner}
     [:panel {:layout [:box :page]}
       [:panel {:layout [:box :line]}
-        [:text-field]
+        [:text-field {:border :none}]
         [:button {:text "Search"}]]
       [:panel {:layout :border}
         [:scroll [:tree {:hide-root true}
@@ -102,7 +104,7 @@ includes a label and a closing button."
 
 (defn line-number-dialog []
   [:dialog {:title "Enter Line Number"
-            :size [300 85]
+            :size  [300 85]
             :modal true}
     [:panel {:layout [:box :page]}
       [:text-field {:border :none}]

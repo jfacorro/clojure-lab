@@ -3,11 +3,12 @@
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.protocols :refer [abstract impl]]
             [lab.ui.swing.util :as util])
-  (:import  [javax.swing JDialog JFileChooser JOptionPane]))
+  (:import  [javax.swing JDialog JFileChooser JOptionPane JFrame]))
 
 (defn- dialog-init [c]
-  (let [abs (atom nil)] 
-    (proxy [JDialog lab.ui.protocols.Implementation] []
+  (let [abs   (atom nil)
+        owner (as-> (ui/attr c :owner) x (when x ^JFrame (impl x)))]
+    (proxy [JDialog lab.ui.protocols.Implementation] [owner]
       (abstract ([] @abs)
                 ([x] (reset! abs x) this)))))
 
@@ -66,6 +67,7 @@ is set before processing other attribute's code."
 
 (defattributes
   :dialog
+  (:owner [c _ _])
   (:result [c _ _])
   (:modal [c _ v]
     (.setModal ^JDialog (impl c) v))
