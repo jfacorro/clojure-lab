@@ -57,11 +57,6 @@
 
 ## DONE
 
-#### Tabs
-  - Higlight the current one.
-  - Change the default wrapping mode.
-    - Not conveninet: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
-
 ### UI
   - Abstraction for events
     - Define available events for each component (alla seesaw)
@@ -72,6 +67,11 @@
   - Modify the global atom created for the ui.
   - Create with-id macro or something similar in order to be able to avoid declaring explicit ids if it's not necessary.
   - The abstraction value for the implementations should be updated with each modification to the abstraction.
+
+#### Tabs
+  - Higlight the current one.
+  - Change the default wrapping mode.
+    - Not conveninet: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
 
 #### Events
   - Fixed bug when mapping keys in a JVM with a different language.
