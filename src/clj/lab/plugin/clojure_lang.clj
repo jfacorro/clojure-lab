@@ -124,7 +124,7 @@ check if its one of the registered symbols."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Keymap commands
 
-(defn- insert-tab [app e]
+(defn- insert-tab [e]
   (let [editor (:source e)
         offset (ui/caret-position editor)]
     (model/insert editor offset "  ")))
@@ -153,7 +153,7 @@ the current line."
       :else
         (recur (inc offset)))))
 
-(defn- toggle-comment [app e]
+(defn- toggle-comment [e]
   (let [editor (:source e)
         text   (model/text editor)
         [start end] (ui/selection editor)

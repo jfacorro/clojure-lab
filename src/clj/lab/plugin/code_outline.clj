@@ -22,7 +22,7 @@
 (defn- go-to-definition-enter
   "Handles the enter press in a tree node positioning the
 caret in the definition associated with the tree node."
-  [app {:keys [source description event] :as e}]
+  [{:keys [app source description event] :as e}]
   (when (and (= :pressed event) (= :enter description))
     (let [ui     (:ui @app)
           info   (ui/attr source :info)]
@@ -31,9 +31,9 @@ caret in the definition associated with the tree node."
 (defn- go-to-definition-click
   "Handles the click in a tree node positioning the
 caret in the definition associated with the tree node."
-  [app e]
+  [e]
   (when (= 2 (:click-count e))
-    (let [ui     (:ui @app)
+    (let [ui     (-> e :app deref :ui)
           node   (:source e)
           info   (ui/attr node :info)]
       (go-to-definition ui (:offset info)))))
@@ -75,8 +75,9 @@ or the current document if non is specified."
     (ui/add [:scroll [:tree {:id "outline-tree"}]])
     (ui/apply-stylesheet (:styles @app))))
 
-(defn- create-outline-tree! [app _]
-  (let [ui      (:ui @app)
+(defn- create-outline-tree! [e]
+  (let [app     (:app e)
+        ui      (:ui @app)
         outline (ui/find @ui :#outline-tree)]
     (if-not outline
       (let [split (ui/find @ui (ui/parent "right"))]
@@ -101,7 +102,7 @@ and content"
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
-        g      (fn [app _] (#'update-outline-tree! @app doc))
+        g      (fn [e] (#'update-outline-tree! (:app e) doc))
         ch     (util/timeout-channel 500 g)]
     (-> editor
       (ui/listen :insert ch)

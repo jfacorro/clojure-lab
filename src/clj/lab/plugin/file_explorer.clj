@@ -28,7 +28,7 @@ name."
 (defn- file-node-children
   "Returns a vector of children nodes for the
 file specified, which should be a directory."
-  [app ^java.io.File  file]
+  [app ^java.io.File file]
   (->> file
     .listFiles
     (filter (comp not hidden?))
@@ -39,8 +39,9 @@ file specified, which should be a directory."
 (defn- lazy-add-to-dir
   "Lazily add the file nodes to this node if it
 currently has no children."
-  [app e]
-  (let [ui        (:ui @app)
+  [e]
+  (let [app       (:app e)
+        ui        (:ui @app)
         node      (:source e)
         id        (ui/attr node :id)
         file      (:file (ui/attr node :stuff))]
@@ -85,12 +86,12 @@ tree. Returns a tree node."
 
 (defn- open-document-tree-click
   "Handler for the click event of an item in the tree."
-  [app {:keys [source click-count]}]
+  [{:keys [app source click-count] :as e}]
   (when (= click-count 2)
     (open-document-tree app source)))
 
 (defn- open-document-tree-enter
-  [app {:keys [event source description] :as e}]
+  [{:keys [app event source description] :as e}]
   (when (and (= :pressed event) (= description :enter))
     (open-document-tree app source)))
 
@@ -118,8 +119,9 @@ tree. Returns a tree node."
   "Create the file explorer tab if it doesn't exist and add
 the directory structure to it, otherwise just add the directory
 structure."
-  [app _]
-  (let [ui           (:ui @app)
+  [e]
+  (let [app          (:app e)
+        ui           (:ui @app)
         dir          (lab/config @app :current-dir)
         dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir))
         [result dir] (ui/attr dir-dialog :result)

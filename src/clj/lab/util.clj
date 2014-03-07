@@ -26,7 +26,7 @@ wins. Returns a channel that takes the input events."
             (if (= ch c)
               (recur :recieve args)
               (do
-                (async/thread (apply f args))
+                (async/thread (if (sequential? args) (apply f args) (f args)))
                 (recur :wait nil))))))
     c))
 

@@ -65,8 +65,9 @@ the open and new commands."
 (defn- open-document-menu
   "Opens a file selection dialog for the user to choose a file
 and call the app's open-document function."
-  [app _]
-  (let [curr-dir      (lab/config @app :current-dir)
+  [e]
+  (let [app           (:app e)
+        curr-dir      (lab/config @app :current-dir)
         file-dialog   (ui/init (tplts/open-file-dialog curr-dir))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
@@ -77,7 +78,7 @@ and call the app's open-document function."
 
 (defn- new-document
   "Creates a new document and shows it in a new tab."
-  [app & _]
+  [{app :app :as e}]
   (swap! app lab/new-document)
   (open-document-ui! app (lab/current-document @app)))
 
@@ -113,14 +114,15 @@ should be closed and false otherwise."
 
 (defn close-document-button
   "Handles the tabs' close button when clicked."
-  [app e]
-  (close-document-ui app (-> (:source e) (ui/attr :stuff) :tab-id)))
+  [e]
+  (close-document-ui (:app e) (-> (:source e) (ui/attr :stuff) :tab-id)))
 
 (defn- close-document-menu
   "Finds the currently selected tab, removes it and closes the document
 associated to it."
-  [app & _]
-  (let [ui     (:ui @app)
+  [e]
+  (let [app    (:app e)
+        ui     (:ui @app)
         tab    (current-document-tab @ui)
         id     (ui/attr tab :id)]
     (when tab
@@ -153,8 +155,9 @@ associated to it."
     result))
 
 (defn- save-document-menu
-  [app & _]
-  (let [ui     (:ui @app)
+  [e]
+  (let [app    (:app e)
+        ui     (:ui @app)
         tab    (current-document-tab @ui)]
     (when tab
       (save-document-ui! app tab))))
@@ -163,8 +166,9 @@ associated to it."
 ;;; Switch
 
 (defn- switch-document-ui!
-  [app evt]
-  (let [ui     (:ui @app)
+  [e]
+  (let [app    (:app e)
+        ui     (:ui @app)
         editor (current-text-editor @ui)
         doc    (ui/attr editor :doc)]
     (when doc
@@ -194,7 +198,7 @@ to the UI's main menu."
 (defn text-editor-change
   "Handles changes in the control, updates the document
 and signals the highlighting process."
-  [app {:keys [type source offset text length] :as e}]
+  [{:keys [app type source offset text length] :as e}]
   (let [editor   source
         doc      (ui/attr editor :doc)]
     (when (not (:read-only @doc))
@@ -204,24 +208,25 @@ and signals the highlighting process."
 
 ;; Key handle
 
-(defn- handle-key [app e]
-  (let [ui   (:ui @app)
+(defn- handle-key [{app :app :as e}]
+  (let [ui     (:ui @app)
         editor (:source e)
-        doc  (ui/attr editor :doc)
-        [x y](ui/key-stroke (dissoc e :source))
-        cmd  (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
-              (map #(km/find-or % y x))
-              (drop-while nil?)
-              first)]
+        doc    (ui/attr editor :doc)
+        [x y]  (ui/key-stroke (dissoc e :source))
+        cmd    (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
+                 (map #(km/find-or % y x))
+                 (drop-while nil?)
+                 first)]
     (when cmd
       (ui/consume e)
       (when (= :pressed (:event e))
         (ui/handle-event (:fn cmd) e)))))
 
 ;; Change font size
-(defn change-font-size [app e]
+(defn change-font-size [e]
   (when (contains? (:modifiers e) :ctrl)
-    (let [ui     (:ui @app)
+    (let [app    (:app e)
+          ui     (:ui @app)
           id     (-> (ui/find (:source e) :text-editor) (ui/attr :id))
           editor (ui/find @ui (ui/selector# id))
           op     (if (neg? (:wheel-rotation e)) inc dec)
@@ -262,7 +267,7 @@ and signals the highlighting process."
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
 
-(defn- exit! [app e]
+(defn- exit! [e]
   (let [result (tplts/confirm "Bye bye" "Are you sure you want to leave this magical experience?")]
     (if (= result :ok)
         (System/exit 0))))
@@ -272,19 +277,21 @@ and signals the highlighting process."
 
 (defn- toggle-fullscreen
   "Toggles between fullscreen and non fullscreen mode."
-  [app _]
-  (let [ui    (:ui @app)
+  [e]
+  (let [app   (:app e)
+        ui    (:ui @app)
         full? (-> (ui/find @ui :#main) (ui/attr :fullscreen))]
-    (ui/update! ui :#main ui/attr :fullscreen (not full?)))
-  app)
+    (ui/update! ui :#main ui/attr :fullscreen (not full?))
+    app))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toogle Line Numbers
 
 (defn- toggle-line-numbers
   "Hides and shows the line number for the currently active editor."
-  [app e]
-  (let [ui     (:ui @app)
+  [e]
+  (let [app    (:app e)
+        ui     (:ui @app)
         tab    (current-document-tab @ui)
         editor (ui/find tab :text-editor)]
     (when (and tab editor)
@@ -301,8 +308,9 @@ and signals the highlighting process."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undo/Redo
 
-(defn undo-redo! [app e f]
-  (let [ui     (:ui @app)
+(defn undo-redo! [e f]
+  (let [app    (:app e)
+        ui     (:ui @app)
         editor (current-text-editor @ui)]
     (when editor
       (let [id     (ui/attr editor :id)
@@ -315,17 +323,18 @@ and signals the highlighting process."
           (ui/update! ui (ui/selector# id) (constantly editor)))
         (swap! doc dissoc :read-only)))))
 
-(defn redo! [app e]
-  (undo-redo! app e doc/redo))
+(defn redo! [e]
+  (undo-redo! e doc/redo))
 
-(defn undo! [app e]
-  (undo-redo! app e doc/undo))
+(defn undo! [e]
+  (undo-redo! e doc/undo))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Next/previous center tab
 
-(defn move-tab [app move]
-  (let [ui    (:ui @app)
+(defn move-tab [e move]
+  (let [app   (:app e)
+        ui    (:ui @app)
         tab   (current-document-tab @ui)
         tabs  (ui/find @ui :#center)
         children (ui/children tabs)
@@ -335,31 +344,32 @@ and signals the highlighting process."
                 (move (count children)))]
     (ui/update! ui :#center ui/selection i)))
 
-(defn next-tab [app e]
-  (move-tab app
+(defn next-tab [e]
+  (move-tab e
             (fn [total i] (if (< (inc i) total) (inc i) 0))))
 
-(defn prev-tab [app e]
-  (move-tab app
+(defn prev-tab [e]
+  (move-tab e
             (fn [total i] (if (>= (dec i) 0) (dec i) (dec total)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 
 
-(defn- goto-line-ok [app e]
+(defn- goto-line-ok [e]
   (let [dialog (ui/attr (:source e) :stuff)
         txt    (-> @dialog (ui/find :text-field) model/text)]
     (when (re-matches #"\d*" txt)
       (ui/update! dialog [] ui/attr :result :ok)
       (ui/update! dialog [] ui/attr :visible false))))
 
-(defn- goto-line-cancel [app e]
+(defn- goto-line-cancel [e]
   (let [dialog (ui/attr (:source e) :stuff)]
     (ui/update! dialog [] ui/attr :result :cancel)
     (ui/update! dialog [] ui/attr :visible false)))
 
-(defn- goto-line! [app e]
-  (let [ui     (:ui @app)
+(defn- goto-line! [e]
+  (let [app    (:app e)
+        ui     (:ui @app)
         editor (current-text-editor @ui)
         dialog (atom nil)]
     (when editor
@@ -385,15 +395,16 @@ and signals the highlighting process."
   "Replaces the UI's default event-handler implementation, 
 inserting a fixed first parameter, which is the app."
   [app f e]
-  (cond
-    (or (fn? f) (var? f))
-      (f app e)
-    (keyword? f)
-      ((memoized-kw->fn f) app e)
-    (util/channel? f)
-      (async/put! f [app e])
-    :else
-      (throw (Exception. "Not supported event handler value, it must be a function or a ns qualified keyword."))))
+  (let [e (assoc e :app app)]
+    (cond
+      (or (fn? f) (var? f))
+        (f e)
+      (keyword? f)
+        ((memoized-kw->fn f) e)
+      (util/channel? f)
+        (async/put! f e)
+      :else
+        (throw (Exception. "Not supported event handler value, it must be a function or a ns qualified keyword.")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Default styles

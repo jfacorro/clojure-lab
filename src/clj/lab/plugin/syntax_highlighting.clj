@@ -34,7 +34,7 @@ are applied their highlight."
         (ui/apply-style editor tokens styles))))
   editor)
 
-(defn- text-editor-change! [app e]
+(defn- text-editor-change! [e]
   (if-not (= :change (:type e))
     (highlight! (:source e) true)))
 

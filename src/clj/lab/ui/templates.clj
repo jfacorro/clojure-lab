@@ -22,8 +22,8 @@
         [:tabs {:id "bottom"}]]]))
 
 (defn- close-tab-button
-  [app e]
-  (let [ui  (:ui @app)
+  [e]
+  (let [ui  (-> e :app deref :ui)
         id  (-> (:source e) (ui/attr :stuff) :tab-id)
         tab (ui/find @ui (ui/selector# id))]
     (ui/update! ui (ui/parent id) ui/remove tab)))

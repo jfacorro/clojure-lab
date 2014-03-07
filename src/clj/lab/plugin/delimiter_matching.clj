@@ -5,7 +5,7 @@
             [lab.core [plugin :as plugin]
                       [lang :as lang]]))
 
-(defn- check-for-delimiters [app e highlights]
+(defn- check-for-delimiters [e highlights]
   (let [editor    (:source e)
         doc       (ui/attr editor :doc)
         lang      (doc/lang @doc)
@@ -23,10 +23,9 @@
   (let [ch         (async/chan)
         highlights (atom #{})]
     (async/go-loop []
-      (let [[app e] (async/<! ch)]
-        (when e
-          (check-for-delimiters app e highlights)
-          (recur))))
+      (when-let [e (async/<! ch)]
+        (check-for-delimiters e highlights)
+        (recur)))
     ch))
 
 (defn- text-editor-hook [f doc]

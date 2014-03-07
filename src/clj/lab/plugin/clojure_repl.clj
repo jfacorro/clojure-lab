@@ -46,8 +46,8 @@ it. If not project file is supplied, a bare REPL is started."
     (let [proc (popen/popen clojure-repl-cmd :redirect true)]
       {:proc proc :cin (popen/stdin proc) :cout (popen/stdout proc)})))
 
-(defn- eval-in-repl! [app e]
-  (let [ui          (:ui @app)
+(defn- eval-in-repl! [e]
+  (let [ui          (-> e :app deref :ui)
         editor      (:source e)
         file-path   (-> (ui/attr editor :doc) deref doc/path)
         [start end] (ui/selection editor)
@@ -105,8 +105,8 @@ output and input streams of the REPL process."
 (defn- close-tab-repl
   "Ask for confirmation before closing the REPL tab
 and killing the associated process."
-  [app e]
-  (let [ui   (:ui @app)
+  [e]
+  (let [ui   (-> e :app deref :ui)
         id   (-> (:source e) (ui/attr :stuff) :tab-id)
         tab  (ui/find @ui (ui/selector# id))
         repl (-> tab
@@ -144,8 +144,9 @@ to the ui in the bottom section."
 (defn open-project-repl!
   "Ask the user to select a project file and fire a 
 child process with a running repl."
-  [app e]
-  (let [dir           (lab/config @app :current-dir)
+  [e]
+  (let [app           (-> e :app deref :ui)
+        dir           (lab/config @app :current-dir)
         file-dialog   (ui/init (tplts/open-file-dialog dir))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
@@ -155,8 +156,9 @@ child process with a running repl."
 
 (defn open-repl!
   "Fires up a bare REPL."
-  [app e]
-  (let [repl (start-repl)]
+  [e]
+  (let [app  (-> e :app deref :ui)
+        repl (start-repl)]
     (swap! app update-in [:repls] conj repl)
     (repl-tab app repl)))
 

@@ -95,7 +95,7 @@
         (ui/apply-style editor tokens depths-styles))))
   editor)
 
-(defn- text-editor-change! [app e]
+(defn- text-editor-change! [e]
   (let [editor (:source e)]
     (color-delimiters! editor)))
 

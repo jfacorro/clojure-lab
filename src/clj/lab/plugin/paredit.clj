@@ -53,7 +53,7 @@ string node."
 (a b (|) c d)
 (foo \"bar |baz\" quux)
 (foo \"bar |(baz\" quux)"
-  [app e]
+  [e]
   (let [editor    (:source e)
         opening   (:char e)
         closing   (delimiters opening)
@@ -77,7 +77,7 @@ and the closing delimiter.
 (a b c)|
 ; Hello,| world!
 ; Hello,)| world!"
-  [app e]
+  [e]
   (let [editor (:source e)
         pos    (ui/caret-position editor)
         ch     (:char e)
@@ -134,7 +134,7 @@ and the closing delimiter.
       [:list _] (- snd start)
       [(:or :vector :set :map) _] (inc (- delim start)))))
 
-(defn- format-code [app e]
+(defn- format-code [e]
   (let [editor  (:source e)
         doc     (ui/attr editor :doc)
         tree    (lang/code-zip (lang/parse-tree @doc))
@@ -169,11 +169,11 @@ and the closing delimiter.
 (let ((n frobbotz))
   |(display (+ n 1)
             port))"
-  [app e]
+  [e]
   (let [editor  (:source e)]
     (ui/action
       (model/insert editor (ui/caret-position editor) "\n")
-      (format-code app e))))
+      (format-code e))))
 
 (defn close-delimiter-and-newline
   "Closes a delimiter and inserts a newline.
@@ -183,17 +183,17 @@ and the closing delimiter.
   |)
 ; (Foo.|
 ; (Foo.)|"
-  [app e]
-  (close-delimiter app e)
-  (insert-newline app e))
+  [e]
+  (close-delimiter e)
+  (insert-newline e))
 
-(defn comment-dwin [app e]
+(defn comment-dwin [e]
   (prn ::comment-dwin))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement & Navigation
 
-(defn- move [app e movement]
+(defn- move [e movement]
   (let [editor  (:source e)
         pos     (ui/caret-position editor)
         doc     (ui/attr editor :doc)
@@ -217,8 +217,8 @@ form or the end of the next one.
 (foo |(bar baz) quux)
 (|(foo) bar)
 |((foo) bar)"
-  [app e]
-  (move app e move-back))
+  [e]
+  (move e move-back))
 
 (defn forward
   "Moves the caret to the end of the current 
@@ -228,8 +228,8 @@ form or the start of the next one.
 (foo (bar baz)| quux)
 (foo (bar baz)|)
 (foo (bar baz))|"
-  [app e]
-  (move app e #(-> % zip/up zip/right)))
+  [e]
+  (move e #(-> % zip/up zip/right)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Depth-Changing Commands
@@ -242,7 +242,7 @@ it.
 
 (foo |bar baz)
 (foo (|bar) baz)"
-  [app e]
+  [e]
   (let [editor  (:source e)
         pos     (ui/caret-position editor)
         doc     (ui/attr editor :doc)
@@ -267,7 +267,7 @@ the parent's text for the string returned by f.
 f is a function that takes the editor, the limits for the location and
 the limits for the parent list, returning the string that will replace
 the parent's list text."
-  [app e f]
+  [e f]
   (let [editor  (:source e)
         pos     (ui/caret-position editor)
         doc     (ui/attr editor :doc)
@@ -294,8 +294,8 @@ parentheses by deleting and inserting the modified substring.
 
 (foo (bar| baz) quux)
 (foo bar| baz quux)"
-  [app e]
-  (splice-sexp-killing app e
+  [e]
+  (splice-sexp-killing e
     (fn [editor _ [pstart pend]]
       (->> (model/substring editor pstart pend)
         rest
@@ -305,8 +305,8 @@ parentheses by deleting and inserting the modified substring.
 (defn splice-sexp-killing-backward
   "(foo (let ((x 5)) |(sqrt n)) bar)
    (foo |(sqrt n) bar)"
-  [app e]
-  (splice-sexp-killing app e
+  [e]
+  (splice-sexp-killing e
     (fn [editor [start end] [pstart pend]]
       (->> (model/substring editor start pend)
         butlast
@@ -315,8 +315,8 @@ parentheses by deleting and inserting the modified substring.
 (defn splice-sexp-killing-forward
   "(a (b c| d e) f)
    (a b c| f)"
-  [app e]
-  (splice-sexp-killing app e
+  [e]
+  (splice-sexp-killing e
     (fn [editor [start end] [pstart pend]]
       (->> (model/substring editor pstart start)
         rest
@@ -326,8 +326,8 @@ parentheses by deleting and inserting the modified substring.
   "(dynamic-wind in (lambda [] |body) out)
 (dynamic-wind in |body out)
 |body"
-  [app e]
-  (splice-sexp-killing app e
+  [e]
+  (splice-sexp-killing e
     (fn [editor [start end] [pstart pend]]
       (model/substring editor start end))))
 
@@ -360,7 +360,7 @@ parentheses by deleting and inserting the modified substring.
 (a b ((c| d)) e f)
 (a b ((c| d) e) f)
 (a b ((c| d e)) f)"
-  [app e]
+  [e]
   (slurp-sexp (:source e) zip/right zip/rightmost
               (fn [editor pos [pstart pend] [start end] delim]
                 (model/delete editor (dec pend) pend)
@@ -373,7 +373,7 @@ parentheses by deleting and inserting the modified substring.
 
 (a b ((c| d)) e f)
 (a (b (c| d) e) f)"
-  [app e]
+  [e]
   (slurp-sexp (:source e) zip/left zip/leftmost
               (fn [editor pos [pstart pend] [start end] delim]
                 (model/delete editor pstart (inc pstart))
@@ -400,7 +400,7 @@ parentheses by deleting and inserting the modified substring.
 (defn forward-barf-sexp
   "(foo (bar |baz quux) zot)
 (foo (bar |baz) quux zot)"
-  [app e]
+  [e]
   (barf-sexp (:source e) zip/left zip/rightmost
              (fn [editor pos [pstart pend] [start end] delim]
                (when (<= pos end)
@@ -411,7 +411,7 @@ parentheses by deleting and inserting the modified substring.
 (defn backward-barf-sexp
   "(foo (bar baz |quux) zot)
 (foo bar (baz |quux) zot)"
-  [app e]
+  [e]
   (barf-sexp (:source e) zip/right zip/leftmost
              (fn [editor pos [pstart pend] [start end] delim]
                (when (>= pos (dec start))

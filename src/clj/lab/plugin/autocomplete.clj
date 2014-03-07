@@ -1,6 +1,5 @@
 (ns lab.plugin.autocomplete
   (:require [clojure.zip :as zip]
-            [lab.util :refer [timeout-channel]]
             [lab.core [plugin :as plugin]
                       [keymap :as km]
                       [lang :as lang]
@@ -14,7 +13,7 @@
     dir
     lang/loc-string?))
 
-(defn- select-autocomplete [app e]
+(defn- select-autocomplete [e]
   (let [node   (:source e)
         txt    (ui/attr node :item)
         {:keys [editor loc popup]} (ui/attr node :stuff)
@@ -31,7 +30,7 @@
       (ui/caret-position (+ offset (count txt)))
       ui/focus)))
 
-(defn handle-keymap [km app e]
+(defn handle-keymap [km e]
   (let [[x y](ui/key-stroke (dissoc e :source))
         cmd  (km/find-or km x y)]
     (when cmd
@@ -67,7 +66,7 @@
       (ui/attr :visible true)
       (ui/update :tree ui/focus))))
 
-(defn- autocomplete [app {:keys [event description modifiers] :as e}]
+(defn- autocomplete [{:keys [event description modifiers] :as e}]
   (when (and (= :pressed event) (= description :space) (modifiers :ctrl))
   (let [editor (:source e)
         pos    (ui/caret-position editor)

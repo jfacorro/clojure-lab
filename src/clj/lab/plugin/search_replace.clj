@@ -11,17 +11,18 @@
   (:import  [java.nio.file FileSystems]
             [java.io File ]))
 
-(defn- open-document [app e]
-  (when (or (= 2 (:click-count e)) 
+(defn- open-document [e]
+  (when (or (= 2 (:click-count e))
             (and (= :pressed (:event e)) (= :enter (:description e))))
     (let [node   (:source e)
+          app    (:app e)
           stuff  (ui/attr node :stuff)
           dialog (:dialog stuff)
           file   ^File (:file stuff)]
-    (when file
-      (ui/action
-        (ui/update! dialog :dialog ui/attr :visible false)
-        (main-ui/open-document app (.getCanonicalPath file)))))))
+      (when file
+        (ui/action
+          (ui/update! dialog :dialog ui/attr :visible false)
+          (main-ui/open-document app (.getCanonicalPath file)))))))
 
 (defn- file-label [^File file]
   (str (.getName file) " - [" (.getPath file) "]"))
@@ -44,11 +45,11 @@ directories are returnes. Otherwise the file-seq for the
 files for which any part of its full path matches the
 search string. Finally it removes all the previos items
 and adds new found ones."
-  [dialog app e]
+  [dialog e]
   (let [field (:source e)
         s      (model/text field)]
     (when (< 2 (count s))
-      (let [files  (file-explorer-current-dirs app)
+      (let [files  (file-explorer-current-dirs (:app e))
             re     (re-pattern s)
             result (filter #(re-find re (.getCanonicalPath ^File %)) files)
 
@@ -74,25 +75,25 @@ in the children's tree root node."
     (when sel-id
       (util/index-of (ui/children root) node))))
 
-(defn select-next-node [dialog app e]
+(defn select-next-node [dialog e]
   (let [tree   (ui/find @dialog :#results)
         root   (first (ui/children tree))
         index  (inc (or (selected-index tree) -1))]
     (when (<= index (dec (count (ui/children root))))
       (ui/update! dialog :#results ui/selection index))))
 
-(defn select-prev-node [dialog app e]
+(defn select-prev-node [dialog e]
   (let [tree   (ui/find @dialog :#results)
         index  (dec (or (selected-index tree) 1))]
     (when (>= index 0)
       (ui/update! dialog :#results ui/selection index))))
 
-(defn open-selected-node [dialog app e]
+(defn open-selected-node [dialog e]
   (let [tree   (ui/find @dialog :#results)
         sel-id (ui/selection tree)
         node   (ui/find tree (ui/selector# sel-id))]
     (when node
-      (open-document app (assoc e :source node)))))
+      (open-document (assoc e :source node)))))
 
 (def file-open-keymap
   (km/keymap 'file-open-dialog
@@ -101,25 +102,25 @@ in the children's tree root node."
     {:keystroke "up" :fn #'select-prev-node :name "Select previous node"}
     {:keystroke "enter" :fn #'open-selected-node :name "Open selected node"}))
 
-(defn handle-key [dialog app e]
+(defn handle-key [dialog e]
   (when (= :pressed (:event e))
     (let [kss  (ui/key-stroke (dissoc e :source))
           cmd  (apply km/find-or file-open-keymap kss)]
       (when cmd
-        ((:fn cmd) dialog app e)))))
+        ((:fn cmd) dialog e)))))
 
 (defn- search-open-file
   "Creates a dialog with a text field that allows to search
 for files whose complete path match the text provided. If the
 File Explorer is open then the files are searched in the directories
 loaded, otherwise the '.' directory is used."
-  [app e]
+  [e]
   ;; Add ESC as an exit dialog key.
   (let [dialog (atom nil)
-        ch     (util/timeout-channel 500 (partial #'search-file dialog))]
+        ch     (util/timeout-channel 200 (partial #'search-file dialog))]
     (ui/action
       (reset! dialog
-            (-> (tplts/search-file-dialog (-> @app :ui deref) "Search & Open File")
+            (-> (tplts/search-file-dialog (-> e :app deref :ui deref) "Search & Open File")
               ui/init
               (ui/update :text-field ui/listen :key (partial #'handle-key dialog))
               (ui/update :text-field ui/listen :insert ch)
@@ -134,7 +135,7 @@ loaded, otherwise the '.' directory is used."
 (defn- search-channel [hls]
   (let [ch  (async/chan)]
     (async/go-loop []
-      (when-let [[app e :as _] (async/<! ch)]
+      (when-let [e (async/<! ch)]
         (let [{:keys [editor dialog]} (ui/attr (:source e) :stuff)
               ptrn    (-> (ui/find @dialog :text-field) model/text)
               txt     (model/text editor)
@@ -147,15 +148,16 @@ loaded, otherwise the '.' directory is used."
 
 (defn- close-search-text
   "Closes the channel and removes all highlights from the editor."
-  [ch hls app e]
+  [ch hls e]
   (let [editor (-> (ui/find (:source e) :button) (ui/attr :stuff) :editor)]
     (ui/action (doseq [hl @hls] (ui/remove-highlight editor hl)))
     (async/close! ch)))
 
 (defn- search-text-in-editor
   "Looks for matches of the entered text in the current editor."
-  [app e]
-  (let [ui      (:ui @app)
+  [e]
+  (let [app     (:app e)
+        ui      (:ui @app)
         editor  (main-ui/current-text-editor @ui)]
     (when editor
       (let [dialog (atom nil)
