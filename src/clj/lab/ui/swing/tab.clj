@@ -46,13 +46,26 @@
   (set-prop "TabbedPane.focus" transparent)
   (set-prop "TabbedPane.contentAreaColor" transparent))
 
+(defn- style-tab-header [tab style]
+  (reduce-kv ui/attr (ui/attr tab :header) style))
+
+(defn- highlight-current-tab [e]
+  (let [{:keys [source]} (to-map e)
+        sel-style        (ui/attr source :selected-tab-style)
+        unsel-style      (ui/attr source :unselected-tab-style)
+        sel-id           (selection source)]
+    (doseq [tab (ui/children source)]
+      (style-tab-header tab unsel-style))
+    (ui/update source (ui/selector# sel-id) style-tab-header sel-style)))
+
 (defn- tab-init [c]
   (doto (JPanel.)
     (.setLayout (java.awt.BorderLayout.))))
 
 (defn- tabs-init [c]
   (doto (JTabbedPane.)
-    (.setTabLayoutPolicy JTabbedPane/WRAP_TAB_LAYOUT)))
+    (.setTabLayoutPolicy JTabbedPane/WRAP_TAB_LAYOUT)
+    (.addChangeListener (util/create-listener c :change #'highlight-current-tab))))
 
 (definitializations
   :tabs        tabs-init
@@ -92,6 +105,10 @@
       (.setSelectedIndex this index))))
 
 (defattributes
+  :tabs
+  (:selected-tab-style [c _ _])
+  (:unselected-tab-style [c _ _])
+
   :tab
   (:title [c _ _])
   (:tool-tip [c _ _])

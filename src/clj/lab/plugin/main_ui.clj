@@ -425,7 +425,9 @@ inserting a fixed first parameter, which is the app."
                  :caret-color 0xFFFFFF}
    :split       {:divider-size 3
                  :background 0x666666
-                 :divider-background 0x999999}})
+                 :divider-background 0x999999}
+   :tabs        {:selected-tab-style   {:border [:line 0x00FFFF 1]}
+                 :unselected-tab-style {:border :none}}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Plugin definition

@@ -7,17 +7,12 @@
     - This has some deeper implications since all UI actions won't be executed in the UI thread but in the agent's.
     - Unless the ui/action macro is not part of the API but is used in the library internally.
 
-#### Tabs
-  - Higlight the current one.
-  - Change the default wrapping mode: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
-
 #### Events
   - Close the channels that listen to components that don't exist anymore.
   - Create a :keymap attribute for components so that keymaps can be registered to them.
 
 #### Code Editor
   - Move the following code editor features to their own plugin.
-This could be done by adding a hook to an editor creation templates function.
     - Undo/redo (?)
 
   - Features:
@@ -61,6 +56,11 @@ This could be done by adding a hook to an editor creation templates function.
       - (?) Allow plugins to define their own dependencies.
 
 ## DONE
+
+#### Tabs
+  - Higlight the current one.
+  - Change the default wrapping mode.
+    - Not conveninet: given the way the current L&F is overriden the arrows to navigate tabs in Scroll mode don't show up.
 
 ### UI
   - Abstraction for events
