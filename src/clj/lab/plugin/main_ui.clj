@@ -363,7 +363,7 @@ and signals the highlighting process."
         editor (current-text-editor @ui)
         dialog (atom nil)]
     (when editor
-      (reset! dialog (-> (tplts/line-number-dialog) 
+      (reset! dialog (-> (tplts/line-number-dialog)
                        ui/init
                        (ui/update :button ui/attr :stuff dialog)
                        (ui/update :#ok ui/listen :click ::goto-line-ok)
@@ -375,9 +375,11 @@ and signals the highlighting process."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event handler
 
-(defn keyword->fn [k]
+(defn- kw->fn [k]
   (or (-> k str (subs 1) symbol resolve)
       (throw (Exception. (str "The keyword " k " does not resolve to a var.")))))
+
+(def ^:private memoized-kw->fn (memoize kw->fn))
 
 (defn event-handler
   "Replaces the UI's default event-handler implementation, 
@@ -387,7 +389,7 @@ inserting a fixed first parameter, which is the app."
     (or (fn? f) (var? f))
       (f app e)
     (keyword? f)
-      ((keyword->fn f) app e)
+      ((memoized-kw->fn f) app e)
     (util/channel? f)
       (async/put! f [app e])
     :else
