@@ -78,7 +78,10 @@ includes a label and a closing button."
                  :title          title
                  :current-dir    dir}])
 
-(defn search-file-dialog [owner title]
+(defn search-file-dialog
+  "Defines the dialog that's used to search and
+open files."
+  [owner title]
   [:dialog {:title title
             :size  [500 150]
             :modal true
@@ -86,7 +89,7 @@ includes a label and a closing button."
     [:panel {:layout [:box :page]}
       [:text-field]
       [:panel {:layout :border}
-        [:scroll [:tree {:hide-root true}
+        [:scroll [:tree {:id "results" :hide-root true}
                    [:tree-node {:item :root}]]]]]])
 
 (defn search-text-dialog [owner title]

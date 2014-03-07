@@ -61,8 +61,8 @@ and adds new found ones."
                              (ui/attr :stuff {:dialog dialog :file %})))
                      (reduce ui/add (ui/init [:tree-node {:item ::root}])))]
         (ui/action
-          (ui/update! dialog :tree ui/remove-all)
-          (ui/update! dialog :tree ui/add root))))))
+          (ui/update! dialog :#results ui/remove-all)
+          (ui/update! dialog :#results ui/add root))))))
 
 (defn selected-index
   "Returns the index for the currently selected item 
@@ -75,20 +75,20 @@ in the children's tree root node."
       (util/index-of (ui/children root) node))))
 
 (defn select-next-node [dialog app e]
-  (let [tree   (ui/find @dialog :tree)
+  (let [tree   (ui/find @dialog :#results)
         root   (first (ui/children tree))
         index  (inc (or (selected-index tree) -1))]
     (when (<= index (dec (count (ui/children root))))
-      (ui/update! dialog :tree ui/selection index))))
+      (ui/update! dialog :#results ui/selection index))))
 
 (defn select-prev-node [dialog app e]
-  (let [tree   (ui/find @dialog :tree)
+  (let [tree   (ui/find @dialog :#results)
         index  (dec (or (selected-index tree) 1))]
     (when (>= index 0)
-      (ui/update! dialog :tree ui/selection index))))
+      (ui/update! dialog :#results ui/selection index))))
 
 (defn open-selected-node [dialog app e]
-  (let [tree   (ui/find @dialog :tree)
+  (let [tree   (ui/find @dialog :#results)
         sel-id (ui/selection tree)
         node   (ui/find tree (ui/selector# sel-id))]
     (when node
