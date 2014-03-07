@@ -52,7 +52,7 @@ or the current document if non is specified."
   ([app]
     (update-outline-tree! app (lab/current-document app)))
   ([app doc]
-    (let [ui         (:ui app)
+    (let [ui         (:ui @app)
           outline    (ui/find @ui :#outline-tree)]
       (when outline
         (if-not doc
