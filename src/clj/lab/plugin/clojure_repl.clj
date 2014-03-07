@@ -130,7 +130,7 @@ to the ui in the bottom section."
         in      (hook-up-repl repl console)
         console (ui/attr console :stuff {:in in :repl repl})
         tab     (-> (tplts/tab)
-                  (ui/update :button ui/ignore-all :click)
+                  (ui/update :button ui/ignore-all :click) ; Remove all :click listeners
                   (ui/update :button ui/listen :click ::close-tab-repl)
                   (ui/update :label ui/attr :text (str "REPL: "(:name repl)))
                   (ui/add [:scroll console])
@@ -145,7 +145,7 @@ to the ui in the bottom section."
   "Ask the user to select a project file and fire a 
 child process with a running repl."
   [e]
-  (let [app           (-> e :app deref :ui)
+  (let [app           (:app e)
         dir           (lab/config @app :current-dir)
         file-dialog   (ui/init (tplts/open-file-dialog dir))
         [result file] (ui/attr file-dialog :result)]
@@ -157,7 +157,7 @@ child process with a running repl."
 (defn open-repl!
   "Fires up a bare REPL."
   [e]
-  (let [app  (-> e :app deref :ui)
+  (let [app  (:app e)
         repl (start-repl)]
     (swap! app update-in [:repls] conj repl)
     (repl-tab app repl)))
