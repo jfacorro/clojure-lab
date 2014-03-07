@@ -16,6 +16,7 @@
                  ; gtk+
                  #_[local/gtk "4.1"]
                  #_[local/gtk-bindings "4.1"]]
+  :uberjar-name "lab.jar"
   :java-source-paths ["src/java"]
   :source-paths ["src/clj"]
   :manifest {"SplashScreen-Image" "logo.png"}
