@@ -1,4 +1,4 @@
-(defproject clojure-lab "0.0.1-SNAPSHOT"
+(defproject clojure-lab "0.1.0-SNAPSHOT"
   :description "Clojure Lab - A development environment for Clojure in Clojure."
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/core.match "0.2.1"]
