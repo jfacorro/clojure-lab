@@ -52,7 +52,7 @@ or the current document if non is specified."
   ([app]
     (update-outline-tree! app (lab/current-document app)))
   ([app doc]
-    (let [ui         (:ui @app)
+    (let [ui         (:ui app)
           outline    (ui/find @ui :#outline-tree)]
       (when outline
         (if-not doc
@@ -102,7 +102,7 @@ and content"
 
 (defn- text-editor-hook [f doc]
   (let [editor (f doc)
-        g      (fn [e] (#'update-outline-tree! (:app e) doc))
+        g      (fn [e] (#'update-outline-tree! @(:app e) doc))
         ch     (util/timeout-channel 500 g)]
     (-> editor
       (ui/listen :insert ch)
