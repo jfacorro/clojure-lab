@@ -138,7 +138,7 @@ associated to it."
     doc
     (let [file-dialog   (ui/init (tplts/save-file-dialog current-dir))
           [result file] (ui/attr file-dialog :result)]
-      (when (= result :ok)
+      (when (= result :accept)
         (swap! doc doc/bind (.getCanonicalPath ^java.io.File file) :new? true))
       result)))
 
