@@ -404,7 +404,8 @@ inserting a fixed first parameter, which is the app."
       (util/channel? f)
         (async/put! f e)
       :else
-        (throw (Exception. "Not supported event handler value, it must be a function or a ns qualified keyword.")))))
+        (throw (ex-info "Not supported event handler, it must be a function, an ns qualified keyword or a channel."
+                        {:handler f})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Default styles
