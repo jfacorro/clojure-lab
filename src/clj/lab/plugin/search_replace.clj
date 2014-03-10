@@ -136,7 +136,8 @@ loaded, otherwise the '.' directory is used."
   (let [ch  (async/chan)]
     (async/go-loop []
       (when-let [e (async/<! ch)]
-        (let [{:keys [editor dialog]} (ui/attr (:source e) :stuff)
+        (let [{:keys [dialog]} (ui/attr (:source e) :stuff)
+              editor  (:editor (ui/attr @dialog :stuff))
               ptrn    (-> (ui/find @dialog :text-field) model/text)
               txt     (model/text editor)
               results (util/find-limits ptrn txt)]
@@ -148,10 +149,10 @@ loaded, otherwise the '.' directory is used."
 
 (defn- close-search-text
   "Closes the channel and removes all highlights from the editor."
-  [ch hls e]
-  (let [editor (-> (ui/find (:source e) :button) (ui/attr :stuff) :editor)]
-    (ui/action (doseq [hl @hls] (ui/remove-highlight editor hl)))
-    (async/close! ch)))
+  [e]
+  (let [{:keys [editor chan highlights]} (-> (:source e) (ui/attr :stuff))]
+    (ui/action (doseq [hl @highlights] (ui/remove-highlight editor hl)))
+    (async/close! chan)))
 
 (defn- search-text-in-editor
   "Looks for matches of the entered text in the current editor."
@@ -165,9 +166,10 @@ loaded, otherwise the '.' directory is used."
             ch     (search-channel hls)]
         (reset! dialog (-> (tplts/search-text-dialog @ui "Search Text")
                          ui/init
-                         (ui/update :dialog ui/listen :closing (partial #'close-search-text ch hls))
-                         (ui/update :button ui/attr :stuff {:dialog dialog :editor editor})
-                         (ui/update :button ui/listen :click ch)))
+                         (ui/update :#search-text ui/attr :stuff {:chan ch :highlights hls :editor editor})
+                         (ui/update :#search-text ui/listen :closing ::close-search-text)
+                         (ui/update [:#search-text :button] ui/attr :stuff {:dialog dialog})
+                         (ui/update [:#search-text :button] ui/listen :click ch)))
         (ui/attr @dialog :visible true)))))
 
 (def ^:private keymaps

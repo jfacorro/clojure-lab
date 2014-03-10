@@ -87,13 +87,15 @@ open files."
             :modal true
             :owner owner}
     [:panel {:layout [:box :page]}
-      [:text-field]
+      [:text-field {:border :none}]
       [:panel {:layout :border}
-        [:scroll [:tree {:id "results" :hide-root true}
-                   [:tree-node {:item :root}]]]]]])
+        [:scroll {:border :none}
+          [:tree {:id "results" :hide-root true}
+            [:tree-node {:item :root}]]]]]])
 
 (defn search-text-dialog [owner title]
-  [:dialog {:title title
+  [:dialog {:id "search-text"
+            :title title
             :size  [500 150]
             :modal false
             :owner owner}
