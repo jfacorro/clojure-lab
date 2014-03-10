@@ -82,7 +82,8 @@ includes a label and a closing button."
   "Defines the dialog that's used to search and
 open files."
   [owner title]
-  [:dialog {:title title
+  [:dialog {:id "search-file"
+            :title title
             :size  [500 150]
             :modal true
             :owner owner}

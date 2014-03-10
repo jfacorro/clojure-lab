@@ -45,8 +45,9 @@ directories are returnes. Otherwise the file-seq for the
 files for which any part of its full path matches the
 search string. Finally it removes all the previos items
 and adds new found ones."
-  [dialog e]
-  (let [field (:source e)
+  [e]
+  (let [field  (:source e)
+        dialog (:dialog (ui/attr field :stuff))
         s      (model/text field)]
     (when (< 2 (count s))
       (let [files  (file-explorer-current-dirs (:app e))
@@ -65,50 +66,6 @@ and adds new found ones."
           (ui/update! dialog :#results ui/remove-all)
           (ui/update! dialog :#results ui/add root))))))
 
-(defn selected-index
-  "Returns the index for the currently selected item 
-in the children's tree root node."
-  [tree]
-  (let [sel-id (ui/selection tree)
-        root   (first (ui/children tree))
-        node   (ui/find root (ui/selector# sel-id))]
-    (when sel-id
-      (util/index-of (ui/children root) node))))
-
-(defn select-next-node [dialog e]
-  (let [tree   (ui/find @dialog :#results)
-        root   (first (ui/children tree))
-        index  (inc (or (selected-index tree) -1))]
-    (when (<= index (dec (count (ui/children root))))
-      (ui/update! dialog :#results ui/selection index))))
-
-(defn select-prev-node [dialog e]
-  (let [tree   (ui/find @dialog :#results)
-        index  (dec (or (selected-index tree) 1))]
-    (when (>= index 0)
-      (ui/update! dialog :#results ui/selection index))))
-
-(defn open-selected-node [dialog e]
-  (let [tree   (ui/find @dialog :#results)
-        sel-id (ui/selection tree)
-        node   (ui/find tree (ui/selector# sel-id))]
-    (when node
-      (open-document (assoc e :source node)))))
-
-(def file-open-keymap
-  (km/keymap 'file-open-dialog
-    :local
-    {:keystroke "down" :fn #'select-next-node :name "Select next node"}
-    {:keystroke "up" :fn #'select-prev-node :name "Select previous node"}
-    {:keystroke "enter" :fn #'open-selected-node :name "Open selected node"}))
-
-(defn handle-key [dialog e]
-  (when (= :pressed (:event e))
-    (let [kss  (ui/key-stroke (dissoc e :source))
-          cmd  (apply km/find-or file-open-keymap kss)]
-      (when cmd
-        ((:fn cmd) dialog e)))))
-
 (defn- search-open-file
   "Creates a dialog with a text field that allows to search
 for files whose complete path match the text provided. If the
@@ -117,14 +74,15 @@ loaded, otherwise the '.' directory is used."
   [e]
   ;; Add ESC as an exit dialog key.
   (let [dialog (atom nil)
-        ch     (util/timeout-channel 200 (partial #'search-file dialog))]
+        ch     (util/timeout-channel 500 #'search-file)
+        owner  (-> e :app deref :ui deref)]
     (ui/action
       (reset! dialog
-            (-> (tplts/search-file-dialog (-> e :app deref :ui deref) "Search & Open File")
+            (-> (tplts/search-file-dialog owner "Search & Open File")
               ui/init
-              (ui/update :text-field ui/listen :key (partial #'handle-key dialog))
-              (ui/update :text-field ui/listen :insert ch)
-              (ui/update :text-field ui/listen :delete ch)))
+              (ui/update [:#search-file :text-field] ui/attr :stuff {:dialog dialog})
+              (ui/update [:#search-file :text-field] ui/listen :insert ch)
+              (ui/update [:#search-file :text-field] ui/listen :delete ch)))
       ;; Show the modal dialog without modifying the atom so that
       ;; there's no retry when the compare-and-set! is done on the atom.
       (ui/update @dialog :dialog ui/attr :visible true))))
