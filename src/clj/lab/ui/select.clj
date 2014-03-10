@@ -91,12 +91,15 @@ For example:
              parent)
         path)))
 
-(defn- parents-match? [node [p & preds]]
-  (if p
-    (if (and node (p (zip/node node)))
+(defn- parents-match? [node [p & preds :as ps]]
+  (cond
+    (nil? p) true
+    (and node (p (zip/node node)))
       (recur (zip/up node) preds)
-      false)
-    true))
+    node
+      (recur (zip/up node) ps)
+    :else
+      false))
 
 (defn- check-alternatives
   [pnode preds single? {:keys [alts path] :as alt-spec}]
