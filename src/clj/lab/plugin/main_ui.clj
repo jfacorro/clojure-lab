@@ -353,7 +353,7 @@ and signals the highlighting process."
             (fn [total i] (if (>= (dec i) 0) (dec i) (dec total)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; 
+;;; Go to line
 
 (defn- goto-line-ok [e]
   (let [dialog (ui/attr (:source e) :stuff)
@@ -448,7 +448,7 @@ inserting a fixed first parameter, which is the app."
               {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
               {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"}
 
-              {:category "Edit", :name "Goto line..." :fn ::goto-line! :keystroke "ctrl g"}
+              {:category "Edit", :name "Go to Line" :fn ::goto-line! :keystroke "ctrl g"}
               {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
               {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
 
