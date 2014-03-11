@@ -7,11 +7,15 @@ the specified root dir."
             [lab.plugin.main-ui :as main]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [clojure-watch.core :refer [start-watch]]))
 
 (declare tree-node-from-file)
 
-(defn file-proxy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Tree nodes creation
+
+(defn- file-proxy
   "Creates a proxy that overrides the toString method
 for the File class so that it returns the (file/directory)'s
 name."
@@ -28,13 +32,13 @@ name."
 (defn- file-node-children
   "Returns a vector of children nodes for the
 file specified, which should be a directory."
-  [app ^java.io.File file]
+  [^java.io.File file]
   (->> file
     .listFiles
     (filter (comp not hidden?))
     (sort-by #(if (.isDirectory ^java.io.File %) (str " " (.getName ^java.io.File  %)) (.getName ^java.io.File %)))
     (map file-proxy)
-    (mapv #(tree-node-from-file app % true))))
+    (mapv #(tree-node-from-file % true))))
 
 (defn- lazy-add-to-dir
   "Lazily add the file nodes to this node if it
@@ -48,16 +52,16 @@ currently has no children."
     (when (empty? (ui/children node))
       (ui/update! ui (ui/selector# id)
         (partial reduce ui/add)
-        (file-node-children app file)))))
+        (file-node-children file)))))
 
 (defn- tree-node-from-file
   "Creates a tree node with the supplied file as its item.
 If the arg is a directory, all its children are added
 recursively."
-  [app ^java.io.File file & [lazy]]
+  [^java.io.File file & [lazy]]
   (if (.isDirectory file)
     (if-not lazy
-      (into [:tree-node {:item file}] (file-node-children app file))
+      (into [:tree-node {:item file}] (file-node-children file))
       (let [id       (ui/genid)]
         [:tree-node {:id id
                      :item file
@@ -65,14 +69,39 @@ recursively."
                      :listen [:expansion ::lazy-add-to-dir]}]))
     [:tree-node {:item file :leaf true}]))
 
+(defn- file-node [path x]
+  (as-> (ui/attr x :item) item
+    (= path (and item (instance? java.io.File item) (.getCanonicalPath item)))))
+
+(defn- handle-file-change [app event path]
+  (try 
+    (let [file   (file-proxy (io/file path))
+          parent (.getParent file)
+          ui     (:ui @app)]
+      (case event
+        :delete
+          (when-let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node path)]])]
+            (ui/action 
+              (ui/update! ui (ui/parent (ui/attr node :id)) ui/remove node)))
+        :create
+          (let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node parent)]])]
+            (ui/action 
+              (ui/update! ui (ui/selector# (ui/attr node :id))
+                             ui/add (tree-node-from-file file true))))))
+    (catch Exception ex
+      (prn ex)
+      (.printStackTrace ex))))
+
 (defn load-dir
   "Loads the file tree for the given path. If its a file
 then the parent directory is considered the root of the 
 tree. Returns a tree node."
-  [app root-dir]
-  (let [root  ^java.io.File (file-proxy root-dir)
-        root  (if (.isDirectory root) root (.getParentFile root))]
-    (tree-node-from-file app root false)))
+  [root-dir]
+  (let [root ^java.io.File (file-proxy root-dir)]
+    (tree-node-from-file root false)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Open document handlers
 
 (defn- open-document-tree
   "Opens the document that's selected in the tree."
@@ -95,25 +124,46 @@ tree. Returns a tree node."
   (when (and (= :pressed event) (= description :enter))
     (open-document-tree app source)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; File explorer tab creation
+
+(defn- stop-all-watches! [app]
+  (let [ui        (:ui @app)
+        watchers  (-> (ui/find @ui :#file-explorer) (ui/attr :stuff))]
+    ;; Cancel all directory watches
+    (doseq [w watchers] (future-cancel w))
+    ;; Empty the watches collection
+    (ui/update! ui :#file-explorer ui/attr :stuff nil))
+
+(defn- close-file-explorer [e]
+  (stop-all-watches! (:app e))
+  (tplts/close-tab-button e)))
+
 (defn- file-explorer
   [app]
   (-> (tplts/tab "file-explorer")
     (ui/update :label ui/attr :text "File Explorer")
-    (ui/add [:scroll {:border :none}
+    (ui/update [:panel :button] ui/ignore-all :click)
+    (ui/update [:panel :button] ui/listen :click ::close-file-explorer)
+    (ui/add [:scroll
               [:tree {:hide-root true
                       :listen [:click ::open-document-tree-click
                                :key ::open-document-tree-enter]}
                 [:tree-node {:id "file-explorer-root" :item ::root}]]])
     (ui/apply-stylesheet (:styles @app))))
 
-(defn- add-dir [tab app dir]
-  (let [root   (ui/find tab :#file-explorer-root)]
-    ;; Since the root is not updated automatically when
-    ;; nodes are added, we need to remove the root and add
-    ;; it again.
-    (-> tab
-      (ui/update :tree ui/remove root)
-      (ui/update :tree ui/add (ui/add root (load-dir app dir))))))
+(defn- watch-dir!
+  "Creates a future in which the a watching service is run and
+adds the future to the :stuff in the file explorer tab. Futures
+should be cancelled when the tab is closed."
+  [app dir]
+  (let [f (future (start-watch [{:path (.getCanonicalPath dir)
+                                 :event-types [:create :delete]
+                                 :callback (partial #'handle-file-change app)
+                                 :options {:recursive true}}]))]
+    (ui/update! (:ui @app)
+                :#file-explorer
+                #(as-> (ui/attr % :stuff) stuff (ui/attr % :stuff (conj stuff f))))))
 
 (defn- open-directory
   "Create the file explorer tab if it doesn't exist and add
@@ -128,9 +178,10 @@ structure."
         dir          ^java.io.File (when dir (io/file (.getCanonicalPath ^java.io.File dir)))]
     (when (= result :accept)
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
-      (if (ui/find @ui :#file-explorer)
-        (ui/update! ui :#file-explorer add-dir app dir)
-        (ui/update! ui :#left ui/add (-> (file-explorer app) (add-dir app dir)))))))
+      (when-not (ui/find @ui :#file-explorer)
+        (ui/update! ui :#left ui/add (file-explorer app)))
+      (ui/update! ui [:#file-explorer :#file-explorer-root] ui/add (load-dir dir))
+      (watch-dir! app dir))))
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)

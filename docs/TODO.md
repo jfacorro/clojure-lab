@@ -8,7 +8,6 @@
     - Unless the ui/action macro is not part of the API but is used in the library internally.
 
 #### Events
-  - Close the channels that listen to components that don't exist anymore.
   - Create a :keymap attribute for components so that keymaps can be registered to them.
 
 #### Code Editor
@@ -20,9 +19,6 @@
     - Find/replace (in an open file, in all files from the file explorer, in all files of a selected folder).
     - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
     - Wrap text.
-
-#### File Explorer
-  - Listen for changes in current dir structure.
 
 #### Code Outline:
   - When going to line, position the line in the top (or middle) of the scroll.
@@ -79,6 +75,8 @@
     - Remove all defaults and replace them all => not practical
     - Override/replace the ones that are not good enough (e.g. CTRL+TAB for tabbed pane)?
   - Implement listen/ignore functions to add and remove event handlers from a component.
+  - Close the channels that listen to components that don't exist anymore.
+    - Not necessary since parked go block and their related channels are GC'ed if done right.
 
 #### Code Editor
   - Syntax high-lighting.
@@ -98,6 +96,7 @@
 
 #### File Explorer
   - Load directories lazily
+  - Listen for changes in current dir structure.
 
 #### Parsley
   - Modify parsley in order to be able to find node index but keeping log(n).
