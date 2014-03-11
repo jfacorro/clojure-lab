@@ -11,12 +11,19 @@
 
 (defn tree-node-init [c] 
   (let [ab        (atom nil)
+        meta-data (atom nil)
         children  (when-not (ui/attr c :leaf) (to-array []))]
-    (proxy [JTree$DynamicUtilTreeNode lab.ui.protocols.Implementation]
+    (proxy [JTree$DynamicUtilTreeNode
+            lab.ui.protocols.Implementation
+            clojure.lang.IObj]
            [(ui/attr c :item) children]
       (abstract
         ([] @ab)
-        ([x] (reset! ab x) this)))))
+        ([x] (reset! ab x) this))
+      (meta [] @meta-data)
+      (withMeta [x]
+        (reset! meta-data x)
+        this))))
 
 (defn- node-expansion
   "Takes a TreeExpansionEvent, looks for the expanded node
@@ -67,15 +74,25 @@ event can be :click or :key."
   :tree        tree-init
   :tree-node   tree-node-init)
 
+(defn- update-tree-from-node [node]
+  (let [root (.getRoot node)
+          tree ^JTree (:tree (meta root))]
+      (when (and tree (.getModel tree))
+        (-> tree .getModel (.reload node)))))
+
 (extend-type DefaultMutableTreeNode
   Component
   (add [this child]
     (.add this child)
+    (update-tree-from-node this)
     this)
   (remove [this child]
-    (.remove this ^DefaultMutableTreeNode child))
+    (.remove this ^DefaultMutableTreeNode child)
+    (update-tree-from-node this)
+    this)
   (children [this]
     (.children this))
+  (focus [this] this)
 
   Implementation
   (abstract
@@ -87,7 +104,7 @@ event can be :click or :key."
 (extend-type JTree
   Component
   (add [this child]
-    (let [model (DefaultTreeModel. child)]
+    (let [model (DefaultTreeModel. (with-meta child {:tree this}))]
       (.setModel this model)
       this))
   (remove [this ^TreeNode child]
