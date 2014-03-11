@@ -3,16 +3,16 @@
   (:require [clojure.core.async :as async]
             [lab.core :as lab]
             [lab.util :as util]
+            [lab.core [keymap :as km]
+                      [plugin :as plugin]
+                      [lang :as lang]]
+            [lab.model [document :as doc]
+                       [protocols :as model]]
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
                     [templates :as tplts]]
-            lab.ui.swing.core
-            [lab.core [keymap :as km]
-                      [plugin :as plugin]
-                      [lang :as lang]]
-            [lab.model.document :as doc]
-            [lab.model.protocols :as model]))
+            lab.ui.swing.core))
 
 (declare document-tab)
 
