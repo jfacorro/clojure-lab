@@ -51,11 +51,12 @@
     JFileChooser/ERROR_OPTION    [:error  chosen]))
 
 (defn- option-dialog-open [c]
-  (let [title   (ui/attr c :title)
+  (let [owner   (ui/attr c :owner)
+        title   (ui/attr c :title)
         msg     (ui/attr c :message)
         options (ui/attr c :options)]
     (JOptionPane/showConfirmDialog
-        nil
+        (when owner (impl owner))
         ^Object (ui/attr c :message)
         ^String (ui/attr c :title)
         ^int (options-type options))))
@@ -76,6 +77,10 @@ is set before processing other attribute's code."
     (.setSize ^JDialog (impl c) (util/dimension w h)))
   (:title [c _ v]
     (.setTitle ^JDialog (impl c) v))
+  (:visible [c _ v]
+    (when (ui/attr c :owner)
+      (.setLocationRelativeTo (impl c) (impl (ui/attr c :owner))))
+    (.setVisible (impl c) v))
 
   :file-dialog
   (:title [c _ v]
