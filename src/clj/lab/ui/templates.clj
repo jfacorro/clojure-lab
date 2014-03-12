@@ -53,8 +53,8 @@ includes a label and a closing button."
     (ui/caret-position 0)))
 
 (defn confirm
-  [title message]
-  (-> [:option-dialog {:title title, :message message, :options :yes-no-cancel, :visible true}]
+  [title message owner]
+  (-> [:option-dialog {:owner owner, :title title, :message message, :options :yes-no-cancel, :visible true}]
     ui/init
     (ui/attr :result)))
 

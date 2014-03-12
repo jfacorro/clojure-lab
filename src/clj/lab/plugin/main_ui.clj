@@ -95,7 +95,8 @@ should be closed and false otherwise."
   (if-not (doc/modified? @doc)
     true
     (let [result (tplts/confirm "Save changes"
-                                "Do you want to save the changes made to this file before closing?")]
+                                "Do you want to save the changes made to this file before closing?"
+                                (-> @app :ui deref))]
       (if (= result :ok)
         (save-document-ui! app tab)
         result))))
@@ -269,7 +270,9 @@ and signals the highlighting process."
       (ui/apply-stylesheet (:styles @app)))))
 
 (defn- exit! [e]
-  (let [result (tplts/confirm "Bye bye" "Are you sure you want to leave this magical experience?")]
+  (let [result (tplts/confirm "Bye bye"
+                              "Are you sure you want to leave this magical experience?"
+                              (-> e :app deref :ui deref))]
     (if (= result :ok)
         (System/exit 0))))
 
