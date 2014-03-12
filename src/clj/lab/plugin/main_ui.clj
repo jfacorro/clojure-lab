@@ -68,7 +68,7 @@ and call the app's open-document function."
   [e]
   (let [app           (:app e)
         curr-dir      (lab/config @app :current-dir)
-        file-dialog   (ui/init (tplts/open-file-dialog curr-dir))
+        file-dialog   (ui/init (tplts/open-file-dialog curr-dir @(:ui @app)))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
       (open-document app (.getCanonicalPath ^java.io.File file)))))
@@ -133,10 +133,11 @@ associated to it."
 
 (defn- assign-path!
   "When saving, if the document doesn't have a path, get one from the user."
-  [doc current-dir]
+  [app doc current-dir]
   (if (doc/path @doc)
     doc
-    (let [file-dialog   (ui/init (tplts/save-file-dialog current-dir))
+    (let [ui            (:ui @app)
+          file-dialog   (ui/init (tplts/save-file-dialog current-dir @ui))
           [result file] (ui/attr file-dialog :result)]
       (when (= result :accept)
         (swap! doc doc/bind (.getCanonicalPath ^java.io.File file) :new? true))
@@ -147,7 +148,7 @@ associated to it."
         tab-id  (ui/attr tab :id)
         doc     (-> tab (ui/find :text-editor) (ui/attr :doc))
         cur-dir (lab/config @app :current-dir)
-        result  (assign-path! doc cur-dir)]
+        result  (assign-path! app doc cur-dir)]
     (when (doc/path @doc)
         (ui/update! ui (ui/selector# tab-id)
                     update-tab-title (doc/name @doc))
@@ -373,7 +374,7 @@ and signals the highlighting process."
         editor (current-text-editor @ui)
         dialog (atom nil)]
     (when editor
-      (reset! dialog (-> (tplts/line-number-dialog)
+      (reset! dialog (-> (tplts/line-number-dialog @ui)
                        ui/init
                        (ui/update :button ui/attr :stuff dialog)
                        (ui/update :#ok ui/listen :click ::goto-line-ok)

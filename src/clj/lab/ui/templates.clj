@@ -59,20 +59,23 @@ includes a label and a closing button."
     (ui/attr :result)))
 
 (defn save-file-dialog
-  [dir]
-  [:file-dialog {:type :save
+  [dir owner]
+  [:file-dialog {:owner owner
+                 :type :save
                  :visible true
                  :current-dir dir}])
 
 (defn open-file-dialog
-  [dir]
-  [:file-dialog {:type :open
+  [dir owner]
+  [:file-dialog {:owner owner
+                 :type :open
                  :visible true
                  :current-dir dir}])
 
 (defn directory-dialog
-  [title dir]
-  [:file-dialog {:type           :open,
+  [title dir owner]
+  [:file-dialog {:owner owner
+                 :type           :open,
                  :selection-type :dir-only,
                  :visible        true,
                  :title          title
@@ -108,8 +111,9 @@ open files."
         [:scroll [:tree {:hide-root true}
                    [:tree-node {:item :root}]]]]]])
 
-(defn line-number-dialog []
-  [:dialog {:title "Enter Line Number"
+(defn line-number-dialog [owner]
+  [:dialog {:owner owner
+            :title "Enter Line Number"
             :size  [300 85]
             :modal true}
     [:panel {:layout [:box :page]}

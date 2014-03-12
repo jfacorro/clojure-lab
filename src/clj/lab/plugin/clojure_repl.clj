@@ -147,7 +147,7 @@ child process with a running repl."
   [e]
   (let [app           (:app e)
         dir           (lab/config @app :current-dir)
-        file-dialog   (ui/init (tplts/open-file-dialog dir))
+        file-dialog   (ui/init (tplts/open-file-dialog dir @(:ui @app)))
         [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
       (let [repl (start-repl (.getCanonicalPath ^java.io.File file))]

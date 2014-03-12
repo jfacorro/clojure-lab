@@ -173,7 +173,7 @@ structure."
   (let [app          (:app e)
         ui           (:ui @app)
         dir          (lab/config @app :current-dir)
-        dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir))
+        dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir @ui))
         [result dir] (ui/attr dir-dialog :result)
         dir          ^java.io.File (when dir (io/file (.getCanonicalPath ^java.io.File dir)))]
     (when (= result :accept)

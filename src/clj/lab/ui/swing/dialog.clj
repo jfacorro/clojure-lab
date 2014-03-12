@@ -36,10 +36,11 @@
 
 (defn- file-dialog-open [c]
   (let [x       ^JFileChooser (impl c)
+        owner   (as-> (ui/attr c :owner) owner (when owner (impl owner)))
         result  (case (ui/attr c :type)
-                  :open   (.showOpenDialog x nil)
-                  :save   (.showSaveDialog x nil)
-                  :custom (.showDialog x nil (ui/attr c :accept-label)))]
+                  :open   (.showOpenDialog x owner)
+                  :save   (.showSaveDialog x owner)
+                  :custom (.showDialog x owner (ui/attr c :accept-label)))]
      [result (.getSelectedFile x)]))
 
 (defn- file-dialog-result [result chosen]
