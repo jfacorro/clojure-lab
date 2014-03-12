@@ -133,11 +133,11 @@ tree. Returns a tree node."
     ;; Cancel all directory watches
     (doseq [w watchers] (future-cancel w))
     ;; Empty the watches collection
-    (ui/update! ui :#file-explorer ui/attr :stuff nil))
+    (ui/update! ui :#file-explorer ui/attr :stuff nil)))
 
 (defn- close-file-explorer [e]
   (stop-all-watches! (:app e))
-  (tplts/close-tab-button e)))
+  (tplts/close-tab-button e))
 
 (defn- file-explorer
   [app]

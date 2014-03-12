@@ -342,19 +342,21 @@ and signals the highlighting process."
         tab   (current-document-tab @ui)
         tabs  (ui/find @ui :#center)
         children (ui/children tabs)
+        total (count children)
         i     (->> children
                 (keep-indexed #(when (= tab %2) %1))
                 first
-                (move (count children)))]
-    (ui/update! ui :#center ui/selection i)))
+                (move total))]
+    (when (pos? total)
+      (ui/update! ui :#center ui/selection i))))
 
 (defn next-tab [e]
   (move-tab e
-            (fn [total i] (if (< (inc i) total) (inc i) 0))))
+            (fn [total i] (if (and i (< (inc i) total)) (inc i) 0))))
 
 (defn prev-tab [e]
   (move-tab e
-            (fn [total i] (if (>= (dec i) 0) (dec i) (dec total)))))
+            (fn [total i] (if (and i (>= (dec i) 0)) (dec i) (dec total)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Go to line
