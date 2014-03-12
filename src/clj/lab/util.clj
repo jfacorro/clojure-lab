@@ -48,6 +48,15 @@ wins. Returns a channel that takes the input events."
       (when-let [lim (when (.find m) [(.start m) (.end m)])]
         (cons lim (find-limits m))))))
 
+(defn find-char
+  "Finds the next char in s for which pred is true,
+  starting to look from position cur, in the direction 
+  specified by dt (1 or -1)."
+  [s cur pred dt]
+  (cond (or (neg? cur) (<= (count s) cur)) nil
+        (pred (get s cur)) cur
+        :else (recur s (+ cur dt) pred dt)))
+
 (defn remove-at
   "Removes the element in the ith position from the given vector."
   [v i]
@@ -57,60 +66,3 @@ wins. Returns a channel that takes the input events."
   "Takes a vector and returns the index of x."
   [^clojure.lang.PersistentVector v x]
   (.indexOf v x))
-
-;; Reflection
-
-(defmulti class-info (fn [_ info] info))
-
-(defmethod class-info :methods
-  [c info]
-  (->> (#'r/declared-methods c) (sort-by :name)))
-
-(defmethod class-info :constructors
-  [c info]
-  (->> (#'r/declared-constructors c) (sort-by :name)))
-
-(defmethod class-info :fields
-  [c info]
-  (->> (#'r/declared-fields c) (sort-by :name)))
-
-(defn print-info
-  ([clazz]
-    (doseq [[k v] (r/reflect clazz :ancestors true)]
-      (println "-----------------------------")
-      (println k)
-      (println "-----------------------------")
-      (case k
-        :ancestors (println v)
-        :members   (p/print-table (sort-by #(str (:declaring-class %) (type %)) v))
-        :bases     (println v)
-        :flags     (println v))))
-  ([clazz info]
-    (p/print-table (class-info clazz info))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; break
-
-(defn readr [locals prompt exit-code]
-  (let [input (clojure.main/repl-read prompt exit-code)]
-    (if (= input :quit) 
-      exit-code
-      (do
-        (when (= input :locals)
-          (println locals))
-        input))))
-
-(defn contextual-eval [ctx expr]
-  (eval
-    `(let [~@(mapcat (fn [[k v]] [k `'~v]) ctx)]
-      ~expr)))
-
-(defmacro local-context []
-  (let [symbols (keys &env)]
-    `(zipmap '~symbols (list ~@symbols))))
-
-(defmacro break []
-  `(clojure.main/repl
-    :prompt #(print "debug=> ")
-    :read (partial readr (local-context))
-    :eval (partial contextual-eval (local-context))))

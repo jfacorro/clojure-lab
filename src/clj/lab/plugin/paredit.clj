@@ -2,7 +2,7 @@
   (:require [clojure.zip :as zip]
             [clojure.core.match :refer [match]]
             [lab.ui.core :as ui]
-            [lab.util :refer [timeout-channel find-limits]]
+            [lab.util :refer [timeout-channel find-limits find-char]]
             [lab.model.document :as doc]
             [lab.model.protocols :as model]
             [lab.core [plugin :as plugin]
@@ -100,15 +100,6 @@ and the closing delimiter.
           (ui/action
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
-
-(defn- find-char
-  "Finds the next char in s for which pred is true,
-  starting to look from position cur, in the direction 
-  specified by dt (1 or -1)."
-  [s cur pred dt]
-  (cond (or (neg? cur) (<= (count s) cur)) nil
-        (pred (get s cur)) cur
-        :else (recur s (+ cur dt) pred dt)))
 
 (defn- location-index [loc]
   (loop [loc loc
