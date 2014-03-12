@@ -11,7 +11,13 @@
   (:import  [java.nio.file FileSystems]
             [java.io File ]))
 
-(defn- open-document [e]
+;;;;;;;;;;;;;;;;;;;;;;
+;; Search File
+
+(defn- open-document
+  "Check the event for double click or enter key, if so
+open the document associated with the selected item."
+  [e]
   (when (or (= 2 (:click-count e))
             (and (= :pressed (:event e)) (= :enter (:description e))))
     (let [node   (:source e)
@@ -27,10 +33,10 @@
 (defn- file-label [^File file]
   (str (.getName file) " - [" (.getPath file) "]"))
 
-(defn- file-explorer-current-dirs
+(defn- current-dirs
   "Looks for the File Explorer tree root. If it is
 found then the concatenated file-seqs for the loaded
-directories are returnes. Otherwise the file-seq for the
+directories are returned. Otherwise the file-seq for the
 \".\" directory is returned."
   [app]
   (let [root  (ui/find @(:ui @app) :#file-explorer-root)
@@ -51,12 +57,14 @@ and adds new found ones."
   (let [field  (:source e)
         dialog (:dialog (ui/attr field :stuff))
         s      (model/text field)]
-    (when (< 2 (count s))
-      (let [files  (file-explorer-current-dirs (:app e))
+    (if (< (count s) 3)
+      (ui/action (ui/update! dialog :#results ui/remove-all))
+      (let [files  (current-dirs (:app e))
             re     (re-pattern s)
             result (->> files
                      (filter #(re-find re (.getCanonicalPath ^File %)))
-                     (take max-files))
+                     (take max-files)
+                     sort)
             node   [:tree-node {:leaf true
                                 :listen [:click ::open-document
                                          :key ::open-document]}]
@@ -93,19 +101,25 @@ loaded, otherwise the '.' directory is used."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Text
 
-(defn- search-channel [hls]
+(defn- do-search [hls e]
+  (let [dialog  (:dialog (ui/attr (:source e) :stuff))
+        editor  (:editor (ui/attr @dialog :stuff))
+        ptrn    (-> (ui/find @dialog :text-field) model/text)]
+    (when-not (empty? ptrn)
+      (ui/action
+        (doseq [hl @hls] (ui/remove-highlight editor hl))
+        (reset! hls (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888))
+                          (util/find-limits ptrn
+                                            (model/text editor))))))))
+(defn- search-channel
+  "Takes an atom that contains the current highlights for the results
+and creates a channel in which the search is performed."
+  [hls]
   (let [ch  (async/chan)]
     (async/go-loop []
       (when-let [e (async/<! ch)]
-        (let [{:keys [dialog]} (ui/attr (:source e) :stuff)
-              editor  (:editor (ui/attr @dialog :stuff))
-              ptrn    (-> (ui/find @dialog :text-field) model/text)
-              txt     (model/text editor)
-              results (util/find-limits ptrn txt)]
-          (ui/action
-            (doseq [hl @hls] (ui/remove-highlight editor hl))
-            (reset! hls (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888)) results)))
-          (recur))))
+          (do-search hls e)
+          (recur)))
     ch))
 
 (defn- close-search-text

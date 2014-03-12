@@ -33,7 +33,7 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
   "This var should be set by the UI implementation with a macro 
 that runs code in the UI thread."
   [& xs]
-  (throw (Exception. "ui-action-macro has not been set by the implementation.")))
+  (throw (Exception. "action-macro has not been set by the implementation.")))
 
 (defmacro action
   "Macro that uses the UI action macro defined by the implementation."
