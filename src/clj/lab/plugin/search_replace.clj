@@ -101,16 +101,45 @@ loaded, otherwise the '.' directory is used."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Text
 
+(defn- goto-line [e]
+  (when (= 2 (:click-count e))
+    (let [node   (:source e)
+          {:keys [editor position]} (ui/attr node :stuff)]
+      (ui/caret-position editor position))))
+
+(defn- line-at [editor pos]
+  (let [s     (model/text editor)
+        start (util/find-char s pos #{\newline} -1)
+        end   (util/find-char s pos #{\newline} 1)]
+    (.substring s
+                (if start start 0)
+                (if end end (dec (.lenght s))))))
+
+(defn- search-results-node [editor [start end]]
+  [:tree-node {:item   (line-at editor start)
+               :leaf   true
+               :stuff  {:position start :editor editor}
+               :listen [:click ::goto-line]}])
+
+(defn- add-search-results! [dialog results]
+  (let [editor (:editor (ui/attr @dialog :stuff))
+        txt    (model/text editor)
+        items  (mapv (partial search-results-node editor) results)
+        root   (-> [:tree-node {:item :root}] ui/init (ui/add-all items))]
+    (ui/update! dialog [:#search-text :tree] #(-> % ui/remove-all (ui/add root)))))
+
 (defn- do-search [hls e]
   (let [dialog  (:dialog (ui/attr (:source e) :stuff))
         editor  (:editor (ui/attr @dialog :stuff))
-        ptrn    (-> (ui/find @dialog :text-field) model/text)]
-    (when-not (empty? ptrn)
+        ptrn    (model/text (ui/find @dialog :text-field))
+        results (when (seq ptrn) (util/find-limits ptrn (model/text editor)))]
+    (when results
       (ui/action
         (doseq [hl @hls] (ui/remove-highlight editor hl))
         (reset! hls (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888))
-                          (util/find-limits ptrn
-                                            (model/text editor))))))))
+                          results))
+        (add-search-results! dialog results)))))
+
 (defn- search-channel
   "Takes an atom that contains the current highlights for the results
 and creates a channel in which the search is performed."

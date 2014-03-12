@@ -156,11 +156,6 @@ as the abstraction of its implementation."
   (substring [this start end]
     (mp/substring (p/impl this) start end)))
 
-(defn remove-all
-  "Takes a component and removes all of its children."
-  [c]
-  (reduce p/remove c (p/children c)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Abstract protocol implementation for nil
 
@@ -202,6 +197,18 @@ as the abstraction of its implementation."
 (def add #'p/add)
 (def remove #'p/remove)
 (def focus #'p/focus)
+
+(defn remove-all
+  "Takes a component and removes all of its children."
+  [c]
+  (reduce p/remove c (p/children c)))
+
+(defn add-all
+  "Takes a component and removes all of its children."
+  [c children]
+  (reduce p/add c children))
+
+;; Event Listener
 
 (defn listeners [c event]
   (->> (meta c) :listen event (map first)))
