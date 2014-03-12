@@ -40,6 +40,8 @@ directories are returnes. Otherwise the file-seq for the
       (file-seq (io/file "."))
       (apply concat (map file-seq dirs)))))
 
+(def ^:private max-files 25)
+
 (defn- search-file
   "Checks the search text in the field and finds the 
 files for which any part of its full path matches the
@@ -52,8 +54,9 @@ and adds new found ones."
     (when (< 2 (count s))
       (let [files  (file-explorer-current-dirs (:app e))
             re     (re-pattern s)
-            result (filter #(re-find re (.getCanonicalPath ^File %)) files)
-
+            result (->> files
+                     (filter #(re-find re (.getCanonicalPath ^File %)))
+                     (take max-files))
             node   [:tree-node {:leaf true
                                 :listen [:click ::open-document
                                          :key ::open-document]}]
