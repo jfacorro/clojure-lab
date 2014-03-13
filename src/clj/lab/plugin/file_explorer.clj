@@ -4,7 +4,7 @@ the specified root dir."
   (:require [lab.core :as lab]
             [lab.core.keymap :as km]
             [lab.core.plugin :refer [defplugin]]
-            [lab.plugin.main-ui :as main]
+            [lab.plugin.main-ui :refer [open-document]]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [clojure.java.io :as io]
@@ -112,7 +112,7 @@ tree. Returns a tree node."
         node    (ui/find @ui (ui/selector# (ui/selection tree)))
         ^File file (ui/attr node :item)]
     (when (and node (.isFile file))
-      (main/open-document app (.getCanonicalPath file)))))
+      (open-document app (.getCanonicalPath file)))))
 
 (defn- open-document-tree-click
   "Handler for the click event of an item in the tree."
