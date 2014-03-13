@@ -1,13 +1,13 @@
-#The Core of the App
+# The Core of the App
 
-- Document management:
+## Document management
   - Loading a document.
   - Keeps track of the current document that's being worked on.
   - Saving the changes to a modified document.
   - Switching documents.
   - Maps a document to a language (see Lang mgmt).
 
-- Language management:
+## Language management
   - Assigns a language to each opened document.
   - A language is assigned based on rules.
     - The most basic one is the extension of the file.
@@ -19,19 +19,19 @@
     - grammar: special forms, literals (numbers, strings, etc.).
     - lang?: Predicate function that receives a doc and returns true if the language applies to the doc.
 
-- Plugin management:
+## Plugin management
   - Load a plugin.
   - Unload a plugin.
   - Keeps track of what plugins have been loaded.
   - Allow plugins to define their own dependencies (?)
 
-- Keymap management:
+## Keymap management
   - Register keymaps at the :global and :language levels.
     - Consider :local level, which registers the km in the current document.
   - Unregister keymaps at the same levels.
   - Mapper that can be attached to UI controls.
 
-- UI:
+## UI
   - Initial creation.
   - Event Handling plumbing using keymaps.
     - Alternatives:

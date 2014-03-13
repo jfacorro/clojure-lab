@@ -9,3 +9,6 @@
 
 ## Rainbow Delimiters
 - Should not be active for all langs. Therefore adding it via a hook to the editor creation function is not the correct option.
+
+## Menu
+- Some shortcuts don't work: ctrl alt r, ctrl tab (unless the focus is on an editor).
