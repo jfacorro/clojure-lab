@@ -1,4 +1,4 @@
-(ns lab.test.document
+(ns lab.test.model.document
   (:refer-clojure :exclude [name replace])
   (:use clojure.test
         [lab.test :onle [->test ->is]]

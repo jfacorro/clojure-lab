@@ -4,9 +4,9 @@
         [clojure.test :only [deftest is run-tests use-fixtures]])
   (:require [clojure.java.io :as io]
             [lab.model.document :as doc :reload true]))
-;;------------------------------------
+
 (declare delete-file create-file tmp-files)
-;;------------------------------------
+
 (defn temp-document-config
   "Fixture that creates some temp files and sets
   the new document counter to 0."
@@ -17,16 +17,16 @@
       (f))
     (finally
       (dorun (map delete-file tmp-files)))))
-;;------------------------------------
+
 (use-fixtures :once temp-document-config)
-;;------------------------------------
+
 (deftest init-app
   (->test
     default-app
     (->is not= nil)
     (->is not= nil :documents)
     (->is = nil :current-document)))
-;;------------------------------------
+
 (deftest document-operations
   (->test
     default-app
@@ -70,27 +70,20 @@
     
     (as-> x (switch-document x (find-doc-by-name x "tmp")))
     (is (instance? clojure.lang.Atom :current-document))))
-;;------------------------------------
-#_(deftest project-operations
-  (is false))
-;;------------------------------------
-#_(deftest workspace-operations
-  (is false))
-;;------------------------------------
 
 ;;------------------------------------
 ;; Helper functions
-;;------------------------------------
+
 (def tmp-files ["./tmp" "../tmp"])
-;;------------------------------------
+
 (defn delete-file
   "Deletes a file if it exists."
   [path]
   (when (-> path io/file .exists)
     (io/delete-file path)))
-;;------------------------------------
+
 (defn create-file
   "Creates a file with the supplied content."
   [content path]
   (spit path content))
-;;------------------------------------
+
