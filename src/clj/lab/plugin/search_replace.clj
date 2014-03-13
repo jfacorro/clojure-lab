@@ -111,9 +111,7 @@ loaded, otherwise the '.' directory is used."
   (let [s     (model/text editor)
         start (util/find-char s pos #{\newline} -1)
         end   (util/find-char s pos #{\newline} 1)]
-    (.substring s
-                (if start start 0)
-                (if end end (dec (.lenght s))))))
+    (subs s (if start start 0) (if end end (dec (count s))))))
 
 (defn- search-results-node [editor [start end]]
   [:tree-node {:item   (line-at editor start)

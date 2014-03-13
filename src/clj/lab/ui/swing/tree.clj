@@ -4,7 +4,7 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
-            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel TreePath]
+            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel TreePath DefaultTreeModel]
             [javax.swing.event TreeSelectionListener TreeExpansionListener 
                                TreeExpansionEvent]
             [java.awt.event MouseAdapter KeyAdapter]))
@@ -74,11 +74,11 @@ event can be :click or :key."
   :tree        tree-init
   :tree-node   tree-node-init)
 
-(defn- update-tree-from-node [node]
+(defn- update-tree-from-node [^DefaultMutableTreeNode node]
   (let [root (.getRoot node)
-          tree ^JTree (:tree (meta root))]
+        tree ^JTree (:tree (meta root))]
       (when (and tree (.getModel tree))
-        (-> tree .getModel (.reload node)))))
+        (.reload ^DefaultTreeModel (.getModel tree) node))))
 
 (extend-type DefaultMutableTreeNode
   Component

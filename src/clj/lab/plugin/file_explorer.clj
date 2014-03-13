@@ -1,14 +1,15 @@
 (ns lab.plugin.file-explorer
   "Add a global action that creates a tree control with the dirs and files of
 the specified root dir."
-  (:use [lab.core.plugin :only [defplugin]])
   (:require [lab.core :as lab]
             [lab.core.keymap :as km]
+            [lab.core.plugin :refer [defplugin]]
             [lab.plugin.main-ui :as main]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [clojure.java.io :as io]
-            [clojure-watch.core :refer [start-watch]]))
+            [clojure-watch.core :refer [start-watch]])
+  (:import java.io.File))
 
 (declare tree-node-from-file)
 
@@ -19,24 +20,24 @@ the specified root dir."
   "Creates a proxy that overrides the toString method
 for the File class so that it returns the (file/directory)'s
 name."
-  [^java.io.File file]
-  (proxy [java.io.File] [(.getPath file)]
+  [^File file]
+  (proxy [File] [(.getPath file)]
     (toString []
-      (.getName ^java.io.File this))))
+      (.getName ^File this))))
 
 (defn- hidden?
   "Returns true for files or directories that begin with a dot."
-  [^java.io.File file]
+  [^File file]
   (-> file .getName (.startsWith ".")))
 
 (defn- file-node-children
   "Returns a vector of children nodes for the
 file specified, which should be a directory."
-  [^java.io.File file]
+  [^File file]
   (->> file
     .listFiles
     (filter (comp not hidden?))
-    (sort-by #(if (.isDirectory ^java.io.File %) (str " " (.getName ^java.io.File  %)) (.getName ^java.io.File %)))
+    (sort-by (fn [^File x] (if (.isDirectory x) (str " " (.getName x)) (.getName x))))
     (map file-proxy)
     (mapv #(tree-node-from-file % true))))
 
@@ -58,7 +59,7 @@ currently has no children."
   "Creates a tree node with the supplied file as its item.
 If the arg is a directory, all its children are added
 recursively."
-  [^java.io.File file & [lazy]]
+  [^File file & [lazy]]
   (if (.isDirectory file)
     (if-not lazy
       (into [:tree-node {:item file}] (file-node-children file))
@@ -71,11 +72,11 @@ recursively."
 
 (defn- file-node [path x]
   (as-> (ui/attr x :item) item
-    (= path (and item (instance? java.io.File item) (.getCanonicalPath item)))))
+    (= path (and item (instance? File item) (.getCanonicalPath ^File item)))))
 
 (defn- handle-file-change [app event path]
   (try 
-    (let [file   (file-proxy (io/file path))
+    (let [file   ^File (file-proxy (io/file path))
           parent (.getParent file)
           ui     (:ui @app)]
       (case event
@@ -97,7 +98,7 @@ recursively."
 then the parent directory is considered the root of the 
 tree. Returns a tree node."
   [root-dir]
-  (let [root ^java.io.File (file-proxy root-dir)]
+  (let [root ^File (file-proxy root-dir)]
     (tree-node-from-file root false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -109,7 +110,7 @@ tree. Returns a tree node."
   (let [ui      (:ui @app)
         tree    (ui/find @ui (ui/selector# (ui/attr tree :id)))
         node    (ui/find @ui (ui/selector# (ui/selection tree)))
-        ^java.io.File file (ui/attr node :item)]
+        ^File file (ui/attr node :item)]
     (when (and node (.isFile file))
       (main/open-document app (.getCanonicalPath file)))))
 
@@ -156,7 +157,7 @@ tree. Returns a tree node."
   "Creates a future in which the a watching service is run and
 adds the future to the :stuff in the file explorer tab. Futures
 should be cancelled when the tab is closed."
-  [app dir]
+  [app ^File dir]
   (let [f (future (start-watch [{:path (.getCanonicalPath dir)
                                  :event-types [:create :delete]
                                  :callback (partial #'handle-file-change app)
@@ -175,7 +176,7 @@ structure."
         dir          (lab/config @app :current-dir)
         dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir @ui))
         [result dir] (ui/attr dir-dialog :result)
-        dir          ^java.io.File (when dir (io/file (.getCanonicalPath ^java.io.File dir)))]
+        dir          ^File (when dir (io/file (.getCanonicalPath ^File dir)))]
     (when (= result :accept)
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
       (when-not (ui/find @ui :#file-explorer)

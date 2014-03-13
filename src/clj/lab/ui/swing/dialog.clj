@@ -79,8 +79,8 @@ is set before processing other attribute's code."
     (.setTitle ^JDialog (impl c) v))
   (:visible [c _ v]
     (when (ui/attr c :owner)
-      (.setLocationRelativeTo (impl c) (impl (ui/attr c :owner))))
-    (.setVisible (impl c) v))
+      (.setLocationRelativeTo ^JDialog (impl c) (impl (ui/attr c :owner))))
+    (.setVisible ^JDialog (impl c) v))
 
   :file-dialog
   (:title [c _ v]
