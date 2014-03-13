@@ -1,5 +1,5 @@
 (ns lab.core.keymap
-  (:refer-clojure :exclude [find])
+  (:refer-clojure :exclude [find remove])
   (:require [clojure.string :as str]))
 
 (defn- ks->set [ks]
@@ -7,7 +7,7 @@
     (str/split #" ")
     set))
 
-(defn add-command
+(defn- add-command
   [km {ks :keystroke :as cmd}]
   (assoc-in km [:bindings (ks->set ks)] cmd))
 
@@ -49,18 +49,24 @@ is nil the other is returned."
     (nil? child)  parent
     :else         (assoc child :parent parent)))
 
+(defn remove
+  "Append a child keymap to an existinig one. If either one 
+is nil the other is returned."
+  [top km-name]
+  (loop [cur  top
+         prev nil]
+    (cond
+      (nil? cur) top
+      (= (:name cur) km-name)
+        (if (:parent cur)
+          (append (:parent cur) prev)
+          (dissoc prev :parent))
+      :else (recur (:parent cur) cur))))
+
 (defmulti register-multi
-  "Registers a keymap in the app according to its type."
-  (fn [app km] (:type km)))
+  "Registers a keymap in x according to its type."
+  (fn [x km] (:type km)))
 
-(comment
-
-{:name     'keymap-name
- :type     :global ; or :lang or :local
- :binding  {"ctrl O" {:category "File" :name "Open" :fn #'lab.core/open-document :keystroke "ctrl O"}}}
-
-(keymap :catita :global
-  {:category "File" :name "Open" :fn #'keymap :keystroke "ctrl O"}
-  {:category "File" :name "Close" :fn #'keymap :keystroke "ctrl W"})
-
-)
+(defmulti unregister-multi
+  "Registers a keymap in x according to its type."
+  (fn [x km] (:type km)))
