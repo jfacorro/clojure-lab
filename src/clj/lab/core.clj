@@ -8,7 +8,7 @@
   (:import [java.io File]))
 
 (declare 
-  current-document 
+  current-document
   open-document 
   save-document 
   close-document
@@ -72,8 +72,23 @@ default configuration."
 
 (defmethod km/register-multi :local
   [app keymap]
-  (let [doc (current-document app)]
-    (swap! doc update-in [:keymap] km/append keymap)))
+  (when-let [doc (current-document app)]
+    (swap! doc update-in [:keymap] km/append keymap))
+  app)
+
+(defmethod km/unregister-multi :global
+  [app keymap]
+  (update-in app [:keymap] km/remove (:name keymap)))
+
+(defmethod km/unregister-multi :lang
+  [app {lang :lang :as keymap}]
+  (update-in app [:langs lang :keymap] km/remove (:name keymap)))
+
+(defmethod km/unregister-multi :local
+  [app keymap]
+  (when-let [doc (current-document app)]
+    (swap! doc update-in [:keymap] km/remove (:name keymap)))
+  app)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document operations
