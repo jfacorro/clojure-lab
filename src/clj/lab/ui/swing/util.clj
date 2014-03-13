@@ -352,13 +352,13 @@ including itself."
       ps)))
 
 (defn remove-focus-traversal
-  "Remove all focus traversal key binginds for this
+  "Remove all focus traversal key bindings for this
 component and its parents."
   [^JComponent x]
   (let [ks (map keystroke ["ctrl TAB" "ctrl shift TAB"])]
     (doseq [^JComponent x (all-parents x)]
       (let [forward-keys  (set (.getFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS))
             backward-keys (set (.getFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS))]
-        (mapv (partial remove-key-binding x) ks)
+        (doall (map (partial remove-key-binding x) ks))
         (.setFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS (apply disj forward-keys ks))
         (.setFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS (apply disj backward-keys ks))))))

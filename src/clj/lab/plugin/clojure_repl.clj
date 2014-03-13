@@ -169,8 +169,8 @@ child process with a running repl."
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
-              {:category "Clojure > REPL" :name "Project..." :fn ::open-project-repl! :keystroke "ctrl r"}
-              {:category "Clojure > REPL" :name "New..." :fn ::open-repl! :keystroke "ctrl alt r"})
+              {:category "Clojure > REPL" :name "Project" :fn ::open-project-repl! :keystroke "ctrl r"}
+              {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "ctrl alt r"})
    (km/keymap (ns-name *ns*)
               :lang :clojure
               {:category "Clojure > REPL" :name "Eval" :fn ::eval-in-repl! :keystroke "ctrl enter"})])
