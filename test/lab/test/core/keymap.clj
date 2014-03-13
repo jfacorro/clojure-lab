@@ -51,6 +51,7 @@
         global-lang       (remove global-lang-local :local-keymap)
         global-local      (remove global-lang-local :lang-keymap)
         lang-local        (remove global-lang-local :global-keymap)
+        empty-km          (remove lang :lang-keymap)
         ctrl-*            (#'km/ks->set "ctrl *")
         ctrl-a            (#'km/ks->set "ctrl a")
         ctrl-b            (#'km/ks->set "ctrl b")
@@ -61,4 +62,6 @@
     (is (nil? (find global-local ctrl-b)))
     (is (= :ctrl-a-local (:fn (find global-local ctrl-a))))
 
-    (is (nil? (find lang-local ctrl-*)))))
+    (is (nil? (find lang-local ctrl-*)))
+
+    (is (nil? empty-km))))
