@@ -75,23 +75,19 @@ recursively."
     (= path (and item (instance? File item) (.getCanonicalPath ^File item)))))
 
 (defn- handle-file-change [app event path]
-  (try 
-    (let [file   ^File (file-proxy (io/file path))
-          parent (.getParent file)
-          ui     (:ui @app)]
-      (case event
-        :delete
-          (when-let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node path)]])]
-            (ui/action 
-              (ui/update! ui (ui/parent (ui/attr node :id)) ui/remove node)))
-        :create
-          (let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node parent)]])]
-            (ui/action 
-              (ui/update! ui (ui/selector# (ui/attr node :id))
-                             ui/add (tree-node-from-file file true))))))
-    (catch Exception ex
-      (prn ex)
-      (.printStackTrace ex))))
+  (let [file   ^File (file-proxy (io/file path))
+        parent (.getParent file)
+        ui     (:ui @app)]
+    (case event
+      :delete
+        (when-let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node path)]])]
+          (ui/action 
+            (ui/update! ui (ui/parent (ui/attr node :id)) ui/remove node)))
+      :create
+        (let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node parent)]])]
+          (ui/action 
+            (ui/update! ui (ui/selector# (ui/attr node :id))
+                           ui/add (tree-node-from-file file true)))))))
 
 (defn load-dir
   "Loads the file tree for the given path. If its a file

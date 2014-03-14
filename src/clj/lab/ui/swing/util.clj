@@ -195,9 +195,7 @@ all optional and creates a Font."
   (let [ge          (GraphicsEnvironment/getLocalGraphicsEnvironment)
         font-stream (-> font-path io/resource io/input-stream)
         font        (Font/createFont Font/TRUETYPE_FONT font-stream)]
-    (try 
-      (.registerFont ge font)
-      (catch Exception ex))))
+    (.registerFont ge font)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Document Style
