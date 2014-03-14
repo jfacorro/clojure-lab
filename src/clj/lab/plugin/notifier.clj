@@ -23,7 +23,7 @@
                  str
                  (truncate 50)
                  (str "Error - "))
-        tab    (-> (tplts/tab)
+        tab    (-> (tplts/tab "notifier")
                  (ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none}
                            [:text-area {:text (str sw) :read-only true :post-init #(ui/caret-position (:source %) 0)}]]))]

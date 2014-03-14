@@ -21,12 +21,26 @@
             [:tabs {:id "right"}]]]
         [:tabs {:id "bottom"}]]]))
 
-(defn close-tab-button
+(defn close-tab
+  "Expects the source of the event to have a :tab-id key in its :stuff."
   [e]
   (let [ui  (-> e :app deref :ui)
         id  (-> (:source e) (ui/attr :stuff) :tab-id)
         tab (ui/find @ui (ui/selector# id))]
     (ui/update! ui (ui/parent id) ui/remove tab)))
+
+(defn- resolve-close-tab [e]
+  (let [ui  (-> e :app deref :ui)
+        id  (-> (:source e) (ui/attr :stuff) :tab-id)
+        tab (ui/find @ui (ui/selector# id))
+        close-tab (or (:close-tab (ui/attr tab :stuff)) close-tab)]
+    (when close-tab
+      (close-tab e))))
+
+(defn- close-tab-middle-click
+  [e]
+  (when (= :button-2 (:button e))
+    (resolve-close-tab e)))
 
 (defn tab
   "Creates a tab with a tab header as a panel that
@@ -36,12 +50,15 @@ includes a label and a closing button."
   ([id]
     (ui/init
       [:tab {:id id
-             :header [:panel {:transparent false :background 0x333333}
+             :header [:panel {:transparent false
+                              :background 0x333333
+                              :stuff  {:tab-id id}
+                              :listen [:click ::close-tab-middle-click]}
                        [:label {:color 0xFFFFFF}]
                        [:button {:icon         "close-tab.png"
                                  :border       :none
                                  :transparent  true
-                                 :listen       [:click ::close-tab-button]
+                                 :listen       [:click ::resolve-close-tab]
                                  :stuff        {:tab-id id}}]]}])))
 
 (defn text-editor

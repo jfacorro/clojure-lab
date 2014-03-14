@@ -126,22 +126,21 @@ tree. Returns a tree node."
 
 (defn- stop-all-watches! [app]
   (let [ui        (:ui @app)
-        watchers  (-> (ui/find @ui :#file-explorer) (ui/attr :stuff))]
+        watchers  (-> (ui/find @ui :#file-explorer) (ui/attr :stuff) :watches)]
     ;; Cancel all directory watches
     (doseq [w watchers] (future-cancel w))
     ;; Empty the watches collection
-    (ui/update! ui :#file-explorer ui/attr :stuff nil)))
+    (ui/update! ui :#file-explorer ui/update-attr :stuff assoc-in [:watches] nil)))
 
 (defn- close-file-explorer [e]
   (stop-all-watches! (:app e))
-  (tplts/close-tab-button e))
+  (tplts/close-tab e))
 
 (defn- file-explorer
   [app]
   (-> (tplts/tab "file-explorer")
+    (ui/update :tab ui/attr :stuff {:close-tab close-file-explorer})
     (ui/update :label ui/attr :text "File Explorer")
-    (ui/update [:panel :button] ui/ignore-all :click)
-    (ui/update [:panel :button] ui/listen :click ::close-file-explorer)
     (ui/add [:scroll
               [:tree {:hide-root true
                       :listen [:click ::open-document-tree-click
@@ -160,7 +159,7 @@ should be cancelled when the tab is closed."
                                  :options {:recursive true}}]))]
     (ui/update! (:ui @app)
                 :#file-explorer
-                #(as-> (ui/attr % :stuff) stuff (ui/attr % :stuff (conj stuff f))))))
+                ui/update-attr :stuff update-in [:watches] conj f)))
 
 (defn- open-directory
   "Create the file explorer tab if it doesn't exist and add

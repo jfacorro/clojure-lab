@@ -262,10 +262,9 @@ and signals the highlighting process."
         title (doc/name @doc)
         tool-tip (doc/path @doc)]
     (-> (tplts/tab id)
+      (ui/update :tab ui/update-attr :stuff assoc-in [:close-tab] close-document-button)
       (ui/update :tab ui/attr :tool-tip tool-tip)
       (ui/update :label ui/attr :text title)
-      (ui/update :button ui/attr :stuff {:tab-id id})
-      (ui/update :button ui/listen :click ::close-document-button)
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
 

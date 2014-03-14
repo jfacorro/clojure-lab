@@ -131,9 +131,8 @@ to the ui in the bottom section."
         in      (hook-up-repl repl console)
         console (ui/attr console :stuff {:in in :repl repl})
         tab     (-> (tplts/tab)
-                  (ui/update :button ui/ignore-all :click) ; Remove all :click listeners
-                  (ui/update :button ui/listen :click ::close-tab-repl)
-                  (ui/update :label ui/attr :text (str "REPL: "(:name repl)))
+                  (ui/update :tab ui/attr :stuff {:close-tab close-tab-repl})
+                  (ui/update :label ui/attr :text (str "REPL - "(:name repl)))
                   (ui/add [:scroll console])
                   (ui/apply-stylesheet styles))
         split   (ui/find @ui (ui/parent "bottom"))
