@@ -330,6 +330,12 @@ TODO: define a way to get an updated value from the abstraction."
           (-> c (p/set-attr k v) update-abstraction)
           c)))))
 
+(defn update-attr
+  "Applies the function f to the current value of attr k. The
+result will be the new value of the attribute."
+  [c k f & args]
+  (attr c k (apply f (attr c k) args)))
+
 (defn- check-missing-id
   "Makes sure the component is not
 missing an :id attribute."
