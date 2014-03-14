@@ -49,6 +49,7 @@
 ### App (Control)
     - Plugin management:
       - Unload a plugin.
+      - Keep track of what plugins have been loaded.
       - (?) Allow plugins to define their own dependencies.
 
 ## DONE

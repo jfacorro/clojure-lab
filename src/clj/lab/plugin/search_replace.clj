@@ -7,7 +7,7 @@
             [lab.util :as util]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
-            [lab.plugin.main-ui :refer [open-document current-text-editor]])
+            [lab.plugin.main-ui :refer [current-text-editor] :as main-ui])
   (:import  [java.nio.file FileSystems]
             [java.io File ]))
 
@@ -28,7 +28,7 @@ open the document associated with the selected item."
       (when file
         (ui/action
           (ui/update! dialog :dialog ui/attr :visible false)
-          (open-document app (.getCanonicalPath file)))))))
+          (main-ui/open-document app (.getCanonicalPath file)))))))
 
 (defn- file-label [^File file]
   (str (.getName file) " - [" (.getPath file) "]"))
@@ -181,4 +181,5 @@ and creates a channel in which the search is performed."
      {:category "Search" :fn ::search-open-file :keystroke "ctrl alt o" :name "File"})])
 
 (plugin/defplugin lab.plugin.search-replace
+  :type    :global
   :keymaps keymaps)

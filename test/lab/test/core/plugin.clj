@@ -15,20 +15,24 @@
 ;;;;;;;;;;;;;;;;;;;;;
 ;; Test
 
-(deftest load-and-unload-plugin
-  (is (nil? (:keymap @app )))
+(deftest load-and-unload-global-plugin
+  (is (nil? (:keymap @app)))
+  (is (= 0 (count (:plugins @app))))
   (is (nil? (-> @app :langs :plain-text :keymap (km/find #{"ctrl" "o"}))))
   (is (nil? (:init? @app)))
   (is (= :hooked (hooked 1)))
 
   (load-plugin! app 'lab.test.core.dummy-plugin)
   (is (:keymap @app))
+  (is (= 1 (count (:plugins @app))))
+  (is (= 'lab.test.core.dummy-plugin (-> @app :plugins first :name)))
   (is (-> @app :langs :plain-text :keymap (km/find #{"ctrl" "o"})))
   (is (:init? @app))
   (is (= :hook (hooked 1)))
 
   (unload-plugin! app 'lab.test.core.dummy-plugin)
   (is (nil? (:keymap @app )))
+  (is (= 0 (count (:plugins @app))))
   (is (nil? (-> @app :langs :plain-text :keymap (km/find #{"ctrl" "o"}))))
   (is (nil? (:init? @app)))
   (is (= :hooked (hooked 1))))

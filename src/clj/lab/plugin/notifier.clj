@@ -48,4 +48,5 @@
   (default-error-handler app))
 
 (plugin/defplugin lab.plugin.notifier
+  :type  :global
   :init! #'init!)

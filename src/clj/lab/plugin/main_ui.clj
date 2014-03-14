@@ -116,7 +116,7 @@ should be closed and false otherwise."
 (defn close-document-button
   "Handles the tabs' close button when clicked."
   [e]
-  (close-document-ui (:app e) (-> (:source e) (ui/attr :stuff) :tab-id)))
+  (close-document-ui (:app e) (:tab-id (ui/attr (:source e) :stuff))))
 
 (defn- close-document-menu
   "Finds the currently selected tab, removes it and closes the document
@@ -475,6 +475,7 @@ inserting a fixed first parameter, which is the app."
 (plugin/defplugin lab.plugin.main-ui
   "Creates the UI for the application and hooks into
 basic file operations."
+  :type     :global
   :init!    #'init!
   :hooks    hooks
   :keymaps  keymaps)

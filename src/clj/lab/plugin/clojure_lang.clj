@@ -249,4 +249,5 @@ and returns the offset of its matching delimiter."
   (swap! app assoc-in [:langs :clojure] clojure))
 
 (plugin/defplugin lab.plugin.clojure-lang
+  :type :global
   :init! init!)

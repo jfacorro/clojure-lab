@@ -118,5 +118,6 @@ and content"
               {:category "View" :name "Outline" :fn #'create-outline-tree! :keystroke "alt O"})])
 
 (plugin/defplugin lab.plugin.code-outline
+  :type  :global
   :hooks hooks
   :keymaps keymaps)

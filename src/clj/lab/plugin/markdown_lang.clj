@@ -70,4 +70,5 @@
   (swap! app assoc-in [:langs :markdown] markdown))
 
 (plugin/defplugin lab.plugin.markdown-lang
+  :type  :global
   :init! init!)

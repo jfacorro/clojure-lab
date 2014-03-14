@@ -90,6 +90,40 @@ default configuration."
     (swap! doc update-in [:keymap] km/remove (:name keymap)))
   app)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Plugin registration
+
+(defn- conj-set [s plugin]
+  (if s
+    (conj s plugin)
+    #{plugin}))
+
+(defmethod pl/register-plugin! :global
+  [app plugin]
+  (swap! app update-in [:plugins] conj-set plugin))
+
+(defmethod pl/register-plugin! :lang
+  [app plugin]
+  (swap! app update-in [:langs (:lang plugin) :plugins] conj-set plugin))
+
+(defmethod pl/register-plugin! :local
+  [app plugin]
+  (when-let [doc (current-document @app)]
+    (swap! doc update-in [:plugins] conj-set plugin)))
+
+(defmethod pl/unregister-plugin! :global
+  [app plugin]
+  (swap! app update-in [:plugins] disj plugin))
+
+(defmethod pl/unregister-plugin! :lang
+  [app plugin]
+  (swap! app update-in [:langs (:lang plugin) :plugins] disj plugin))
+
+(defmethod pl/unregister-plugin! :local
+  [app plugin]
+  (when-let [doc (current-document @app)]
+    (swap! doc update-in [:plugins] disj plugin)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document operations
 

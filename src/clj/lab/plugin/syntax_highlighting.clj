@@ -50,5 +50,5 @@ are applied their highlight."
   {#'lab.ui.templates/text-editor #'text-editor-hook})
 
 (plugin/defplugin lab.plugin.syntax-highlighting
+  :type  :local
   :hooks hooks)
-

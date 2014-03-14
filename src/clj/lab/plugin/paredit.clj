@@ -446,4 +446,6 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::backward-barf-sexp :keystroke "ctrl alt right" :name "backward-barf-sexp"})])
 
 (plugin/defplugin lab.plugin.paredit
+  :type    :lang
+  :lang    :clojure
   :keymaps keymaps)

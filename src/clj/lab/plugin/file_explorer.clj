@@ -190,4 +190,5 @@ structure."
               {:category "Project" :name "Open..." :fn #'open-directory :keystroke "ctrl P"})])
 
 (defplugin lab.plugin.file-explorer
+  :type :global
   :keymaps keymaps)

@@ -111,4 +111,5 @@
   {#'lab.ui.templates/text-editor #'text-editor-hook})
 
 (plugin/defplugin lab.plugin.rainbow-delimiters
+  :type  :local
   :hooks hooks)

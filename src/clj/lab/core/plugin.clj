@@ -11,6 +11,9 @@ keymap     A keymap with global bindings that will be applied to the existing
             [lab.core.keymap :as km]
             [clojure.tools.logging :as log]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hooks
+
 (defn- add-hooks!
   "Add the defined hooks and use the name
 of the plugin as the hooks' key."
@@ -26,6 +29,9 @@ of the plugin as the hooks' key."
   (doseq [[target-var f] hooks]
     (log/info hook-key "- Removing hook" f "in" target-var)
     (hook/remove-hook target-var hook-key)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Keymaps
 
 (defn register-keymap!
   "Uses the register multi-method. This is created as a function 
@@ -50,6 +56,18 @@ so that plugins can add hooks."
   (doseq [km keymaps]
     (unregister-keymap! app km)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Register plugin
+
+(defmulti register-plugin!
+  (fn [_ plugin] (:type plugin)))
+
+(defmulti unregister-plugin!
+  (fn [_ plugin] (:type plugin)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Load / Unload
+
 (defn load-plugin!
   "Receives the app atom and a symbol representing a plugin's
 name(space) and requires the ns. The plugin's vars init!,
@@ -66,6 +84,7 @@ they exist."
       (init! app))
     (when keymaps
       (register-keymaps! app keymaps))
+    (register-plugin! app plugin)
     app))
 
 (defn load-plugins!
@@ -89,7 +108,11 @@ the unload! function."
       (unload! app))
     (when keymaps
       (unregister-keymaps! app keymaps))
+    (unregister-plugin! app plugin)
     app))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Definition
 
 (defmacro defplugin
   "Defines a `#'plugin` var with the plugin's definition. All of 
@@ -98,21 +121,31 @@ the following values are optional when defining the plugin.
 Usage:
 
     (defplugin 'plugin.name
+      \"Some docstring for the plugin var.\"
+      :type    :global
       :keymaps [km1 km2 km3 ,,,]
       :hooks   {target-var1 hook-fn1 ,,,}
       :init!   init-fn!
       :unload! unload-fn!)
 
-Where:
-  - `:keymaps` is a vector that can hold keymaps of different type
+`name` can be a symbol, a keyword or a string, all the rest of the
+fields are optional except for the `:type`:
+  - `:type` should be one of :global, :lang or :local, this determines where
+    the plugin is registered as loaded.
+      - :global in the app.
+      - :lang in the language specified (if the type is :lang then a :lang field
+        should be provided).
+      - :local in the app's current document.
+  - `:keymaps` should be vector that holds keymaps of different types
     which will be registered and unregisterd with the multimethods
     defined in `lab.core.keymap`.
-  - `:hooks` is a map with vars as keys and fns (or vars holding fns)
+  - `:hooks` should be a map with vars as keys and fns (or vars holding fns)
     as values, which will be used as a hook using the robert-hooke lib.
-  - `:init!` is a fn that will be called when loading the plugin, after 
-    the keymaps are registered and receives a single argument which is 
-    the atom holding the whole app.
-  - `:unload!` is a fn that will be called when unloading the plugin, after 
+  - `:init!` should be fn that takes a sinlge argument which is the atom holding
+     the whole app. This fn will be called when loading the plugin, after 
+    the keymaps are registered and before the hooks are added.
+  - `:unload!` should be fn that takes a sinlge argument which is the atom holding
+     the whole app. This fn will be called when unloading the plugin, after 
     the keymaps have been unregistered and before the hooks are removed."
   [name & [docstr & opts :as options]]
   `(def ~'plugin

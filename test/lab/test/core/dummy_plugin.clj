@@ -3,7 +3,8 @@
             [lab.core.keymap :as km]
             [lab.core.plugin :refer [defplugin]]))
 
-(defplugin lab.test.core.plugin
+(defplugin lab.test.core.dummy-plugin
+  :type    :global
   :keymaps [(km/keymap :dummy-global
                        :global
                        {:fn :fn :keystroke "ctrl o"})

@@ -176,6 +176,8 @@ child process with a running repl."
               {:category "Clojure > REPL" :name "Eval" :fn ::eval-in-repl! :keystroke "ctrl enter"})])
 
 (plugin/defplugin lab.plugin.clojure-repl
+  :type  :lang
+  :lang  :clojure
   :init! #'init!
   :keymaps keymaps)
   

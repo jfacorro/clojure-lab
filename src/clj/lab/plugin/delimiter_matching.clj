@@ -37,5 +37,6 @@
   {#'lab.ui.templates/text-editor #'text-editor-hook})
 
 (plugin/defplugin lab.plugin.delimiter-matching
+  :type  :local
   :hooks hooks)
 
