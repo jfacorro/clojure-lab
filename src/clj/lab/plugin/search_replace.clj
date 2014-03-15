@@ -85,18 +85,20 @@ loaded, otherwise the '.' directory is used."
   [e]
   ;; Add ESC as an exit dialog key.
   (let [dialog (atom nil)
-        ch     (util/timeout-channel 500 #'search-file)
+        ch     (util/timeout-channel 200 #'search-file)
         owner  (-> e :app deref :ui deref)]
     (ui/action
       (reset! dialog
             (-> (tplts/search-file-dialog owner "Search & Open File")
               ui/init
-              (ui/update [:#search-file :text-field] ui/attr :stuff {:dialog dialog})
-              (ui/update [:#search-file :text-field] ui/listen :insert ch)
-              (ui/update [:#search-file :text-field] ui/listen :delete ch)))
+              (ui/update [:#search-file :text-field]
+                         #(-> %
+                            (ui/attr :stuff {:dialog dialog})
+                            (ui/listen :insert ch)
+                            (ui/listen :delete ch)))))
       ;; Show the modal dialog without modifying the atom so that
       ;; there's no retry when the compare-and-set! is done on the atom.
-      (ui/update @dialog :dialog ui/attr :visible true))))
+      (ui/update @dialog :#search-file ui/attr :visible true))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Text
