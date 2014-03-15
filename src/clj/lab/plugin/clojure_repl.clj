@@ -109,10 +109,7 @@ and killing the associated process."
   (let [ui   (-> e :app deref :ui)
         id   (-> (:source e) (ui/attr :stuff) :tab-id)
         tab  (ui/find @ui (ui/selector# id))
-        repl (-> tab
-               (ui/find :text-area)
-               (ui/attr :stuff)
-               :repl)
+        repl (-> (ui/find tab :text-area) (ui/attr :stuff) :repl)
         result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."
                                    " Do you want to continue?")
@@ -131,7 +128,7 @@ to the ui in the bottom section."
         in      (hook-up-repl repl console)
         console (ui/attr console :stuff {:in in :repl repl})
         tab     (-> (tplts/tab)
-                  (ui/update :tab ui/attr :stuff {:close-tab close-tab-repl})
+                  (ui/update :tab ui/attr :stuff {:close-tab #'close-tab-repl})
                   (ui/update :label ui/attr :text (str "REPL - "(:name repl)))
                   (ui/add [:scroll console])
                   (ui/apply-stylesheet styles))
