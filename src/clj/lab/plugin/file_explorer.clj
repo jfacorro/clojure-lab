@@ -51,7 +51,7 @@ currently has no children."
         id        (ui/attr node :id)
         file      (:file (ui/attr node :stuff))]
     (when (empty? (ui/children node))
-      (ui/update! ui (ui/selector# id)
+      (ui/update! ui (ui/id= id)
         (partial reduce ui/add)
         (file-node-children file)))))
 
@@ -86,7 +86,7 @@ recursively."
       :create
         (let [node (ui/find @ui [:#file-explorer [:tree-node (partial file-node parent)]])]
           (ui/action 
-            (ui/update! ui (ui/selector# (ui/attr node :id))
+            (ui/update! ui (ui/id= (ui/attr node :id))
                            ui/add (tree-node-from-file file true)))))))
 
 (defn load-dir
@@ -104,8 +104,8 @@ tree. Returns a tree node."
   "Opens the document that's selected in the tree."
   [app tree]
   (let [ui      (:ui @app)
-        tree    (ui/find @ui (ui/selector# (ui/attr tree :id)))
-        node    (ui/find @ui (ui/selector# (ui/selection tree)))
+        tree    (ui/find @ui (ui/id= (ui/attr tree :id)))
+        node    (ui/find @ui (ui/id= (ui/selection tree)))
         ^File file (ui/attr node :item)]
     (when (and node (.isFile file))
       (open-document app (.getCanonicalPath file)))))

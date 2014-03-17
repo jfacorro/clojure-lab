@@ -14,7 +14,7 @@
   (let [editor (current-text-editor @ui)
         id     (ui/attr editor :id)]
     (when id
-      (ui/update! ui (ui/selector# id)
+      (ui/update! ui (ui/id= id)
         #(-> %
           (ui/caret-position line-number)
           ui/focus)))))

@@ -56,7 +56,7 @@
         sel-id           (selection source)]
     (doseq [tab (ui/children source)]
       (style-tab-header tab unsel-style))
-    (ui/update source (ui/selector# sel-id) style-tab-header sel-style)))
+    (ui/update source (ui/id= sel-id) style-tab-header sel-style)))
 
 (defn- tab-init [c]
   (doto (JPanel.)

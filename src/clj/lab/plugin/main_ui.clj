@@ -20,7 +20,7 @@
   "Returns the currently selected document tab."
   (->> (ui/find ui :#center)
     ui/selection
-    ui/selector#
+    ui/id=
     (ui/find ui)))
 
 (defn current-text-editor
@@ -41,7 +41,7 @@
     (let [ui    (:ui @app)
           name  (doc/name new-state)
           title (if (doc/modified? new-state) (str name "*") name)]
-      (ui/update! ui (ui/selector# id) update-tab-title title))))
+      (ui/update! ui (ui/id= id) update-tab-title title))))
 
 (defn- open-document-ui!
   "Adds a new tab to the documents tab container. This is used by both 
@@ -54,7 +54,7 @@ the open and new commands."
     (add-watch doc (str :editor id) (partial #'doc-modified-update-title app id))
     (ui/action
       (ui/update! ui :#center ui/add tab)
-      (ui/update! ui (ui/selector# editor-id) ui/focus))))
+      (ui/update! ui (ui/id= editor-id) ui/focus))))
 
 (defn open-document
   "Adds a new tab with the open document."
@@ -104,11 +104,11 @@ should be closed and false otherwise."
 (defn close-document-ui
   [app id]
   (let [ui     (:ui @app)
-        tab    (ui/find @ui (ui/selector# id))
+        tab    (ui/find @ui (ui/id= id))
         editor (ui/find tab :text-editor)
         doc    (ui/attr editor :doc)
         result (save-changes-before-closing app tab doc)
-        tab    (ui/find @ui (ui/selector# id))]
+        tab    (ui/find @ui (ui/id= id))]
     (when (not (#{:cancel :closed} result))
       (ui/update! ui :#center ui/remove tab)
       (swap! app lab/close-document doc))))
@@ -151,7 +151,7 @@ associated to it."
         cur-dir (lab/config @app :current-dir)
         result  (assign-path! app doc cur-dir)]
     (when (doc/path @doc)
-        (ui/update! ui (ui/selector# tab-id)
+        (ui/update! ui (ui/id= tab-id)
                     update-tab-title (doc/name @doc))
         (swap! app lab/save-document doc))
     result))
@@ -230,13 +230,13 @@ and signals the highlighting process."
     (let [app    (:app e)
           ui     (:ui @app)
           id     (-> (ui/find (:source e) :text-editor) (ui/attr :id))
-          editor (ui/find @ui (ui/selector# id))
+          editor (ui/find @ui (ui/id= id))
           op     (if (neg? (:wheel-rotation e)) inc dec)
           font   (-> (apply hash-map (ui/attr editor :font))
                    (update-in [:size] op)
                    seq flatten vec)]
       (ui/consume e)
-      (ui/update! ui (ui/selector# id) ui/attr :font font))))
+      (ui/update! ui (ui/id= id) ui/attr :font font))))
 
 ;; Text editor creation
 
@@ -308,8 +308,8 @@ and signals the highlighting process."
             id           (ui/attr scroll :id)
             line-number  (ui/attr scroll :margin-control)]
         (if line-number
-          (ui/update! ui (ui/selector# id) ui/attr :margin-control nil)
-          (ui/update! ui (ui/selector# id) ui/attr :margin-control (line-number-create app editor)))))))
+          (ui/update! ui (ui/id= id) ui/attr :margin-control nil)
+          (ui/update! ui (ui/id= id) ui/attr :margin-control (line-number-create app editor)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undo/Redo
@@ -326,7 +326,7 @@ and signals the highlighting process."
         ;; TODO: Fix this abominable scheme for undo/redo
         (swap! doc assoc :read-only true)
         (let [[editor hist] (f editor hist)]
-          (ui/update! ui (ui/selector# id) (constantly editor)))
+          (ui/update! ui (ui/id= id) (constantly editor)))
         (swap! doc dissoc :read-only)))))
 
 (defn redo! [e]

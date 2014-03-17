@@ -24,7 +24,7 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
             [lab.ui.hierarchy :as h]
             [lab.ui.util :refer [defattributes definitializations]]))
 
-(declare init initialized? attr find genid selector# hiccup->component)
+(declare init initialized? attr find genid hiccup->component)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; UI action macro
@@ -377,12 +377,9 @@ each child and the attributes that have a component as a value."
   (when-let [path (sel/select root selector)]
     (get-in root path)))
 
-(defn selector#
-  "Builds an id selector."
-  [^String id]
-  (-> (str "#" id) keyword))
-
 (def attr= #'sel/attr=)
+
+(def id= "Builds an id selector." (partial sel/attr= :id))
 
 (defn parent
   "Selects the parent of the component with the id."

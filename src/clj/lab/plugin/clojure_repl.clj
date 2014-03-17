@@ -108,7 +108,7 @@ and killing the associated process."
   [e]
   (let [ui   (-> e :app deref :ui)
         id   (-> (:source e) (ui/attr :stuff) :tab-id)
-        tab  (ui/find @ui (ui/selector# id))
+        tab  (ui/find @ui (ui/id= id))
         repl (-> (ui/find tab :text-area) (ui/attr :stuff) :repl)
         result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."

@@ -27,13 +27,13 @@
   [e]
   (let [ui  (-> e :app deref :ui)
         id  (-> (:source e) (ui/attr :stuff) :tab-id)
-        tab (ui/find @ui (ui/selector# id))]
+        tab (ui/find @ui (ui/id= id))]
     (ui/update! ui (ui/parent id) ui/remove tab)))
 
 (defn- resolve-close-tab [e]
   (let [ui  (-> e :app deref :ui)
         id  (-> (:source e) (ui/attr :stuff) :tab-id)
-        tab (ui/find @ui (ui/selector# id))
+        tab (ui/find @ui (ui/id= id))
         close-tab (or (:close-tab (ui/attr tab :stuff)) close-tab)]
     (when close-tab
       (close-tab e))))
@@ -41,7 +41,7 @@
 (defn select-tab [tabs id]
   (ui/selection tabs
                 (index-of (ui/children tabs)
-                          (ui/find tabs (ui/selector# id)))))
+                          (ui/find tabs (ui/id= id)))))
 
 (defn- select-tab-click
   "Selects the tab that generated the event."
