@@ -1,13 +1,13 @@
-(ns lab.plugin.main-ui
+(ns lab.core.main
   "Builds the main UI window and components."
   (:require [clojure.core.async :as async]
             [lab.core :as lab]
-            [lab.util :as util]
             [lab.core [keymap :as km]
                       [plugin :as plugin]
                       [lang :as lang]]
             [lab.model [document :as doc]
                        [protocols :as model]]
+            [lab.util :as util]
             [lab.ui [core :as ui]
                     [select :as ui.sel]
                     [menu :as menu]
@@ -474,7 +474,7 @@ inserting a fixed first parameter, which is the app."
                          atom)
                    :styles styles))
 
-(plugin/defplugin lab.plugin.main-ui
+(plugin/defplugin lab.core.main
   "Creates the UI for the application and hooks into
 basic file operations."
   :type     :global

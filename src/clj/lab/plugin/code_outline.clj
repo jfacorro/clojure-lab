@@ -8,7 +8,7 @@
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [lab.model.document :as doc]
-            [lab.plugin.main-ui :refer [current-text-editor]]))
+            [lab.core.main :refer [current-text-editor]]))
 
 (defn- go-to-definition [ui line-number]
   (let [editor (current-text-editor @ui)

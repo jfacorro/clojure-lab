@@ -4,7 +4,7 @@ the specified root dir."
   (:require [lab.core :as lab]
             [lab.core.keymap :as km]
             [lab.core.plugin :refer [defplugin]]
-            [lab.plugin.main-ui :refer [open-document]]
+            [lab.core.main :refer [open-document]]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [clojure.java.io :as io]

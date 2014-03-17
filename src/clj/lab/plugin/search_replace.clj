@@ -7,7 +7,7 @@
             [lab.util :as util]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
-            [lab.plugin.main-ui :refer [current-text-editor] :as main-ui])
+            [lab.core.main :refer [current-text-editor] :as main])
   (:import  [java.nio.file FileSystems]
             [java.io File ]))
 
@@ -28,7 +28,7 @@ open the document associated with the selected item."
       (when file
         (ui/action
           (ui/update! dialog :dialog ui/attr :visible false)
-          (main-ui/open-document app (.getCanonicalPath file)))))))
+          (main/open-document app (.getCanonicalPath file)))))))
 
 (defn- file-label [^File file]
   (str (.getName file) " - [" (.getPath file) "]"))
