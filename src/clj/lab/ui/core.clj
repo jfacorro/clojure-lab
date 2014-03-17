@@ -393,6 +393,9 @@ each child and the attributes that have a component as a value."
 (def ^:private zipper (partial zip/zipper map? :content identity))
 
 (def ^:private attr-spec
+  "Attribute specification, used with lab.ui.select/select-all
+if component's attributes should be included in the search suring
+selection."
   {:path  (fn [k] [:attrs k])
    :alts  (fn [x]
             (->> (:attrs x)
@@ -408,7 +411,7 @@ using (update-in root path-to-component f args)."
               (apply f x args)
               (apply update-in x path f args)))
           root
-          (sel/select-all root selector attr-spec)))
+          (sel/select-all root selector)))
 
 (defn update!
   "Same as update but assumes root is an atom."

@@ -29,9 +29,9 @@
   (ui/find (current-document-tab ui) :text-editor))
 
 (defn- update-tab-title [tab title]
-  (let [header (-> (ui/attr tab :header)
-                  (ui/update :label ui/attr :text title))]
-    (ui/attr tab :header header)))
+  (ui/update tab []
+             ui/update-attr :header
+             ui/update :label ui/attr :text title))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Open
@@ -240,15 +240,20 @@ and signals the highlighting process."
 
 ;; Text editor creation
 
+(defn- line-number-create
+  [app editor]
+  (-> [:line-number {:source editor :update-font true}]
+    ui/init
+    (ui/apply-stylesheet (:styles @app))))
+
 (defn- text-editor-create [app doc]
   (let [editor (-> (tplts/text-editor doc)
-                 (ui/listen :key ::handle-key)
-                 (ui/listen :insert ::text-editor-change)
-                 (ui/listen :delete ::text-editor-change))]
+                 (ui/attr :listen [:key ::handle-key
+                                   :insert ::text-editor-change
+                                   :delete ::text-editor-change]))]
     [:scroll {:vertical-increment 16
-              :border :none
               :listen [:mouse-wheel ::change-font-size]
-              :margin-control [:line-number {:source editor :update-font true}]}
+              :margin-control (line-number-create app editor)}
       [:panel {:border :none
                :layout :border}
         editor]]))
@@ -262,9 +267,10 @@ and signals the highlighting process."
         title (doc/name @doc)
         tool-tip (doc/path @doc)]
     (-> (tplts/tab id)
-      (ui/update :tab ui/update-attr :stuff assoc-in [:close-tab] close-document-button)
-      (ui/update :tab ui/attr :tool-tip tool-tip)
-      (ui/update :label ui/attr :text title)
+      (ui/update :tab #(-> %
+                    (ui/update-attr :stuff assoc :close-tab close-document-button)
+                         (ui/attr :tool-tip tool-tip)
+                         (ui/update-attr :header ui/update :label ui/attr :text title)))
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
 
@@ -303,10 +309,7 @@ and signals the highlighting process."
             line-number  (ui/attr scroll :margin-control)]
         (if line-number
           (ui/update! ui (ui/selector# id) ui/attr :margin-control nil)
-          (as-> [:line-number {:source editor}] line-number
-            (ui/init line-number)
-            (ui/apply-stylesheet line-number (:styles @app))
-            (ui/update! ui (ui/selector# id) ui/attr :margin-control line-number)))))))
+          (ui/update! ui (ui/selector# id) ui/attr :margin-control (line-number-create app editor)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undo/Redo

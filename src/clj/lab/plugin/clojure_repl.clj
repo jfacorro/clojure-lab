@@ -129,7 +129,9 @@ to the ui in the bottom section."
         console (ui/attr console :stuff {:in in :repl repl})
         tab     (-> (tplts/tab)
                   (ui/update :tab ui/attr :stuff {:close-tab #'close-tab-repl})
-                  (ui/update :label ui/attr :text (str "REPL - "(:name repl)))
+                  (ui/update :tab
+                             ui/update-attr :header
+                             ui/update :label ui/attr :text (str "REPL - "(:name repl)))
                   (ui/add [:scroll console])
                   (ui/apply-stylesheet styles))
         split   (ui/find @ui (ui/parent "bottom"))

@@ -140,7 +140,9 @@ tree. Returns a tree node."
   [app]
   (-> (tplts/tab "file-explorer")
     (ui/update :tab ui/attr :stuff {:close-tab close-file-explorer})
-    (ui/update :label ui/attr :text "File Explorer")
+    (ui/update :tab
+               ui/update-attr :header
+               ui/update :label ui/attr :text "File Explorer")
     (ui/add [:scroll
               [:tree {:hide-root true
                       :listen [:click ::open-document-tree-click

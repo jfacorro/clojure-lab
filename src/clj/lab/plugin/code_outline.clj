@@ -71,7 +71,9 @@ or the current document if non is specified."
   "Creates a new tab that contains a tree with id :#outline-tree."
   [app]
   (-> (tplts/tab "outline-tab")
-    (ui/update :label ui/attr :text "Outline")
+    (ui/update :tab
+               ui/update-attr :header
+               ui/update :label ui/attr :text "Outline")
     (ui/add [:scroll [:tree {:id "outline-tree"}]])
     (ui/apply-stylesheet (:styles @app))))
 
