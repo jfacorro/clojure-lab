@@ -7,42 +7,6 @@
             [lab.core [plugin :as plugin]
                       [lang :as lang]]))
 
-(def dark-styles
-  {0 {:color 0xFFFF00}
-   1 {:color 0x555555}
-   2 {:color 0x93A8C6}
-   3 {:color 0xB0B1A3}
-   4 {:color 0x97B098}
-   5 {:color 0xAEBED8}
-   6 {:color 0xB0B0B3}
-   7 {:color 0x90A890}
-   8 {:color 0xA2B6DA}
-   9 {:color 0x9CB6AD}})
-
-(def light-styles
-  {0 {:color 0x88090B}
-   1 {:color 0x707183}
-   2 {:color 0x7388d6}
-   3 {:color 0x909183}
-   4 {:color 0x709870}
-   5 {:color 0x907373}
-   6 {:color 0x6276ba}
-   7 {:color 0x858580}
-   8 {:color 0x80a880}
-   9 {:color 0x887070}})
-
-(def rainbow-styles
-  {0 {:color 0x88090B}
-   1 {:color 0xFFFF00}
-   2 {:color 0xFF00FF}
-   3 {:color 0x00FFFF}
-   4 {:color 0x55FF55}
-   5 {:color 0x0000FF}
-   6 {:color 0xFF7700}
-   7 {:color 0xFFFFFF}
-   8 {:color 0x9999FF}
-   9 {:color 0x887070}})
-
 (def rainbow-styles
   {1 {:color 0xFF2244}
    2 {:color 0xFF7F00}

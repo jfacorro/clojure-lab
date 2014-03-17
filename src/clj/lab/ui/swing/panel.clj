@@ -7,6 +7,23 @@
            [java.awt BorderLayout]
            [javax.swing.plaf.basic BasicSplitPaneDivider]))
 
+(extend-protocol Component
+  JSplitPane
+  (add [this child]
+    ; Assume that if the top component is a button then 
+    ; it is because it was never set
+    (if (instance? JButton (.getTopComponent this))
+      (.setTopComponent this child)
+      (.setBottomComponent this child))
+    (util/remove-focus-traversal child)
+    this)
+
+  JScrollPane
+  (add [this child]
+    (.. this getViewport (add ^java.awt.Container child nil))
+    (util/remove-focus-traversal child)
+    this))
+
 (definitializations
   :split       JSplitPane
   :panel       JPanel
@@ -53,20 +70,3 @@
       (.. ^JScrollPane (impl c) getVerticalScrollBar (setUnitIncrement 16)))
     (:margin-control [c _ v]
       (.setRowHeaderView ^JScrollPane (impl c) (impl v))))
-
-(extend-protocol Component
-  JSplitPane
-  (add [this child]
-    ; Assume that if the top component is a button then 
-    ; it is because it was never set
-    (if (instance? JButton (.getTopComponent this))
-      (.setTopComponent this child)
-      (.setBottomComponent this child))
-    (util/remove-focus-traversal child)
-    this)
-
-  JScrollPane
-  (add [this child]
-    (.. this getViewport (add ^java.awt.Container child nil))
-    (util/remove-focus-traversal child)
-    this))
