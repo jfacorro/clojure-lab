@@ -1,5 +1,6 @@
 (ns lab.ui.templates
-  (:require [lab.ui.core :as ui]
+  (:require [lab.util :refer [index-of]]
+            [lab.ui.core :as ui]
             [lab.model.document :as doc]))
 
 (defn app-window [app-name]
@@ -37,10 +38,24 @@
     (when close-tab
       (close-tab e))))
 
-(defn- close-tab-middle-click
+(defn select-tab [tabs id]
+  (ui/selection tabs
+                (index-of (ui/children tabs)
+                          (ui/find tabs (ui/selector# id)))))
+
+(defn- select-tab-click
+  "Selects the tab that generated the event."
   [e]
-  (when (= :button-2 (:button e))
-    (resolve-close-tab e)))
+  (let [ui  (-> e :app deref :ui)
+        id  (-> (:source e) (ui/attr :stuff) :tab-id)]
+    (ui/update! ui (ui/parent id) select-tab id)))
+
+(defn- tab-click
+  [e]
+  (case (:button e)
+    :button-1 (select-tab-click e)
+    :button-2 (resolve-close-tab e)
+    :button-3 nil))
 
 (defn tab
   "Creates a tab with a tab header as a panel that
@@ -53,7 +68,7 @@ includes a label and a closing button."
              :header [:panel {:transparent false
                               :background 0x333333
                               :stuff  {:tab-id id}
-                              :listen [:click ::close-tab-middle-click]}
+                              :listen [:click ::tab-click]}
                        [:label {:color 0xFFFFFF}]
                        [:button {:icon         "close-tab.png"
                                  :border       :none
