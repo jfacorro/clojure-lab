@@ -225,7 +225,6 @@ as the abstraction of its implementation."
 
 (defn ignore [c evt f]
   (let [listener (-> (get-in (meta c) [:listen evt [f]]) meta :impl)]
-    (prn :listener listener)
     (p/ignore c evt listener)
     (-> c
       (vary-meta update-in [:listen evt] disj [f])
