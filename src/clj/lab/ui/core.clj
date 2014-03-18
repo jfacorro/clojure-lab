@@ -217,17 +217,18 @@ as the abstraction of its implementation."
   (let [listener   (p/listen c evt (partial handle-event f))
         ;; keywords can't have metadata so in case f is a keyword
         ;; wrap it in a vector in order to add the impl listener to it.
-        f-meta     (with-meta [f] {:impl listener}) 
+        f-meta     (with-meta [f] {:impl listener})
         listeners  (get-in (meta c) [:listen evt] #{})]
     (-> c
       (vary-meta assoc-in [:listen evt] (conj listeners f-meta))
       update-abstraction)))
 
 (defn ignore [c evt f]
-  (let [listener  (-> c listeners (get [f]) meta :impl)]
+  (let [listener (-> (get-in (meta c) [:listen evt [f]]) meta :impl)]
+    (prn :listener listener)
     (p/ignore c evt listener)
     (-> c
-      (vary-meta assoc-in [:listen evt] dissoc [f])
+      (vary-meta update-in [:listen evt] disj [f])
       update-abstraction)))
 
 (defn ignore-all [c evt]

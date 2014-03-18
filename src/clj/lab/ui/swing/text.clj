@@ -1,7 +1,7 @@
 (ns lab.ui.swing.text
   (:use     [lab.ui.protocols :only [impl abstract
                                      Event to-map
-                                     listen
+                                     listen ignore
                                      TextEditor StyledTextEditor
                                      Selection selection caret-position]])
   (:require [lab.model.protocols :as mp]
@@ -167,12 +167,21 @@
     (.addCaretListener ^JTextComponent (impl c) listener)
     listener))
 
+(defmethod ignore [:text-field :caret]
+  [c evt listener]
+  (.removeCaretListener ^JTextComponent listener))
+
 (defmethod listen [:text-field :insert]
   [c evt f]
   (let [listener  (util/create-listener c evt f)
         doc      (.getDocument ^JTextComponent (impl c))]
     (.addDocumentListener ^Document doc listener)
     listener))
+
+(defmethod ignore [:text-field :insert]
+  [c evt listener]
+  (let [doc  (.getDocument ^JTextComponent (impl c))]
+    (.removeDocumentListener ^Document doc listener)))
 
 (defmethod listen [:text-field :delete]
   [c evt f]
@@ -181,9 +190,19 @@
     (.addDocumentListener ^Document doc listener)
     listener))
 
+(defmethod ignore [:text-field :delete]
+  [c evt listener]
+  (let [doc  (.getDocument ^JTextComponent (impl c))]
+    (.removeDocumentListener ^Document doc listener)))
+
 (defmethod listen [:text-field :change]
   [c evt f]
   (let [listener  (util/create-listener c evt f)
         doc      (.getDocument ^JTextComponent (impl c))]
     (.addDocumentListener ^Document doc listener)
     listener))
+
+(defmethod ignore [:text-field :change]
+  [c evt listener]
+  (let [doc  (.getDocument ^JTextComponent (impl c))]
+    (.removeDocumentListener ^Document doc listener)))
