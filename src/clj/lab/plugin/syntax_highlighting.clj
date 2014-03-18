@@ -4,7 +4,8 @@
             [lab.ui.core :as ui]
             [lab.model.document :as doc]
             [lab.core [plugin :as plugin]
-                      [lang :as lang]]))
+                      [lang :as lang]
+                      [main :as main]]))
 
 (defn highlight!
   "Takes the editor component and an optional argument
@@ -38,17 +39,33 @@ are applied their highlight."
   (if-not (= :change (:type e))
     (highlight! (:source e) true)))
 
-(defn- text-editor-hook [f doc]
-  (let [editor (f doc)
-        hl-ch  (timeout-channel 250 #'text-editor-change!)]
+(defn- text-editor-init [editor]
+  (let [hl-ch  (timeout-channel 250 #'text-editor-change!)]
     (-> editor
       highlight!
+      (ui/update-attr :stuff assoc ::listener hl-ch)
       (ui/listen :insert hl-ch)
       (ui/listen :delete hl-ch))))
 
-(def ^:private hooks
-  {#'lab.ui.templates/text-editor #'text-editor-hook})
+(defn- text-editor-unload [editor]
+  (let [hl-ch  (::listener (ui/attr editor :stuff))]
+    (-> editor
+      (ui/update-attr :stuff dissoc ::listener)
+      (ui/ignore :insert hl-ch)
+      (ui/ignore :delete hl-ch))))
+
+(defn init! [app]
+  (let [ui     (:ui @app)
+        editor (main/current-text-editor @ui)
+        id     (ui/attr editor :id)]
+    (ui/update! ui (ui/id= id) text-editor-init)))
+
+(defn unload! [app]
+  (let [ui (:ui @app)
+        id (ui/attr (main/current-text-editor @ui) :id)]
+    (ui/update! ui (ui/id= id) text-editor-unload)))
 
 (plugin/defplugin lab.plugin.syntax-highlighting
-  :type  :local
-  :hooks hooks)
+  :type    :local
+  :init!   init!
+  :unload! unload!)

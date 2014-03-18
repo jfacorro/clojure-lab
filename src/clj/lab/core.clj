@@ -16,22 +16,22 @@
 
 (def default-config
   {:name          "Clojure Lab"
-   :core-plugins  '[lab.core.main
-                    lab.plugin.notifier]
-   :plugins       '[lab.plugin.file-explorer
+   :core-plugins  '[lab.core.main]
+   :plugins       '[lab.plugin.notifier
+                    lab.plugin.file-explorer
                     lab.plugin.search-replace
                     lab.plugin.code-outline
 
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
 
-                    lab.plugin.clojure-repl
-
-                    lab.plugin.autocomplete
-                    lab.plugin.delimiter-matching
-                    lab.plugin.syntax-highlighting
-                    lab.plugin.rainbow-delimiters
-                    lab.plugin.paredit]
+                    lab.plugin.clojure-repl]
+   :lang-plugins  '{"Clojure" [lab.plugin.autocomplete
+                               lab.plugin.delimiter-matching
+                               lab.plugin.syntax-highlighting
+                               lab.plugin.rainbow-delimiters
+                               lab.plugin.paredit]
+                    "Markdown" [lab.plugin.syntax-highlighting]}
    :plugins-dir   "plugins"
    :current-dir   "."})
 
@@ -49,15 +49,10 @@ default configuration."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Language
 
-(defn lang
-  "Returns the language registered with the specified key in the langs map."
-  [app k]
-  (->> app :langs k))
-
 (defn default-lang
   "Returns the default language."
-  [app]
-  (->> app :default-lang (lang app)))
+  [{:keys [langs default-lang] :as app}]
+  (default-lang langs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Keymap registration
@@ -120,6 +115,14 @@ default configuration."
     (when (contains? (:plugins @doc) plugin)
       (swap! doc update-in [:plugins] disj plugin))))
 
+(defn load-lang-plugins!
+  "Loads the plugins associated with the language assigned
+to the doc."
+  [app doc]
+  (let [lang-name (-> @doc doc/lang :name)]
+    (doseq [plugin ((config @app :lang-plugins) lang-name)]
+      (pl/load-plugin! app plugin))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document operations
 
@@ -161,7 +164,7 @@ within the opened documents."
   (let [x (io/file x)]
     (find-doc-by app #(same-file? (doc/file %) x))))
 
-(defn new-document 
+(defn new-document
   "Creates a new document, adds it to the document
 collection and sets it as the current-document."
   ([app]
@@ -180,15 +183,15 @@ and adds it to the openened documents map."
           default (default-lang app)]
       (open-document app path (lang/resolve-lang path langs default))))
   ([app path lang]
-  {:pre [path]}
-  (let [doc        (atom (doc/document lang path))
-        opened-doc (find-doc-by-path app path)]
-    (if opened-doc
-      (switch-document app opened-doc)
-      (-> app
-        (update-in [:documents] conj doc)
-        (switch-document doc)
-        (config :current-dir path))))))
+    {:pre [path]}
+    (let [doc        (atom (doc/document lang path))
+          opened-doc (find-doc-by-path app path)]
+      (if opened-doc
+        (switch-document app opened-doc)
+        (-> app
+          (update-in [:documents] conj doc)
+          (switch-document doc)
+          (config :current-dir path))))))
 
 (defn close-document
   "Closes a document and removes it from the opened

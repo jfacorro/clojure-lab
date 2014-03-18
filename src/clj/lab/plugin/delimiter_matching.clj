@@ -3,7 +3,8 @@
             [lab.ui.core :as ui]
             [lab.model.document :as doc]
             [lab.core [plugin :as plugin]
-                      [lang :as lang]]))
+                      [lang :as lang]
+                      [main :as main]]))
 
 (defn- check-for-delimiters [e highlights]
   (let [editor    (:source e)
@@ -28,15 +29,30 @@
         (recur)))
     ch))
 
-(defn- text-editor-hook [f doc]
-  (let [editor (f doc)
-        ch     (find-matching-delimiter)]
-    (ui/listen editor :caret ch)))
+(defn- text-editor-init [editor]
+  (let [ch     (find-matching-delimiter)]
+    (-> editor
+      (ui/update-attr :stuff assoc ::listener ch)
+      (ui/listen :caret ch))))
 
-(def ^:private hooks
-  {#'lab.ui.templates/text-editor #'text-editor-hook})
+(defn- text-editor-unload [editor]
+  (let [ch (::listener (ui/attr editor :stuff))]
+    (-> editor
+      (ui/update-attr :stuff dissoc ::listener)
+      (ui/ignore :caret ch))))
+
+(defn init! [app]
+  (let [ui     (:ui @app)
+        editor (main/current-text-editor @ui)
+        id     (ui/attr editor :id)]
+    (ui/update! ui (ui/id= id) text-editor-init)))
+
+(defn unload! [app]
+  (let [ui (:ui @app)
+        id (ui/attr (main/current-text-editor @ui) :id)]
+    (ui/update! ui (ui/id= id) text-editor-unload)))
 
 (plugin/defplugin lab.plugin.delimiter-matching
-  :type  :local
-  :hooks hooks)
-
+  :type    :local
+  :init!   init!
+  :unload! unload!)

@@ -66,8 +66,7 @@
       (ui/attr :visible true)
       (ui/update :tree ui/focus))))
 
-(defn- autocomplete [{:keys [event description modifiers] :as e}]
-  (when (and (= :pressed event) (= description :space) (modifiers :ctrl))
+(defn- autocomplete [e]
   (let [editor (:source e)
         pos    (ui/caret-position editor)
         doc    (ui/attr editor :doc)
@@ -85,16 +84,13 @@
     (popup-menu editor loc
       (if (= tag :symbol)
         (-> symbols trie/trie (trie/prefix-matches (zip/node loc)))
-        symbols)))))
+        symbols))))
 
-(defn- text-editor-hook [f doc]
-  (let [editor (f doc)]
-    (-> editor
-      (ui/listen :key #'autocomplete))))
-
-(def ^:private hooks
-  {#'lab.ui.templates/text-editor #'text-editor-hook})
+(def ^:private keymaps
+  [(km/keymap 'lab.plugin.autocomplete
+      :local
+      {:fn ::autocomplete :keystroke "ctrl space"})])
 
 (plugin/defplugin lab.plugin.autocomplete
-  :type  :local
-  :hooks hooks)
+  :type    :local
+  :keymaps keymaps)

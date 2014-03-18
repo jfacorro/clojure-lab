@@ -415,7 +415,7 @@ parentheses by deleting and inserting the modified substring.
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.paredit
-    :lang :clojure
+    :local
     ;; Basic Insertion Commands
     {:fn ::open-delimiter :keystroke "(" :name "Open round"}
     {:fn ::close-delimiter :keystroke ")" :name "Close round"}

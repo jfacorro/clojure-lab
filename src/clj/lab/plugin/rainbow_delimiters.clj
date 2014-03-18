@@ -83,7 +83,6 @@
   (let [ui     (:ui @app)
         editor (main/current-text-editor @ui)
         id     (ui/attr editor :id)]
-    ;; TODO: detect initialization
     (ui/update! ui (ui/id= id) text-editor-init)))
 
 (defn unload! [app]

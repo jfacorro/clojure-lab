@@ -54,7 +54,8 @@ the open and new commands."
     (add-watch doc editor-id (partial #'doc-modified-update-title app id))
     (ui/action
       (ui/update! ui :#center ui/add tab)
-      (ui/update! ui (ui/id= editor-id) ui/focus))))
+      (ui/update! ui (ui/id= editor-id) ui/focus)
+      (lab/load-lang-plugins! app doc))))
 
 (defn open-document
   "Adds a new tab with the open document."
