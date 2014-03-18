@@ -160,6 +160,8 @@
     (:current-line-color [c _ v]
        (.setCurrentLineForeground ^TextLineNumber (impl c) (util/color v))))
 
+;;;;;;;;;;;;;;;;;;;;;;;
+;; Events
 
 (defmethod listen [:text-field :caret]
   [c evt f]
@@ -173,7 +175,7 @@
 
 (defmethod listen [:text-field :insert]
   [c evt f]
-  (let [listener  (util/create-listener c evt f)
+  (let [listener (util/create-listener c evt f)
         doc      (.getDocument ^JTextComponent (impl c))]
     (.addDocumentListener ^Document doc listener)
     listener))
@@ -185,7 +187,7 @@
 
 (defmethod listen [:text-field :delete]
   [c evt f]
-  (let [listener  (util/create-listener c evt f)
+  (let [listener (util/create-listener c evt f)
         doc      (.getDocument ^JTextComponent (impl c))]
     (.addDocumentListener ^Document doc listener)
     listener))
@@ -197,7 +199,7 @@
 
 (defmethod listen [:text-field :change]
   [c evt f]
-  (let [listener  (util/create-listener c evt f)
+  (let [listener (util/create-listener c evt f)
         doc      (.getDocument ^JTextComponent (impl c))]
     (.addDocumentListener ^Document doc listener)
     listener))

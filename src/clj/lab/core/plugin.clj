@@ -60,9 +60,14 @@ so that plugins can add hooks."
 ;; Register plugin
 
 (defmulti register-plugin!
+  "Registers the plugin when it is loaded. Returns
+nil if the plugin was already registered and not
+nil otherwise."
   (fn [_ plugin] (:type plugin)))
 
 (defmulti unregister-plugin!
+  "Removes the plugin if it was registered. Returns
+nil if the plugin was not registered and not nil otherwise."
   (fn [_ plugin] (:type plugin)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -75,23 +80,20 @@ keymap and hooks are searched and processed accordingly if
 they exist."
   [app plugin-name & [reload]]
   (require [plugin-name :reload reload])
-  (let [plugin-ns                      (the-ns plugin-name)
-        {:keys [init! hooks keymaps] :as plugin} (->> (ns-resolve plugin-ns 'plugin) deref)]
+  (let [plugin-ns  (the-ns plugin-name)
+        {:keys [init! hooks keymaps] :as plugin}
+                   (->> (ns-resolve plugin-ns 'plugin) deref)]
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
-    (when hooks
-      (add-hooks! hooks plugin-name))
-    (when init!
-      (init! app))
-    (when keymaps
-      (register-keymaps! app keymaps))
-    (register-plugin! app plugin)
+    (prn plugin-name)
+    (when (register-plugin! app plugin)
+      (prn :registered-plugin plugin-name (nil? hooks))
+      (when hooks
+        (add-hooks! hooks plugin-name))
+      (when init!
+        (init! app))
+      (when keymaps
+        (register-keymaps! app keymaps)))
     app))
-
-(defn load-plugins!
-  "Loads the plugins specified by calling the init! function
-defined in their namespace."
-  [app plugins]
-  (reduce load-plugin! app plugins))
 
 (defn unload-plugin!
   "Receives the app atom and a symbol representing a plugin's
@@ -102,13 +104,13 @@ the unload! function."
         {:keys [unload! hooks keymaps] :as plugin}
                   (->> (ns-resolve plugin-ns 'plugin) deref)]
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
-    (when hooks
-      (remove-hooks! hooks plugin-name))
-    (when unload!
-      (unload! app))
-    (when keymaps
-      (unregister-keymaps! app keymaps))
-    (unregister-plugin! app plugin)
+    (when (unregister-plugin! app plugin)
+      (when hooks
+        (remove-hooks! hooks plugin-name))
+      (when unload!
+        (unload! app))
+      (when keymaps
+        (unregister-keymaps! app keymaps)))
     app))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;

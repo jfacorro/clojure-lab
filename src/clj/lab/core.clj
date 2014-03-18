@@ -100,29 +100,25 @@ default configuration."
 
 (defmethod pl/register-plugin! :global
   [app plugin]
-  (swap! app update-in [:plugins] conj-set plugin))
-
-(defmethod pl/register-plugin! :lang
-  [app plugin]
-  (swap! app update-in [:langs (:lang plugin) :plugins] conj-set plugin))
+  (when-not (contains? (:plugins @app) plugin)
+    (swap! app update-in [:plugins] conj-set plugin)))
 
 (defmethod pl/register-plugin! :local
   [app plugin]
   (when-let [doc (current-document @app)]
-    (swap! doc update-in [:plugins] conj-set plugin)))
+    (when-not (contains? (:plugins @doc) plugin)
+      (swap! doc update-in [:plugins] conj-set plugin))))
 
 (defmethod pl/unregister-plugin! :global
   [app plugin]
-  (swap! app update-in [:plugins] disj plugin))
-
-(defmethod pl/unregister-plugin! :lang
-  [app plugin]
-  (swap! app update-in [:langs (:lang plugin) :plugins] disj plugin))
+  (when (contains? (:plugins @app) plugin)
+    (swap! app update-in [:plugins] disj plugin)))
 
 (defmethod pl/unregister-plugin! :local
   [app plugin]
   (when-let [doc (current-document @app)]
-    (swap! doc update-in [:plugins] disj plugin)))
+    (when (contains? (:plugins @doc) plugin)
+      (swap! doc update-in [:plugins] disj plugin))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document operations
@@ -242,9 +238,7 @@ app's configuration map."
   (let [app (atom default-app)]
     ; Load configuration from the file specified.
     (swap! app load-config config-path)
-    
     ; Load core and other plugins specified in the config.
     (doseq [plugin-type [:core-plugins :plugins]]
-      (pl/load-plugins! app (get-in @app [:config plugin-type])))
-    
+      (reduce pl/load-plugin! app (get-in @app [:config plugin-type])))
     app))

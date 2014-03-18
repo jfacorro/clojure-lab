@@ -5,7 +5,8 @@
             [lab.model.document :as doc]
             [lab.model.protocols :as model]
             [lab.core [plugin :as plugin]
-                      [lang :as lang]]))
+                      [lang :as lang]
+                      [main :as main]]))
 
 (def rainbow-styles
   {1 {:color 0xFF2244}
@@ -63,17 +64,34 @@
   (let [editor (:source e)]
     (color-delimiters! editor)))
 
-(defn- text-editor-hook [f doc]
-  (let [editor (f doc)
-        ch     (timeout-channel 500 #'text-editor-change!)]
+(defn- text-editor-init [editor]
+  (let [ch  (timeout-channel 500 #'text-editor-change!)]
     (-> editor
       color-delimiters!
+      (ui/update-attr :stuff assoc ::listener ch)
       (ui/listen :insert ch)
       (ui/listen :delete ch))))
 
-(def ^:private hooks
-  {#'lab.ui.templates/text-editor #'text-editor-hook})
+(defn- text-editor-unload [editor]
+  (let [ch  (::listener (ui/attr editor :stuff))]
+    (-> editor
+      (ui/update-attr :stuff dissoc ::listener)
+      (ui/ignore :insert ch)
+      (ui/ignore :delete ch))))
+
+(defn init! [app]
+  (let [ui     (:ui @app)
+        editor (main/current-text-editor @ui)
+        id     (ui/attr editor :id)]
+    ;; TODO: detect initialization
+    (ui/update! ui (ui/id= id) text-editor-init)))
+
+(defn unload! [app]
+  (let [ui (:ui @app)
+        id (ui/attr (main/current-text-editor @ui) :id)]
+    (ui/update! ui (ui/id= id) text-editor-unload)))
 
 (plugin/defplugin lab.plugin.rainbow-delimiters
-  :type  :local
-  :hooks hooks)
+  :type    :local
+  :init!   init!
+  :unload! unload!)

@@ -96,5 +96,5 @@
   {#'lab.ui.templates/text-editor #'text-editor-hook})
 
 (plugin/defplugin lab.plugin.autocomplete
-  :type  :global
+  :type  :local
   :hooks hooks)

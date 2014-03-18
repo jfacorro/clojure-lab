@@ -50,8 +50,8 @@ the open and new commands."
   (let [ui  (:ui @app)
         tab (document-tab app doc)
         id  (ui/attr tab :id)
-        editor-id (-> tab (ui/find :text-editor) (ui/attr :id))]
-    (add-watch doc (str :editor id) (partial #'doc-modified-update-title app id))
+        editor-id (-> (ui/find tab :text-editor) (ui/attr :id))]
+    (add-watch doc editor-id (partial #'doc-modified-update-title app id))
     (ui/action
       (ui/update! ui :#center ui/add tab)
       (ui/update! ui (ui/id= editor-id) ui/focus))))
@@ -110,6 +110,7 @@ should be closed and false otherwise."
         result (save-changes-before-closing app tab doc)
         tab    (ui/find @ui (ui/id= id))]
     (when (not (#{:cancel :closed} result))
+      (remove-watch doc (ui/attr editor :id))
       (ui/update! ui :#center ui/remove tab)
       (swap! app lab/close-document doc))))
 
