@@ -6,11 +6,15 @@
   (:import  [javax.swing JDialog JFileChooser JOptionPane JFrame]))
 
 (defn- dialog-init [c]
-  (let [abs   (atom nil)
-        owner (as-> (ui/attr c :owner) x (when x ^JFrame (impl x)))]
-    (proxy [JDialog lab.ui.protocols.Implementation] [owner]
-      (abstract ([] @abs)
-                ([x] (reset! abs x) this)))))
+  (let [abs    (atom nil)
+        owner  (as-> (ui/attr c :owner) x (when x ^JFrame (impl x)))
+        dialog (proxy [JDialog lab.ui.protocols.Implementation] [owner]
+                 (abstract ([] @abs)
+                           ([x] (reset! abs x) this)))]
+    (util/register-key-binding (.getRootPane dialog) "escape"
+                               (fn [e] (.setVisible dialog false))
+                               :focused-window)
+    dialog))
 
 (definitializations
   :file-dialog   JFileChooser
@@ -81,6 +85,8 @@ is set before processing other attribute's code."
     (when (ui/attr c :owner)
       (.setLocationRelativeTo ^JDialog (impl c) (impl (ui/attr c :owner))))
     (.setVisible ^JDialog (impl c) v))
+  (:default-button [c _ v]
+     (.. ^JDialog (impl c) getRootPane (setDefaultButton (impl v))))
 
   :file-dialog
   (:title [c _ v]
@@ -98,7 +104,7 @@ is set before processing other attribute's code."
         file-dialog-open
         (apply file-dialog-result)
         (ui/attr c :result))))
-  
+
   :option-dialog
   (:title [c _ _])
   (:visible ^:modify [c _ v]

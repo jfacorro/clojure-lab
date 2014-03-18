@@ -318,12 +318,12 @@ no more."
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Key Bindings
 
-(def input-map-modes [JComponent/WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-                      JComponent/WHEN_FOCUSED
-                      JComponent/WHEN_IN_FOCUSED_WINDOW])
+(def input-map-modes {:focused-ancestor JComponent/WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+                      :focused-self     JComponent/WHEN_FOCUSED
+                      :focused-window   JComponent/WHEN_IN_FOCUSED_WINDOW})
 
 (defn- all-input-maps [^JComponent ctrl]
-  (->> input-map-modes
+  (->> (vals input-map-modes)
     (map #(.getInputMap ctrl %))
     (filter (comp not nil?))))
 
@@ -335,6 +335,13 @@ no more."
         (when (seq ims)
           (doall (map delete ims))
           (recur (mapcat #(when % [(.getParent ^InputMap %)]) ims)))))))
+
+(defn register-key-binding [^JComponent ctrl ks f & [focus-scope]]
+  (let [ks     (keystroke ks)
+        action (proxy [javax.swing.AbstractAction] [] (actionPerformed [e] (f e)))
+        scope  (or (input-map-modes focus-scope) JComponent/WHEN_FOCUSED)]
+    (.put (.getInputMap ctrl scope) ks f)
+    (.put (.getActionMap ctrl) f action)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Focus Traversal Keys

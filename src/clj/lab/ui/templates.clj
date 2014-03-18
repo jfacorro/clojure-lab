@@ -130,26 +130,30 @@ open files."
             [:tree-node {:item :root}]]]]]])
 
 (defn search-text-dialog [owner title]
-  [:dialog {:id "search-text"
-            :title title
-            :size  [500 150]
-            :modal false
-            :owner owner}
-    [:panel {:layout [:box :page]}
-      [:panel {:layout [:box :line]}
-        [:text-field {:border :none}]
-        [:button {:text "Search"}]]
-      [:panel {:layout :border}
-        [:scroll [:tree {:hide-root true}
-                   [:tree-node {:item :root}]]]]]])
+  (let [search-btn (ui/init [:button {:text "Search"}])]
+    [:dialog {:id "search-text"
+              :title title
+              :size  [500 150]
+              :modal false
+              :owner owner
+              :default-button search-btn}
+      [:panel {:layout [:box :page]}
+        [:panel {:layout [:box :line]}
+          [:text-field {:border :none}]
+          search-btn]
+        [:panel {:layout :border}
+          [:scroll [:tree {:hide-root true}
+                     [:tree-node {:item :root}]]]]]]))
 
 (defn line-number-dialog [owner]
-  [:dialog {:owner owner
-            :title "Enter Line Number"
-            :size  [300 85]
-            :modal true}
-    [:panel {:layout [:box :page]}
-      [:text-field {:border :none}]
-      [:panel {:layout :flow}
-        [:button {:id "ok" :text "Ok"}]
-        [:button {:id "cancel" :text "Cancel"}]]]])
+  (let [ok-btn (ui/init [:button {:id "ok" :text "Ok"}])]
+    [:dialog {:owner owner
+              :title "Enter Line Number"
+              :size  [300 85]
+              :modal true
+              :default-button ok-btn}
+      [:panel {:layout [:box :page]}
+        [:text-field {:border :none}]
+        [:panel {:layout :flow}
+          ok-btn
+          [:button {:id "cancel" :text "Cancel"}]]]]))
