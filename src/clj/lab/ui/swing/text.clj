@@ -171,7 +171,7 @@
 
 (defmethod ignore [:text-field :caret]
   [c evt listener]
-  (.removeCaretListener ^JTextComponent listener))
+  (.removeCaretListener ^JTextComponent (impl c) listener))
 
 (defmethod listen [:text-field :insert]
   [c evt f]
