@@ -26,9 +26,9 @@
                     lab.plugin.clojure-lang
 
                     lab.plugin.clojure-repl]
-   :lang-plugins  '{"Clojure" [lab.plugin.autocomplete
+   :lang-plugins  '{"Clojure" [lab.plugin.syntax-highlighting
+                               lab.plugin.autocomplete
                                lab.plugin.delimiter-matching
-                               lab.plugin.syntax-highlighting
                                lab.plugin.rainbow-delimiters
                                lab.plugin.paredit]
                     "Markdown" [lab.plugin.syntax-highlighting]}
@@ -242,6 +242,6 @@ app's configuration map."
     ; Load configuration from the file specified.
     (swap! app load-config config-path)
     ; Load core and other plugins specified in the config.
-    (doseq [plugin-type [:core-plugins :plugins]]
-      (reduce pl/load-plugin! app (get-in @app [:config plugin-type])))
+    (doseq [plugin-name (mapcat #(get-in @app [:config %]) [:core-plugins :plugins])]
+      (pl/load-plugin! app plugin-name))
     app))

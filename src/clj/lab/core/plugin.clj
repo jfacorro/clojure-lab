@@ -90,8 +90,7 @@ they exist."
       (when init!
         (init! app))
       (when keymaps
-        (register-keymaps! app keymaps)))
-    app))
+        (register-keymaps! app keymaps)))))
 
 (defn unload-plugin!
   "Receives the app atom and a symbol representing a plugin's
@@ -108,8 +107,7 @@ the unload! function."
       (when unload!
         (unload! app))
       (when keymaps
-        (unregister-keymaps! app keymaps)))
-    app))
+        (unregister-keymaps! app keymaps)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Definition
