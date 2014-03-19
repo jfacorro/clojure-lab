@@ -130,28 +130,6 @@ open files."
           [:tree {:id "results" :hide-root true}
             [:tree-node {:item :root}]]]]]])
 
-(defn find-replace-dialog [owner]
-  (let [find-btn (ui/init [:button {:id "find-btn" :text "Find Next"}])]
-    [:dialog {:id "find-replace-dialog"
-              :title "Find Text"
-              :size  [500 300]
-              :modal false
-              :owner owner
-              :default-button find-btn}
-      [:panel {:layout [:box :page]}
-        [:panel {:layout [:box :line] :padding 5}
-          [:label {:text "Find:" :size [70 20]}]
-          [:text-field {:border [:line 0xAAAAAA 1] :padding 0}]]
-        [:panel {:layout [:box :line] :padding 5}
-          [:label {:text "Replace:" :size [70 20]}]
-          [:text-field {:border [:line 0xAAAAAA 1] :padding 0}]]
-        [:panel
-          find-btn
-          [:button {:text "Replace"}]]
-        [:panel {:layout :border}
-          [:scroll {:border :none} [:tree {:hide-root true :border :none}
-                     [:tree-node {:item :root}]]]]]]))
-
 (defn line-number-dialog [owner]
   (let [ok-btn (ui/init [:button {:id "ok" :text "Ok"}])]
     [:dialog {:owner owner
