@@ -177,6 +177,9 @@ as the abstraction of its implementation."
   (impl [this] (-> this meta :impl))
   (impl [this x] (vary-meta this assoc :impl x)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; event->key-stroke
+
 (defn memoized-key-stroke
   "Expects a keystroke event with keys :modifiers, :char and
 :code."

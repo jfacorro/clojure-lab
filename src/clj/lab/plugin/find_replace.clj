@@ -38,26 +38,29 @@
         root   (-> [:tree-node {:item :root}] ui/init (ui/add-all items))]
     (ui/update! dialog [:dialog :tree] #(-> % ui/remove-all (ui/add root)))))
 
-(defn- do-search [hls e]
+(defn- find-next
+  "Takes the highlights atom "
+  [e]
   (let [dialog  (:dialog (ui/attr (:source e) :stuff))
-        editor  (:editor (ui/attr @dialog :stuff))
+        {:keys [editor highlights]}
+                (ui/attr @dialog :stuff)
         ptrn    (model/text (ui/find @dialog :text-field))
         results (when (seq ptrn) (util/find-limits ptrn (model/text editor)))]
     (when results
       (ui/action
-        (doseq [hl @hls] (ui/remove-highlight editor hl))
-        (reset! hls (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888))
+        (doseq [hl @highlights] (ui/remove-highlight editor hl))
+        (reset! highlights (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888))
                           results))
         (add-search-results! dialog results)))))
 
 (defn- search-channel
   "Takes an atom that contains the current highlights for the results
 and creates a channel in which the search is performed."
-  [hls]
+  []
   (let [ch  (async/chan)]
     (async/go-loop []
       (when-let [e (async/<! ch)]
-          (do-search hls e)
+          (find-next e)
           (recur)))
     ch))
 
@@ -68,7 +71,7 @@ and creates a channel in which the search is performed."
     (ui/action (doseq [hl @highlights] (ui/remove-highlight editor hl)))
     (async/close! chan)))
 
-(defn- find-replace
+(defn- show-find-replace
   "Looks for matches of the entered text in the current editor."
   [e]
   (let [app     (:app e)
@@ -76,12 +79,13 @@ and creates a channel in which the search is performed."
         editor  (current-text-editor @ui)]
     (when editor
       (let [dialog (atom nil)
-            hls    (atom nil)
-            ch     (search-channel hls)]
-        (reset! dialog (-> (tplts/find-replace-dialog @ui "Find Text")
+            ch     (search-channel)]
+        (reset! dialog (-> (tplts/find-replace-dialog @ui)
                          ui/init
                          (ui/update :#find-replace-dialog
-                                    #(-> % (ui/attr :stuff {:chan ch :highlights hls :editor editor})
+                                    #(-> % (ui/attr :stuff {:chan ch
+                                                            :highlights (atom nil)
+                                                            :editor editor})
                                            (ui/listen :closing ::close-find-replace)
                                            (ui/listen :closed ::close-find-replace)))
                          (ui/update :#find-btn
@@ -92,7 +96,7 @@ and creates a channel in which the search is performed."
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.find-replace
      :global
-     {:category "Edit" :fn ::find-replace :keystroke "ctrl f" :name "Find & Replace"})])
+     {:category "Edit" :fn ::show-find-replace :keystroke "ctrl f" :name "Find & Replace"})])
 
 (plugin/defplugin lab.plugin.find-replace
   :type    :global

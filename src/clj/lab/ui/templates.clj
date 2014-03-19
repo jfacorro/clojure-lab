@@ -130,10 +130,10 @@ open files."
           [:tree {:id "results" :hide-root true}
             [:tree-node {:item :root}]]]]]])
 
-(defn find-replace-dialog [owner title]
+(defn find-replace-dialog [owner]
   (let [find-btn (ui/init [:button {:id "find-btn" :text "Find Next"}])]
     [:dialog {:id "find-replace-dialog"
-              :title title
+              :title "Find Text"
               :size  [500 300]
               :modal false
               :owner owner
