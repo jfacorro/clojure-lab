@@ -302,9 +302,9 @@ can be a single value or a collection specifying:
  [top-bottom left right]
  [top left bottom right]"
   [x]
-  (let [[top left bottom right] (if-let [c (and (sequential? x) (count x))]
+  (let [[top left bottom right] (if-let [n (and (sequential? x) (count x))]
                                   (let [[a b c d]  x]
-                                    (case c
+                                    (case (int n)
                                       1 [a a a a]
                                       2 [a b a b]
                                       3 [a b a c]

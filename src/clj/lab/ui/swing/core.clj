@@ -33,7 +33,8 @@
                           tab
                           misc-control
                           event])
-  (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]))
+  (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
+           java.awt.Component))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Swing L&F
@@ -113,17 +114,21 @@
                                               (.. x getBorder getInsideBorder)
                                               (.getBorder x))))))
     (:background [c _ v]
-      (.setBackground ^java.awt.Component (p/impl c) (util/color v)))
+      (.setBackground ^Component (p/impl c) (util/color v)))
     (:color [c _ v]
-      (.setForeground ^java.awt.Component (p/impl c) (util/color v)))
+      (.setForeground ^Component (p/impl c) (util/color v)))
     (:font [c _ v]
-      (.setFont ^java.awt.Component (p/impl c) (util/font v)))
-    (:size [c attr [w h :as v]]
-      (.setPreferredSize ^java.awt.Component (p/impl c) (util/dimension w h)))
+      (.setFont ^Component (p/impl c) (util/font v)))
+    (:size [c _ [w h :as v]]
+      (.setPreferredSize ^Component (p/impl c) (util/dimension w h)))
+    (:width [c _ w]
+      (ui/attr c :size [w (.getHeight ^Component (p/impl c))]))
+    (:height [c _ h]
+      (ui/attr c :size [(.getWidth ^Component (p/impl c)) h]))
     (:location [c _ [x y]]
-      (.setLocation ^java.awt.Component (p/impl c) x y))
+      (.setLocation ^Component (p/impl c) x y))
     (:visible [c _ v]
-      (.setVisible ^java.awt.Component (p/impl c) v)))
+      (.setVisible ^Component (p/impl c) v)))
 
 ;;;;;;;;;;;;;;;;;
 ;; Key
