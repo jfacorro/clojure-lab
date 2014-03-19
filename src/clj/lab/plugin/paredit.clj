@@ -120,9 +120,9 @@ and the closing delimiter.
         start (inc (or (find-char s delim #{\newline} -1) 0))
         index (location-index loc)]
     (match [tag index]
-      [:list 1] (inc (- delim start))
-      [:list 2] (+ (- delim start) 2)
-      [:list _] (- snd start)
+      [(:or :list :fn) 1] (inc (- delim start))
+      [(:or :list :fn) 2] (+ (- delim start) 2)
+      [(:or :list :fn) _] (- snd start)
       [(:or :vector :set :map) _] (inc (- delim start)))))
 
 (defn- format-code [e]
@@ -212,7 +212,7 @@ form or the end of the next one.
   (move e move-back))
 
 (defn forward
-  "Moves the caret to the end of the current 
+  "Moves the caret to the end of the current
 form or the start of the next one.
 
 (foo |(bar baz) quux)
