@@ -22,7 +22,8 @@ Example: the following code creates a 300x400 window with a \"Hello!\" button
             [lab.ui.protocols :as p]
             [lab.ui.select :as sel]
             [lab.ui.hierarchy :as h]
-            [lab.ui.util :refer [defattributes definitializations]]))
+            [lab.ui.util :refer [defattributes definitializations]])
+  (:import [lab.ui.protocols UIComponent UIEvent]))
 
 (declare init initialized? attr find genid hiccup->component)
 
@@ -75,54 +76,48 @@ as the abstraction of its implementation."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Abstract UI Component record
 
-(defrecord UIComponent [tag attrs content]
+(extend-type UIComponent
   p/Abstract
-  (impl [component]
-    (-> component meta :impl))
-  (impl [component implementation]
-    (vary-meta component assoc :impl implementation))
+  (impl
+    ([this]
+      (-> this meta :impl))
+    ([this implementation]
+      (vary-meta this assoc :impl implementation)))
 
   p/Selection
-  (selection [this]
-    (p/selection (p/impl this)))
-  (selection [this selection]
-    (p/selection (p/impl this) selection)
-    this)
-
-  Object
-  (toString [this]
-    (if-let [id (attr this :id)]
-      (str tag " (#" id ")")
-      tag))
+  (selection
+    ([this]
+      (p/selection (p/impl this)))
+    ([this selection]
+      (p/selection (p/impl this) selection)
+      this))
 
   p/StyledTextEditor
-  (apply-style [this tokens styles]
-    (p/apply-style (p/impl this) tokens styles)
-    this)
-  (apply-style [this start len style]
-    (p/apply-style (p/impl this) start len style)
-    this)
+  (apply-style
+    ([this tokens styles]
+      (p/apply-style (p/impl this) tokens styles)
+      this)
+    ([this start len style]
+      (p/apply-style (p/impl this) start len style)
+      this))
 
   p/TextEditor
   (add-highlight [this start end color]
     (p/add-highlight (p/impl this) start end color))
-
   (remove-highlight [this id]
     (p/remove-highlight (p/impl this) id))
-
-  (caret-position [this]
-    (p/caret-position (p/impl this)))
-  (caret-position [this position]
-    (p/caret-position (p/impl this) position)
-    this)
+  (caret-position
+    ([this]
+      (p/caret-position (p/impl this)))
+    ([this position]
+      (p/caret-position (p/impl this) position)
+      this))
   (caret-location [this]
     (p/caret-location (p/impl this)))
   (goto-line [this n]
-    (p/goto-line (p/impl this) n)))
+    (p/goto-line (p/impl this) n))
 
-;; Have to use this since remove is part of the java.util.Map interface.
-(extend-type UIComponent
-  p/Component 
+  p/Component
   (children [this]
     (:content this))
   (add [this child]
@@ -168,14 +163,15 @@ as the abstraction of its implementation."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; UI event abstraction
 
-(defrecord UIEvent [source event]
+(extend-type UIEvent
   p/Event
   (to-map [this] this)
   (consume [this] (p/consume (p/impl this)))
   
   p/Abstract
-  (impl [this] (-> this meta :impl))
-  (impl [this x] (vary-meta this assoc :impl x)))
+  (impl
+    ([this] (-> this meta :impl))
+    ([this x] (vary-meta this assoc :impl x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; event->key-stroke
@@ -284,7 +280,7 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
   [x]
   (if (vector? x)
     (let [[tag & [attrs & ch :as children]] x]
-      (->UIComponent
+      (p/->UIComponent
         tag
         (if (attrs? attrs)
           (reduce attr->component attrs attrs)
@@ -292,9 +288,10 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
         (mapv hiccup->component (if-not (attrs? attrs) children ch))))
     (update-in x [:content] (partial mapv hiccup->component))))
 
-(def ^:private initialized?
+(defn- initialized?
   "Checks if the component is initialized."
-  (comp not nil? p/impl))
+  [x]
+  (-> (p/impl x) nil? not))
 
 (defn- init-content
   "Initialize all content (children) for this component."
@@ -352,7 +349,7 @@ missing an :id attribute."
 and applies it to the component."
   [c]
   (if-let [f (attr c :post-init)]
-    (handle-event f (map->UIEvent {:source c :event :post-init}))
+    (handle-event f (p/map->UIEvent {:source c :event :post-init}))
     c))
 
 (defn init
@@ -374,11 +371,7 @@ each child and the attributes that have a component as a value."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Finding and Updating
 
-(defn find
-  "Returns the first component found."
-  [root selector]
-  (when-let [path (sel/select root selector)]
-    (get-in root path)))
+;; Selectors
 
 (def attr= #'sel/attr=)
 
@@ -389,6 +382,12 @@ each child and the attributes that have a component as a value."
   [id]
   (fn [c]
     (when c (some (sel/id= id) (children c)))))
+
+(defn find
+  "Returns the first component found."
+  [root selector]
+  (when-let [path (sel/select root selector)]
+    (get-in root path)))
 
 (def ^:private zipper (partial zip/zipper map? :content identity))
 

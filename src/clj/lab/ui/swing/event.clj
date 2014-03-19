@@ -109,7 +109,7 @@ a reflection warning."
 (def event-object "Root implementation."
   {:to-map (fn [^java.util.EventObject this]
              (-> {:source (p/abstract (.getSource this))}
-               ui/map->UIEvent
+               p/map->UIEvent
                (p/impl this)))
    :consume consume})
 

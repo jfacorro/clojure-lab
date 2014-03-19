@@ -34,6 +34,13 @@
   (goto-line [this n] "Positions the caret at the beggining of line n."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Records
+
+(defrecord UIComponent [tag attrs content])
+
+(defrecord UIEvent [source event])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Multi methods
 
 (defn tag-key-dispatch [{:keys [tag]} k & _]
