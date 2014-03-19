@@ -98,8 +98,20 @@
             c ^JComponent (p/impl c)]
         (.setLayout c (util/layout c v))))
     (:border [c _ v]
-      (let [v (if (sequential? v) v [v])]
-        (.setBorder ^JComponent (p/impl c) (apply util/border v))))
+      (let [v       (if (sequential? v) v [v])
+            border  (apply util/border v)
+            x       ^JComponent (p/impl c)
+            current (.getBorder x)]
+        (if-not (util/compound-border? current)
+          (.setBorder x border)
+          (.setBorder x (util/compound-border (.getOutsideBorder current) border)))))
+    (:padding [c _ v]
+      (let [x       ^JComponent (p/impl c)
+            current (.getBorder x)]
+        (.setBorder x (util/compound-border (util/padding v)
+                                            (if (util/compound-border? current)
+                                              (.. x getBorder getInsideBorder)
+                                              (.getBorder x))))))
     (:background [c _ v]
       (.setBackground ^java.awt.Component (p/impl c) (util/color v)))
     (:color [c _ v]

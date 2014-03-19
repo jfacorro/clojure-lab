@@ -285,6 +285,33 @@ with Color instances."
     :titled
       (BorderFactory/createTitledBorder ^String x)))
 
+(defn compound-border? [border]
+  (instance? javax.swing.border.CompoundBorder border))
+
+(defn compound-border
+  "Creates a compound border with the inner and outer
+borders provided."
+  [outer inner]
+  (BorderFactory/createCompoundBorder outer inner))
+
+(defn padding
+  "Creates an empty border with the specified padding, which
+can be a single value or a collection specifying:
+ [top-bottom-left-right]
+ [top-bottom left-right]
+ [top-bottom left right]
+ [top left bottom right]"
+  [x]
+  (let [[top left bottom right] (if-let [c (and (sequential? x) (count x))]
+                                  (let [[a b c d]  x]
+                                    (case c
+                                      1 [a a a a]
+                                      2 [a b a b]
+                                      3 [a b a c]
+                                      4 [a b c d]))
+                                  [x x x x])]
+    (BorderFactory/createEmptyBorder top left bottom right)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; KeyStroke
 
