@@ -78,13 +78,15 @@ and creates a channel in which the search is performed."
       (let [dialog (atom nil)
             hls    (atom nil)
             ch     (search-channel hls)]
-        (reset! dialog (-> (tplts/search-text-dialog @ui "Search Text")
+        (reset! dialog (-> (tplts/search-text-dialog @ui "Find Text")
                          ui/init
-                         (ui/update :#search-text ui/attr :stuff {:chan ch :highlights hls :editor editor})
-                         (ui/update :#search-text ui/listen :closing ::close-search-text)
-                         (ui/update :#search-text ui/listen :closed ::close-search-text)
-                         (ui/update [:#search-text :button] ui/attr :stuff {:dialog dialog})
-                         (ui/update [:#search-text :button] ui/listen :click ch)))
+                         (ui/update :#search-text
+                                    #(-> % (ui/attr :stuff {:chan ch :highlights hls :editor editor})
+                                           (ui/listen :closing ::close-search-text)
+                                           (ui/listen :closed ::close-search-text)))
+                         (ui/update :#search-btn
+                                    #(-> % (ui/attr :stuff {:dialog dialog})
+                                           (ui/listen :click ch)))))
         (ui/attr @dialog :visible true)))))
 
 (def ^:private keymaps
