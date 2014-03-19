@@ -1,4 +1,4 @@
-(ns lab.plugin.search-replace
+(ns lab.plugin.find-replace
   (:require [clojure.java.io :as io]
             [clojure.core.async :as async]
             [lab.core [plugin :as plugin]
@@ -90,10 +90,10 @@ and creates a channel in which the search is performed."
         (ui/attr @dialog :visible true)))))
 
 (def ^:private keymaps
-  [(km/keymap 'lab.plugin.search-replace
+  [(km/keymap 'lab.plugin.find-replace
      :global
      {:category "Edit" :fn ::find-replace :keystroke "ctrl f" :name "Find & Replace"})])
 
-(plugin/defplugin lab.plugin.search-replace
+(plugin/defplugin lab.plugin.find-replace
   :type    :global
   :keymaps keymaps)

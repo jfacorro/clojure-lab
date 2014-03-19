@@ -19,7 +19,7 @@
    :core-plugins  '[lab.core.main]
    :plugins       '[lab.plugin.notifier
                     lab.plugin.file-explorer
-                    lab.plugin.search-replace
+                    lab.plugin.find-replace
                     lab.plugin.code-outline
 
                     lab.plugin.markdown-lang
