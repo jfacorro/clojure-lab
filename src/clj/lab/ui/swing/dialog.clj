@@ -12,7 +12,7 @@
                  (abstract ([] @abs)
                            ([x] (reset! abs x) this)))]
     (util/register-key-binding (.getRootPane dialog) "escape"
-                               (fn [e] (.setVisible dialog false))
+                               (fn [e] (.setVisible dialog false) (.dispose dialog))
                                :focused-window)
     dialog))
 

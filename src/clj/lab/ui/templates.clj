@@ -133,16 +133,22 @@ open files."
   (let [search-btn (ui/init [:button {:text "Search"}])]
     [:dialog {:id "search-text"
               :title title
-              :size  [500 150]
+              :size  [500 300]
               :modal false
               :owner owner
               :default-button search-btn}
       [:panel {:layout [:box :page]}
-        [:panel {:layout [:box :line]}
-          [:text-field {:border :none}]
-          search-btn]
+        [:panel {:layout [:box :line] :size [100 20]}
+          [:label {:text "Find:" :size [50 10]}]
+          [:text-field {:border :none :size [50 10]}]]
+        [:panel {:layout [:box :line] :size [100 20]}
+          [:label {:text "Replace:" :size [50 10]}]
+          [:text-field {:border :none}]]
+        [:panel
+          search-btn
+          [:button {:text "Replace"}]]
         [:panel {:layout :border}
-          [:scroll [:tree {:hide-root true}
+          [:scroll {:border :none} [:tree {:hide-root true :border :none}
                      [:tree-node {:item :root}]]]]]]))
 
 (defn line-number-dialog [owner]
