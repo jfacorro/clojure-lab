@@ -424,7 +424,7 @@ inserting a fixed first parameter, which is the app."
   {#{:label :tree :button}
                 {:font [:name "Consolas" :size 14]}
    #{:text-editor :text-area :scroll :split :panel :tree}
-                {:border :none}
+                {:border :none :padding 0}
    :line-number {:font        [:name "Consolas" :size 16]
                  :background  0x666666
                  :color       0xFFFFFF

@@ -13,8 +13,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Text
 
-(defn- goto-line [e]
-  (when (= 2 (:click-count e))
+(defn- goto-result [{:keys [click-count button] :as e}]
+  (when (and (= 2 click-count) (= :button-1 button))
     (let [node   (:source e)
           {:keys [editor position]} (ui/attr node :stuff)]
       (ui/caret-position editor position))))
@@ -23,20 +23,20 @@
   (let [s     (model/text editor)
         start (util/find-char s pos #{\newline} -1)
         end   (util/find-char s pos #{\newline} 1)]
-    (subs s (if start start 0) (if end end (dec (count s))))))
+    (subs s (if start start 0) (if end end (count s)))))
 
 (defn- search-results-node [editor [start end]]
   [:tree-node {:item   (line-at editor start)
                :leaf   true
                :stuff  {:position start :editor editor}
-               :listen [:click ::goto-line]}])
+               :listen [:click ::goto-result]}])
 
 (defn- add-search-results! [dialog results]
   (let [editor (:editor (ui/attr @dialog :stuff))
         txt    (model/text editor)
-        items  (mapv (partial search-results-node editor) results)
+        items  (map (partial search-results-node editor) results)
         root   (-> [:tree-node {:item :root}] ui/init (ui/add-all items))]
-    (ui/update! dialog [:#search-text :tree] #(-> % ui/remove-all (ui/add root)))))
+    (ui/update! dialog [:dialog :tree] #(-> % ui/remove-all (ui/add root)))))
 
 (defn- do-search [hls e]
   (let [dialog  (:dialog (ui/attr (:source e) :stuff))
@@ -61,14 +61,14 @@ and creates a channel in which the search is performed."
           (recur)))
     ch))
 
-(defn- close-search-text
+(defn- close-find-replace
   "Closes the channel and removes all highlights from the editor."
   [e]
   (let [{:keys [editor chan highlights]} (-> (:source e) (ui/attr :stuff))]
     (ui/action (doseq [hl @highlights] (ui/remove-highlight editor hl)))
     (async/close! chan)))
 
-(defn- search-text-in-editor
+(defn- find-replace
   "Looks for matches of the entered text in the current editor."
   [e]
   (let [app     (:app e)
@@ -78,13 +78,13 @@ and creates a channel in which the search is performed."
       (let [dialog (atom nil)
             hls    (atom nil)
             ch     (search-channel hls)]
-        (reset! dialog (-> (tplts/search-text-dialog @ui "Find Text")
+        (reset! dialog (-> (tplts/find-replace-dialog @ui "Find Text")
                          ui/init
-                         (ui/update :#search-text
+                         (ui/update :#find-replace-dialog
                                     #(-> % (ui/attr :stuff {:chan ch :highlights hls :editor editor})
-                                           (ui/listen :closing ::close-search-text)
-                                           (ui/listen :closed ::close-search-text)))
-                         (ui/update :#search-btn
+                                           (ui/listen :closing ::close-find-replace)
+                                           (ui/listen :closed ::close-find-replace)))
+                         (ui/update :#find-btn
                                     #(-> % (ui/attr :stuff {:dialog dialog})
                                            (ui/listen :click ch)))))
         (ui/attr @dialog :visible true)))))
@@ -92,7 +92,7 @@ and creates a channel in which the search is performed."
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.search-replace
      :global
-     {:category "Edit" :fn ::search-text-in-editor :keystroke "ctrl f" :name "Find & Replace"})])
+     {:category "Edit" :fn ::find-replace :keystroke "ctrl f" :name "Find & Replace"})])
 
 (plugin/defplugin lab.plugin.search-replace
   :type    :global

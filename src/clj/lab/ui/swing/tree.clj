@@ -9,6 +9,12 @@
                                TreeExpansionEvent]
             [java.awt.event MouseAdapter KeyAdapter]))
 
+(defn- update-tree-from-node [^DefaultMutableTreeNode node]
+  (let [root (.getRoot node)
+        tree ^JTree (:tree (meta root))]
+      (when (and tree (.getModel tree))
+        (.reload ^DefaultTreeModel (.getModel tree) node))))
+
 (defn tree-node-init [c] 
   (let [ab        (atom nil)
         meta-data (atom nil)
@@ -38,7 +44,7 @@ The handler should return falsey if the node was modified."
     (doseq [f fns]
       (when (and f (#'ui/event-handler f e))
         ;; notify the model to reload the modified node
-        (.reload ^DefaultTreeModel (.getModel tree) node)))))
+        (update-tree-from-node node)))))
 
 (defn- node-event
   "Event handler for either click or key.
@@ -52,7 +58,7 @@ event can be :click or :key."
     (doseq [f fns]
       (when (and node f (#'ui/event-handler f e))
         ;; notify the model to reload the modified node
-        (.reload ^DefaultTreeModel (.getModel tree) node)))))
+        (update-tree-from-node node)))))
 
 (defn tree-init [c]
   (let [expansion (proxy [TreeExpansionListener] []
@@ -73,12 +79,6 @@ event can be :click or :key."
 (definitializations
   :tree        tree-init
   :tree-node   tree-node-init)
-
-(defn- update-tree-from-node [^DefaultMutableTreeNode node]
-  (let [root (.getRoot node)
-        tree ^JTree (:tree (meta root))]
-      (when (and tree (.getModel tree))
-        (.reload ^DefaultTreeModel (.getModel tree) node))))
 
 (extend-type DefaultMutableTreeNode
   Component

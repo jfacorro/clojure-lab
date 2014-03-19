@@ -72,6 +72,7 @@ includes a label and a closing button."
                        [:label {:color 0xFFFFFF}]
                        [:button {:icon         "close-tab.png"
                                  :border       :none
+                                 :padding      0
                                  :transparent  true
                                  :listen       [:click ::resolve-close-tab]
                                  :stuff        {:tab-id id}}]]}])))
@@ -129,14 +130,14 @@ open files."
           [:tree {:id "results" :hide-root true}
             [:tree-node {:item :root}]]]]]])
 
-(defn search-text-dialog [owner title]
-  (let [search-btn (ui/init [:button {:id "search-btn" :text "Search"}])]
-    [:dialog {:id "search-text"
+(defn find-replace-dialog [owner title]
+  (let [find-btn (ui/init [:button {:id "find-btn" :text "Find Next"}])]
+    [:dialog {:id "find-replace-dialog"
               :title title
               :size  [500 300]
               :modal false
               :owner owner
-              :default-button search-btn}
+              :default-button find-btn}
       [:panel {:layout [:box :page]}
         [:panel {:layout [:box :line] :padding 5}
           [:label {:text "Find:" :size [70 20]}]
@@ -145,7 +146,7 @@ open files."
           [:label {:text "Replace:" :size [70 20]}]
           [:text-field {:border [:line 0xAAAAAA 1] :padding 0}]]
         [:panel
-          search-btn
+          find-btn
           [:button {:text "Replace"}]]
         [:panel {:layout :border}
           [:scroll {:border :none} [:tree {:hide-root true :border :none}
