@@ -130,7 +130,7 @@ open files."
             [:tree-node {:item :root}]]]]]])
 
 (defn search-text-dialog [owner title]
-  (let [search-btn (ui/init [:button {:text "Search"}])]
+  (let [search-btn (ui/init [:button {:id "search-btn" :text "Search"}])]
     [:dialog {:id "search-text"
               :title title
               :size  [500 300]
@@ -138,12 +138,12 @@ open files."
               :owner owner
               :default-button search-btn}
       [:panel {:layout [:box :page]}
-        [:panel {:layout [:box :line] :size [100 20]}
-          [:label {:text "Find:" :size [50 10]}]
-          [:text-field {:border :none :size [50 10]}]]
-        [:panel {:layout [:box :line] :size [100 20]}
-          [:label {:text "Replace:" :size [50 10]}]
-          [:text-field {:border :none}]]
+        [:panel {:layout [:box :line] :padding 5}
+          [:label {:text "Find:" :size [70 20]}]
+          [:text-field {:border [:line 0xAAAAAA 1] :padding 0}]]
+        [:panel {:layout [:box :line] :padding 5}
+          [:label {:text "Replace:" :size [70 20]}]
+          [:text-field {:border [:line 0xAAAAAA 1] :padding 0}]]
         [:panel
           search-btn
           [:button {:text "Replace"}]]
