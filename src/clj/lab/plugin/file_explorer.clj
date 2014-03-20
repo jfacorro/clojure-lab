@@ -147,16 +147,15 @@ file specified, which should be a directory."
 (defn- lazy-add-to-dir
   "Lazily add the file nodes to this node if it
 currently has no children."
-  [e]
-  (let [app       (:app e)
-        ui        (:ui @app)
-        node      (:source e)
-        id        (ui/attr node :id)
-        file      (:file (ui/stuff node))]
-    (when (empty? (ui/children node))
+  [{:keys [app source] :as e}]
+  (let [ui        (:ui @app)
+        id        (ui/attr source :id)
+        {:keys [file loaded]} (ui/stuff source)]
+    (when-not loaded
       (ui/update! ui (ui/id= id)
-        (partial reduce ui/add)
-        (file-node-children file)))))
+                  #(-> %
+                       (ui/add-all (file-node-children file))
+                       (ui/update-attr :stuff assoc :loaded true))))))
 
 (defn- tree-node-from-file
   "Creates a tree node with the supplied file as its item.
