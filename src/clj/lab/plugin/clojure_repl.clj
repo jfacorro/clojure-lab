@@ -57,7 +57,7 @@ it. If not project file is supplied, a bare REPL is started."
                         (model/text editor))
                       (model/substring editor start end))
         repl        (ui/find @ui [:#bottom :tab :scroll :text-area])
-        in          (-> repl (ui/attr :stuff) :in)]
+        in          (:in (ui/stuff repl))]
     (when repl
       (async/put! in selection))))
 
@@ -105,11 +105,11 @@ output and input streams of the REPL process."
 (defn- close-tab-repl
   "Ask for confirmation before closing the REPL tab
 and killing the associated process."
-  [e]
-  (let [ui   (-> e :app deref :ui)
-        id   (-> (:source e) (ui/attr :stuff) :tab-id)
+  [{:keys [source app] :as e}]
+  (let [ui   (:ui @app)
+        id   (:tab-id (ui/stuff source))
         tab  (ui/find @ui (ui/id= id))
-        repl (-> (ui/find tab :text-area) (ui/attr :stuff) :repl)
+        repl (:repl (ui/stuff (ui/find tab :text-area)))
         result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."
                                    " Do you want to continue?")

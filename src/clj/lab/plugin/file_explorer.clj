@@ -229,7 +229,7 @@ tree. Returns a tree node."
 
 (defn- stop-all-watches! [app]
   (let [ui        (:ui @app)
-        watchers  (-> (ui/find @ui :#file-explorer) (ui/attr :stuff) :watches)]
+        watchers  (-> (ui/find @ui :#file-explorer) ui/stuff :watches)]
     ;; Cancel all directory watches
     (doseq [w watchers] (future-cancel w))
     ;; Empty the watches collection

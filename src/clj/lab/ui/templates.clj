@@ -5,15 +5,16 @@
 
 (defn close-tab
   "Expects the source of the event to have a :tab-id key in its :stuff."
-  [e]
-  (let [ui  (-> e :app deref :ui)
-        id  (-> (:source e) (ui/attr :stuff) :tab-id)
+  [{:keys [source app] :as e}]
+  (let [ui  (:ui @app)
+        id  (:tab-id (ui/stuff source))
         tab (ui/find @ui (ui/id= id))]
     (ui/update! ui (ui/parent id) ui/remove tab)))
 
-(defn- resolve-close-tab [e]
-  (let [ui  (-> e :app deref :ui)
-        id  (-> (:source e) (ui/attr :stuff) :tab-id)
+(defn- resolve-close-tab
+  [{:keys [source app] :as e}]
+  (let [ui  (:ui @app)
+        id  (:tab-id (ui/stuff source))
         tab (ui/find @ui (ui/id= id))
         close-tab (or (:close-tab (ui/stuff tab)) close-tab)]
     (when close-tab
