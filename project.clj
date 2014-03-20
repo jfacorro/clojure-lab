@@ -26,7 +26,8 @@
              "build-aot" ["with-profile" "aot" "build"]}
   :repositories [["local" "file:repo"]]
   :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.4"]]
-                   :main lab.main}
+                   :main lab.main
+                   :debug true}
              :aot {:aot :all}
              :uberjar {:main lab.main
                        :aot [lab.main]}})

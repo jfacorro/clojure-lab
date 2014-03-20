@@ -45,9 +45,9 @@
 
 (defn- select-tab-click
   "Selects the tab that generated the event."
-  [e]
-  (let [ui  (-> e :app deref :ui)
-        id  (-> (:source e) (ui/attr :stuff) :tab-id)]
+  [{:keys [app source] :as e}]
+  (let [ui  (:ui @app)
+        id  (:tab-id (ui/stuff source))]
     (ui/update! ui (ui/parent id) select-tab id)))
 
 (defn- tab-click
@@ -129,17 +129,3 @@ open files."
         [:scroll {:border :none}
           [:tree {:id "results" :hide-root true}
             [:tree-node {:item :root}]]]]]])
-
-(defn line-number-dialog [owner]
-  (let [ok-btn (ui/init [:button {:id "ok" :text "Ok"}])]
-    [:dialog {:owner owner
-              :icons ["right-icon.png"]
-              :title "Go to Line"
-              :size  [300 85]
-              :modal true
-              :default-button ok-btn}
-      [:panel {:layout [:box :page]}
-        [:text-field {:border :none}]
-        [:panel {:layout :flow}
-          ok-btn
-          [:button {:id "cancel" :text "Cancel"}]]]]))

@@ -16,7 +16,8 @@
 
 (def default-config
   {:name          "Clojure Lab"
-   :core-plugins  '[lab.core.main]
+   :core-plugins  '[lab.core.main
+                    lab.plugin.editor.go-to]
    :plugins       '[lab.plugin.notifier
                     lab.plugin.file-explorer
                     lab.plugin.find-replace

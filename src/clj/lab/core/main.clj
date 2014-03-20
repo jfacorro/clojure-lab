@@ -276,12 +276,19 @@ and signals the highlighting process."
       (ui/add (text-editor-create app doc))
       (ui/apply-stylesheet (:styles @app)))))
 
-(defn- exit! [e]
-  (let [result (tplts/confirm "Bye bye"
-                              "Are you sure you want to leave this magical experience?"
-                              (-> e :app deref :ui deref))]
-    (if (= result :ok)
-        (System/exit 0))))
+(defn- debugging? []
+  (= "true" (System/getProperty "clojure.debug")))
+
+(defn- exit! [{:keys [app] :as e}]
+  (if (debugging?)
+    (do
+      (ui/attr @(:ui @app) :visible false)
+      (reset! app nil))
+    (let [result (tplts/confirm "Bye bye"
+                                "Are you sure you want to leave this magical experience?"
+                                (-> @app :ui deref))]
+      (when (= result :ok)
+          (System/exit 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toogle Fullscreen
@@ -363,36 +370,6 @@ and signals the highlighting process."
             (fn [total i] (if (and i (>= (dec i) 0)) (dec i) (dec total)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Go to line
-
-(defn- goto-line-ok [e]
-  (let [dialog (ui/attr (:source e) :stuff)
-        txt    (-> @dialog (ui/find :text-field) model/text)]
-    (when (re-matches #"\d*" txt)
-      (ui/update! dialog [] ui/attr :result :ok)
-      (ui/update! dialog [] ui/attr :visible false))))
-
-(defn- goto-line-cancel [e]
-  (let [dialog (ui/attr (:source e) :stuff)]
-    (ui/update! dialog [] ui/attr :result :cancel)
-    (ui/update! dialog [] ui/attr :visible false)))
-
-(defn- goto-line! [e]
-  (let [app    (:app e)
-        ui     (:ui @app)
-        editor (current-text-editor @ui)
-        dialog (atom nil)]
-    (when editor
-      (reset! dialog (-> (tplts/line-number-dialog @ui)
-                       ui/init
-                       (ui/update :button ui/attr :stuff dialog)
-                       (ui/update :#ok ui/listen :click ::goto-line-ok)
-                       (ui/update :#cancel ui/listen :click ::goto-line-cancel)))
-      (ui/attr @dialog :visible true)
-      (when (= :ok (ui/attr @dialog :result))
-        (ui/goto-line editor (-> @dialog (ui/find :text-field) model/text read-string))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event handler
 
 (defn- kw->fn [k]
@@ -459,7 +436,6 @@ inserting a fixed first parameter, which is the app."
               {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
               {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"}
 
-              {:category "Edit", :name "Go to Line" :fn ::goto-line! :keystroke "ctrl g"}
               {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
               {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
 
