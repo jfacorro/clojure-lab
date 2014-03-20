@@ -24,9 +24,7 @@
                  (truncate 50)
                  (str "Error - "))
         tab    (-> (tplts/tab "notifier")
-                 (ui/update :tab
-                            ui/update-attr :header
-                            ui/update :label ui/attr :text title)
+                 (ui/update-attr :header ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none}
                            [:text-area {:text (str sw) :read-only true :post-init #(ui/caret-position (:source %) 0)}]]))]
     (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 200)

@@ -187,10 +187,8 @@ directory to the text field that holds the path."
       (ui/action
         (when-not (ui/find @ui :#find-results)
           (ui/update! ui :#bottom ui/add (view-find-results)))
-;;        (future
-          (find-in-files app path recursive txt)
-;;          )
-          ))))
+        (future
+          (find-in-files app path recursive txt))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Replace
@@ -250,11 +248,11 @@ function to look for the next match."
 (defn- show-dialog
   "Show the find and replace dialog, selecting the tab
 with the id specified."
-  [{:keys [app] :as e} view-find]
+  [{:keys [app] :as e} view-find & [no-editor-required]]
   (let [ui      (:ui @app)
         editor  (current-text-editor @ui)
         dialog  (atom nil)]
-    (when editor
+    (when (or no-editor-required editor)
       (-> dialog
         (reset! (ui/init (view-find @ui dialog)))
         (ui/attr :visible true)))))
@@ -269,7 +267,7 @@ with the id specified."
 
 (defn- show-find-in-files 
   [e]
-  (show-dialog e view-find-in-files))
+  (show-dialog e view-find-in-files true))
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.find-replace
