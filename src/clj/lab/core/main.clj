@@ -248,11 +248,19 @@ and signals the highlighting process."
     ui/init
     (ui/apply-stylesheet (:styles @app))))
 
+(defn text-editor-view
+  "Creates a text editor with a document attached to it."
+  [doc]
+  (-> [:text-editor {:doc doc
+                     :text (doc/text @doc)
+                     :listen [:key ::handle-key
+                              :insert ::text-editor-change
+                              :delete ::text-editor-change]}]
+      ui/init
+      (ui/caret-position 0)))
+
 (defn- text-editor-create [app doc]
-  (let [editor (-> (tplts/text-editor doc)
-                 (ui/attr :listen [:key ::handle-key
-                                   :insert ::text-editor-change
-                                   :delete ::text-editor-change]))]
+  (let [editor (text-editor-view doc)]
     [:scroll {:vertical-increment 16
               :listen [:mouse-wheel ::change-font-size]
               :margin-control (line-number-create app editor)}
@@ -269,12 +277,11 @@ and signals the highlighting process."
         title (doc/name @doc)
         tool-tip (doc/path @doc)]
     (-> (tplts/tab id)
-      (ui/update :tab #(-> %
-                    (ui/update-attr :stuff assoc :close-tab close-document-button)
-                         (ui/attr :tool-tip tool-tip)
-                         (ui/update-attr :header ui/update :label ui/attr :text title)))
-      (ui/add (text-editor-create app doc))
-      (ui/apply-stylesheet (:styles @app)))))
+        (ui/update-attr :stuff assoc :close-tab close-document-button)
+        (ui/attr :tool-tip tool-tip)
+        (ui/update-attr :header ui/update :label ui/attr :text title)
+        (ui/add (text-editor-create app doc))
+        (ui/apply-stylesheet (:styles @app)))))
 
 (defn- debugging? []
   (= "true" (System/getProperty "clojure.debug")))
@@ -417,6 +424,27 @@ inserting a fixed first parameter, which is the app."
    :tabs        {:selected-tab-style   {:border [:line 0x00FFFF 1]}
                  :unselected-tab-style {:border :none}}})
 
+(defn app-view [title]
+  (ui/init
+    [:window {:id     "main"
+              :title   title
+              :visible true
+              :size    [700 500]
+              :maximized true
+              :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
+              :menu    [:menu-bar]
+              :listen  [:closing ::exit!]}
+      [:split {:orientation :vertical
+               :resize-weight 1}
+        [:split {:resize-weight 0
+                 :divider-location 150}
+          [:tabs {:id "left" :border :none}]
+          [:split {:resize-weight 1}
+            [:tabs {:id "center"
+                    :listen [:change ::switch-document-ui!]}]
+            [:tabs {:id "right"}]]]
+        [:tabs {:id "bottom"}]]]))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Plugin definition
 
@@ -443,13 +471,9 @@ inserting a fixed first parameter, which is the app."
   "Builds the basic UI and adds it to the app under the key :ui."
   [app]
   (ui/register-event-handler! (partial #'event-handler app))
-  (swap! app assoc :ui (-> @app
-                         (lab/config :name)
-                         tplts/app-window
-                         (ui/update :#main ui/listen :closing ::exit!)
-                         (ui/update :#center ui/listen :change ::switch-document-ui!)
-                         (ui/apply-stylesheet styles)
-                         atom)
+  (swap! app assoc :ui (-> (app-view (lab/config @app :name))
+                           (ui/apply-stylesheet styles)
+                           atom)
                    :styles styles))
 
 (plugin/defplugin lab.core.main

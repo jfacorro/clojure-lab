@@ -112,7 +112,7 @@ and content"
 
 (def ^:private hooks
   {#'lab.core/switch-document #'switch-document-hook
-   #'lab.ui.templates/text-editor #'text-editor-hook})
+   #'lab.core.main/text-editor-view #'text-editor-hook})
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)

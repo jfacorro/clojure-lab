@@ -3,25 +3,6 @@
             [lab.ui.core :as ui]
             [lab.model.document :as doc]))
 
-(defn app-window [app-name]
-  (ui/init
-    [:window {:id     "main"
-              :title   app-name
-              :visible true
-              :size    [700 500]
-              :maximized true
-              :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
-              :menu    [:menu-bar]}
-      [:split {:orientation :vertical
-               :resize-weight 1}
-        [:split {:resize-weight 0
-                 :divider-location 150}
-          [:tabs {:id "left" :border :none}]
-          [:split {:resize-weight 1}
-            [:tabs {:id "center"}]
-            [:tabs {:id "right"}]]]
-        [:tabs {:id "bottom"}]]]))
-
 (defn close-tab
   "Expects the source of the event to have a :tab-id key in its :stuff."
   [e]
@@ -76,14 +57,6 @@ includes a label and a closing button."
                                  :transparent  true
                                  :listen       [:click ::resolve-close-tab]
                                  :stuff        {:tab-id id}}]]}])))
-
-(defn text-editor
-  "Creates a text editor with a document attached to it."
-  [doc]
-  (-> [:text-editor {:doc  doc}]
-    ui/init
-    (ui/attr :text (doc/text @doc))
-    (ui/caret-position 0)))
 
 (defn confirm
   [title message owner]
