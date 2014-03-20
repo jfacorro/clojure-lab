@@ -16,6 +16,25 @@ the specified root dir."
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Search & Open File
 
+(defn view-search-file
+  "Defines the dialog that's used to search and
+open files."
+  [owner dialog chan]
+  [:dialog {:id "search-file"
+            :title "Search & Open File"
+            :size  [500 150]
+            :modal true
+            :owner owner}
+    [:panel {:layout [:box :page]}
+      [:text-field {:border :none
+                    :stuff  {:dialog dialog}
+                    :listen [:insert chan
+                             :delete chan]}]
+      [:panel {:layout :border}
+        [:scroll {:border :none}
+          [:tree {:id "results" :hide-root true}
+            [:tree-node {:item :root}]]]]]])
+
 (defn- open-document-dialog
   "Check the event for double click or enter key, if so
 open the document associated with the selected item."
@@ -83,23 +102,17 @@ and adds new found ones."
 for files whose complete path match the text provided. If the
 File Explorer is open then the files are searched in the directories
 loaded, otherwise the '.' directory is used."
-  [e]
+  [{:keys [app] :as e}]
   ;; Add ESC as an exit dialog key.
   (let [dialog (atom nil)
         ch     (util/timeout-channel 200 #'search-file)
-        owner  (-> e :app deref :ui deref)]
+        ui     (:ui @app)]
     (ui/action
-      (reset! dialog
-            (-> (tplts/search-file-dialog owner "Search & Open File")
-              ui/init
-              (ui/update [:#search-file :text-field]
-                         #(-> %
-                            (ui/attr :stuff {:dialog dialog})
-                            (ui/listen :insert ch)
-                            (ui/listen :delete ch)))))
-      ;; Show the modal dialog without modifying the atom so that
-      ;; there's no retry when the compare-and-set! is done on the atom.
-      (ui/update @dialog :#search-file ui/attr :visible true))))
+      (-> dialog
+        (reset! (ui/init (view-search-file @ui dialog ch)))
+        ;; Show the modal dialog without modifying the atom so that
+        ;; there's no retry when the compare-and-set! is done on the atom.
+        (ui/attr :visible true)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tree nodes creation
