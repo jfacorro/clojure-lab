@@ -34,6 +34,7 @@
                           misc-control
                           event])
   (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
+           javax.swing.border.CompoundBorder
            java.awt.Component))
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -105,13 +106,13 @@
             current (.getBorder x)]
         (if-not (util/compound-border? current)
           (.setBorder x border)
-          (.setBorder x (util/compound-border (.getOutsideBorder current) border)))))
+          (.setBorder x (util/compound-border (.getOutsideBorder ^CompoundBorder current) border)))))
     (:padding [c _ v]
       (let [x       ^JComponent (p/impl c)
             current (.getBorder x)]
         (.setBorder x (util/compound-border (util/padding v)
                                             (if (util/compound-border? current)
-                                              (.. x getBorder getInsideBorder)
+                                              (.getInsideBorder ^CompoundBorder (.getBorder x))
                                               (.getBorder x))))))
     (:background [c _ v]
       (.setBackground ^Component (p/impl c) (util/color v)))

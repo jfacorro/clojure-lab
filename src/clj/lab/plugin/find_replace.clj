@@ -11,6 +11,7 @@
                     [templates :as tplts]])
   (:import  [java.io File]))
 
+(declare find-next-click)
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Views
 
@@ -121,7 +122,7 @@
           ui     (:ui @app)
           {:keys [file position]}
                  (ui/attr node :stuff)
-          path   (.getCanonicalPath file)]
+          path   (.getCanonicalPath ^File file)]
       (open-document app path)
       (ui/action (ui/caret-position (current-text-editor @ui) position)))))
 
@@ -136,13 +137,20 @@
                :stuff  {:position start :file file}
                :listen [:click ::open-result]}])
 
-(defn- find-results [ui id txt file]
+(defn- find-results [ui id txt ^File file]
   (let [s       (slurp file)
         results (find-limits txt s)
         items   (map (partial search-results-node file s) results)
         file-node (into [:tree-node {:item (.getCanonicalPath file)}] items)]
   (when (seq items)
     (ui/action (ui/update! ui (ui/id= id) ui/add file-node)))))
+
+(defn- get-files
+  [path & [recursive]]
+  (let [x (io/file path)]
+    (if recursive
+      (file-seq x)
+      (.listFiles x))))
 
 (defn- find-in-files [app path recursive txt]
   (let [ui    (:ui @app)
@@ -152,7 +160,7 @@
         id    (ui/attr root :id)]
     (ui/action
       (ui/update! ui [:#find-results :#find-results-root] ui/add root))
-    (doseq [file files]
+    (doseq [^File file files]
       (when (.isFile file)
         (find-results ui id txt file)))))
 
@@ -167,13 +175,6 @@ directory to the text field that holds the path."
         [res dir] (ui/attr dir-dlg :result)
         path      (.getCanonicalPath ^File dir)]
     (ui/update! dialog :#path-text ui/attr :text path)))
-
-(defn- get-files
-  [path & [recursive]]
-  (let [x (io/file path)]
-    (if recursive
-      (file-seq x)
-      (.listFiles x))))
 
 (defn- find-in-files-click
   [{:keys [app source] :as e}]
