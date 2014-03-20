@@ -87,6 +87,8 @@ is set before processing other attribute's code."
     (.setVisible ^JDialog (impl c) v))
   (:default-button [c _ v]
      (.. ^JDialog (impl c) getRootPane (setDefaultButton (impl v))))
+  (:resizable [c _ v]
+    (.setResizable ^JDialog (impl c) v))
 
   :file-dialog
   (:title [c _ v]
