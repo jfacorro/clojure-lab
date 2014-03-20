@@ -3,11 +3,12 @@
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.protocols :as p]
             [lab.ui.swing.util :as util])
-  (:import [javax.swing JButton JLabel]))
+  (:import [javax.swing JButton JLabel JCheckBox]))
 
 (definitializations
   :button      JButton
-  :label       JLabel)
+  :label       JLabel
+  :checkbox    JCheckBox)
 
 (defattributes
   :button
@@ -20,7 +21,19 @@
 
   :label
   (:text [c _ v]
-    (.setText ^JLabel (p/impl c) v)))
+    (.setText ^JLabel (p/impl c) v))
+  
+  :checkbox
+  (:text [c _ v]
+    (.setText ^JCheckBox (p/impl c) v)))
+
+(extend-type JCheckBox
+  p/Selection
+  (p/selection
+    ([this]
+      (.isSelected this))
+    ([this v]
+      (.setSelected this v))))
 
 (defmethod p/listen [:button :click]
   [c evt f]

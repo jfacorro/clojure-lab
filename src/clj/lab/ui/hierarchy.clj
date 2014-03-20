@@ -33,7 +33,7 @@
                   ; tree
                   :tree :tree-node
                   ; misc
-                  :button :label]
+                  :button :label :checkbox]
     :window     [:dialog]
     :dialog     [:file-dialog :option-dialog]
     :text-field [:text-area]
