@@ -169,30 +169,29 @@ within the opened documents."
   "Creates a new document, adds it to the document
 collection and sets it as the current-document."
   ([app]
-    (new-document app (default-lang app)))
+   (new-document app (default-lang app)))
   ([app lang]
-    (let [doc (atom (doc/document lang))]
-      (-> app
-        (update-in [:documents] conj doc)
-        (switch-document doc)))))
+   (let [doc (atom (doc/document lang))]
+     (-> app
+       (update-in [:documents] conj doc)
+       (switch-document doc)))))
 
 (defn open-document
   "Opens a document from an existing file
 and adds it to the openened documents map."
   ([app path]
-    (let [langs (-> app :langs vals)
-          default (default-lang app)]
-      (open-document app path (lang/resolve-lang path langs default))))
+   (let [langs (-> app :langs vals)
+         default (default-lang app)]
+     (open-document app path (lang/resolve-lang path langs default))))
   ([app path lang]
-    {:pre [path]}
-    (let [doc        (atom (doc/document lang path))
-          opened-doc (find-doc-by-path app path)]
-      (if opened-doc
-        (switch-document app opened-doc)
-        (-> app
-          (update-in [:documents] conj doc)
-          (switch-document doc)
-          (config :current-dir path))))))
+   {:pre [path]}
+   (if-let [opened-doc (find-doc-by-path app path)]
+     (switch-document app opened-doc)
+     (let [doc (atom (doc/document lang path))]
+       (-> app
+         (update-in [:documents] conj doc)
+         (switch-document doc)
+         (config :current-dir path))))))
 
 (defn close-document
   "Closes a document and removes it from the opened
