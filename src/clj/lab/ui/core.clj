@@ -379,6 +379,13 @@ each child and the attributes that have a component as a value."
   (fn [c]
     (when c (some (sel/id= id) (children c)))))
 
+(defn child
+  "Selects the current component if any of the children
+has the provided id."
+  [id]
+  (fn [c]
+    (when c (boolean (find c (id= id))))))
+
 (defn find
   "Returns the first component found."
   [root selector]

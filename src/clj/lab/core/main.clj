@@ -43,19 +43,31 @@
           title (if (doc/modified? new-state) (str name "*") name)]
       (ui/update! ui (ui/id= id) update-tab-title title))))
 
+(defn- has-doc? [doc editor]
+  (= doc (ui/attr editor :doc)))
+
 (defn- open-document-ui!
   "Adds a new tab to the documents tab container. This is used by both 
-the open and new commands."
+the open and new commands.
+If the document is already open, then the text editor associated with
+it is brought into focus and the tab containing it is selected."
   [app doc]
-  (let [ui  (:ui @app)
-        tab (document-tab app doc)
-        id  (ui/attr tab :id)
-        editor-id (-> (ui/find tab :text-editor) (ui/attr :id))]
-    (add-watch doc editor-id (partial #'doc-modified-update-title app id))
-    (ui/action
-      (ui/update! ui :#center ui/add tab)
-      (ui/update! ui (ui/id= editor-id) ui/focus)
-      (lab/load-lang-plugins! app doc))))
+  (let [ui     (:ui @app)
+        editor (ui/find @ui [:#center [:text-editor (partial has-doc? doc)]])
+        id     (ui/attr editor :id)
+        tab-id (-> (ui/find @ui [:#center [:tab (ui/child id)]]) (ui/attr :id))]
+    (if editor
+      (ui/action
+        (ui/update! ui :#center tplts/select-tab tab-id)
+        (ui/update! ui (ui/id= id) ui/focus))
+      (let [tab    (document-tab app doc)
+            tab-id (ui/attr tab :id)
+            editor (ui/find tab :text-editor)
+            id     (ui/attr editor :id)]
+      (add-watch doc id (partial #'doc-modified-update-title app tab-id))
+      (ui/action        
+        (ui/update! ui :#center ui/add tab)
+        (lab/load-lang-plugins! app doc))))))
 
 (defn open-document
   "Adds a new tab with the open document."
