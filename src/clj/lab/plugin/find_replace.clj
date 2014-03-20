@@ -1,11 +1,12 @@
 (ns lab.plugin.find-replace
   (:require [clojure.java.io :as io]
             [clojure.core.async :as async]
+            [lab.core :as lab]
             [lab.core [plugin :as plugin]
                       [keymap :as km]
-                      [main :refer [current-text-editor]]]
+                      [main :refer [current-text-editor open-document]]]
             [lab.model.protocols :as model]
-            [lab.util :as util]
+            [lab.util :refer [find-char find-limits]]
             [lab.ui [core :as ui]
                     [templates :as tplts]])
   (:import  [java.io File]))
@@ -71,8 +72,8 @@
 
 (defn view-find-in-files [owner dialog]
   (let [find-all-btn  (ui/init [:button {:text "Find All"
-                                     :listen [:click ::find-next-click]
-                                     :stuff {:dialog dialog}}])]
+                                         :listen [:click ::find-in-files-click]
+                                         :stuff {:dialog dialog}}])]
     [:dialog {:id "find-replace-dialog"
               :title "Find in Files"
               :size  [300 130]
@@ -83,59 +84,112 @@
               :default-button find-all-btn}
     [:panel {:layout [:box :page]}
       [:panel {:layout [:box :line] :padding 5}
-       [:label {:text "Find "}]
-       [:text-field {:border [:line 0xAAAAAA 1]
+       [:label {:text "Find " :width 40}]
+       [:text-field {:id "find-text"
+                     :border [:line 0xAAAAAA 1]
                      :padding 0}]]
       [:panel {:layout [:box :line] :padding 5}
-       [:label {:text "Path "}]
-       [:text-field {:border [:line 0xAAAAAA 1]
-                     :padding 0}]
+       [:label {:text "Path " :width 40}]
+       [:text-field {:id "path-text"
+                     :border [:line 0xAAAAAA 1]
+                     :padding 0
+                     :read-only true}]
        [:panel {:width 5}]
-       [:button {:text "Browse..."}]]
+       [:button {:text   "Browse..."
+                 :listen [:click ::browse-directory]
+                 :stuff  {:dialog dialog}}]]
       [:panel {:layout [:box :line] :padding 5}
+       [:checkbox {:id "recursive"
+                   :text "Recursive"}]
        [:panel]
        find-all-btn]]]))
+
+(defn- view-find-results []
+  (-> (tplts/tab "find-results")
+    (ui/update-attr :header ui/update :label ui/attr :text "Search Results")
+    (ui/add [:tree {:border    :none
+                    :hide-root true}
+             [:tree-node {:id "find-results-root"}]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Find in Files
 
-(defn- goto-result [{:keys [click-count button] :as e}]
+(defn- open-result
+  [{:keys [click-count button source app] :as e}]
   (when (and (= 2 click-count) (= :button-1 button))
-    (let [node   (:source e)
-          {:keys [editor position]} (ui/attr node :stuff)]
-      (ui/caret-position editor position))))
+    (let [node   source
+          ui     (:ui @app)
+          {:keys [file position]}
+                 (ui/attr node :stuff)
+          path   (.getCanonicalPath file)]
+      (open-document app path)
+      (ui/action (ui/caret-position (current-text-editor @ui) position)))))
 
 (defn- line-at [s pos]
-  (let [start (util/find-char s pos #{\newline} -1)
-        end   (util/find-char s pos #{\newline} 1)]
+  (let [start (find-char s pos #{\newline} -1)
+        end   (find-char s pos #{\newline} 1)]
     (subs s (if start start 0) (if end end (count s)))))
 
-(defn- search-results-node [editor [start end]]
-  [:tree-node {:item   (line-at (model/text editor) start)
+(defn- search-results-node [file txt [start end]]
+  [:tree-node {:item   (line-at txt start)
                :leaf   true
-               :stuff  {:position start :editor editor}
-               :listen [:click ::goto-result]}])
+               :stuff  {:position start :file file}
+               :listen [:click ::open-result]}])
 
-(defn- add-search-results! [dialog results]
-  (let [editor (:editor (ui/attr @dialog :stuff))
-        txt    (model/text editor)
-        items  (map (partial search-results-node editor) results)
-        root   (-> [:tree-node {:item :root}] ui/init (ui/add-all items))]
-    (ui/update! dialog [:dialog :tree] #(-> % ui/remove-all (ui/add root)))))
+(defn- find-results [ui id txt file]
+  (let [s       (slurp file)
+        results (find-limits txt s)
+        items   (map (partial search-results-node file s) results)
+        file-node (into [:tree-node {:item (.getCanonicalPath file)}] items)]
+  (when (seq items)
+    (ui/action (ui/update! ui (ui/id= id) ui/add file-node)))))
 
-(defn- find-in-files
-  [e]
-  (let [dialog  (:dialog (ui/attr (:source e) :stuff))
-        {:keys [editor highlights]}
-                (ui/attr @dialog :stuff)
-        ptrn    (model/text (ui/find @dialog :text-field))
-        results (when (seq ptrn) (util/find-limits ptrn (model/text editor)))]
-    (when results
+(defn- find-in-files [app path recursive txt]
+  (let [ui    (:ui @app)
+        files (get-files path recursive)
+        title (str "Find \"" txt "\" in \"" path "\"")
+        root  (ui/init [:tree-node {:item title}])
+        id    (ui/attr root :id)]
+    (ui/action
+      (ui/update! ui [:#find-results :#find-results-root] ui/add root))
+    (doseq [file files]
+      (when (.isFile file)
+        (find-results ui id txt file)))))
+
+(defn- browse-directory
+  "Opens a browse directory dialog and assigns the selected
+directory to the text field that holds the path."
+  [{:keys [app source] :as e}]
+  (let [ui        (:ui @app)
+        dialog    (:dialog (ui/attr source :stuff))
+        curr-dir  (lab/config @app :current-dir)
+        dir-dlg   (ui/init (tplts/directory-dialog "Browse for dir..." curr-dir @ui))
+        [res dir] (ui/attr dir-dlg :result)
+        path      (.getCanonicalPath ^File dir)]
+    (ui/update! dialog :#path-text ui/attr :text path)))
+
+(defn- get-files
+  [path & [recursive]]
+  (let [x (io/file path)]
+    (if recursive
+      (file-seq x)
+      (.listFiles x))))
+
+(defn- find-in-files-click
+  [{:keys [app source] :as e}]
+  (let [ui      (:ui @app)
+        dialog  (:dialog (ui/attr source :stuff))
+        txt     (model/text (ui/find @dialog :#find-text))
+        path    (model/text (ui/find @dialog :#path-text))
+        recursive  (ui/selection (ui/find @dialog :#recursive))]
+    (when (and (seq txt) (seq path))
       (ui/action
-        (doseq [hl @highlights] (ui/remove-highlight editor hl))
-        (reset! highlights (mapv (fn [[start end]] (ui/add-highlight editor start end 0x888888))
-                          results))
-        (add-search-results! dialog results)))))
+        (when-not (ui/find @ui :#find-results)
+          (ui/update! ui :#bottom ui/add (view-find-results)))
+;;        (future
+          (find-in-files app path recursive txt)
+;;          )
+          ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Replace
@@ -147,9 +201,9 @@ emtpy"
   (let [ui     (:ui @app)
         dialog (:dialog (ui/attr source :stuff))
         editor (current-text-editor @ui)
-        _      (find-next-click e)
         src    (model/text (ui/find @dialog :#find-text))
         rpl    (model/text (ui/find @dialog :#replace-text))
+        _      (and (seq src) (seq rpl) (find-next-click e))
         [s e]  (ui/selection editor)]
     (when (and (not= s e) (seq rpl) (seq src))
       (model/delete editor s e)
@@ -175,7 +229,7 @@ from the current position of the caret."
           editor  (current-text-editor @ui)
           offset  (ui/caret-position editor)
           ptrn    (::find-pattern @app)
-          result  (when (seq ptrn) (first (util/find-limits ptrn (subs (model/text editor) offset))))]
+          result  (when (seq ptrn) (first (find-limits ptrn (subs (model/text editor) offset))))]
     (when result
       (ui/selection editor (map (partial + offset) result))
       true))))
@@ -189,10 +243,8 @@ function to look for the next match."
     (swap! app assoc ::find-pattern ptrn)
     (find-next e)))
 
-(defn- select-tab [dialog tab-id]
-  (ui/update dialog :tabs
-             #(ui/selection % (util/index-of (ui/children %)
-                                             (ui/find % tab-id)))))
+;;;;;;;;;;;;;;;;;;;;;;
+;; Show dialogs
 
 (defn- show-dialog
   "Show the find and replace dialog, selecting the tab
