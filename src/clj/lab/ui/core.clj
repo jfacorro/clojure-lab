@@ -336,6 +336,11 @@ result will be the new value of the attribute."
   [c k f & args]
   (attr c k (apply f (attr c k) args)))
 
+(defn stuff
+  "Returns the :stuff attribute for this component."
+  [c]
+  (attr c :stuff))
+
 (defn- check-missing-id
   "Makes sure the component is not
 missing an :id attribute."
