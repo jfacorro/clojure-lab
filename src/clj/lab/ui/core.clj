@@ -344,14 +344,6 @@ missing an :id attribute."
     c
     (attr c :id (genid))))
 
-(defn- run-post-init
-  "Checks if there's a :post-init attribute
-and applies it to the component."
-  [c]
-  (if-let [f (attr c :post-init)]
-    (handle-event f (p/map->UIEvent {:source c :event :post-init}))
-    c))
-
 (defn init
   "Initializes a component, creating the implementation for 
 each child and the attributes that have a component as a value."
@@ -365,7 +357,6 @@ each child and the attributes that have a component as a value."
         set-attrs
         init-content
         check-missing-id
-        run-post-init
         update-abstraction))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -458,7 +449,6 @@ used in the component's definition (e.g. in event handlers)."
       (when (not= (attr c :id) v)
         (throw (Exception. (str "Can't change the :id once it is set: " c)))))
     (:keymap [c _ v])
-    (:post-init [c _ _])
     (:stuff [c _ _])
     (:listen ^:modify [c _ events]
       (assert (-> events count even?) "An even amount of items must be provided.")
