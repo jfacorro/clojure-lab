@@ -11,56 +11,93 @@
   (:import  [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
-;; Search Text
+;; Views
 
-(defn view [owner dialog]
+(defn view-find [owner dialog]
+  (let [find-next-btn  (ui/init [:button {:text "Find Next"
+                                          :listen [:click ::find-next-click]
+                                          :stuff {:dialog dialog}}])]
+    [:dialog {:id "find-replace-dialog"
+              :title "Find Text"
+              :size  [300 90]
+              :icons ["search-icon.png"]
+              :resizable false
+              :modal false
+              :owner owner
+              :default-button find-next-btn}
+    [:panel {:layout [:box :page]}
+      [:panel {:layout [:box :line] :padding 5}
+       [:label {:text "Find "}]
+       [:text-field {:id "find-text"
+                     :border [:line 0xAAAAAA 1]
+                     :padding 0}]]
+      [:panel {:layout [:box :line] :padding 2}
+       [:panel]
+       find-next-btn]]]))
+
+(defn view-replace [owner dialog]
   (let [find-next-btn  (ui/init [:button {:text "Find Next"
                                      :listen [:click ::find-next-click]
                                      :stuff {:dialog dialog}}])]
     [:dialog {:id "find-replace-dialog"
-              :title "Find Text"
-              :size  [500 300]
+              :title "Replace"
+              :size  [310 110]
+              :icons ["search-icon.png"]
+              :resizable false
               :modal false
               :owner owner
-              :default-button find-next-btn
-              :stuff  {:highlights (atom nil)}
-              :listen [:closing ::close-find-replace
-                       :closed  ::close-find-replace]}
-      [:tabs {:selected-tab-style   {:border [:line 0xAAAAAA 1]}
-              :unselected-tab-style {:border :none}}
-        [:tab {:id "find-tab"
-               :layout [:box :page]
-               :header [:panel [:label {:text "Find"}]]}
-          [:panel {:layout [:box :line] :padding 5}
-            [:label {:text "Find "}]
-            [:text-field {:border [:line 0xAAAAAA 1]
-                          :padding 0
-                          :size [200 20]}]]
-          [:panel {:layout [:box :line] :padding 5}
-              [:panel]
-              find-next-btn]]
-        [:tab {:id "replace-tab"
-               :layout [:box :page]
-               :header [:panel [:label {:text "Replace"}]]}
-          [:panel {:layout [:box :line] :padding 5}
-            [:label {:text "Find " :width 60}]
-            [:text-field {:border [:line 0xAAAAAA 1]
-                          :padding 0}]]
-          [:panel {:layout [:box :line] :padding 5}
-            [:label {:text "Replace " :width 60}]
-            [:text-field {:border [:line 0xAAAAAA 1]
-                          :padding 0}]]
-          [:panel {:layout [:box :line] :padding 5}
-              [:panel]
-              [:button {:text "Find Next"}]
-              [:button {:text "Replace"}]
-              [:button {:text "Find & Replace"}]]]
-        [:tab {:id "find-in-files-tab"
-               :layout [:box :page]
-               :header [:panel [:label {:text "Find in Files"}]]}]]]))
+              :default-button find-next-btn}
+    [:panel {:layout [:box :line]}
+     [:panel {:layout [:box :page]}
+      [:panel {:layout [:box :line] :padding 3}
+       [:label {:text "Find " :width 60}]
+       [:text-field {:id "find-text"
+                     :border [:line 0xAAAAAA 1]
+                     :padding 0}]]
+      [:panel {:layout [:box :line] :padding 3}
+       [:label {:text "Replace " :width 60}]
+       [:text-field {:id "replace-text"
+                     :border [:line 0xAAAAAA 1]
+                     :padding 0}]]
+      [:panel {:height 10000}]]
+     [:panel {:layout [:box :y] :padding 3}
+      find-next-btn
+      [:button {:text "Replace"
+                :listen [:click ::replace-click]
+                :stuff {:dialog dialog}}]
+      [:button {:text "Replace All"
+                :listen [:click ::replace-all-click]
+                :stuff {:dialog dialog}}]]]]))
+
+(defn view-find-in-files [owner dialog]
+  (let [find-all-btn  (ui/init [:button {:text "Find All"
+                                     :listen [:click ::find-next-click]
+                                     :stuff {:dialog dialog}}])]
+    [:dialog {:id "find-replace-dialog"
+              :title "Find in Files"
+              :size  [300 130]
+              :icons ["search-icon.png"]
+              :resizable false
+              :modal false
+              :owner owner
+              :default-button find-all-btn}
+    [:panel {:layout [:box :page]}
+      [:panel {:layout [:box :line] :padding 5}
+       [:label {:text "Find "}]
+       [:text-field {:border [:line 0xAAAAAA 1]
+                     :padding 0}]]
+      [:panel {:layout [:box :line] :padding 5}
+       [:label {:text "Path "}]
+       [:text-field {:border [:line 0xAAAAAA 1]
+                     :padding 0}]
+       [:panel {:width 5}]
+       [:button {:text "Browse..."}]]
+      [:panel {:layout [:box :line] :padding 5}
+       [:panel]
+       find-all-btn]]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;
-;; Search Text
+;; Find in Files
 
 (defn- goto-result [{:keys [click-count button] :as e}]
   (when (and (= 2 click-count) (= :button-1 button))
@@ -68,14 +105,13 @@
           {:keys [editor position]} (ui/attr node :stuff)]
       (ui/caret-position editor position))))
 
-(defn- line-at [editor pos]
-  (let [s     (model/text editor)
-        start (util/find-char s pos #{\newline} -1)
+(defn- line-at [s pos]
+  (let [start (util/find-char s pos #{\newline} -1)
         end   (util/find-char s pos #{\newline} 1)]
     (subs s (if start start 0) (if end end (count s)))))
 
 (defn- search-results-node [editor [start end]]
-  [:tree-node {:item   (line-at editor start)
+  [:tree-node {:item   (line-at (model/text editor) start)
                :leaf   true
                :stuff  {:position start :editor editor}
                :listen [:click ::goto-result]}])
@@ -101,6 +137,34 @@
                           results))
         (add-search-results! dialog results)))))
 
+;;;;;;;;;;;;;;;;;;;;;;
+;; Replace
+
+(defn- replace-click
+  "Finds the next match and if the replacement text is not
+emtpy"
+  [{:keys [app source] :as e}]
+  (let [ui     (:ui @app)
+        dialog (:dialog (ui/attr source :stuff))
+        editor (current-text-editor @ui)
+        _      (find-next-click e)
+        src    (model/text (ui/find @dialog :#find-text))
+        rpl    (model/text (ui/find @dialog :#replace-text))
+        [s e]  (ui/selection editor)]
+    (when (and (not= s e) (seq rpl) (seq src))
+      (model/delete editor s e)
+      (model/insert editor s rpl)
+      (ui/selection editor [s (+ s (count rpl))])
+      true)))
+
+(defn- replace-all-click
+  [e]
+  (when (replace-click e)
+    (recur e)))
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Find next
+
 (defn- find-next
   "Checks if there's a find-pattern registered in the app and
 finds the next match in the text of the current editor, starting
@@ -113,22 +177,17 @@ from the current position of the caret."
           ptrn    (::find-pattern @app)
           result  (when (seq ptrn) (first (util/find-limits ptrn (subs (model/text editor) offset))))]
     (when result
-      (ui/action (ui/selection editor (map (partial + offset) result)))))))
+      (ui/selection editor (map (partial + offset) result))
+      true))))
 
 (defn- find-next-click
   "Registers the find pattern in the app and uses the find-next
 function to look for the next match."
   [{:keys [app source] :as e}]
   (let [dialog  (:dialog (ui/attr source :stuff))
-        ptrn    (model/text (ui/find @dialog :text-field))]
+        ptrn    (model/text (ui/find @dialog :#find-text))]
     (swap! app assoc ::find-pattern ptrn)
     (find-next e)))
-
-(defn- close-find-replace
-  "Removes all highlights from the editor."
-  [e]
-  (let [{:keys [editor highlights]} (-> (:source e) (ui/attr :stuff))]
-    (ui/action (doseq [hl @highlights] (ui/remove-highlight editor hl)))))
 
 (defn- select-tab [dialog tab-id]
   (ui/update dialog :tabs
@@ -138,28 +197,26 @@ function to look for the next match."
 (defn- show-dialog
   "Show the find and replace dialog, selecting the tab
 with the id specified."
-  [{:keys [app] :as e} tab-id]
+  [{:keys [app] :as e} view-find]
   (let [ui      (:ui @app)
         editor  (current-text-editor @ui)
         dialog  (atom nil)]
     (when editor
-      (-> dialog 
-        (reset! (-> (view @ui dialog)
-                    ui/init
-                    (select-tab tab-id)))
+      (-> dialog
+        (reset! (ui/init (view-find @ui dialog)))
         (ui/attr :visible true)))))
 
 (defn- show-find
   [e]
-  (show-dialog e :#find-tab))
+  (show-dialog e view-find))
 
 (defn- show-replace
   [e]
-  (show-dialog e :#replace-tab))
+  (show-dialog e view-replace))
 
 (defn- show-find-in-files 
   [e]
-  (show-dialog e :#find-in-files-tab))
+  (show-dialog e view-find-in-files))
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.find-replace

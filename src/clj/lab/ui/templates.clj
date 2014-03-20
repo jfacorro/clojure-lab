@@ -133,7 +133,8 @@ open files."
 (defn line-number-dialog [owner]
   (let [ok-btn (ui/init [:button {:id "ok" :text "Ok"}])]
     [:dialog {:owner owner
-              :title "Enter Line Number"
+              :icons ["right-icon.png"]
+              :title "Go to Line"
               :size  [300 85]
               :modal true
               :default-button ok-btn}
