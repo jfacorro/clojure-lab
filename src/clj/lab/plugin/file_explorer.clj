@@ -24,9 +24,8 @@ open the document associated with the selected item."
             (and (= :pressed (:event e)) (= :enter (:description e))))
     (let [node   (:source e)
           app    (:app e)
-          stuff  (ui/attr node :stuff)
-          dialog (:dialog stuff)
-          file   ^File (:file stuff)]
+          {:keys [dialog ^File file]}
+                 (ui/stuff node)]
       (when file
         (ui/action
           (ui/update! dialog :dialog ui/attr :visible false)
@@ -57,7 +56,7 @@ search string. Finally it removes all the previos items
 and adds new found ones."
   [e]
   (let [field  (:source e)
-        dialog (:dialog (ui/attr field :stuff))
+        dialog (:dialog (ui/stuff field))
         s      (model/text field)]
     (if (< (count s) 3)
       (ui/action (ui/update! dialog :#results ui/remove-all))
@@ -140,7 +139,7 @@ currently has no children."
         ui        (:ui @app)
         node      (:source e)
         id        (ui/attr node :id)
-        file      (:file (ui/attr node :stuff))]
+        file      (:file (ui/stuff node))]
     (when (empty? (ui/children node))
       (ui/update! ui (ui/id= id)
         (partial reduce ui/add)

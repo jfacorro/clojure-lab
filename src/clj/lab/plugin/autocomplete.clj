@@ -16,7 +16,7 @@
 (defn- select-autocomplete [e]
   (let [node   (:source e)
         txt    (ui/attr node :item)
-        {:keys [editor loc popup]} (ui/attr node :stuff)
+        {:keys [editor loc popup]} (ui/stuff node)
         [start end] (lang/limits loc)
         ws?     (lang/whitespace? loc)
         offset (if ws?

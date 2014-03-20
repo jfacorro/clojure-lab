@@ -48,7 +48,7 @@ are applied their highlight."
       (ui/listen :delete hl-ch))))
 
 (defn- text-editor-unload [editor]
-  (let [hl-ch  (::listener (ui/attr editor :stuff))]
+  (let [hl-ch  (::listener (ui/stuff editor))]
     (-> editor
       (ui/update-attr :stuff dissoc ::listener)
       (ui/ignore :insert hl-ch)

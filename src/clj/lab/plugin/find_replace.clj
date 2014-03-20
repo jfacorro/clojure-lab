@@ -121,7 +121,7 @@
     (let [node   source
           ui     (:ui @app)
           {:keys [file position]}
-                 (ui/attr node :stuff)
+                 (ui/stuff node)
           path   (.getCanonicalPath ^File file)]
       (open-document app path)
       (ui/action (ui/caret-position (current-text-editor @ui) position)))))
@@ -169,7 +169,7 @@
 directory to the text field that holds the path."
   [{:keys [app source] :as e}]
   (let [ui        (:ui @app)
-        dialog    (:dialog (ui/attr source :stuff))
+        dialog    (:dialog (ui/stuff source))
         curr-dir  (lab/config @app :current-dir)
         dir-dlg   (ui/init (tplts/directory-dialog "Browse for dir..." curr-dir @ui))
         [res dir] (ui/attr dir-dlg :result)
@@ -179,7 +179,7 @@ directory to the text field that holds the path."
 (defn- find-in-files-click
   [{:keys [app source] :as e}]
   (let [ui      (:ui @app)
-        dialog  (:dialog (ui/attr source :stuff))
+        dialog  (:dialog (ui/stuff source))
         txt     (model/text (ui/find @dialog :#find-text))
         path    (model/text (ui/find @dialog :#path-text))
         recursive  (ui/selection (ui/find @dialog :#recursive))]
@@ -198,7 +198,7 @@ directory to the text field that holds the path."
 emtpy"
   [{:keys [app source] :as e}]
   (let [ui     (:ui @app)
-        dialog (:dialog (ui/attr source :stuff))
+        dialog (:dialog (ui/stuff source))
         editor (current-text-editor @ui)
         src    (model/text (ui/find @dialog :#find-text))
         rpl    (model/text (ui/find @dialog :#replace-text))
@@ -237,7 +237,7 @@ from the current position of the caret."
   "Registers the find pattern in the app and uses the find-next
 function to look for the next match."
   [{:keys [app source] :as e}]
-  (let [dialog  (:dialog (ui/attr source :stuff))
+  (let [dialog  (:dialog (ui/stuff source))
         ptrn    (model/text (ui/find @dialog :#find-text))]
     (swap! app assoc ::find-pattern ptrn)
     (find-next e)))

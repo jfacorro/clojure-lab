@@ -117,8 +117,8 @@ should be closed and false otherwise."
 
 (defn close-document-button
   "Handles the tabs' close button when clicked."
-  [e]
-  (close-document-ui (:app e) (:tab-id (ui/attr (:source e) :stuff))))
+  [{:keys [app source] :as e}]
+  (close-document-ui app (:tab-id (ui/stuff source))))
 
 (defn- close-document-menu
   "Finds the currently selected tab, removes it and closes the document

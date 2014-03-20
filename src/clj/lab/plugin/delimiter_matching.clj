@@ -36,7 +36,7 @@
       (ui/listen :caret ch))))
 
 (defn- text-editor-unload [editor]
-  (let [ch (::listener (ui/attr editor :stuff))]
+  (let [ch (::listener (ui/stuff editor))]
     (-> editor
       (ui/update-attr :stuff dissoc ::listener)
       (ui/ignore :caret ch))))

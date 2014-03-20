@@ -34,7 +34,7 @@
   (let [ui  (-> e :app deref :ui)
         id  (-> (:source e) (ui/attr :stuff) :tab-id)
         tab (ui/find @ui (ui/id= id))
-        close-tab (or (:close-tab (ui/attr tab :stuff)) close-tab)]
+        close-tab (or (:close-tab (ui/stuff tab)) close-tab)]
     (when close-tab
       (close-tab e))))
 
