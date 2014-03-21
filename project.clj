@@ -13,9 +13,7 @@
                  [org.clojure/tools.logging "0.2.6"]
                  [org.slf4j/slf4j-log4j12 "1.7.5"]
 
-                 [clojure-watch "LATEST"]
-
-                 [swingrepl "1.3.0" :exclusions [org.clojure/clojure org.clojure/clojure-contrib]]]
+                 [clojure-watch "LATEST"]]
   :uberjar-name "lab.jar"
   :java-source-paths ["src/java"]
   :source-paths ["src/clj"]
