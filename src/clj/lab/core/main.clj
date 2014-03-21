@@ -65,8 +65,9 @@ it is brought into focus and the tab containing it is selected."
             editor (ui/find tab :text-editor)
             id     (ui/attr editor :id)]
       (add-watch doc id (partial #'doc-modified-update-title app tab-id))
-      (ui/action        
+      (ui/action
         (ui/update! ui :#center ui/add tab)
+        (ui/update! ui (ui/id= id) ui/focus)
         (lab/load-lang-plugins! app doc))))))
 
 (defn open-document
