@@ -4,6 +4,7 @@
             [leiningen.core.eval :as eval]
             [leiningen.core.project :as project]
             [clojure.java.io :as io]
+            clojure.main
             [clojure.string :as str]
             [lab.core :as lab]
             [lab.core [plugin :as plugin]
@@ -115,16 +116,19 @@ and killing the associated process."
   (let [ui   (:ui @app)
         id   (:tab-id (ui/stuff source))
         tab  (ui/find @ui (ui/id= id))
-        repl (ui/attr (ui/find tab :console) :conn)
-        result (tplts/confirm "Closing REPL"
+        conn (ui/attr (ui/find tab :console) :conn)
+        proc (:proc conn)]
+    (if (instance? Thread proc)
+      (do
+        (.stop ^Thread proc)
+        (ui/update! ui (ui/parent id) ui/remove tab))
+      (let [result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."
                                    " Do you want to continue?")
                               @ui)]
-    (when (= :ok result)
-      (if (instance? Thread (:proc repl)) 
-        (.stop ^Thread (:proc repl))
-        (popen/kill (:proc repl)))
-      (ui/update! ui (ui/parent id) ui/remove tab))))
+        (when (= :ok result)
+          (popen/kill proc)
+          (ui/update! ui (ui/parent id) ui/remove tab))))))
 
 (defn- repl-tab
   "Create the tab that contains the repl and add it
