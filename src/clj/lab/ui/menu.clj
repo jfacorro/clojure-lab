@@ -36,7 +36,9 @@
         selectors (map #(->> selector (take %1) vec) (range 1 (-> selector count inc)))
         item      (if separator
                     [:menu-separator]
-                    [:menu-item {:text name :listen [:click fn] :keystroke keystroke}])
+                    [:menu-item {:text name
+                                 :listen [:click fn]
+                                 :keystroke (or keystroke "")}])
         menu-bar  (reduce create-menu-path menu-bar selectors)
         menu-bar  (ui/update menu-bar selector ui/add item)]
      (ui/attr ui :menu menu-bar)))

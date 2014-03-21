@@ -3,9 +3,8 @@
   (:require [clojure.string :as str]))
 
 (defn- ks->set [ks]
-  (-> ks
-    (str/split #" ")
-    set))
+  (when ks
+    (-> ks (str/split #" ") set)))
 
 (defn- add-command
   [km {ks :keystroke :as cmd}]

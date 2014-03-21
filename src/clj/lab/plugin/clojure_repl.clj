@@ -11,7 +11,12 @@
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [lab.model.document :as doc]
-            [lab.model.protocols :as model]))
+            [lab.model.protocols :as model])
+  (:import  [java.io PipedOutputStream PipedInputStream]
+            [clojure.lang LineNumberingPushbackReader]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; REPL process creation
 
 (def ^:private running-jar 
   "Resolves the path to the current running jar file."
@@ -45,6 +50,29 @@ it. If not project file is supplied, a bare REPL is started."
     (let [proc (popen/popen clojure-repl-cmd :redirect true)]
       {:proc proc :cin (popen/stdin proc) :cout (popen/stdout proc)})))
 
+(defn lab-repl
+  "Creates a new thread that fires up a thread
+  that calls clojure.main/repl, with new bindings
+  for *out* an *in*."
+  []
+  (let [thrd-out  (PipedOutputStream.)
+        aux-out   (PipedOutputStream.)
+        out       (io/writer thrd-out)
+        in        (-> aux-out PipedInputStream. io/reader LineNumberingPushbackReader.)
+        cout      (io/writer aux-out)
+        cin       (-> thrd-out PipedInputStream. io/reader)
+        thrd      (binding [*out* out *in* in *err* out]
+                    (Thread. (bound-fn [] 
+                               (require 'clojure.main)
+                               (clojure.main/repl))))]
+    (.start thrd)
+    {:proc thrd
+     :cout cin
+     :cin  cout}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Eval code
+
 (defn eval-in-console
   "Evaluates the code in the specified repl. Code
   can be a string or a list form.
@@ -77,6 +105,9 @@ it. If not project file is supplied, a bare REPL is started."
     (when console
       (eval-in-console console selection))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; View
+
 (defn- close-tab-repl
   "Ask for confirmation before closing the REPL tab
 and killing the associated process."
@@ -90,7 +121,9 @@ and killing the associated process."
                                    " Do you want to continue?")
                               @ui)]
     (when (= :ok result)
-      (popen/kill (:proc repl))
+      (if (instance? Thread (:proc repl)) 
+        (.stop ^Thread (:proc repl))
+        (popen/kill (:proc repl)))
       (ui/update! ui (ui/parent id) ui/remove tab))))
 
 (defn- repl-tab
@@ -110,6 +143,9 @@ to the ui in the bottom section."
     (when (< div-loc 10)
       (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 150))
     (ui/update! ui :#bottom ui/add tab)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Commands
 
 (defn open-project-repl!
   "Ask the user to select a project file and fire a 
@@ -132,6 +168,14 @@ child process with a running repl."
     (swap! app update-in [:repls] conj repl)
     (repl-tab app repl)))
 
+(defn open-lab-repl!
+  "Starts a clojure.main/repl in a local thread."
+  [e]
+  (let [app  (:app e)
+        repl (lab-repl)]
+    (swap! app update-in [:repls] conj repl)
+    (repl-tab app repl)))
+
 (defn- init! [app]
   (swap! app assoc :repls #{}))
 
@@ -139,7 +183,8 @@ child process with a running repl."
   [(km/keymap (ns-name *ns*)
               :global
               {:category "Clojure > REPL" :name "Project" :fn ::open-project-repl! :keystroke "ctrl r"}
-              {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "ctrl alt r"})
+              {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "ctrl alt r"}
+              {:category "Clojure > REPL" :name "Lab" :fn ::open-lab-repl!})
    (km/keymap (ns-name *ns*)
               :lang :clojure
               {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
