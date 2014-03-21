@@ -21,19 +21,21 @@
   of UI components. Must be built and rebound to the result
   of calling [build-hierarchy]."
   {:component [; containers
-                  :window :panel :split :scroll
-                  ; menu
-                  :menu-bar :menu :menu-item :menu-separator 
-                  :pop-up-menu
-                  ; text
-                  :text-field
-                  :line-number
-                  ; tabs
-                  :tabs :tab
-                  ; tree
-                  :tree :tree-node
-                  ; misc
-                  :button :label :checkbox]
+               :window :panel :split :scroll
+               ; menu
+               :menu-bar :menu :menu-item :menu-separator 
+               :pop-up-menu
+               ; text
+               :text-field
+               :line-number
+               ; tabs
+               :tabs :tab
+               ; tree
+               :tree :tree-node
+               ; misc
+               :button :label :checkbox
+               ; combobox
+               :combobox :cb-item]
     :window     [:dialog]
     :dialog     [:file-dialog :option-dialog]
     :text-field [:text-area]
