@@ -32,7 +32,8 @@
                           text
                           tab
                           misc-control
-                          event])
+                          event
+                          console])
   (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
            javax.swing.border.CompoundBorder
            java.awt.Component))

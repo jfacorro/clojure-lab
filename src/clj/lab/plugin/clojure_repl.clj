@@ -5,14 +5,13 @@
             [leiningen.core.project :as project]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [clojure.core.async :as async]
             [lab.core :as lab]
-            [lab.ui.core :as ui]
-            [lab.model.document :as doc]
-            [lab.model.protocols :as model]
-            [lab.ui.templates :as tplts]
             [lab.core [plugin :as plugin]
-                      [keymap :as km]]))
+                      [keymap :as km]]
+            [lab.ui.core :as ui]
+            [lab.ui.templates :as tplts]
+            [lab.model.document :as doc]
+            [lab.model.protocols :as model]))
 
 (def ^:private running-jar 
   "Resolves the path to the current running jar file."
@@ -46,61 +45,37 @@ it. If not project file is supplied, a bare REPL is started."
     (let [proc (popen/popen clojure-repl-cmd :redirect true)]
       {:proc proc :cin (popen/stdin proc) :cout (popen/stdout proc)})))
 
-(defn- eval-in-repl! [e]
-  (let [ui          (-> e :app deref :ui)
-        editor      (:source e)
-        file-path   (-> (ui/attr editor :doc) deref doc/path)
+(defn eval-in-console
+  "Evaluates the code in the specified repl. Code
+  can be a string or a list form.
+
+  args:
+    - repl:  the repl where to evaluate the code.
+    - code:  string or list with the code to evaluate.
+    - echo:  print the code to the repl."
+  [console code & {:keys [echo] :or {echo true}}]
+  (let [conn  (ui/attr console :conn)
+        cin   (:cin conn)]
+    (.println (lab.ui.protocols/impl console)
+              (when echo code))
+    (doto cin
+      (.write (str code "\n"))
+      (.flush))))
+
+(defn- eval-code!
+  [{:keys [source app] :as e}]
+  (let [ui          (:ui @app)
+        editor      source
+        file-path   (doc/path @(ui/attr editor :doc))
         [start end] (ui/selection editor)
         selection   (if (= start end)
                       (if file-path
                         (str "(load-file \"" (str/replace file-path \\ \/) "\")")
                         (model/text editor))
                       (model/substring editor start end))
-        repl        (ui/find @ui [:#bottom :tab :scroll :text-area])
-        in          (:in (ui/stuff repl))]
-    (when repl
-      (async/put! in selection))))
-
-(defn- wrap-output-stream-in-channel
-  "Hook up the output stream of the REPL process
-to the channel provided."
-  [^java.io.BufferedReader stream out]
-  (async/go
-    (loop [input (.read stream)]
-      (when (pos? input)
-        (async/>! out input)
-        (recur (.read stream))))
-    (async/close! out)))
-
-(defn- send-to-repl
-  "Send code to the input channel of the REPL process
-and print the sent code to the REPL console."
-  [console ^java.io.BufferedWriter cin x]
-  (let [x      (if (not= (last x) \newline) (str x "\n") x)
-        output (str/replace x #"\n+" "\n")]
-    (ui/action
-      (model/insert console (model/length console) x)
-      (.write cin output)
-      (.flush cin))))
-
-(defn- hook-up-repl
-  "Creates two channels that are hooked up to the
-output and input streams of the REPL process."
-  [repl console]
-  (let [in   (async/chan)
-        out  (async/chan)
-        cout (:cout repl)
-        cin  (:cin repl)]
-    (wrap-output-stream-in-channel cout out)
-    (async/go-loop []
-      (when-let [x (async/<! out)]
-        (model/insert console (model/length console) (-> x char str))
-        (recur)))
-    (async/go-loop []
-      (when-let [x (async/<! in)]
-        (#'send-to-repl console cin x)
-        (recur)))
-    in))
+        console     (ui/find @ui [:#bottom :tab :console])]
+    (when console
+      (eval-in-console console selection))))
 
 (defn- close-tab-repl
   "Ask for confirmation before closing the REPL tab
@@ -109,7 +84,7 @@ and killing the associated process."
   (let [ui   (:ui @app)
         id   (:tab-id (ui/stuff source))
         tab  (ui/find @ui (ui/id= id))
-        repl (:repl (ui/stuff (ui/find tab :text-area)))
+        repl (ui/attr (ui/find tab :console) :conn)
         result (tplts/confirm "Closing REPL"
                               (str "If you close this tab the REPL process will be killed."
                                    " Do you want to continue?")
@@ -124,15 +99,11 @@ to the ui in the bottom section."
   [app repl]
   (let [ui      (:ui @app)
         styles  (:styles @app)
-        console (ui/init [:text-area {:read-only true}])
-        in      (hook-up-repl repl console)
-        console (ui/attr console :stuff {:in in :repl repl})
+        title   (str "REPL - "(:name repl))
         tab     (-> (tplts/tab)
-                  (ui/update :tab ui/attr :stuff {:close-tab #'close-tab-repl})
-                  (ui/update :tab
-                             ui/update-attr :header
-                             ui/update :label ui/attr :text (str "REPL - "(:name repl)))
-                  (ui/add [:scroll console])
+                  (ui/attr :stuff {:close-tab #'close-tab-repl})
+                  (ui/update-attr :header ui/update :label ui/attr :text title)
+                  (ui/add [:scroll [:console {:conn repl}]])
                   (ui/apply-stylesheet styles))
         split   (ui/find @ui (ui/parent "bottom"))
         div-loc (or (ui/attr split :divider-location-right) 0)]
@@ -171,7 +142,7 @@ child process with a running repl."
               {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "ctrl alt r"})
    (km/keymap (ns-name *ns*)
               :lang :clojure
-              {:category "Clojure > REPL" :name "Eval" :fn ::eval-in-repl! :keystroke "ctrl enter"})])
+              {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 
 (plugin/defplugin lab.plugin.clojure-repl
   :type  :global

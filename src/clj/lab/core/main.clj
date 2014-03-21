@@ -425,7 +425,7 @@ inserting a fixed first parameter, which is the app."
                  :background  0x666666
                  :color       0xFFFFFF
                  :current-line-color 0x00FFFF}
-   #{:text-editor :text-area}
+   #{:text-editor :text-area :console}
                 {:font        [:name "Consolas" :size 16]
                  :background  0x333333
                  :color       0xFFFFFF

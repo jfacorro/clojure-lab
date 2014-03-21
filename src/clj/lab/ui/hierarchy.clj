@@ -36,9 +36,10 @@
                :button :label :checkbox
                ; combobox
                :combobox :cb-item]
-    :window     [:dialog]
-    :dialog     [:file-dialog :option-dialog]
-    :text-field [:text-area]
-    :text-area  [:text-editor]})
+    :window      [:dialog]
+    :dialog      [:file-dialog :option-dialog]
+    :text-field  [:text-area]
+    :text-area   [:text-editor]
+    :text-editor [:console]})
 
 (def hierarchy (build-hierarchy hierarchy-description))
