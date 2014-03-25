@@ -5,14 +5,14 @@
 
 (defn close-tab
   "Expects the source of the event to have a :tab-id key in its :stuff."
-  [{:keys [source app] :as e}]
+  [{:keys [app source] :as e}]
   (let [ui  (:ui @app)
         id  (:tab-id (ui/stuff source))
         tab (ui/find @ui (ui/id= id))]
     (ui/update! ui (ui/parent id) ui/remove tab)))
 
 (defn- resolve-close-tab
-  [{:keys [source app] :as e}]
+  [{:keys [app source] :as e}]
   (let [ui  (:ui @app)
         id  (:tab-id (ui/stuff source))
         tab (ui/find @ui (ui/id= id))
@@ -20,7 +20,8 @@
     (when close-tab
       (close-tab e))))
 
-(defn select-tab [tabs id]
+(defn select-tab
+  [tabs id]
   (ui/selection tabs
                 (index-of (ui/children tabs)
                           (ui/find tabs (ui/id= id)))))
@@ -61,7 +62,11 @@ includes a label and a closing button."
 
 (defn confirm
   [title message owner]
-  (-> [:option-dialog {:owner owner, :title title, :message message, :options :yes-no-cancel, :visible true}]
+  (-> [:option-dialog {:owner   owner
+                       :title   title
+                       :message message
+                       :options :yes-no-cancel
+                       :visible true}]
     ui/init
     (ui/attr :result)))
 

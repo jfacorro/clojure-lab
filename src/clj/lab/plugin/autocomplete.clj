@@ -52,13 +52,13 @@
   (let [location (ui/caret-location editor)
         km    (km/keymap :autocomplete :local
                 {:fn ::select-autocomplete :keystroke "enter"})
-        popup (-> [:pop-up-menu {:location location
-                                 :source   editor
-                                 :border   :none}
-                    [:scroll {:size [250 100]
-                              :border :none}
-                      [:tree {:hide-root true}]]]
-                ui/init)
+        popup (ui/init
+                [:pop-up-menu {:location location
+                               :source   editor
+                               :border   :none}
+                 [:scroll {:size [250 100]
+                           :border :none}
+                  [:tree {:hide-root true}]]])
         stuff {:editor editor :loc loc :popup popup}
         root  (matches-nodes stuff matches km)]
     (-> popup
