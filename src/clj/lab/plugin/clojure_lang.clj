@@ -168,6 +168,11 @@ check if its one of the registered symbols."
   {:out nil
    :in  (symbols-in-binding-vector (node-second x))})
 
+(defmethod build-scope ["loop"]
+  [x]
+  {:out nil
+   :in  (symbols-in-binding-vector (node-second x))})
+
 (defn- build-scope-for-defs [x]
   (let [c         (node-count x)
         but-first (map (partial node-nth x) (range 1 c))

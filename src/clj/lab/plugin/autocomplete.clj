@@ -95,7 +95,8 @@ inner and outer symbols in scope."
         doc     (ui/attr editor :doc)
         root    (lang/code-zip (lang/parse-tree @doc))
         [loc i] (lang/location root pos)
-        loc     (if (and (lang/whitespace? loc) (= pos i))
+        tag     (lang/location-tag loc)
+        loc     (if (and (not= tag :symbol) (= pos i))
                   (adjacent-string loc zip/prev)
                   loc)
         symbols (->> (collect-symbols-in-scope loc) set sort)]
