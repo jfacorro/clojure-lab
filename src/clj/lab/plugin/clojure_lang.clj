@@ -173,7 +173,7 @@ check if its one of the registered symbols."
   {:out nil
    :in  (symbols-in-binding-vector (node-second x))})
 
-(defn- build-scope-for-defs [x]
+(defn- build-scope-for-def [x]
   (let [c         (node-count x)
         but-first (map (partial node-nth x) (range 1 c))
         out       (first (drop-while (comp not node-symbol?) but-first))
@@ -184,11 +184,15 @@ check if its one of the registered symbols."
 
 (defmethod build-scope ["defn"]
   [x]
-  (build-scope-for-defs x))
+  (build-scope-for-def x))
+
+(defmethod build-scope ["def"]
+  [x]
+  (assoc (build-scope-for-def x) :in nil))
 
 (defmethod build-scope ["defn-"]
   [x]
-  (build-scope-for-defs x))
+  (build-scope-for-def x))
 
 (defmethod build-scope :default [x] {})
 
