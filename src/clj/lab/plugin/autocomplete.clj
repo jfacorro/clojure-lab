@@ -8,10 +8,13 @@
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]))
 
-(defn- adjacent-string [loc dir]
+(defn- adjacent-string
+  "Returns the first location that's adjacent
+to the current in the direction specified."
+  [loc dir]
   (lang/select-location (dir loc)
-    dir
-    lang/loc-string?))
+                        dir
+                        lang/loc-string?))
 
 (defn- select-autocomplete [e]
   (let [node   (:source e)
@@ -66,23 +69,38 @@
       (ui/attr :visible true)
       (ui/update :tree ui/focus))))
 
+(defn- symbols-in-scope
+  "Gets all the siblings of the current location and their
+inner and outer symbols in scope."
+  [loc]
+  (->> (if (zip/up loc)
+         [(zip/node loc)]
+         (zip/children loc))
+       (mapcat #(mapcat (fn [x] (-> % meta :scope x))
+                        (if (zip/up loc)
+                          [:in :out]
+                          [:out])))
+       (map (comp first :content))))
+
+(defn- collect-symbols-in-scope [loc]
+  (loop [loc  loc
+         symbols (into #{} (symbols-in-scope loc))]
+    (if-not loc
+      symbols
+      (recur (zip/up loc) (into symbols (symbols-in-scope loc))))))
+
 (defn- autocomplete [e]
-  (let [editor (:source e)
-        pos    (ui/caret-position editor)
-        doc    (ui/attr editor :doc)
-        tree   (lang/code-zip (lang/parse-tree @doc))
-        [loc i](lang/location tree pos)
-        loc    (if (and (lang/whitespace? loc) (= pos i))
-                 (adjacent-string loc zip/prev)
-                 loc)
-        tag    (lang/location-tag loc)
-        ploc  (zip/up loc)
-        symbols(->> (lang/search tree #(and (= :symbol (-> % zip/node :tag)) (not= ploc %)))
-                  (map #(-> % zip/down zip/node))
-                  set
-                  sort)]
+  (let [editor  (:source e)
+        pos     (ui/caret-position editor)
+        doc     (ui/attr editor :doc)
+        root    (lang/code-zip (lang/parse-tree @doc))
+        [loc i] (lang/location root pos)
+        loc     (if (and (lang/whitespace? loc) (= pos i))
+                  (adjacent-string loc zip/prev)
+                  loc)
+        symbols (->> (collect-symbols-in-scope loc) set sort)]
     (popup-menu editor loc
-      (if (= tag :symbol)
+      (if (= (lang/location-tag loc) :symbol)
         (-> symbols trie/trie (trie/prefix-matches (zip/node loc)))
         symbols))))
 

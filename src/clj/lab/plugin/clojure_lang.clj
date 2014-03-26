@@ -23,11 +23,13 @@
               :symbol #"(?<!0x|0|0x[A-Fa-f\d]{42})[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_#]*"
               :keyword #"::?#?[\w-_*+\?/\.!>]+"
               :whitespace #"[ \t\r\n,]+"
-              :list [#"(?<!\\)\(" :expr* #"(?<!\\)\)"]
+
+              :list ["(" :expr* ")"]
               :vector ["[" :expr* "]"]
               :map ["{" :expr* "}"]
               :set ["#{" :expr* "}"]
-              :pair- [:expr :expr]
+              :fn ["#(" :expr* ")"]
+
               :meta [#"#?\^" #{:keyword :map :symbol :string}]
               :quote ["'" :expr]
               :syntax-quote ["`" :expr]
@@ -35,30 +37,35 @@
               :unquote-splice ["~@" :expr]
               :regex #"#\".*?(?<!\\)\""                  ;; Doesn't handle \\" as a possible termination.
               :string #"(?s)(?<!#)\".*?(?<!\\)\""        ;; Doesn't handle \\" as a possible termination.
+
               :char #"\\(.|newline|space|tab|backspace|formfeed|return|u([0-9a-fA-F]{4}|[0-7]{1,2}|[0-3][0-7]{2}))(?![a-zA-Z0-9!$%&*+\-\./:<=>?_#])"
               :number #"(0x[\dA-Fa-f]+|\d(?!x)\d*\.?\d*[MN]?)"
               :reader-var ["#'" :symbol]
               :reader-discard ["#_" :expr]
               :comment #"(#!|;).*[\n\r]*"
-              :deref ["@" :expr]
-              :fn ["#(" :expr* ")"]])
+              :deref ["@" :expr]])
 
 (def styles-mapping
   {:symbol #{[:special-form special-forms]
              [:var core-vars]}})
 
 (defn- resolve-style [tag [content]]
-  (reduce (fn [x [style pred]]
-            (if (pred content) style x))
-    tag
-    (styles-mapping tag)))
+  (if (= tag :symbol)
+    (reduce (fn [x [style pred]]
+              (if (pred content) style x))
+      tag
+      (styles-mapping tag))
+    tag))
+
+(declare build-scope)
 
 (defn- node-meta
   "If the tag for the node is a symbol
 check if its one of the registered symbols."
   [tag content]
   {:style (resolve-style tag content)
-   :group lang/*node-group*})
+   :group lang/*node-group*
+   :scope (build-scope {:tag tag :content content})})
 
 (defn- make-node [tag content]
   (with-meta {:tag tag :length (lang/calculate-length content) :content content}
@@ -87,15 +94,98 @@ check if its one of the registered symbols."
   :comment      {:color 0x999988}
 
   :deref        {:color 0xFFFFFF}
-  :fn           {:color 0xFFFFFF}
-  ;; Delimiters
-;;  :vector       {} ;{:color 0xFFFF00}
-;;  :list         {} ;{:color 0xFFFF00}
-;;  :map          {} ;{:color 0xFFFF00}
-;;  :set          {} ;{:color 0xFFFF00}
+
+  ;; Delimiters and forms using them
+;;  :fn           {:color 0xFFFFFF}
+;;
+;;  :vector       {:color 0xFFFF00}
+;;  :list         {:color 0xFFFF00}
+;;  :map          {:color 0xFFFF00}
+;;  :set          {:color 0xFFFF00}
+
   :default      {:color 0xFFFFFF}
   :net.cgrand.parsley/unfinished  {:color 0xFF1111 :italic true}
   :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Context
+
+(defn node-tag= [tag node]
+  (= tag (:tag node)))
+
+(def node-list? (partial node-tag= :list))
+(def node-symbol? (partial node-tag= :symbol))
+(def node-vector? (partial node-tag= :vector))
+(def node-map? (partial node-tag= :map))
+(def node-set? (partial node-tag= :set))
+(def node-whitespace? (partial node-tag= :whitespace))
+
+(defn node-nth [node n]
+  (loop [[x & xs] (rest (:content node))
+         n        n]
+    (cond
+      (node-whitespace? x)
+        (recur xs n)
+      (and x (pos? n))
+        (recur xs (dec n))
+      (and x xs) ; Don't return the last item
+        x)))
+
+(defn node-first [node]
+  (node-nth node 0))
+
+(defn node-second [node]
+  (node-nth node 1))
+
+(defn node-count [node]
+  (loop [[x & xs] (:content node)
+         n        0]
+    (cond
+      (node-whitespace? x)
+        (recur xs n)
+      x
+        (recur xs (inc n))
+      :else
+        (- n 2))))
+
+(defmulti build-scope
+  (fn [lst]
+    (:content (node-first lst))))
+
+(defn- symbols-in-binding-vector
+  [v]
+  (map (partial node-nth v)
+       (->> (iterate (partial + 2) 0)
+            (take (/ (node-count v) 2)))))
+
+(defmethod build-scope ["let"]
+  [x]
+  {:out nil
+   :in  (symbols-in-binding-vector (node-second x))})
+
+(defmethod build-scope ["binding"]
+  [x]
+  {:out nil
+   :in  (symbols-in-binding-vector (node-second x))})
+
+(defn- build-scope-for-defs [x]
+  (let [c         (node-count x)
+        but-first (map (partial node-nth x) (range 1 c))
+        out       (first (drop-while (comp not node-symbol?) but-first))
+        args      (first (drop-while (comp not node-vector?) but-first))
+        in        (map (partial node-nth args) (range 0 (node-count args)))]
+    {:out [out]
+     :in  in}))
+
+(defmethod build-scope ["defn"]
+  [x]
+  (build-scope-for-defs x))
+
+(defmethod build-scope ["defn-"]
+  [x]
+  (build-scope-for-defs x))
+
+(defmethod build-scope :default [x] {})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Outline
@@ -196,7 +286,7 @@ loc->def functions specified in the language."
 
 (defn- char-at [[offset [loc pos]]]
   (when loc
-    (-> (zip/node loc) (get (- offset pos)))))
+    (-> loc zip/node (get (- offset pos)))))
 
 (defn- find-matching-delimiter [loc closing?]
   (if closing?
@@ -207,11 +297,11 @@ loc->def functions specified in the language."
   "Checks that the character in offset is a delimiter
 and returns the offset of its matching delimiter."
   [doc offset]
-  (let [root        (-> doc lang/parse-tree lang/code-zip)
+  (let [root        (lang/code-zip (lang/parse-tree doc))
         prev-offset (when (pos? offset) (dec offset))
         next-offset (when (< offset (model/length doc)) offset)
         [offset [loc pos]] (->> [next-offset prev-offset]
-                             (filter identity)
+                             (filter (comp not nil?))
                              (map (juxt identity (partial lang/location root)))
                              (filter (comp delimiter? char-at))
                              first)
