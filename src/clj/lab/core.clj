@@ -26,7 +26,8 @@
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
 
-                    lab.plugin.clojure-repl]
+                    lab.plugin.clojure-repl
+                    lab.plugin.clojure-nrepl]
    :lang-plugins  '{"Clojure" [lab.plugin.syntax-highlighting
                                lab.plugin.autocomplete
                                lab.plugin.delimiter-matching

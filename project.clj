@@ -7,6 +7,7 @@
                  [net.cgrand/parsley "0.9.2"]
                  [popen "0.3.0"]
                  [leiningen "2.3.4"]
+                 [org.clojure/tools.nrepl "0.2.3"]
 
                  [com.cemerick/pomegranate "0.2.0"]
 

@@ -63,10 +63,11 @@ it. If not project file is supplied, a bare REPL is started."
         cout      (io/writer aux-out)
         cin       (-> thrd-out PipedInputStream. io/reader)
         thrd      (binding [*out* out *in* in *err* out]
-                    (Thread. (bound-fn [] 
+                    (Thread. ^Runnable
+                             (bound-fn []
                                (require 'clojure.main)
                                (clojure.main/repl))))]
-    (.start thrd)
+    (.start ^Thread thrd)
     {:proc thrd
      :cout cin
      :cin  cout}))
