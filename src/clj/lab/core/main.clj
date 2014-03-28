@@ -36,7 +36,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Open
 
-(defn- doc-modified-update-title [app id key doc old-state new-state]
+(defn- doc-modified-update-title
+  [app id key doc old-state new-state]
   (when (not= (doc/modified? old-state) (doc/modified? new-state))
     (let [ui    (:ui @app)
           name  (doc/name new-state)
@@ -92,7 +93,7 @@ and call the app's open-document function."
 
 (defn- new-document
   "Creates a new document and shows it in a new tab."
-  [{app :app :as e}]
+  [{app :app :as e}]  
   (swap! app lab/new-document)
   (open-document-ui! app (lab/current-document @app)))
 

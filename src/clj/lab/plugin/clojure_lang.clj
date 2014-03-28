@@ -148,15 +148,46 @@ check if its one of the registered symbols."
       :else
         (- n 2))))
 
+(defn- node-children [node]
+  (map (partial node-nth node)
+       (range 0 (node-count node))))
+
 (defmulti build-scope
   (fn [lst]
     (:content (node-first lst))))
 
+(defn- symbols-in-destructure [x]
+  (cond
+    (or (node-vector? x) (node-map? x))
+      (mapcat symbols-in-destructure (node-children x))
+    (node-symbol? x)
+      [x]))
+
 (defn- symbols-in-binding-vector
   [v]
-  (map (partial node-nth v)
-       (->> (iterate (partial + 2) 0)
-            (take (/ (node-count v) 2)))))
+  (->> (iterate (partial + 2) 0)      ; take nodes in even indexes
+       (take (/ (node-count v) 2))
+       (map (partial node-nth v))
+       (mapcat symbols-in-destructure)))
+
+(defn- name-symbol-in-def
+  [children]
+  (let [name-sym (first (drop-while #(and (-> % node-symbol? not)   ; look for a symbol
+                                          (-> % node-vector? not))  ; and a vector
+                                    (drop 1 children)))]
+    (when (node-symbol? name-sym) ; only a symbol is valid
+      [name-sym])))
+
+(defn- symbols-in-argument-vector
+  [children]
+  (let [args (first (drop-while (comp not node-vector?) children))]
+    (mapcat symbols-in-destructure (node-children args))))
+
+(defn- build-scope-for-def
+  [x]
+  (let [children  (node-children x)]
+    {:out (name-symbol-in-def children)
+     :in  (symbols-in-argument-vector children)}))
 
 (defmethod build-scope ["let"]
   [x]
@@ -173,15 +204,6 @@ check if its one of the registered symbols."
   {:out nil
    :in  (symbols-in-binding-vector (node-second x))})
 
-(defn- build-scope-for-def [x]
-  (let [c         (node-count x)
-        but-first (map (partial node-nth x) (range 1 c))
-        out       (first (drop-while (comp not node-symbol?) but-first))
-        args      (first (drop-while (comp not node-vector?) but-first))
-        in        (map (partial node-nth args) (range 0 (node-count args)))]
-    {:out [out]
-     :in  in}))
-
 (defmethod build-scope ["defn"]
   [x]
   (build-scope-for-def x))
@@ -191,6 +213,10 @@ check if its one of the registered symbols."
   (assoc (build-scope-for-def x) :in nil))
 
 (defmethod build-scope ["defn-"]
+  [x]
+  (build-scope-for-def x))
+
+(defmethod build-scope ["fn"]
   [x]
   (build-scope-for-def x))
 
