@@ -2,24 +2,55 @@
   "Clojure REPL process."
   (:require [popen :refer [popen kill stdin stdout]]
             [clojure.java.io :as io]
-            [clojure.string :refer [split]]
+            [clojure.string :refer [split] :as str]
             [clojure.tools.nrepl :as repl]
 
             [lab.core :as lab]
             [lab.core [plugin :as plugin]
                       [keymap :as km]]
+            [lab.model [document :as doc]
+                       [protocols :as model]]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts])
    (:import java.io.File))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Namespace symbol list
+
+(def ns-symbols-fns
+  '[(defn- ns-aliased-symbols
+      "Takes a namespace and returns a set of all the symbols in the aliased namespaces."
+      [ns]
+      (reduce (fn [s [alias ns]]
+                (into s (map (partial str alias "/")
+                             (keys (ns-publics ns)))))
+              #{}
+              (ns-aliases ns)))
+    (defn ns-all-symbols
+      "Takes a namespace and returns the symbols for all imported classes,
+referred vars (without the ns qualifier) and aliased symbols."
+      [ns]
+      (let [ns (the-ns ns)]
+        (->> [(ns-imports ns)
+              ;;(ns-interns ns)
+              (ns-refers ns)]
+             (map (comp (partial map str) keys))
+             (reduce into (ns-aliased-symbols ns)))))])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Eval code
 
-(defn eval-code!
-  [client code]
+(defn eval-in-server
+  [{:keys [client] :as conn} code]
   (repl/message client
-    {:op :eval
+    {:op   :eval
      :code code}))
+
+(defn response-values
+  [responses]
+  (->> responses
+    (filter :value)
+    (map :value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; nREPL server & client
@@ -70,8 +101,8 @@
      :cin  (stdin proc)
      :cout (stdout proc)}))
 
-(defn stop-nrepl-server [{:keys [client] :as conn}]
-  (eval-code! client "(System/exit 0)"))
+(defn stop-nrepl-server [conn]
+  (eval-in-server conn "(System/exit 0)"))
 
 (defn start-nrepl-client [path & {:keys [host port]}]
   (let [path      (ensure-dir path)
@@ -107,6 +138,8 @@ and updates the conn."
               host    (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
               client  (start-nrepl-client path :port port :host host)]
           (swap! app assoc-in [:connections id :client] client))
+          (eval-in-server (get-in @app [:connections id])
+                          ns-symbols-fns)
         (catch Exception ex
           (.printStackTrace ex)))))
 
@@ -142,7 +175,7 @@ to the ui in the bottom section."
   (let [ui      (:ui @app)
         styles  (:styles @app)
         title   (str "nREPL - " name)]
-    (-> (tplts/tab)
+    (-> (tplts/tab "nrepl")
         (ui/attr :stuff {:close-tab #'close-tab-repl})
         (ui/update-attr :header ui/update :label ui/attr :text title)
         (ui/add [:scroll [:text-editor {:stuff {:conn-id id}}]])
@@ -177,9 +210,29 @@ an nREPL client that connects to that server."
                            (-> (ui/update-attr x :divider-location-right #(or % 150))
                                (ui/update :#bottom ui/add (repl-tab app conn))))))))))
 
-(defn connect-to-server!
+(defn- connect-to-server!
   [e]
   (throw (ex-info "Not implemented" {})))
+
+(defn- eval-code!
+  [{:keys [source app] :as e}]
+  (let [ui          (:ui @app)
+        editor      source
+        file-path   (doc/path @(ui/attr editor :doc))
+        [start end] (ui/selection editor)
+        selection   (if (= start end)
+                      (model/text editor)
+                      (model/substring editor start end))
+        editor      (ui/find @ui [:#bottom :#nrepl :text-editor])
+        conn-id     (:conn-id (ui/stuff editor))]
+    (when editor
+      (let [responses  (-> (get-in @app [:connections conn-id])
+                           (eval-in-server selection))
+            values    (response-values responses)]
+        (doseq [x values]
+          (model/insert editor
+                        (model/length editor)
+                        (str x "\n")))))))
 
 (defn- init! [app]
   (swap! app assoc :connections {}))
