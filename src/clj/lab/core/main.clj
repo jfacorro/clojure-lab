@@ -342,30 +342,6 @@ and signals the highlighting process."
           (ui/update! ui (ui/id= id) ui/attr :margin-control (line-number-create app editor)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Undo/Redo
-
-(defn undo-redo! [e f]
-  (let [app    (:app e)
-        ui     (:ui @app)
-        editor (current-text-editor @ui)]
-    (when editor
-      (let [id     (ui/attr editor :id)
-            doc    (ui/attr editor :doc)
-            hist   (doc/history @doc)]
-        (swap! doc f)
-        ;; TODO: Fix this abominable scheme for undo/redo
-        (swap! doc assoc :read-only true)
-        (let [[editor hist] (f editor hist)]
-          (ui/update! ui (ui/id= id) (constantly editor)))
-        (swap! doc dissoc :read-only)))))
-
-(defn redo! [e]
-  (undo-redo! e doc/redo))
-
-(defn undo! [e]
-  (undo-redo! e doc/undo))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Next/previous center tab
 
 (defn move-tab [e move]
