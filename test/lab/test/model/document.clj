@@ -1,7 +1,7 @@
 (ns lab.test.model.document
   (:refer-clojure :exclude [name replace])
   (:use clojure.test
-        [lab.test :onle [->test ->is]]
+        [lab.test :only [->test ->is]]
         lab.model.document)
   (:require [clojure.java.io :as io]
             [lab.core.lang :as lang]))

@@ -1,7 +1,7 @@
 (ns lab.test.model.history
   (:refer-clojure :exclude [name replace])
   (:use [clojure.test :only [deftest testing is run-tests]]
-        [lab.test :onle [->test ->is]]
+        [lab.test :only [->test ->is]]
         [lab.model.history :only [history add current rewind forward]]))
 
 (testing "History operations"
