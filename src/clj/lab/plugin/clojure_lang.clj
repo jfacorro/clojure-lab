@@ -226,7 +226,7 @@ check if its one of the registered symbols."
 ;; Outline
 
 (defn- def? [loc]
-  (and (-> loc zip/node :tag (= :list))
+  (and (= :list (-> loc zip/node :tag))
        (-> loc zip/down zip/right zip/node
          (as-> x
            (and (= (:tag x) :symbol)

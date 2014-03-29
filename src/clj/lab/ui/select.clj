@@ -174,26 +174,28 @@ is the value."
 
 (defn tag=
   "Returns a predicate that indicates whether its 
-  argument has the specified tag name."
+argument has the specified tag name."
   [tag]
   (with-meta #(= tag (:tag %)) {:tag tag}))
 
 (defn id=
   "Returns a predicate that indicates wheter its
-  argument has the same id as the provided."
+argument has the same id as the provided."
   [id]
   (with-meta #(= id (-> % :attrs :id)) {:id id}))
 
-(defn attr= [attr v]
+(defn attr=
   "Returns a predicate that indicates whether its
-  argument has the value provided in the attribute specified."
+argument has the value provided in the attribute specified."
+  [attr v]
   (with-meta
-    #(-> % :attrs attr (= v))
+    #(= v (-> % :attrs attr))
     {:attr attr :value v}))
 
-(defn attr? [attr]
+(defn attr?
   "Returns a predicate that indicates whether its
-  argument has a truthy value in the attribute specified."
+argument has a truthy value in the attribute specified."
+  [attr]
   (with-meta
     #(-> % :attrs attr)
     {:attr attr}))

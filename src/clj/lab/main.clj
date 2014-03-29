@@ -1,6 +1,6 @@
 (ns lab.main
   "Entry point for the whole environment."
-  (:use lab.core)
+  (:require [lab.core :refer [init]])
   (:gen-class))
 
 (def app nil)

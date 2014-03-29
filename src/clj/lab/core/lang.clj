@@ -22,7 +22,7 @@ function from each lang to determine the appropiate one."
   "Returns a positive number if the path's extension 
 equals ext, zero otherwise."
   [ext ^String path]
-  (if (-> path (.split "\\.") last (= ext))
+  (if (= ext (-> path (.split "\\.") last))
     1
     0))
 

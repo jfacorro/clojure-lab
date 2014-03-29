@@ -16,14 +16,6 @@
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
             [java.awt Color]))
 
-(defn- apply-style
-  "Applies the given style to the text
-  enclosed between the strt and end positions."
-  ([^StyledDocument doc ^long strt ^long end ^SimpleAttributeSet stl]
-    (.setCharacterAttributes doc strt end stl true))
-  ([^JTextPane txt ^SimpleAttributeSet stl]
-    (.setCharacterAttributes txt stl true)))
-
 (extend-type JTextComponent
   TextEditor
   (add-highlight [this start end color]

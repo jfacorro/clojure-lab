@@ -153,7 +153,7 @@ within the opened documents."
 (defn find-doc-by-name
   "Returns the document that has the supplied name."
   [app x]
-  (find-doc-by app #(-> % doc/name (= x))))
+  (find-doc-by app #(= x (doc/name %))))
 
 (defn same-file?
   "Checks if the two files supplied are the same."

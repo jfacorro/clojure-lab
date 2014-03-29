@@ -16,8 +16,9 @@
 
 (declare document-tab)
 
-(defn- current-document-tab [ui]
+(defn- current-document-tab
   "Returns the currently selected document tab."
+  [ui]
   (->> (ui/find ui :#center)
     ui/selection
     ui/id=

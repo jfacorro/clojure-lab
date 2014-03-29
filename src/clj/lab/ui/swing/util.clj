@@ -157,7 +157,7 @@
           (instance? Color x)
             x
           :else
-            (throw)))
+            (throw (ex-info "Invalid color format." {:value x}))))
   ([r g b]
     (Color. ^int r ^int g ^int b)))
     
@@ -213,17 +213,19 @@ all optional and creates a Font."
   [attr]
   (#{:color :background} (key attr)))
 
-(defn- parse-attrs [style]
+(defn- parse-attrs
   "Parses the attribute definition, replacing RGB values
 with Color instances."
+  [style]
   (let [rgb-to-color (fn [[k v]] [k (color v)])
         attrs        (->> style (filter color-attr?) (mapcat rgb-to-color))]
     (if (seq attrs)
       (apply assoc style attrs)
       style)))
 
-(defn make-style* [style]
+(defn make-style*
   "Creates a new style with the given style map."
+  [style]
   (let [attr-set (SimpleAttributeSet.)
         att      (parse-attrs style)]
     (doseq [[k v] att]
@@ -360,7 +362,7 @@ no more."
           delete (fn [^InputMap x] (when x (.remove x ks)))]
       (loop [ims (all-input-maps ctrl)]
         (when (seq ims)
-          (doall (map delete ims))
+          (doseq [x ims] (delete x))
           (recur (mapcat #(when % [(.getParent ^InputMap %)]) ims)))))))
 
 (defn register-key-binding [^JComponent ctrl ks f & [focus-scope]]
@@ -391,6 +393,6 @@ component and its parents."
     (doseq [^JComponent x (all-parents x)]
       (let [forward-keys  (set (.getFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS))
             backward-keys (set (.getFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS))]
-        (doall (map (partial remove-key-binding x) ks))
+        (doseq [k ks] (remove-key-binding x k))
         (.setFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS (apply disj forward-keys ks))
         (.setFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS (apply disj backward-keys ks))))))

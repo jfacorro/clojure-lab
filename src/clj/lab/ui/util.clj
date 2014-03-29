@@ -8,8 +8,9 @@
         b (-> n (bit-and 0x0000FF))]
     {:r r :g g :b b}))
 
-(defn rgb-to-int [{:keys [r g b]}]
+(defn rgb-to-int
   "Converts a RGB triple to a single int value."
+  [{:keys [r g b]}]
   (int (+ (* r 65536) (* g 256) b)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

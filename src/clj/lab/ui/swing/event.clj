@@ -100,10 +100,9 @@ latest version."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event Object
 
-(defn- consume [e]
-  "consume() is a protected method in AWTEvent, 
-only subclasses make it public, so this throws 
-a reflection warning."
+(defn- consume
+  "Default implementation for consume that does nothing."
+  [e]
   (throw (UnsupportedOperationException. "Can't consume this type of event.")))
 
 (def event-object "Root implementation."
