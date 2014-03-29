@@ -12,7 +12,7 @@
                        [protocols :as model]]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts])
-   (:import java.io.File))
+   (:import [java.io File BufferedReader]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Namespace symbol list
@@ -119,7 +119,7 @@ referred vars (without the ns qualifier) and aliased symbols."
   "Listen for each line of output from the
 server process and pass it to handler."
   [app conn handler]
-  (let [cout (get-in conn [:server :cout])]
+  (let [cout  ^BufferedReader (get-in conn [:server :cout])]
     (future
       (try 
         (loop [] (handler app conn (.readLine cout)))
@@ -129,11 +129,11 @@ server process and pass it to handler."
   "Takes the app, the connection and a line from the server process
 output. Based on the contents of the message, starts an nrepl client
 and updates the conn."
-  [app {:keys [file id] :as conn} event]
+  [app {:keys [file id] :as conn} ^String event]
   (cond
     (.contains event "nREPL server started on port")
       (try
-        (let [path    (.getCanonicalPath file)
+        (let [path    (.getCanonicalPath ^File file)
               port    (second (re-find #"port (\d+) " event))
               host    (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
               client  (start-nrepl-client path :port port :host host)]
@@ -250,7 +250,3 @@ an nREPL client that connects to that server."
   :type  :global
   :init! #'init!
   :keymaps keymaps)
-
-;;(start-nrepl-server ".")
-;;(connect-nrepl ".")
-;;(locate-dominating-file "." "project.clj")
