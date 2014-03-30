@@ -71,17 +71,13 @@ to the current in the direction specified."
       (ui/update :tree ui/focus))))
 
 (defn- symbols-in-scope
-  "Gets all the siblings of the current location and their
-inner and outer symbols in scope."
+  "Gets all the symbols in the current location's scope."
   [loc]
-  (->> (if (zip/up loc)
-         [(zip/node loc)]
-         (zip/children loc))
-       (mapcat #(mapcat (fn [x] (-> % meta :scope x))
-                        (if (zip/up loc)
-                          [:in :out]
-                          [:out])))
-       (map (comp first :content))))
+  (when loc
+    (->> (zip/node loc)
+         meta
+         :scope
+         (map (comp first :content)))))
 
 (defn- symbols-in-scope-from-location
   "Starting at the location specified, goes up the parse tree

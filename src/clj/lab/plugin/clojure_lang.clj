@@ -153,8 +153,10 @@ check if its one of the registered symbols."
        (range 0 (node-count node))))
 
 (defmulti build-scope
-  (fn [lst]
-    (:content (node-first lst))))
+  (fn [x]
+    (if (= ::root (:tag x))
+      (:tag x)
+      (:content (node-first x)))))
 
 (defn- symbols-in-destructure [x]
   (cond
@@ -171,12 +173,22 @@ check if its one of the registered symbols."
        (mapcat symbols-in-destructure)))
 
 (defn- name-symbol-in-def
-  [children]
+  [node]
   (let [name-sym (first (drop-while #(and (-> % node-symbol? not)   ; look for a symbol
                                           (-> % node-vector? not))  ; and a vector
-                                    (drop 1 children)))]
+                                    (drop 1 (node-children node))))]
     (when (node-symbol? name-sym) ; only a symbol is valid
-      [name-sym])))
+      name-sym)))
+
+(defn- node-def?
+  [{[x] :content :as node}]
+  (and (string? x)
+       (.startsWith ^String x "def")))
+
+(defn- check-for-definition
+  [{:keys [tag] :as node}]
+  (when (and (= :list tag) (node-def? (node-first node)))
+    (name-symbol-in-def node)))
 
 (defn- symbols-in-argument-vector
   [children]
@@ -185,32 +197,32 @@ check if its one of the registered symbols."
 
 (defn- build-scope-for-def
   [x]
-  (let [children  (node-children x)]
-    {:out (name-symbol-in-def children)
-     :in  (symbols-in-argument-vector children)}))
+  (symbols-in-argument-vector (node-children x)))
+
+(defmethod build-scope ::root
+  [x]
+  (reduce (fn [acc node]
+            (if-let [sym-node (check-for-definition node)]
+              (conj acc sym-node)
+              acc))
+          []
+          (:content x)))
 
 (defmethod build-scope ["let"]
   [x]
-  {:out nil
-   :in  (symbols-in-binding-vector (node-second x))})
+  (symbols-in-binding-vector (node-second x)))
 
 (defmethod build-scope ["binding"]
   [x]
-  {:out nil
-   :in  (symbols-in-binding-vector (node-second x))})
+  (symbols-in-binding-vector (node-second x)))
 
 (defmethod build-scope ["loop"]
   [x]
-  {:out nil
-   :in  (symbols-in-binding-vector (node-second x))})
+  (symbols-in-binding-vector (node-second x)))
 
 (defmethod build-scope ["defn"]
   [x]
   (build-scope-for-def x))
-
-(defmethod build-scope ["def"]
-  [x]
-  (assoc (build-scope-for-def x) :in nil))
 
 (defmethod build-scope ["defn-"]
   [x]
