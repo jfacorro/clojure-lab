@@ -1,4 +1,4 @@
-(ns lab.plugin.syntax-highlighting
+(ns lab.plugin.editor.syntax-highlighting
   (:require [clojure.core.async :as async]
             [lab.util :refer [timeout-channel]]
             [lab.ui.core :as ui]
@@ -65,7 +65,7 @@ are applied their highlight."
         id (ui/attr (main/current-text-editor @ui) :id)]
     (ui/update! ui (ui/id= id) text-editor-unload)))
 
-(plugin/defplugin lab.plugin.syntax-highlighting
+(plugin/defplugin lab.plugin.editor.syntax-highlighting
   :type    :local
   :init!   init!
   :unload! unload!)

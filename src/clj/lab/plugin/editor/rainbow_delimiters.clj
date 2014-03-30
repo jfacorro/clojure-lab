@@ -1,4 +1,4 @@
-(ns lab.plugin.rainbow-delimiters
+(ns lab.plugin.editor.rainbow-delimiters
   (:require [clojure.zip :as zip]
             [lab.ui.core :as ui]
             [lab.util :refer [timeout-channel find-limits]]
@@ -90,7 +90,7 @@
         id (ui/attr (main/current-text-editor @ui) :id)]
     (ui/update! ui (ui/id= id) text-editor-unload)))
 
-(plugin/defplugin lab.plugin.rainbow-delimiters
+(plugin/defplugin lab.plugin.editor.rainbow-delimiters
   :type    :local
   :init!   init!
   :unload! unload!)

@@ -1,4 +1,4 @@
-(ns lab.plugin.autocomplete
+(ns lab.plugin.editor.autocomplete
   (:require [clojure.zip :as zip]
             [lab.core [plugin :as plugin]
                       [keymap :as km]
@@ -130,10 +130,10 @@ nodes in the first level."
         symbols))))
 
 (def ^:private keymaps
-  [(km/keymap 'lab.plugin.autocomplete
+  [(km/keymap 'lab.plugin.editor.autocomplete
       :local
       {:fn ::autocomplete :keystroke "ctrl space"})])
 
-(plugin/defplugin lab.plugin.autocomplete
+(plugin/defplugin lab.plugin.editor.autocomplete
   :type    :local
   :keymaps keymaps)

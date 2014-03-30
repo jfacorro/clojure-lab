@@ -1,4 +1,4 @@
-(ns lab.plugin.delimiter-matching
+(ns lab.plugin.editor.delimiter-matching
   (:require [clojure.core.async :as async]
             [lab.ui.core :as ui]
             [lab.model.document :as doc]
@@ -52,7 +52,7 @@
         id (ui/attr (main/current-text-editor @ui) :id)]
     (ui/update! ui (ui/id= id) text-editor-unload)))
 
-(plugin/defplugin lab.plugin.delimiter-matching
+(plugin/defplugin lab.plugin.editor.delimiter-matching
   :type    :local
   :init!   init!
   :unload! unload!)

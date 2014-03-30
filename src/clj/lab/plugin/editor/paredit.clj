@@ -1,4 +1,4 @@
-(ns lab.plugin.paredit
+(ns lab.plugin.editor.paredit
   (:require [clojure.zip :as zip]
             [clojure.core.match :refer [match]]
             [lab.ui.core :as ui]
@@ -414,7 +414,7 @@ parentheses by deleting and inserting the modified substring.
 ;; Keymap
 
 (def ^:private keymaps
-  [(km/keymap 'lab.plugin.paredit
+  [(km/keymap (ns-name *ns*)
     :local
     ;; Basic Insertion Commands
     {:fn ::open-delimiter :keystroke "(" :name "Open round"}
@@ -445,6 +445,6 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::backward-slurp-sexp :keystroke "ctrl alt left" :name "backward-slurp-sexp"}
     {:fn ::backward-barf-sexp :keystroke "ctrl alt right" :name "backward-barf-sexp"})])
 
-(plugin/defplugin lab.plugin.paredit
+(plugin/defplugin (ns-name *ns*)
   :type    :local
   :keymaps keymaps)

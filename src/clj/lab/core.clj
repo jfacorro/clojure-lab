@@ -10,7 +10,7 @@
 (declare 
   current-document
   open-document 
-  save-document 
+  save-document
   close-document
   config)
 
@@ -29,12 +29,12 @@
 
                     lab.plugin.clojure-repl
                     lab.plugin.clojure-nrepl]
-   :lang-plugins  '{"Clojure" [lab.plugin.syntax-highlighting
-                               lab.plugin.autocomplete
-                               lab.plugin.delimiter-matching
-                               lab.plugin.rainbow-delimiters
-                               lab.plugin.paredit]
-                    "Markdown" [lab.plugin.syntax-highlighting]}
+   :lang-plugins  '{"Clojure" [lab.plugin.editor.syntax-highlighting
+                               lab.plugin.editor.autocomplete
+                               lab.plugin.editor.delimiter-matching
+                               lab.plugin.editor.rainbow-delimiters
+                               lab.plugin.editor.paredit]
+                    "Markdown" [lab.plugin.editor.syntax-highlighting]}
    :plugins-dir   "plugins"
    :current-dir   "."})
 
