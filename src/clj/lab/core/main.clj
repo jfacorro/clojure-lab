@@ -16,7 +16,7 @@
 
 (declare document-tab)
 
-(defn- current-document-tab
+(defn- current-editor-tab
   "Returns the currently selected document tab."
   [ui]
   (->> (ui/find ui :#center)
@@ -27,7 +27,7 @@
 (defn current-text-editor
   "Returns the currently selected text-editor."
   [ui]
-  (ui/find (current-document-tab ui) :text-editor))
+  (ui/find (current-editor-tab ui) :text-editor))
 
 (defn- update-tab-title [tab title]
   (ui/update tab []
@@ -141,7 +141,7 @@ associated to it."
   [e]
   (let [app    (:app e)
         ui     (:ui @app)
-        tab    (current-document-tab @ui)
+        tab    (current-editor-tab @ui)
         id     (ui/attr tab :id)]
     (when tab
       (close-document-ui app id))))
@@ -177,7 +177,7 @@ associated to it."
   [e]
   (let [app    (:app e)
         ui     (:ui @app)
-        tab    (current-document-tab @ui)]
+        tab    (current-editor-tab @ui)]
     (when tab
       (save-document-ui! app tab))))
 
@@ -332,7 +332,7 @@ and signals the highlighting process."
   [e]
   (let [app    (:app e)
         ui     (:ui @app)
-        tab    (current-document-tab @ui)
+        tab    (current-editor-tab @ui)
         editor (ui/find tab :text-editor)]
     (when (and tab editor)
       (let [scroll       (ui/find tab :scroll)
@@ -348,7 +348,7 @@ and signals the highlighting process."
 (defn move-tab [e move]
   (let [app   (:app e)
         ui    (:ui @app)
-        tab   (current-document-tab @ui)
+        tab   (current-editor-tab @ui)
         tabs  (ui/find @ui :#center)
         children (ui/children tabs)
         total (count children)

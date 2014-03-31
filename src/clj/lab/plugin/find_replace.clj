@@ -185,6 +185,7 @@ directory to the text field that holds the path."
         recursive  (ui/selection (ui/find @dialog :#recursive))]
     (when (and (seq txt) (seq path))
       (ui/action
+        (ui/attr @dialog :visible false)
         (when-not (ui/find @ui :#find-results)
           (ui/update! ui :#bottom ui/add (view-find-results)))
         (future
