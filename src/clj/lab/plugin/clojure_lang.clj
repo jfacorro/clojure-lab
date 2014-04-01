@@ -309,6 +309,29 @@ the current line."
         (ui/caret-position editor (+ start delta))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Namespace
+
+(defn- ns-list?
+  [node]
+  (and (node-list? node)
+       (as-> (node-first node) x
+         (when (and (node-symbol? x)
+                    (= "ns" (-> x :content first)))
+           (name-symbol-in-def node)))))
+
+(defn find-namespace [doc & {:keys [default]}]
+  (let [root     (lang/parse-tree doc)
+        children (:content root)
+        ns-node  (loop [[node & nodes] children]
+                   (cond
+                     (and node (ns-list? node))
+                       (ns-list? node)
+                     node
+                       (recur nodes)))]
+    (or (and ns-node (-> ns-node :content first))
+        default)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Find definitions
 
 (defn definitions

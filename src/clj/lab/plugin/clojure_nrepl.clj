@@ -6,14 +6,14 @@ Most of the ideas for this plugin were taken from the Cider emacs minor mode."
             [clojure.java.io :as io]
             [clojure.string :refer [split] :as str]
             [clojure.tools.nrepl :as repl]
-
             [lab.core :as lab]
             [lab.core [plugin :as plugin]
                       [keymap :as km]]
             [lab.model [document :as doc]
                        [protocols :as model]]
             [lab.ui.core :as ui]
-            [lab.ui.templates :as tplts])
+            [lab.ui.templates :as tplts]
+            [lab.plugin.clojure-lang :as clj-lang])
    (:import [java.io File BufferedReader]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -104,9 +104,11 @@ symbols in *ns*."
 (def ^:private nrepl-server-cmd
   [lein-path "repl" ":headless"])
 
-(def ^:private default-nrepl-port nil)
+(def ^:private default-port nil)
 
 (def ^:private default-host "127.0.0.1")
+
+(def ^:private default-ns "user")
 
 (defn start-nrepl-server [path]
   (when-not lein-path
@@ -126,7 +128,7 @@ symbols in *ns*."
                       (locate-file "target/repl-port" path))
         port      (or (and port (read-string port))
                       (and port-file (read-string (slurp port-file)))
-                      default-nrepl-port)
+                      default-port)
         host      (or host default-host)]
   (when port
     (repl/client (repl/connect :host host :port port) 1000))))
@@ -252,6 +254,9 @@ an nREPL client that connects to that server."
                       (model/length console)
                       (if (= type :value) (str val "\n") val))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Autocomplete
+
 (defn- symbols-in-scope-from-connection
   [{:keys [editor app] :as e}]
   (let [ui      (:ui @app)
@@ -262,13 +267,28 @@ an nREPL client that connects to that server."
       (eval-and-get-value conn (str ns-symbols-fns)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Hooks
+
+(defn- switch-document-hook
+  [f app doc]
+  (if-not doc
+    (f app doc)
+    (let [app     (f app doc)
+          lang    (doc/lang @doc)
+          ui      (:ui app)
+          console (ui/find @ui [:#nrepl :text-editor])
+          conn-id (:conn-id (ui/stuff console))]
+      (if (and conn-id (= (:name lang) "Clojure"))
+        (assoc-in app
+                  [:connections conn-id :current-ns]
+                  (clj-lang/find-namespace @doc :default default-ns))
+        app))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Plugin definition
 
-(defn- init! [app]
-  (swap! app assoc :connections {})
-  (swap! app
-         update-in [:langs :clojure]
-         update-in [:autocomplete] conj #'symbols-in-scope-from-connection))
+(def ^:private hooks
+  {#'lab.core/switch-document #'switch-document-hook})
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
@@ -279,7 +299,14 @@ an nREPL client that connects to that server."
               :lang :clojure
               {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 
+(defn- init! [app]
+  (swap! app assoc :connections {})
+  (swap! app
+         update-in [:langs :clojure]
+         update-in [:autocomplete] conj #'symbols-in-scope-from-connection))
+
 (plugin/defplugin (ns-name *ns*)
-  :type  :global
-  :init! #'init!
-  :keymaps keymaps)
+  :type    :global
+  :init!   #'init!
+  :keymaps keymaps
+  :hooks   hooks)
