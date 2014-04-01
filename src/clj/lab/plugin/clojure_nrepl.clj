@@ -1,5 +1,7 @@
 (ns lab.plugin.clojure-nrepl
-  "Clojure REPL process."
+  "Clojure nREPL connection.
+
+Most of the ideas for this plugin were taken from the Cider emacs minor mode."
   (:require [popen :refer [popen kill stdin stdout]]
             [clojure.java.io :as io]
             [clojure.string :refer [split] :as str]
@@ -18,39 +20,53 @@
 ;; Namespace symbol list
 
 (def ns-symbols-fns
-  '[(defn- ns-aliased-symbols
-      "Takes a namespace and returns a set of all the symbols in the aliased namespaces."
-      [ns]
-      (reduce (fn [s [alias ns]]
-                (into s (map (partial str alias "/")
-                             (keys (ns-publics ns)))))
-              #{}
-              (ns-aliases ns)))
-    (defn ns-all-symbols
-      "Takes a namespace and returns the symbols for all imported classes,
-referred vars (without the ns qualifier) and aliased symbols."
-      [ns]
-      (let [ns (the-ns ns)]
-        (->> [(ns-imports ns)
-              ;;(ns-interns ns)
-              (ns-refers ns)]
-             (map (comp (partial map str) keys))
-             (reduce into (ns-aliased-symbols ns)))))])
+  "Code that is sent to the nREPL server to get all
+symbols in *ns*."
+  '(letfn [(ns-aliased-symbols
+             [ns]
+             (reduce (fn [s [alias ns]]
+                       (into s (map (partial str alias "/")
+                                    (keys (ns-publics ns)))))
+                     #{}
+                     (ns-aliases ns)))
+           (ns-all-symbols
+             [ns]
+             (let [ns (the-ns ns)]
+               (->> [(ns-imports ns)
+                     (ns-refers ns)]
+                    (map (comp (partial map str) keys))
+                    (reduce into (ns-aliased-symbols ns)))))]
+    (ns-all-symbols *ns*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Eval code
 
 (defn eval-in-server
-  [{:keys [client] :as conn} code]
+  [{:keys [client current-ns] :as conn} code]
   (repl/message client
     {:op   :eval
-     :code code}))
+     :code code
+     :ns   current-ns}))
 
 (defn response-values
   [responses]
   (->> responses
     (filter :value)
     (map :value)))
+
+(defn response-output
+  [responses]
+  (->> responses
+    (mapcat #(map (fn [k]
+                    (when-let [v (% k)]
+                      {:type k :val v}))
+                  [:value :out :err]))
+    (filter identity)))
+
+(defn eval-and-get-value [conn code]
+  (let [reponses  (eval-in-server conn code)
+        [x & _]   (response-values reponses)]
+    (and x (read-string x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; nREPL server & client
@@ -201,6 +217,7 @@ an nREPL client that connects to that server."
             conn   {:id     conn-id
                     :server server
                     :file   file
+                    :current-ns "user"
                     :name   (-> file .getParent io/file .getName)}]
         (listen-nrepl-server-output! app conn handle-nrepl-server-event)
         (swap! app assoc-in [:connections conn-id] conn)
@@ -226,16 +243,31 @@ an nREPL client that connects to that server."
         editor      (ui/find @ui [:#bottom :#nrepl :text-editor])
         conn-id     (:conn-id (ui/stuff editor))]
     (when editor
-      (let [responses  (-> (get-in @app [:connections conn-id])
-                           (eval-in-server selection))
-            values    (response-values responses)]
-        (doseq [x values]
+      (let [conn       (get-in @app [:connections conn-id]) 
+            responses  (eval-in-server conn selection)
+            output     (response-output responses)]
+        (doseq [{:keys [type val] :as x} output]
           (model/insert editor
                         (model/length editor)
-                        (str x "\n")))))))
+                        (if (= type :value) (str val "\n") val)))))))
+
+(defn- symbols-in-scope-from-connection
+  [{:keys [editor app] :as e}]
+  (let [ui      (:ui @app)
+        console (ui/find @ui [:#nrepl :text-editor])
+        conn-id (:conn-id (ui/stuff console))
+        conn    (get-in @app [:connections conn-id])]
+    (when conn
+      (eval-and-get-value conn (str ns-symbols-fns)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Plugin definition
 
 (defn- init! [app]
-  (swap! app assoc :connections {}))
+  (swap! app assoc :connections {})
+  (swap! app
+         update-in [:langs :clojure]
+         update-in [:autocomplete] conj #'symbols-in-scope-from-connection))
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)

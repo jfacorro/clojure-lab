@@ -366,6 +366,43 @@ and returns the offset of its matching delimiter."
     {:fn ::toggle-comment :keystroke "alt c" :name "Comment code"}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Autcompletion
+
+(defn- adjacent-string
+  "Returns the first location that's adjacent
+to the current in the direction specified."
+  [loc dir]
+  (lang/select-location (dir loc)
+                        dir
+                        lang/loc-string?))
+
+
+(defn- symbols-in-scope
+  "Gets all the symbols in the current location's scope."
+  [loc]
+  (when loc
+    (->> (zip/node loc)
+         meta
+         :scope
+         (map (comp first :content)))))
+
+(defn- symbols-in-scope-from-location
+  "Starting at the location specified, goes up the parse tree
+collecting the symbols in scope from every parent node and the
+nodes in the first level."
+  [{:keys [source] :as e}]
+  (let [root    (-> @(ui/attr source :doc)
+                    lang/parse-tree
+                    lang/code-zip)
+        [loc _] (lang/location root (ui/caret-position source))]
+    (loop [loc     loc
+           symbols (into #{} (symbols-in-scope loc))]
+      (if-not loc
+        symbols
+        (recur (zip/up loc)
+               (into symbols (symbols-in-scope loc)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Language definition
 
 (def clojure
@@ -380,7 +417,8 @@ and returns the offset of its matching delimiter."
      :styles    styles
      :definitions #'definitions
      :delimiter-match #'delimiter-match
-     :keymap    keymap}))
+     :keymap    keymap
+     :autocomplete [#'symbols-in-scope-from-location]}))
 
 (defn init! [app]
   (swap! app assoc-in [:langs :clojure] clojure))

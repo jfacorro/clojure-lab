@@ -4,25 +4,40 @@
                       [keymap :as km]
                       [lang :as lang]
                       [trie :as trie]]
-            [lab.model.protocols :as model]
+            [lab.model [protocols :as model]
+                       [document :as doc]]
             [lab.ui [core :as ui]
                     [templates :as tplts]]
             [lab.plugin.clojure-nrepl :as nrepl]))
 
-(defn- adjacent-string
-  "Returns the first location that's adjacent
-to the current in the direction specified."
-  [loc dir]
-  (lang/select-location (dir loc)
-                        dir
-                        lang/loc-string?))
+(defn token-location-at-caret
+  "Takes an editor and finds the token immediately after
+the current caret position."
+  [editor]
+  (let [root    (-> @(ui/attr editor :doc)
+                    lang/parse-tree
+                    lang/code-zip)
+        pos     (ui/caret-position editor)
+        [loc i] (lang/location root pos)
+        prev    (or (zip/left loc)
+                    (-> loc zip/up zip/left))]
+    (when (and (= :symbol (lang/location-tag prev))
+               (= pos i))
+      prev)))
 
-(defn- select-autocomplete [e]
-  (let [node   (:source e)
-        txt    (ui/attr node :item)
-        {:keys [editor loc popup]} (ui/stuff node)
-        [start end] (lang/limits loc)
-        ws?     (lang/whitespace? loc)
+(defn- select-autocomplete
+  "Taken an event whose source is a node form the autocompletion
+tree list. Identifies the selected option in the autocomplete
+popup menu and replaces the token at the caret position with 
+the selection."
+  [{:keys [source] :as e}]
+  (let [txt    (ui/attr source :item)
+        {:keys [editor popup]}
+               (ui/stuff source)
+        loc    (token-location-at-caret editor)
+        [start end]
+               (lang/limits loc)
+        ws?    (lang/whitespace? loc)
         offset (if ws?
                  (ui/caret-position editor)
                  start)]
@@ -42,20 +57,21 @@ to the current in the direction specified."
       (when (= :pressed (:event e))
         (ui/handle-event (:fn cmd) e)))))
 
-(defn sym-tree-node [stuff km sym-name]
-  [:tree-node {:item sym-name
-               :leaf true
-               :stuff stuff
-               :listen [:key (partial handle-keymap km)]}])
+(defn- matches-nodes [editor popup matches]
+  (let [km    (km/keymap :autocomplete :local
+                         {:fn ::select-autocomplete :keystroke "enter"})
+        stuff {:editor editor :popup popup}]
+    (-> [:tree-node {:item :root}]
+      (into (map (fn [sym-name]
+                   [:tree-node {:item sym-name
+                                :leaf true
+                                :stuff stuff
+                                :listen [:key (partial handle-keymap km)]}])
+                 matches)))))
 
-(defn- matches-nodes [stuff matches km]
-  (-> [:tree-node {:item :root}]
-    (into (map (partial sym-tree-node stuff km) matches))))
-
-(defn popup-menu [editor loc matches]
+(defn popup-menu
+  [editor matches]
   (let [location (ui/caret-location editor)
-        km    (km/keymap :autocomplete :local
-                {:fn ::select-autocomplete :keystroke "enter"})
         popup (ui/init
                 [:pop-up-menu {:location location
                                :source   editor
@@ -63,67 +79,33 @@ to the current in the direction specified."
                  [:scroll {:size [250 100]
                            :border :none}
                   [:tree {:hide-root true}]]])
-        stuff {:editor editor :loc loc :popup popup}
-        root  (matches-nodes stuff matches km)]
+        root  (matches-nodes editor popup matches)]
     (-> popup
       (ui/update :tree ui/add root)
       (ui/attr :visible true)
       (ui/update :tree ui/focus))))
 
-(defn- symbols-in-scope
-  "Gets all the symbols in the current location's scope."
-  [loc]
-  (when loc
-    (->> (zip/node loc)
-         meta
-         :scope
-         (map (comp first :content)))))
-
-(defn- symbols-in-scope-from-location
-  "Starting at the location specified, goes up the parse tree
-collecting the symbols in scope from every parent node and the
-nodes in the first level."
-  [loc]
-  (loop [loc  loc
-         symbols (into #{} (symbols-in-scope loc))]
-    (if-not loc
-      symbols
-      (recur (zip/up loc) (into symbols (symbols-in-scope loc))))))
-
-(defn- symbols-in-scope-from-connection [app]
-  (let [ui      (:ui @app)
-        console (ui/find @ui [:#nrepl :text-editor])
-        conn-id (:conn-id (ui/stuff console))
-        conn    (get-in @app [:connections conn-id])]
-    (when conn
-      (->> (nrepl/eval-in-server conn "(test.ns/ns-all-symbols 'test.ns)")
-           nrepl/response-values
-           first
-           read-string))))
-
-(defn- all-symbols-in-scope [app loc]
-  (into (symbols-in-scope-from-location loc)
-        (symbols-in-scope-from-connection app)))
+(defn- completion-tokens
+  "Gets the auto-completion functions from the current
+document and runs them accumulating theirs results in a
+set. Returns nil if there's no token in the current caret
+position."
+  [{:keys [app source] :as e}]
+  (let [lang  (doc/lang @(ui/attr source :doc))
+        fns   (:autocomplete lang)]
+    (when-let [loc (token-location-at-caret source)]
+      (-> (reduce into #{} (map #(% e) fns))
+          trie/trie
+          (trie/prefix-matches (-> loc zip/down zip/node))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
-;; Plugin definition & cmds
+;; Plugin definition
 
 (defn- autocomplete
-  [{:keys [app source]}]
-  (let [editor  source
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        root    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location root pos)
-        tag     (lang/location-tag loc)
-        loc     (if (and (not= tag :symbol) (= pos i))
-                  (adjacent-string loc zip/prev)
-                  loc)
-        symbols (sort (all-symbols-in-scope app loc))]
-    (popup-menu editor loc
-      (if (= (lang/location-tag loc) :symbol)
-        (-> symbols trie/trie (trie/prefix-matches (zip/node loc)))
-        symbols))))
+  [{:keys [app source] :as e}]
+  (when-let [symbols (completion-tokens e)]
+    (popup-menu source
+                (sort symbols))))
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.editor.autocomplete
