@@ -194,7 +194,9 @@ to the ui in the bottom section."
     (-> (tplts/tab "nrepl")
         (ui/attr :stuff {:close-tab #'close-tab-repl})
         (ui/update-attr :header ui/update :label ui/attr :text title)
-        (ui/add [:scroll [:text-editor {:stuff {:conn-id id}}]])
+        (ui/add [:scroll
+                 [:text-editor {:read-only true
+                                :stuff {:conn-id id}}]])
         (ui/apply-stylesheet styles))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -240,16 +242,15 @@ an nREPL client that connects to that server."
         selection   (if (= start end)
                       (model/text editor)
                       (model/substring editor start end))
-        editor      (ui/find @ui [:#bottom :#nrepl :text-editor])
-        conn-id     (:conn-id (ui/stuff editor))]
-    (when editor
-      (let [conn       (get-in @app [:connections conn-id]) 
-            responses  (eval-in-server conn selection)
-            output     (response-output responses)]
-        (doseq [{:keys [type val] :as x} output]
-          (model/insert editor
-                        (model/length editor)
-                        (if (= type :value) (str val "\n") val)))))))
+        console     (ui/find @ui [:#bottom :#nrepl :text-editor])
+        conn-id     (:conn-id (ui/stuff console))]
+    (when conn-id
+      (doseq [{:keys [type val]} (-> (get-in @app [:connections conn-id])
+                                     (eval-in-server selection)
+                                     response-output)]
+        (model/insert console
+                      (model/length console)
+                      (if (= type :value) (str val "\n") val))))))
 
 (defn- symbols-in-scope-from-connection
   [{:keys [editor app] :as e}]
