@@ -22,24 +22,33 @@ Most of the ideas for this plugin were taken from the Cider emacs minor mode."
 (def ns-symbols-fns
   "Code that is sent to the nREPL server to get all
 symbols in *ns*."
-  '(letfn [(ns-aliased
-             [s [alias ns]]
-             (into s (map (partial str alias "/")
-                          (keys (ns-publics ns)))))
+  '(letfn [(into! [to from]
+            (reduce conj! to from))
+           (ns-qualified-public-symbols
+             [alias ns]
+             (map (partial str alias "/")
+                  (keys (ns-publics ns))))
            (ns-aliased-symbols
              [ns]
-             (reduce ns-aliased #{} (ns-aliases ns)))
+             (persistent! 
+               (reduce (fn [s [alias ns]]
+                           (into! s (ns-qualified-public-symbols alias ns)))
+                       (transient [])
+                       (ns-aliases ns))))
            (ns-symbols-from-map
              [ns]
              (->> ns keys (map str)))
            (ns-all-symbols
              [ns]
              (let [ns (the-ns ns)]
-               (->> [(ns-imports ns)
-                     (ns-refers ns)]
-                    (map (comp (partial map str) keys))
-                    (reduce into (ns-aliased-symbols ns))
-                    (into (map str (all-ns))))))]
+               (persistent!
+                 (reduce into!
+                       (transient #{})
+                       [(ns-symbols-from-map (ns-imports ns))
+                        (ns-symbols-from-map (ns-refers ns))
+                        (ns-aliased-symbols ns)
+                        (mapcat #(ns-qualified-public-symbols (str %) %)
+                                (all-ns))]))))]
     (ns-all-symbols *ns*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
