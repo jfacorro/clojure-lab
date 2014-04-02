@@ -22,20 +22,24 @@ Most of the ideas for this plugin were taken from the Cider emacs minor mode."
 (def ns-symbols-fns
   "Code that is sent to the nREPL server to get all
 symbols in *ns*."
-  '(letfn [(ns-aliased-symbols
+  '(letfn [(ns-aliased
+             [s [alias ns]]
+             (into s (map (partial str alias "/")
+                          (keys (ns-publics ns)))))
+           (ns-aliased-symbols
              [ns]
-             (reduce (fn [s [alias ns]]
-                       (into s (map (partial str alias "/")
-                                    (keys (ns-publics ns)))))
-                     #{}
-                     (ns-aliases ns)))
+             (reduce ns-aliased #{} (ns-aliases ns)))
+           (ns-symbols-from-map
+             [ns]
+             (->> ns keys (map str)))
            (ns-all-symbols
              [ns]
              (let [ns (the-ns ns)]
                (->> [(ns-imports ns)
                      (ns-refers ns)]
                     (map (comp (partial map str) keys))
-                    (reduce into (ns-aliased-symbols ns)))))]
+                    (reduce into (ns-aliased-symbols ns))
+                    (into (map str (all-ns))))))]
     (ns-all-symbols *ns*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,19 +47,23 @@ symbols in *ns*."
 
 (defn eval-in-server
   [{:keys [client current-ns] :as conn} code]
+;;  (prn current-ns code)
   (repl/message client
-    {:op   :eval
-     :code code
-     :ns   current-ns}))
+    (merge {:op   :eval
+            :code code}
+           (when current-ns
+             {:ns current-ns}))))
 
 (defn response-values
   [responses]
+;;  (prn responses)
   (->> responses
     (filter :value)
     (map :value)))
 
 (defn response-output
   [responses]
+;;  (prn responses)
   (->> responses
     (mapcat #(map (fn [k]
                     (when-let [v (% k)]
@@ -154,10 +162,15 @@ and updates the conn."
         (let [path    (.getCanonicalPath ^File file)
               port    (second (re-find #"port (\d+) " event))
               host    (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
-              client  (start-nrepl-client path :port port :host host)]
-          (swap! app assoc-in [:connections id :client] client))
-          (eval-in-server (get-in @app [:connections id])
-                          ns-symbols-fns)
+              client  (start-nrepl-client path :port port :host host)
+              conn    (as-> (assoc conn :client client) conn
+                        (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
+                                                    default-ns)))]
+          (swap! app assoc-in [:connections id] conn)
+          (ui/action
+            (ui/update! (:ui @app)
+                        [:#bottom :#nrepl :split :text-editor]
+                        model/append "nREPL client connected!\n")))
         (catch Exception ex
           (.printStackTrace ex)))))
 
@@ -171,7 +184,7 @@ and killing the associated process."
   (let [ui   (:ui @app)
         id   (:tab-id (ui/stuff source))
         tab  (ui/find @ui (ui/id= id))
-        conn-id (-> (ui/find tab :text-editor) ui/stuff :conn-id)
+        conn-id (-> (ui/find tab :split) ui/stuff :conn-id)
         conn (get-in @app [:connections conn-id])
         proc (:server conn)]
     (if (instance? Thread proc)
@@ -186,6 +199,13 @@ and killing the associated process."
           (swap! app update-in [:connections] dissoc conn-id)
           (ui/update! ui (ui/parent id) ui/remove tab))))))
 
+(defn- repl-console
+  [conn-id]
+  [:split {:stuff {:conn-id conn-id}
+           :orientation :vertical}
+   [:scroll [:text-editor {:read-only true}]]
+   [:scroll [:text-editor]]])
+
 (defn- repl-tab
   "Create the tab that contains the repl and add it
 to the ui in the bottom section."
@@ -196,9 +216,7 @@ to the ui in the bottom section."
     (-> (tplts/tab "nrepl")
         (ui/attr :stuff {:close-tab #'close-tab-repl})
         (ui/update-attr :header ui/update :label ui/attr :text title)
-        (ui/add [:scroll
-                 [:text-editor {:read-only true
-                                :stuff {:conn-id id}}]])
+        (ui/add (repl-console id))
         (ui/apply-stylesheet styles))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -221,15 +239,17 @@ an nREPL client that connects to that server."
             conn   {:id     conn-id
                     :server server
                     :file   file
-                    :current-ns "user"
-                    :name   (-> file .getParent io/file .getName)}]
+                    :name   (-> file .getParent io/file .getName)}
+            tab    (-> (repl-tab app conn)
+                       (ui/update [:text-editor]
+                                  model/append "Starting nREPL server\n"))]
         (listen-nrepl-server-output! app conn handle-nrepl-server-event)
         (swap! app assoc-in [:connections conn-id] conn)
-        (ui/action 
+        (ui/action
           (ui/update! ui (ui/parent "bottom")
                          (fn [x]
                            (-> (ui/update-attr x :divider-location-right #(or % 150))
-                               (ui/update :#bottom ui/add (repl-tab app conn))))))))))
+                               (ui/update :#bottom ui/add tab)))))))))
 
 (defn- connect-to-server!
   [e]
@@ -244,14 +264,13 @@ an nREPL client that connects to that server."
         selection   (if (= start end)
                       (model/text editor)
                       (model/substring editor start end))
-        console     (ui/find @ui [:#bottom :#nrepl :text-editor])
+        console     (ui/find @ui [:#bottom :#nrepl :split])
         conn-id     (:conn-id (ui/stuff console))]
     (when conn-id
       (doseq [{:keys [type val]} (-> (get-in @app [:connections conn-id])
                                      (eval-in-server selection)
                                      response-output)]
-        (model/insert console
-                      (model/length console)
+        (model/append (ui/find console :text-editor)
                       (if (= type :value) (str val "\n") val))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -260,7 +279,7 @@ an nREPL client that connects to that server."
 (defn- symbols-in-scope-from-connection
   [{:keys [editor app] :as e}]
   (let [ui      (:ui @app)
-        console (ui/find @ui [:#nrepl :text-editor])
+        console (ui/find @ui [:#nrepl :split])
         conn-id (:conn-id (ui/stuff console))
         conn    (get-in @app [:connections conn-id])]
     (when conn
@@ -276,12 +295,13 @@ an nREPL client that connects to that server."
     (let [app     (f app doc)
           lang    (doc/lang @doc)
           ui      (:ui app)
-          console (ui/find @ui [:#nrepl :text-editor])
-          conn-id (:conn-id (ui/stuff console))]
-      (if (and conn-id (= (:name lang) "Clojure"))
-        (assoc-in app
-                  [:connections conn-id :current-ns]
-                  (clj-lang/find-namespace @doc :default default-ns))
+          console (ui/find @ui [:#nrepl :split])
+          conn-id (:conn-id (ui/stuff console))
+          conn    (get-in app [:connections conn-id])]
+      (if (and conn (= (:name lang) "Clojure"))
+        (let [doc-ns (clj-lang/find-namespace @doc :default default-ns)]
+          (eval-in-server conn (format "(in-ns '%s)" doc-ns))
+          (assoc-in app [:connections conn-id :current-ns] doc-ns))
         app))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
