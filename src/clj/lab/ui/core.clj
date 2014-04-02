@@ -278,7 +278,7 @@ as the abstraction of its implementation."
     attrs))
 
 (defn- hiccup->component
-  "Used to convert huiccup syntax declarations to map components.
+  "Used to convert hiccup syntax declarations to map components.
 x should be a vector with the content [tag-keyword attrs-map? children*]"
   [x]
   (if (vector? x)
@@ -289,7 +289,7 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
           (reduce attr->component attrs attrs)
           {})
         (mapv hiccup->component (if-not (attrs? attrs) children ch))))
-    (update-in x [:content] (partial mapv hiccup->component))))
+    x))
 
 (defn- initialized?
   "Checks if the component is initialized."
