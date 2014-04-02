@@ -50,6 +50,8 @@
   (insert [this offset s]
     (.insertString (.getDocument this) offset s nil)
     (.setCaretPosition this (+ offset (count s))))
+  (append [this s]
+    (mp/insert this (mp/length this) s))
   (delete [this start end]
     (.remove (.getDocument this) start (- end start))
     (.setCaretPosition this start))

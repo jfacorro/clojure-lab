@@ -58,6 +58,8 @@ that may need to be computed or mantained)."
         (update-in [:buffer] p/insert offset s)
         (assoc-in [:modified] true)
         (archive-operations ops))))
+  (append [this s]
+    (p/insert this (p/length this) s))
   (delete [this start end]
     (let [s   (p/substring buffer start end)
           ops [(->DeleteText start end s)]]
@@ -88,7 +90,7 @@ that may need to be computed or mantained)."
 (defn- remove-lf-cr
   "Removes all Windows new line chars and replaces 
 them with *nix new line."
-  [txt]
+  [^String txt]
   (.replace txt "\r\n" "\n"))
 
 (defn bind

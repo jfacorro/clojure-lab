@@ -32,6 +32,8 @@ implementations."
   p/Text
   (insert [this offset s]
     (assoc this :buffer (parsley/edit buffer offset 0 s)))
+  (append [this s]
+    (p/insert this (p/length this) s))
   (delete [this start end]
     (assoc this :buffer (parsley/edit buffer start (- end start) "")))
   (length [this]
@@ -64,6 +66,8 @@ the parsing information from the language provided."
   p/Text
   (insert [this offset s]
     (.insert this ^int offset ^String s))
+  (append [this s]
+    (.append this ^String s))
   (delete [this start end]
     (.delete this ^int start ^int end))
   (length [this]

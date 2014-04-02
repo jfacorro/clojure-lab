@@ -141,6 +141,9 @@ as the abstraction of its implementation."
   (insert [this offset s]
     (mp/insert (p/impl this) offset s)
     this)
+  (append [this s]
+    (mp/append (p/impl this) s)
+    this)
   (delete [this start end]
     (mp/delete (p/impl this) start end)
     this)

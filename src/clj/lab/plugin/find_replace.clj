@@ -108,9 +108,10 @@
 (defn- view-find-results []
   (-> (tplts/tab "find-results")
     (ui/update-attr :header ui/update :label ui/attr :text "Search Results")
-    (ui/add [:tree {:border    :none
-                    :hide-root true}
-             [:tree-node {:id "find-results-root"}]])))
+    (ui/add [:scroll
+             [:tree {:border    :none
+                     :hide-root true}
+              [:tree-node {:id "find-results-root"}]]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Find in Files
