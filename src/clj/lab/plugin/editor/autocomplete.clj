@@ -19,14 +19,19 @@ the current caret position."
                     lang/code-zip)
         pos     (ui/caret-position editor)
         [loc i] (lang/location root pos)
-        prev    (or (zip/left loc)
-                    (-> loc zip/up zip/left))]
-    (when (and (= :symbol (lang/location-tag prev))
-               (= pos i))
+        tag     (lang/location-tag loc)
+        prev    (or (and (= :symbol tag)       ; at a symbol
+                         (zip/up loc))
+                    (zip/left loc)             ; at a closing delimiter
+                    (-> loc zip/up zip/left))  ; at the end of a whitespace
+        tag     (lang/location-tag prev)]
+    (when (and prev
+               (or (= :symbol tag)
+                   (and (not= :symbol tag) (= pos i))))
       prev)))
 
 (defn- select-autocomplete
-  "Taken an event whose source is a node form the autocompletion
+  "Takes an event whose source is a node from the autocompletion
 tree list. Identifies the selected option in the autocomplete
 popup menu and replaces the token at the caret position with 
 the selection."
@@ -78,10 +83,9 @@ the selection."
       (ui/update :tree ui/focus))))
 
 (defn- completion-tokens
-  "Gets the auto-completion functions from the current
-document and runs them accumulating theirs results in a
-set. Returns nil if there's no token in the current caret
-position."
+  "Gets the auto-completion functions from the current document's
+lang and runs them accumulating theirs results in a set.
+Returns nil if there's no token in the current caret position."
   [{:keys [app source] :as e}]
   (let [lang  (doc/lang @(ui/attr source :doc))
         fns   (:autocomplete lang)]

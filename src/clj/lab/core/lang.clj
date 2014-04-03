@@ -151,18 +151,28 @@ node in the way to the root."
 returns a vector with the location and its start
 offset."
   [root-loc offset]
-  (loop [loc (zip/down root-loc), pos 0]
-    (when (and loc (not (zip/end? loc)))
-      (let [node    (zip/node loc)
-            len     (node-length node)
-            new-pos (+ pos len)]
-        (if (and (string? node) (<= pos offset))
-          (if (< offset new-pos)
-            [loc pos]
-            (recur (zip/next loc) new-pos))
-          (if (< new-pos offset)
-            (recur (zip/right loc) new-pos)
-            (recur (zip/down loc) pos)))))))
+  ; Check the bounds for offset
+  (when-let [root-length (and (<= 0 offset)
+                              (<= offset (node-length (zip/node root-loc)))
+                              (node-length (zip/node root-loc)))]
+    (loop [loc (zip/down root-loc), pos 0]
+      (when (and loc (not (zip/end? loc)))
+        (let [node    (zip/node loc)
+              new-pos (+ pos (node-length node))]
+          ; If node is a string and the position we're at
+          ; is less than the offset we're looking for
+          (if (and (string? node) (<= pos offset))
+            ; Check if the new positions will go past the offset.
+            ; If it won't or the offset is actually the same as the 
+            ; lenght, then the current location is the one we are 
+            ; looking for.
+            (if (or (< offset new-pos)
+                    (and (= offset new-pos root-length)))
+              [loc pos]
+              (recur (zip/next loc) new-pos))
+            (if (< new-pos offset)
+              (recur (zip/right loc) new-pos)
+              (recur (zip/down loc) pos))))))))
 
 (defn whitespace?
   "Returns true if the zipper location
