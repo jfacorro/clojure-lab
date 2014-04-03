@@ -376,6 +376,14 @@ and signals the highlighting process."
 
 (def ^:private memoized-kw->fn (memoize kw->fn))
 
+(defn- handle-keymap [km e]
+  (let [[x y] (ui/key-stroke (dissoc e :source))
+        cmd   (km/find-or km x y)]
+    (when cmd
+      (ui/consume e)
+      (when (= :pressed (:event e))
+        (ui/handle-event (:fn cmd) e)))))
+
 (defn event-handler
   "Replaces the UI's default event-handler implementation, 
 inserting a fixed first parameter, which is the app."
@@ -388,6 +396,8 @@ inserting a fixed first parameter, which is the app."
         ((memoized-kw->fn f) e)
       (util/channel? f)
         (async/put! f e)
+      (map? f)
+        (handle-keymap f e)
       :else
         (throw (ex-info "Not supported event handler, it must be a function, an ns qualified keyword or a channel."
                         {:handler f})))))
