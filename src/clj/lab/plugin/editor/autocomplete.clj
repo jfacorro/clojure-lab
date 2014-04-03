@@ -49,14 +49,6 @@ the selection."
       (ui/caret-position (+ offset (count txt)))
       ui/focus)))
 
-(defn handle-keymap [km e]
-  (let [[x y](ui/key-stroke (dissoc e :source))
-        cmd  (km/find-or km x y)]
-    (when cmd
-      (ui/consume e)
-      (when (= :pressed (:event e))
-        (ui/handle-event (:fn cmd) e)))))
-
 (defn- matches-nodes [editor popup matches]
   (let [km    (km/keymap :autocomplete :local
                          {:fn ::select-autocomplete :keystroke "enter"})
@@ -66,7 +58,7 @@ the selection."
                    [:tree-node {:item sym-name
                                 :leaf true
                                 :stuff stuff
-                                :listen [:key (partial handle-keymap km)]}])
+                                :listen [:key km]}])
                  matches)))))
 
 (defn popup-menu
