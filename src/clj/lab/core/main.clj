@@ -232,7 +232,9 @@ and signals the highlighting process."
         editor (:source e)
         doc    (ui/attr editor :doc)
         [x y]  (ui/key-stroke (dissoc e :source))
-        cmd    (->> [(doc/keymap @doc) (-> @doc doc/lang :keymap) (@app :keymap)]
+        cmd    (->> [(doc/keymap @doc)
+                     (-> @doc doc/lang :keymap)
+                     (@app :keymap)]
                  (map #(km/find-or % y x))
                  (drop-while nil?)
                  first)]
@@ -376,8 +378,9 @@ and signals the highlighting process."
 
 (def ^:private memoized-kw->fn (memoize kw->fn))
 
-(defn- handle-keymap [km e]
-  (let [[x y] (ui/key-stroke (dissoc e :source))
+(defn- handle-keymap
+  [km e]
+  (let [[x y] (ui/key-stroke e)
         cmd   (km/find-or km x y)]
     (when cmd
       (ui/consume e)

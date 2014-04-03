@@ -55,6 +55,7 @@ symbols in *ns*."
 ;; Eval code
 
 (defn eval-in-server
+  "Evaluates code by sending it to the server of this connection."
   [{:keys [client current-ns] :as conn} code]
 ;;  (prn current-ns code)
   (repl/message client
@@ -178,8 +179,8 @@ and updates the conn."
           (swap! app assoc-in [:connections id] conn)
           (ui/action
             (ui/update! (:ui @app)
-                        [:#bottom :#nrepl :split :text-editor]
-                        model/append "nREPL client connected!\n")))
+                        [:#bottom :#nrepl :split [[:text-editor (ui/attr= :stuff :out)]]]
+                        model/append "nREPL client connected\n")))
         (catch Exception ex
           (.printStackTrace ex)))))
 
@@ -208,12 +209,45 @@ and killing the associated process."
           (swap! app update-in [:connections] dissoc conn-id)
           (ui/update! ui (ui/parent id) ui/remove tab))))))
 
+(defn- eval-code-and-show-results! [app code]
+  (let [ui      (:ui @app)
+        console (ui/find @ui [:#nrepl :split])
+        conn-id (:conn-id (ui/stuff console))]
+    (when conn-id
+      (doseq [{:keys [type val]} (-> (get-in @app [:connections conn-id])
+                                     (eval-in-server code)
+                                     response-output)]
+        (ui/action
+          (ui/update! ui
+                      [:#nrepl :split [:text-editor (ui/attr= :stuff :out)]]
+                      model/append 
+                      (if (= type :value) (str val "\n") val)))))))
+
+(defn- console-eval-code!
+  [{:keys [app source] :as e}]
+  (eval-code-and-show-results! app (model/text source))
+  (ui/action (ui/attr source :text "")))
+
+(defn- console-prev-history! [e]
+  (prn :console-prev-history!))
+
+(defn- console-next-history! [e]
+  (prn :console-next-history!))
+
+(def ^:private console-keymap
+  (km/keymap :nrepl :local
+             {:keystroke "ctrl enter" :fn ::console-eval-code!}
+             {:keystroke "ctrl up" :fn ::console-prev-history!}
+             {:keystroke "ctrl down" :fn ::console-next-history!}))
+
 (defn- repl-console
   [conn-id]
   [:split {:stuff {:conn-id conn-id}
            :orientation :vertical}
-   [:scroll [:text-editor {:read-only true}]]
-   [:scroll [:text-editor]]])
+   [:scroll [:text-editor {:read-only true
+                           :stuff :out}]]
+   [:scroll [:text-editor {:stuff :in
+                           :listen [:key console-keymap]}]]])
 
 (defn- repl-tab
   "Create the tab that contains the repl and add it
@@ -250,7 +284,7 @@ an nREPL client that connects to that server."
                     :file   file
                     :name   (-> file .getParent io/file .getName)}
             tab    (-> (repl-tab app conn)
-                       (ui/update [:text-editor]
+                       (ui/update [[:text-editor (ui/attr= :stuff :out)]]
                                   model/append "Starting nREPL server\n"))]
         (listen-nrepl-server-output! app conn handle-nrepl-server-event)
         (swap! app assoc-in [:connections conn-id] conn)
@@ -270,17 +304,10 @@ an nREPL client that connects to that server."
         editor      source
         file-path   (doc/path @(ui/attr editor :doc))
         [start end] (ui/selection editor)
-        selection   (if (= start end)
+        code        (if (= start end)
                       (model/text editor)
-                      (model/substring editor start end))
-        console     (ui/find @ui [:#bottom :#nrepl :split])
-        conn-id     (:conn-id (ui/stuff console))]
-    (when conn-id
-      (doseq [{:keys [type val]} (-> (get-in @app [:connections conn-id])
-                                     (eval-in-server selection)
-                                     response-output)]
-        (model/append (ui/find console :text-editor)
-                      (if (= type :value) (str val "\n") val))))))
+                      (model/substring editor start end))]
+    (eval-code-and-show-results! app code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
