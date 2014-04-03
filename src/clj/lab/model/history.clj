@@ -3,10 +3,6 @@
   (:refer-clojure :exclude [empty empty?])
   (:require [clojure.core :as core]))
 
-(defprotocol Bijection
-  (direct [this] "Returns a direct monadic function of this operation.")
-  (inverse [this] "Returns an inverse monadic function of this operation."))
-
 (def ^{:dynamic true :private true} *save-in-history*
   "Indicates if record-operations function should add
   operations to the history. Should be set to false when

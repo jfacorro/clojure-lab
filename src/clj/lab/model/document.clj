@@ -23,15 +23,19 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Editing operations and their inverse
 
+(defprotocol Bijection
+  (direct [this] "Returns a direct monadic function of this operation.")
+  (inverse [this] "Returns an inverse monadic function of this operation."))
+
 (defrecord InsertText [offset s]
-  h/Bijection
+  Bijection
   (direct [this]
     #(p/insert % offset s))
   (inverse [this]
     #(p/delete % offset (+ offset (count s)))))
 
 (defrecord DeleteText [start end s]
-  h/Bijection
+  Bijection
   (direct [this]
     #(p/delete % start end))
   (inverse [this]
@@ -172,7 +176,7 @@ buffer."
   ([x hist]
     (let [ops     (h/current hist)
           hist    (h/rewind hist)
-          inv-ops (->> ops (map h/inverse) reverse)]
+          inv-ops (->> ops (map inverse) reverse)]
       (h/with-no-history
         [(reduce #(%2 %) x inv-ops) hist]))))
 
@@ -184,7 +188,7 @@ buffer."
     (let [hist     (h/forward old-hist)
           ops      (when (not= hist old-hist)
                      (h/current hist))
-          inv-ops  (map h/direct ops)]
+          inv-ops  (map direct ops)]
       (h/with-no-history
         [(reduce #(%2 %) x inv-ops) hist]))))
 
