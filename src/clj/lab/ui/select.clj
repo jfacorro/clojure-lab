@@ -2,7 +2,7 @@
   "Enables finding nodes in a tree by the use of selectors.
 This functionality was inspired by the enlive library, which in turn
 mirrors CSS selectors."
-  (:refer-clojure :exclude [compile])
+  (:refer-clojure :exclude [compile class?])
   (:require [clojure.zip :as zip]
             [clojure.set :as set]))
 
@@ -27,6 +27,13 @@ hash (#) sign which indicates its an id selector."
   (when-let [[x & _] (literal-selector? s)]
     (= x \#)))
 
+(defn- class?
+  "Returns true if the string begins with a
+hash (#) sign which indicates its an id selector."
+  [s]
+  (when-let [[x & _] (literal-selector? s)]
+    (= x \.)))
+
 (defn- all? [s]
   (= (literal-selector? s) "*"))
 
@@ -47,13 +54,23 @@ For example:
   :label [:tag :label]"
   [s]
   (condp apply-pred s
-    id?  [:id (->> s name rest (apply str))]
-    all? [:all nil]
-    tag? [:tag s]
-    fn?  [:fn s]))
+    id?    [:id (subs (name s) 1)]
+    class? [:class (subs (name s) 1)]
+    all?   [:all nil]
+    tag?   [:tag s]
+    fn?    [:fn s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Compilation and search
+
+(defn- literal-class?
+  "Checks if the selector is a literal and
+if so, wheter it contains a dot in it."
+  [x]
+  (and (literal-selector? x)
+       (let [[c & _ :as n] (name x)]
+         (and  (not= c \.)
+               ((set n) \.)))))
 
 (defn- compile
   "Takes a selector and returns a single arg predicate."
@@ -64,16 +81,24 @@ For example:
       (let [predicates (map compile selector)]
         (fn [x]
           (reduce #(and % (%2 x)) true predicates)))
-    ; Disjuntction predicate
+    ; Disjunction predicate
     (set? selector)
       (let [predicates (map compile selector)]
         (fn [x]
           (reduce #(or % (%2 x)) false predicates)))
+    ; Literal built w/ tag or id, and a class predicate
+    (literal-class? selector)
+      (let [predicates (->> (name selector)
+                            (split-with (comp not #{\.}))
+                            (map (partial apply str))
+                            (mapv keyword))]
+        (compile predicates))
     ; Simple predicate
     :else
       (let [[t v] (parse selector)]
         (condp = t
           :id  (id= v)
+          :class (attr= :class v)
           :tag (tag= v)
           :all (all)
           :fn  v))))
@@ -188,9 +213,9 @@ argument has the same id as the provided."
   "Returns a predicate that indicates whether its
 argument has the value provided in the attribute specified."
   [attr v]
-  (with-meta
-    #(= v (-> % :attrs attr))
-    {:attr attr :value v}))
+  (fn ^{:attr attr :value v} attr=
+    [x]
+    (= v (-> x :attrs attr))))
 
 (defn attr?
   "Returns a predicate that indicates whether its

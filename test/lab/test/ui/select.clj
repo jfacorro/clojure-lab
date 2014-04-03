@@ -6,16 +6,17 @@
 (def attr-spec @#'ui/attr-spec)
 
 (def root (#'lab.ui.core/hiccup->component
-            [:window {:id "main" 
+            [:window {:id "main"
                       :attr [:text-area {:id "text1"}]}
               [:label {:id "1"
                        :size [100 100]}]
               [:button {:id "2"
+                        :class "two"
                         :attr [:text-area {:id "text2"}]}
                 [:combo {:id "combo"
                          :size [100 200]
                          :attr [:panel [:button]]}
-                  [:button]
+                  [:button {:class "no-number"}]
                   [:text]]]
               [:label {:id "3"
                        :size [100 100]}]
@@ -61,7 +62,15 @@
     (are [x y] (= x (select root y))
       []           #{:window :label}
       nil          #{:x :y}
-      [:content 0] #{:label :button})))
+      [:content 0] #{:label :button}))
+
+  (testing "Class selector"
+    (are [x y] (= x (select root y))
+      [:content 1] [[:button :.two]]
+      [:content 1] :button.two
+      [:content 1] :.two
+      [:content 1] :#2.two
+      [:content 1 :content 0 :content 0] :.no-number)))
 
 (deftest ui-select-all []
   (are [x y] (= x (select-all root y))
