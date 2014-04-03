@@ -4,7 +4,7 @@
         [lab.test :only [->test ->is]]
         [lab.model.history :only [history add current rewind forward]]))
 
-(testing "History operations"
+(deftest history-operations
   (->test (history)
     (add :a)
     (->is = :a current)
@@ -25,4 +25,6 @@
     (->is = :b current)
     forward
     forward
-    (->is = :d current)))
+    (->is = :d current)
+    forward
+    (->is = nil current)))

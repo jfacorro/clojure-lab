@@ -18,9 +18,9 @@
 
 (defmacro with-history
   "By default operations that modify a document are 
-  saved in the history, but in case saving to the history 
-  was disabled upstream, you might like to be make 
-  sure that operations are being saved."
+saved in the history, but in case saving to the history 
+was disabled upstream, you might like to make 
+sure that operations are being saved."
   [& body]
   `(binding [*save-in-history* true]
     ~@body))
@@ -33,49 +33,68 @@
   ([past]
     (history past []))
   ([past fut]
-    {:past   past
-     :future fut}))
+    {:past    past
+     :present nil
+     :future  fut}))
 
 (defn current
   "Returns the last operation added."
-  [h]
-  (peek (:past h)))
+  [{:keys [present] :as h}]
+  present)
 
 (defn forward
   "Moves an operation from the future to the past."
-  [h]
-  (if-let [x (-> h :future peek)]
-    (-> h (update-in [:past] conj x)
-          (update-in [:future] pop))
+  [{:keys [past present future] :as h}]
+  (if (or present (peek future))
+    (assoc h
+           :past    (if present (conj past present) past)
+           :present (peek future)
+           :future  (or (and (peek future)
+                             (pop future))
+                        []))
     h))
+
+(defn fast-forward
+  "Moves all operations from the future to the past."
+  [{:keys [future present past] :as h}]
+  (assoc h
+         :past    (-> (if present (conj past present) past)
+                      (into (reverse future)))
+         :present nil
+         :future  []))
 
 (defn rewind
   "Moves an operation from the past to the future."
-  [h]
-  (if-let [x (current h)]
-    (-> h (update-in [:past] pop)
-          (update-in [:future] conj x))
+  [{:keys [future present past] :as h}]
+  (if (or present (peek past))
+    (assoc h
+           :past    (or (and (peek past)
+                             (pop past))
+                        [])
+           :present (peek past)
+           :future  (if present (conj future present) future))
     h))
 
 (defn add
   "Adds an operation to the past of this history removing
   creating a new timeline (removing all operations in the
   current future)."
-  [h op]
+  [{:keys [future present past] :as h} op]
   (if *save-in-history*
-    (-> h
-      (update-in [:past] conj op)
-      (assoc-in [:future] []))
+    (assoc h
+           :past    (if present (conj past present) past)
+           :present op
+           :future  [])
     h))
   
 (defn empty
   "Removes all operations from the history."
-  [h]
-  (and (core/empty (:past h))
-       (core/empty (:future h))))
+  [_]
+  (history))
 
 (defn empty?
   "Returns true if the history has no past or present operations."
-  [h]
-  (and (core/empty? (:past h))
-       (core/empty? (:future h))))
+  [{:keys [future present past] :as h}]
+  (and (core/empty? past)
+       (nil? present)
+       (core/empty? future)))
