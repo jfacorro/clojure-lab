@@ -464,6 +464,7 @@ used in the component's definition (e.g. in event handlers)."
       (when (not= (attr c :id) v)
         (throw (Exception. (str "Can't change the :id once it is set: " c)))))
     (:stuff [c _ _])
+    (:class [c _ _])
     (:listen ^:modify [c _ events]
       (assert (-> events count even?) "An even amount of items must be provided.")
       (reduce (fn [c [evt f]] (listen c evt f)) c (partition 2 events))))
