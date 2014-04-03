@@ -10,7 +10,8 @@ Most of the ideas for this plugin were taken from the Cider emacs minor mode."
             [lab.core [plugin :as plugin]
                       [keymap :as km]]
             [lab.model [document :as doc]
-                       [protocols :as model]]
+                       [protocols :as model]
+                       [history :as h]]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [lab.plugin.clojure-lang :as clj-lang])
@@ -179,7 +180,7 @@ and updates the conn."
           (swap! app assoc-in [:connections id] conn)
           (ui/action
             (ui/update! (:ui @app)
-                        [:#bottom :#nrepl :split [[:text-editor (ui/attr= :stuff :out)]]]
+                        [:#nrepl :split :text-editor.output]
                         model/append "nREPL client connected\n")))
         (catch Exception ex
           (.printStackTrace ex)))))
@@ -209,7 +210,10 @@ and killing the associated process."
           (swap! app update-in [:connections] dissoc conn-id)
           (ui/update! ui (ui/parent id) ui/remove tab))))))
 
-(defn- eval-code-and-show-results! [app code]
+(defn- console-eval-code!
+  "Send the code provided to the nREPL server and prints
+the results in the output editor."
+  [app code]
   (let [ui      (:ui @app)
         console (ui/find @ui [:#nrepl :split])
         conn-id (:conn-id (ui/stuff console))]
@@ -219,24 +223,51 @@ and killing the associated process."
                                      response-output)]
         (ui/action
           (ui/update! ui
-                      [:#nrepl :split [:text-editor (ui/attr= :stuff :out)]]
+                      [:#nrepl [:text-editor.output]]
                       model/append 
                       (if (= type :value) (str val "\n") val)))))))
 
-(defn- console-eval-code!
+(defn- console-add-history!
+  "Adds the code provided to the nREPL console command history."
+  [app console-in code]
+  (let [id (ui/attr console-in :id)]
+    (ui/update! (:ui @app)
+                :#nrepl
+                ui/update-attr :stuff
+                update-in [:history] #(-> %
+                                          h/fast-forward
+                                          (h/add code)
+                                          h/fast-forward))))
+
+(defn- console-eval-input!
+  "Evaluates the code that has been entered in the console's 
+input editor."
   [{:keys [app source] :as e}]
-  (eval-code-and-show-results! app (model/text source))
-  (ui/action (ui/attr source :text "")))
+  (when-let [code  (and (not (empty? (model/text source)))
+                        (model/text source))]
+    (console-eval-code! app code)
+    (console-add-history! app source code)
+    (ui/action (ui/attr source :text ""))))
 
-(defn- console-prev-history! [e]
-  (prn :console-prev-history!))
+(defn- console-traverse-history!
+  [{:keys [app] :as e} dir]
+  (ui/update! (:ui @app)
+              :#nrepl
+              #(let [hist (-> (ui/stuff %) :history dir)]
+                (-> (ui/update % :text-editor.input ui/attr :text (h/current hist))
+                    (ui/update-attr :stuff assoc :history hist)))))
 
-(defn- console-next-history! [e]
-  (prn :console-next-history!))
+(defn- console-prev-history!
+  [{:keys [app] :as e}]
+  (console-traverse-history! e h/rewind))
+
+(defn- console-next-history!
+  [{:keys [app] :as e}]
+  (console-traverse-history! e h/forward))
 
 (def ^:private console-keymap
   (km/keymap :nrepl :local
-             {:keystroke "ctrl enter" :fn ::console-eval-code!}
+             {:keystroke "ctrl enter" :fn ::console-eval-input!}
              {:keystroke "ctrl up" :fn ::console-prev-history!}
              {:keystroke "ctrl down" :fn ::console-next-history!}))
 
@@ -245,8 +276,8 @@ and killing the associated process."
   [:split {:stuff {:conn-id conn-id}
            :orientation :vertical}
    [:scroll [:text-editor {:read-only true
-                           :stuff :out}]]
-   [:scroll [:text-editor {:stuff :in
+                           :class "output"}]]
+   [:scroll [:text-editor {:class "input"
                            :listen [:key console-keymap]}]]])
 
 (defn- repl-tab
@@ -257,7 +288,8 @@ to the ui in the bottom section."
         styles  (:styles @app)
         title   (str "nREPL - " name)]
     (-> (tplts/tab "nrepl")
-        (ui/attr :stuff {:close-tab #'close-tab-repl})
+        (ui/attr :stuff {:close-tab #'close-tab-repl
+                         :history (h/history)})
         (ui/update-attr :header ui/update :label ui/attr :text title)
         (ui/add (repl-console id))
         (ui/apply-stylesheet styles))))
@@ -284,7 +316,7 @@ an nREPL client that connects to that server."
                     :file   file
                     :name   (-> file .getParent io/file .getName)}
             tab    (-> (repl-tab app conn)
-                       (ui/update [[:text-editor (ui/attr= :stuff :out)]]
+                       (ui/update :text-editor.output
                                   model/append "Starting nREPL server\n"))]
         (listen-nrepl-server-output! app conn handle-nrepl-server-event)
         (swap! app assoc-in [:connections conn-id] conn)
@@ -300,14 +332,11 @@ an nREPL client that connects to that server."
 
 (defn- eval-code!
   [{:keys [source app] :as e}]
-  (let [ui          (:ui @app)
-        editor      source
-        file-path   (doc/path @(ui/attr editor :doc))
-        [start end] (ui/selection editor)
+  (let [[start end] (ui/selection source)
         code        (if (= start end)
-                      (model/text editor)
-                      (model/substring editor start end))]
-    (eval-code-and-show-results! app code)))
+                      (model/text source)
+                      (model/substring source start end))]
+    (console-eval-code! app code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete

@@ -466,10 +466,7 @@ inserting a fixed first parameter, which is the app."
               {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
               {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
               {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
-              {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"}
-
-              {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
-              {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
+              {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."
