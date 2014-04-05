@@ -213,7 +213,8 @@ argument has the same id as the provided."
   "Returns a predicate that indicates whether its
 argument has the value provided in the attribute specified."
   [attr v]
-  (fn ^{:attr attr :value v} attr=
+  ^{:attr attr :value v}
+  (fn attr=
     [x]
     (= v (-> x :attrs attr))))
 
