@@ -274,7 +274,9 @@ input editor."
 (defn- repl-console
   [conn-id]
   [:split {:stuff {:conn-id conn-id}
-           :orientation :vertical}
+           :orientation :vertical
+           :resize-weight 1
+           :divider-location-right 100}
    [:scroll [:text-editor {:read-only true
                            :class "output"}]]
    [:scroll [:text-editor {:class "input"
