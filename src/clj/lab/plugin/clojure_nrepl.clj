@@ -20,7 +20,7 @@ Most of the ideas for this plugin were taken from the Cider emacs minor mode."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Namespace symbol list
 
-(def ns-symbols-fns
+(def ^:private ns-symbols-fns
   "Code that is sent to the nREPL server to get all
 symbols in *ns*."
   '(letfn [(into! [to from]
@@ -55,7 +55,7 @@ symbols in *ns*."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Eval code
 
-(defn eval-in-server
+(defn- eval-in-server
   "Evaluates code by sending it to the server of this connection."
   [{:keys [client current-ns] :as conn} code]
 ;;  (prn current-ns code)
@@ -65,14 +65,14 @@ symbols in *ns*."
            (when current-ns
              {:ns current-ns}))))
 
-(defn response-values
+(defn- response-values
   [responses]
 ;;  (prn responses)
   (->> responses
     (filter :value)
     (map :value)))
 
-(defn response-output
+(defn- response-output
   [responses]
 ;;  (prn responses)
   (->> responses
@@ -82,7 +82,7 @@ symbols in *ns*."
                   [:value :out :err]))
     (filter identity)))
 
-(defn eval-and-get-value [conn code]
+(defn- eval-and-get-value [conn code]
   (let [reponses  (eval-in-server conn code)
         [x & _]   (response-values reponses)]
     (and x (read-string x))))
@@ -129,7 +129,7 @@ symbols in *ns*."
 
 (def ^:private default-ns "user")
 
-(defn start-nrepl-server [path]
+(defn- start-nrepl-server [path]
   (when-not lein-path
     (throw (ex-info "No leiningen command found." {})))
   (let [dir  (io/file (ensure-dir path))
@@ -138,10 +138,10 @@ symbols in *ns*."
      :cin  (stdin proc)
      :cout (stdout proc)}))
 
-(defn stop-nrepl-server [conn]
+(defn- stop-nrepl-server [conn]
   (eval-in-server conn "(System/exit 0)"))
 
-(defn start-nrepl-client [path & {:keys [host port]}]
+(defn- start-nrepl-client [path & {:keys [host port]}]
   (let [path      (ensure-dir path)
         port-file (or (locate-file ".nrepl-port" path)
                       (locate-file "target/repl-port" path))
@@ -152,7 +152,7 @@ symbols in *ns*."
   (when port
     (repl/client (repl/connect :host host :port port) 1000))))
 
-(defn listen-nrepl-server-output!
+(defn- listen-nrepl-server-output!
   "Listen for each line of output from the
 server process and pass it to handler."
   [app conn handler]
@@ -162,7 +162,7 @@ server process and pass it to handler."
         (loop [] (handler app conn (.readLine cout)))
         (catch Exception _)))))
 
-(defn handle-nrepl-server-event
+(defn- handle-nrepl-server-event
   "Takes the app, the connection and a line from the server process
 output. Based on the contents of the message, starts an nrepl client
 and updates the conn."
@@ -299,7 +299,7 @@ to the ui in the bottom section."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
 
-(defn start-and-connect-to-server!
+(defn- start-and-connect-to-server!
   "Ask the user to select a project file and fire a 
 child process with a running nREPL server, then create
 an nREPL client that connects to that server."

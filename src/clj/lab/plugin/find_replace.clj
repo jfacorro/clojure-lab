@@ -15,7 +15,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Views
 
-(defn view-find [owner dialog]
+(defn- view-find [owner dialog]
   (let [find-next-btn  (ui/init [:button {:text "Find Next"
                                           :listen [:click ::find-next-click]
                                           :stuff {:dialog dialog}}])]
@@ -37,7 +37,7 @@
        [:panel]
        find-next-btn]]]))
 
-(defn view-replace [owner dialog]
+(defn- view-replace [owner dialog]
   (let [find-next-btn  (ui/init [:button {:text "Find Next"
                                      :listen [:click ::find-next-click]
                                      :stuff {:dialog dialog}}])]
@@ -71,7 +71,7 @@
                 :listen [:click ::replace-all-click]
                 :stuff {:dialog dialog}}]]]]))
 
-(defn view-find-in-files [owner dialog]
+(defn- view-find-in-files [owner dialog]
   (let [find-all-btn  (ui/init [:button {:text "Find All"
                                          :listen [:click ::find-in-files-click]
                                          :stuff {:dialog dialog}}])]
@@ -183,14 +183,14 @@ directory to the text field that holds the path."
         dialog  (:dialog (ui/stuff source))
         txt     (model/text (ui/find @dialog :#find-text))
         path    (model/text (ui/find @dialog :#path-text))
-        recursive  (ui/selection (ui/find @dialog :#recursive))]
+        recursive?  (ui/selection (ui/find @dialog :#recursive))]
     (when (and (seq txt) (seq path))
       (ui/action
         (ui/attr @dialog :visible false)
         (when-not (ui/find @ui :#find-results)
           (ui/update! ui :#bottom ui/add (view-find-results)))
         (future
-          (find-in-files app path recursive txt))))))
+          (find-in-files app path recursive? txt))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Replace
@@ -204,9 +204,11 @@ emtpy"
         editor (current-text-editor @ui)
         src    (model/text (ui/find @dialog :#find-text))
         rpl    (model/text (ui/find @dialog :#replace-text))
-        _      (and (seq src) (seq rpl) (find-next-click e))
-        [s e]  (ui/selection editor)]
-    (when (and (not= s e) (seq rpl) (seq src))
+        [s e]  (and (seq src)
+                    (find-next-click e)
+                    (ui/selection editor))]
+    (when (and (not= s e)
+               (seq src))
       (model/delete editor s e)
       (model/insert editor s rpl)
       (ui/selection editor [s (+ s (count rpl))])
@@ -230,10 +232,14 @@ from the current position of the caret."
           editor  (current-text-editor @ui)
           offset  (ui/caret-position editor)
           ptrn    (::find-pattern @app)
-          result  (when (seq ptrn) (first (find-limits ptrn (subs (model/text editor) offset))))]
-    (when result
-      (ui/selection editor (map (partial + offset) result))
-      true))))
+          result  (when (seq ptrn)
+                        (first (find-limits ptrn (subs (model/text editor) offset))))]
+    (if result
+      (or (ui/selection editor (map (partial + offset) result))
+          true)
+      (when (seq (find-limits ptrn (model/text editor)))
+          (ui/caret-position editor 0)
+          (find-next e))))))
 
 (defn- find-next-click
   "Registers the find pattern in the app and uses the find-next
