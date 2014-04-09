@@ -47,17 +47,24 @@ implementations."
   (parse-tree [this]
     (parsley/parse-tree buffer)))
 
+(defn- build-incremental-buffer
+  [lang]
+  (let [{:keys [options grammar]}
+                lang
+        parser  (apply parsley/parser options grammar)]
+    (parsley/incremental-buffer parser)))
+
+(def ^:private memoized-build-incremental-buffer
+  (memoize build-incremental-buffer))
+
 (defn incremental-buffer
   "Returns an incremental buffer whose content will be parsed using 
 the parsing information from the language provided."
   ([lang]
     (incremental-buffer lang ""))
   ([lang s]
-    (let [{:keys [options grammar]} lang
-          parser                    (apply parsley/parser options grammar)]
-      (IncrementalBuffer. (-> parser
-                              parsley/incremental-buffer
-                              (parsley/edit 0 0 s))))))
+    (-> (IncrementalBuffer. (memoized-build-incremental-buffer lang))
+        (p/insert 0 s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; StringBuffer implementation
