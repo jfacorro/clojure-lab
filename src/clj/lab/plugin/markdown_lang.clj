@@ -42,7 +42,7 @@
               :blockquote #">.*"
               :whitespace #"[\r\n]+"])
 
-(def styles
+(def ^:private styles
  {:title {:color 0xC800C8}
   :strong {:color 0x00FF00}
   :em {:color 0x00FFFF}
@@ -55,6 +55,10 @@
   :net.cgrand.parsley/unfinished  {:color 0xFF1111 :italic true}
   :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})
 
+(defn- resolve-style
+  [tag]
+  (styles tag (:default styles)))
+
 (def markdown
   {:name     "Markdown"
    :options  {:main      :expr*
@@ -64,7 +68,7 @@
    :grammar  grammar
    :definitions defs
    :rank     (partial lang/file-extension? "md")
-   :styles   styles})
+   :styles   #'resolve-style})
 
 (defn init! [app]
   (swap! app assoc-in [:langs :markdown] markdown))

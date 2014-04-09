@@ -84,11 +84,10 @@
   StyledTextEditor
   (apply-style
     ([this regions styles]
-      (let [styles (reduce-kv #(assoc %1 %2 (util/make-style %3)) styles styles)]
-        (apply-style this
-          #(doseq [[start length tag] regions]
-            (when (styles tag)
-              (.setCharacterAttributes ^DefaultStyledDocument % start length (styles tag) true))))))
+      (apply-style this
+        #(doseq [[start length tag] regions]
+          (when (styles tag)
+            (.setCharacterAttributes ^DefaultStyledDocument % start length (util/make-style (styles tag)) true)))))
     ([this start len style]
       (apply-style this
         #(.setCharacterAttributes ^DefaultStyledDocument % start len (util/make-style style) true)))))
