@@ -51,6 +51,7 @@
       - Unload a plugin.
       - Keep track of what plugins have been loaded.
       - (?) Allow plugins to define their own dependencies.
+    - Remove lab.plugin.clojure-repl since it was replaced by lab.plugin.clojure-nrepl
 
 ## DONE
 

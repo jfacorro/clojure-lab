@@ -27,7 +27,6 @@
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
 
-                    lab.plugin.clojure-repl
                     lab.plugin.clojure-nrepl]
    :lang-plugins  '{"Clojure" [lab.plugin.editor.syntax-highlighting
                                lab.plugin.editor.autocomplete
@@ -36,7 +35,8 @@
                                lab.plugin.editor.paredit]
                     "Markdown" [lab.plugin.editor.syntax-highlighting]}
    :plugins-dir   "plugins"
-   :current-dir   "."})
+   :current-dir   "."
+   :default-lang  :plain-text})
 
 (def default-app
   "Returns a new app with nothing initialized and a
@@ -46,7 +46,6 @@ default configuration."
    :documents         #{}
    :current-document  nil
    :langs             {:plain-text lang/plain-text}
-   :default-lang      :plain-text
    :keymap            nil})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -54,8 +53,8 @@ default configuration."
 
 (defn default-lang
   "Returns the default language."
-  [{:keys [langs default-lang] :as app}]
-  (default-lang langs))
+  [{:keys [langs config] :as app}]
+  (langs (config :default-lang)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Keymap registration
