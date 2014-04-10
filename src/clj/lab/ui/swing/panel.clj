@@ -22,6 +22,9 @@
   (add [this child]
     (.. this getViewport (add ^java.awt.Container child nil))
     (util/remove-focus-traversal child)
+    this)
+  (remove [this child]
+    (.. this getViewport (remove ^java.awt.Container child))
     this))
 
 (definitializations

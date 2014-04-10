@@ -9,7 +9,6 @@
                        [protocols :as model]]
             [lab.util :as util]
             [lab.ui [core :as ui]
-                    [select :as ui.sel]
                     [menu :as menu]
                     [templates :as tplts]]
             lab.ui.swing.core))
@@ -281,9 +280,7 @@ and signals the highlighting process."
     [:scroll {:vertical-increment 16
               :listen [:mouse-wheel ::change-font-size]
               :margin-control (line-number-create app editor)}
-      [:panel {:border :none
-               :layout :border}
-        editor]]))
+      editor]))
 
 ;; Document tab creation
 
@@ -343,6 +340,28 @@ and signals the highlighting process."
         (if line-number
           (ui/update! ui (ui/id= id) ui/attr :margin-control nil)
           (ui/update! ui (ui/id= id) ui/attr :margin-control (line-number-create app editor)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Toogle Word Wrap
+
+(defn- toggle-word-wrap
+  "Toggles between activating and deactivating word wrap for the
+current text-editor."
+  [{:keys [app] :as e}]
+  ;; The following implementation is actually sepcific for Swing.
+  (let [ui     (:ui @app)
+        tab    (current-editor-tab @ui)
+        tab-id (ui/attr tab :id)
+        scroll (ui/find tab :scroll)
+        panel  (ui/find scroll :panel)
+        editor (ui/find scroll :text-editor)]
+    (ui/update! ui [(ui/id= tab-id) :scroll]
+                #(if panel
+                   (-> % (ui/remove panel) (ui/add editor))
+                   (-> % (ui/remove editor)
+                       (ui/add [:panel {:border :none
+                                        :layout :border}
+                                editor]))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Next/previous center tab
@@ -465,6 +484,7 @@ inserting a fixed first parameter, which is the app."
 
               {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
               {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
+              {:category "View", :name "Word Wrap", :fn ::toggle-word-wrap}
               {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
               {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"})])
 
