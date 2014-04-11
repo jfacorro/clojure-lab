@@ -7,25 +7,14 @@
     - This has some deeper implications since all UI actions won't be executed in the UI thread but in the agent's.
     - Unless the ui/action macro is not part of the API but is used in the library internally.
 
-#### Events
-  - Create a :keymap attribute for components so that keymaps can be registered to them.
-
 #### Code Editor
-  - Move the following code editor features to their own plugin.
-    - Undo/redo (?)
-
   - Features:
     - Indent code.
-    - Find/replace (in an open file, in all files from the file explorer, in all files of a selected folder).
     - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
-    - Wrap text.
 
 #### Code Outline:
   - When going to line, position the line in the top (or middle) of the scroll.
     - Depends on the implementation of the editor's Go to line.
-
-#### REPL
-  - Use nrepl, not a process and its input/output streams.
 
 #### Paredit
   - Implement
@@ -79,6 +68,8 @@
   - Implement listen/ignore functions to add and remove event handlers from a component.
   - Close the channels that listen to components that don't exist anymore.
     - Not necessary since parked go block and their related channels are GC'ed if done right.
+  - Create a :keymap attribute for components so that keymaps can be registered to them.
+    - Implementation of this feature involved setting a keymap as an event handler to a :key event.
 
 #### Code Editor
   - Syntax high-lighting.
@@ -90,11 +81,15 @@
   - Mark corresponding delimiter.
   - Comment / Uncomment lines.
   - Go to line.
-  - Move the following code editor features to their own plugin. This could be done by adding a hook to an editor creation templates function.
+  - Move the following code editor features to their own plugin. This could be done by adding a hook to an editor
     - Syntax highlighting.
     - Delimiter matching.
+    - Undo/redo.
+    - Go to line.
   - Unify protocol Text (there's one in buffer and another in UI).
     - So that text operations are defined in a single protocol.
+  - Find/replace (in an open file, in all files from the file explorer, in all files of a selected folder). creation templates function.
+  - Wrap text.
 
 #### File Explorer
   - Load directories lazily
@@ -115,6 +110,7 @@
     - Possible solutions:
       1. Implement an event handlers map for each component and a listen! function for the UI.
       2. Remove the init in the templates function, so that it only returns the hiccup style vector AND instead of just proxying the add protocol functions, have the function in lab.ui.core call hiccup->component.  
+  - Use nrepl, not a process and its input/output streams.
 
 #### Rainbow parens
   - Implement.
