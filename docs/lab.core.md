@@ -2,7 +2,6 @@
 
 The application's core deals with [initialization](#init) and primarily with the following entities:
 
-- Itself (the App).
 - [Documents](#documents).
 - [Languages](#languages).
 - [Keymaps](#keymaps).
