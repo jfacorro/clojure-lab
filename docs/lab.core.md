@@ -8,12 +8,10 @@ The application's core deals with [initialization](#init) and primarily with the
 - [Keymaps](#keymaps).
 - [Plugins](#plugins).
 
-This document is just a fairly brief introduction of the main pieces of functionality on which the whole of *Clojure Lab* is built upon. For a more detailed explantation on how each of these works you should check their specific documents.
+This document is just a brief introduction of the main pieces of functionality on which the whole of *Clojure Lab* is built upon. For a more detailed explantation on how each of these work please refer to their specific documents.
 
 <a name="init"></a>
 ## Initialization
-
-> In the beginning there was nothing...
 
 There's really not that much happening from the core's point of view during initialization, only two main thing actually.
 
