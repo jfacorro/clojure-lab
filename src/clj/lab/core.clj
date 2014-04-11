@@ -33,15 +33,15 @@
 
                     ;Clojure plugins
                     lab.plugin.clojure-nrepl]
-   :lang-plugins  '{"Clojure" [lab.plugin.editor.syntax-highlighting
+   :lang-plugins  '{:clojure [lab.plugin.editor.syntax-highlighting
                                lab.plugin.editor.autocomplete
                                lab.plugin.editor.delimiter-matching
                                lab.plugin.editor.rainbow-delimiters
                                lab.plugin.editor.paredit]
-                    "Markdown" [lab.plugin.editor.syntax-highlighting]}
+                    :markdown [lab.plugin.editor.syntax-highlighting]}
    :plugins-dir   "plugins"
    :current-dir   "."
-   :default-lang  :plain-text})
+   :default-lang  (:id lang/plain-text)})
 
 (def default-app
   "Returns a new app with nothing initialized and a
@@ -50,7 +50,7 @@ default configuration."
    :config            default-config
    :documents         #{}
    :current-document  nil
-   :langs             {:plain-text lang/plain-text}
+   :langs             {(:id lang/plain-text) lang/plain-text}
    :keymap            nil})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -126,8 +126,8 @@ default configuration."
   "Loads the plugins associated with the language assigned
 to the doc."
   [app doc]
-  (let [lang-name (-> @doc doc/lang :name)]
-    (doseq [plugin ((config @app :lang-plugins) lang-name)]
+  (let [lang-id (-> @doc doc/lang :id)]
+    (doseq [plugin ((config @app :lang-plugins) lang-id)]
       (pl/load-plugin! app plugin))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

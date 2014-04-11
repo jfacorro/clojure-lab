@@ -3,7 +3,8 @@
   (:require [clojure.zip :as zip]
             [lab.core :as lab]
             [lab.core [plugin :as plugin]
-                      [lang :as lang]]
+                      [lang :as lang]
+                      [keymap :as km]]
             [lab.model.document :as doc]))
 
 (defn loc->def [loc]
@@ -56,11 +57,19 @@
   :net.cgrand.parsley/unexpected  {:color 0xFF1111 :italic true}})
 
 (defn- resolve-style
+  "Used by the syntax highlighting plugin. Takes a tag keyword 
+and returns the style defined for that tag. If no style exists 
+return the default style."
   [tag]
   (styles tag (:default styles)))
 
+(def ^:private keymap
+   (km/keymap ::markdown-lang
+              :lang :markdown))
+
 (def markdown
-  {:name     "Markdown"
+  {:id       :markdown
+   :name     "Markdown"
    :options  {:main      :expr*
               :root-tag  ::root
               :space :whitespace*
@@ -68,10 +77,11 @@
    :grammar  grammar
    :definitions defs
    :rank     (partial lang/file-extension? "md")
-   :styles   #'resolve-style})
+   :styles   #'resolve-style
+   :keymap   keymap})
 
 (defn init! [app]
-  (swap! app assoc-in [:langs :markdown] markdown))
+  (swap! app assoc-in [:langs (:id markdown)] markdown))
 
 (plugin/defplugin lab.plugin.markdown-lang
   :type  :global

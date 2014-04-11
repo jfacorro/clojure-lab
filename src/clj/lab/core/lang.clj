@@ -64,7 +64,8 @@ check if its one of the registered symbols."
 
 (def plain-text
   (map->Language
-    {:name     "Plain text"
+    {:id       :plan-text
+     :name     "Plain text"
      :options  {:main      :expr*
                 :root-tag  ::root
                 :make-node #'make-node}

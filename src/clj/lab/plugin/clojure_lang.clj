@@ -430,7 +430,8 @@ nodes in the first level."
 
 (def clojure
   (lang/map->Language
-    {:name      "Clojure"
+    {:id        :clojure
+     :name      "Clojure"
      :options   {:main      :expr*
                  :root-tag  ::root
                  :space :whitespace*
@@ -444,7 +445,7 @@ nodes in the first level."
      :autocomplete [#'symbols-in-scope-from-location]}))
 
 (defn init! [app]
-  (swap! app assoc-in [:langs :clojure] clojure))
+  (swap! app assoc-in [:langs (:id clojure)] clojure))
 
 (plugin/defplugin lab.plugin.clojure-lang
   :type :global
