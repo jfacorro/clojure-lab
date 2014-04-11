@@ -5,6 +5,8 @@
             [lab.core [plugin :as plugin]
                       [lang :as lang]
                       [keymap :as km]]
+            [lab.model.protocols :as model]
+            [lab.ui.core :as ui]
             [lab.model.document :as doc]))
 
 (defn loc->def [loc]
@@ -63,9 +65,24 @@ return the default style."
   [tag]
   (styles tag (:default styles)))
 
+(defn- wrap-in
+  "Wraps the current selection in the delim."
+  [delim {:keys [app source] :as e}]
+  (let [ui (:ui @app)
+        [s e] (ui/selection source)
+        txt   (model/substring source s e)]
+    (ui/action
+      (when (not= s e)
+        (model/delete source s e))
+      (model/insert source s (str delim txt delim))
+      (ui/caret-position source (dec (ui/caret-position source))))))
+
 (def ^:private keymap
    (km/keymap ::markdown-lang
-              :lang :markdown))
+              :lang :markdown
+              {:fn (partial #'wrap-in "`") :keystroke "ctrl k"}
+              {:fn (partial #'wrap-in "**") :keystroke "ctrl b"}
+              {:fn (partial #'wrap-in "*") :keystroke "ctrl i"}))
 
 (def markdown
   {:id       :markdown
