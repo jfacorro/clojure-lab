@@ -16,17 +16,22 @@
 
 (def default-config
   {:name          "Clojure Lab"
-   :core-plugins  '[lab.core.main
+   :core-plugins  '[lab.core.main]
+   :plugins       '[; Editor plugins
                     lab.plugin.editor.go-to
-                    lab.plugin.editor.undo-redo]
-   :plugins       '[lab.plugin.notifier
+                    lab.plugin.editor.undo-redo
+
+                    ; Main plugins 
+                    lab.plugin.notifier
                     lab.plugin.file-explorer
                     lab.plugin.find-replace
                     lab.plugin.code-outline
 
+                    ; Languages
                     lab.plugin.markdown-lang
                     lab.plugin.clojure-lang
 
+                    ;Clojure plugins
                     lab.plugin.clojure-nrepl]
    :lang-plugins  '{"Clojure" [lab.plugin.editor.syntax-highlighting
                                lab.plugin.editor.autocomplete
@@ -243,6 +248,7 @@ app's configuration map."
     ; Load configuration from the file specified.
     (swap! app load-config config-path)
     ; Load core and other plugins specified in the config.
-    (doseq [plugin-name (mapcat #(get-in @app [:config %]) [:core-plugins :plugins])]
+    (doseq [plugin-name (mapcat (partial config @app)
+                                [:core-plugins :plugins])]
       (pl/load-plugin! app plugin-name))
     app))
