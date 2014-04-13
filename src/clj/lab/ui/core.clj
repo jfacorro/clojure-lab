@@ -12,9 +12,10 @@ abstract specification (or explicitly through the use of `attr`).
 Example: the following code creates a 300x400 window with a \"Hello!\" button
          and shows it on the screen.
 
-  (-> [:window {:size [300 400]} [:button {:text \"Hello!\"}]]
-    init
-    show)"
+  (-> [:window {:size [300 400]
+                :visible true}
+       [:button {:text \"Hello!\"}]]
+    init)"
   (:refer-clojure :exclude [find remove])
   (:require [clojure.zip :as zip]
             [lab.util :as util]

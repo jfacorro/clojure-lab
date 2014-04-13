@@ -162,11 +162,14 @@ server process and pass it to handler."
         (loop [] (handler app conn (.readLine cout)))
         (catch Exception _)))))
 
+(declare console-output!)
+
 (defn- handle-nrepl-server-event
   "Takes the app, the connection and a line from the server process
 output. Based on the contents of the message, starts an nrepl client
 and updates the conn."
   [app {:keys [file id] :as conn} ^String event]
+  (console-output! app (str event "\n"))
   (cond
     (.contains event "nREPL server started on port")
       (try
@@ -178,17 +181,14 @@ and updates the conn."
                         (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
                                                     default-ns)))]
           (swap! app assoc-in [:connections id] conn)
-          (ui/action
-            (ui/update! (:ui @app)
-                        [:#nrepl :split :text-editor.output]
-                        model/append "nREPL client connected\n")))
+          (console-output! app "nREPL client connected\n"))
         (catch Exception ex
           (.printStackTrace ex)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; View
 
-(defn- close-tab-repl
+(defn- close-tab
   "Ask for confirmation before closing the REPL tab
 and killing the associated process."
   [{:keys [source app] :as e}]
@@ -210,6 +210,15 @@ and killing the associated process."
           (swap! app update-in [:connections] dissoc conn-id)
           (ui/update! ui (ui/parent id) ui/remove tab))))))
 
+(defn- console-output!
+  "Appends the output to the nREPL console."
+  [app output]
+  (ui/action
+    (ui/update! (:ui @app)
+                [:#nrepl :text-editor.output]
+                model/append
+                output)))
+
 (defn- console-eval-code!
   "Send the code provided to the nREPL server and prints
 the results in the output editor."
@@ -221,11 +230,7 @@ the results in the output editor."
       (doseq [{:keys [type val]} (-> (get-in @app [:connections conn-id])
                                      (eval-in-server code)
                                      response-output)]
-        (ui/action
-          (ui/update! ui
-                      [:#nrepl [:text-editor.output]]
-                      model/append 
-                      (if (= type :value) (str val "\n") val)))))))
+        (console-output! app (if (= type :value) (str val "\n") val))))))
 
 (defn- console-add-history!
   "Adds the code provided to the nREPL console command history."
@@ -271,7 +276,7 @@ input editor."
              {:keystroke "ctrl up" :fn ::console-prev-history!}
              {:keystroke "ctrl down" :fn ::console-next-history!}))
 
-(defn- repl-console
+(defn- console-view
   [conn-id]
   [:split {:stuff {:conn-id conn-id}
            :orientation :vertical
@@ -282,7 +287,7 @@ input editor."
    [:scroll [:text-editor {:class "input"
                            :listen [:key console-keymap]}]]])
 
-(defn- repl-tab
+(defn- tab-view
   "Create the tab that contains the repl and add it
 to the ui in the bottom section."
   [app {:keys [id name] :as conn}]
@@ -290,10 +295,10 @@ to the ui in the bottom section."
         styles  (:styles @app)
         title   (str "nREPL - " name)]
     (-> (tplts/tab "nrepl")
-        (ui/attr :stuff {:close-tab #'close-tab-repl
+        (ui/attr :stuff {:close-tab #'close-tab
                          :history (h/history)})
         (ui/update-attr :header ui/update :label ui/attr :text title)
-        (ui/add (repl-console id))
+        (ui/add (console-view id))
         (ui/apply-stylesheet styles))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -317,7 +322,7 @@ an nREPL client that connects to that server."
                     :server server
                     :file   file
                     :name   (-> file .getParent io/file .getName)}
-            tab    (-> (repl-tab app conn)
+            tab    (-> (tab-view app conn)
                        (ui/update :text-editor.output
                                   model/append "Starting nREPL server\n"))]
         (listen-nrepl-server-output! app conn handle-nrepl-server-event)
@@ -325,7 +330,7 @@ an nREPL client that connects to that server."
         (ui/action
           (ui/update! ui (ui/parent "bottom")
                          (fn [x]
-                           (-> (ui/update-attr x :divider-location-right #(or % 150))
+                           (-> (ui/update-attr x :divider-location-right #(or % 200))
                                (ui/update :#bottom ui/add tab)))))))))
 
 (defn- connect-to-server!
