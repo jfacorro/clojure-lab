@@ -34,7 +34,7 @@ In particular, the `lab.core.main` plugin creates a basic GUI structure, which i
 <a name="documents"></a>
 ## Documents
 
-Like in most IDEs, documents are the center of all activities when working with *Clojure Lab*. Document loading, modification, saving and closing, are all standard operations that are supported and implemented in the core. Keeping track of the documents that are currently opened, the one that's being used at the moment and switching between the opened documents, are the other sort of operations the core is concerned with.
+Like in most IDEs in  *Clojure Lab* work is centered around documents. Loading, modification, saving and closing, are all standard operations that are supported and implemented in the core. Keeping track of the documents that are currently opened, the one that's being used at the moment and switching between the opened documents, are the other sort of operations the core is concerned with.
 
 When opening a document, all existing languages are asked for a ranking number using a `rank` function that they should include in their implementation. The criteria currently in use is based solely on the file extension associated with each document.
 
