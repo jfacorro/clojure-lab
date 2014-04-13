@@ -117,8 +117,8 @@ symbols in *ns*."
 (def ^:private lein-cmd "lein")
 
 (def ^:private lein-path
-  (or (locate-file lein-cmd (System/getenv "path"))
-      (locate-file (str lein-cmd ".bat") (System/getenv "path"))))
+  (or (locate-file lein-cmd (System/getenv "PATH"))
+      (locate-file (str lein-cmd ".bat") (System/getenv "PATH"))))
 
 (def ^:private nrepl-server-cmd
   [lein-path "repl" ":headless"])
