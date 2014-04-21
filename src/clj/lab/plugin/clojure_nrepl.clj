@@ -59,11 +59,12 @@ symbols in *ns*."
   "Evaluates code by sending it to the server of this connection."
   [{:keys [client current-ns] :as conn} code]
 ;;  (prn current-ns code)
-  (repl/message client
-    (merge {:op   :eval
-            :code code}
-           (when current-ns
-             {:ns current-ns}))))
+  (when client
+    (repl/message client
+      (merge {:op   :eval
+              :code code}
+             (when current-ns
+               {:ns current-ns})))))
 
 (defn- response-values
   [responses]
@@ -90,7 +91,11 @@ symbols in *ns*."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; nREPL server & client
 
-(defn- locate-file [filename paths]
+(defn- locate-file
+  "Takes a filename and a string containing a concatenated
+list of directories, looks for the file in each dir and
+returns it if found."
+  [filename paths]
   (->> (split paths (re-pattern (File/pathSeparator)))
        (map #(as-> (str % (File/separator) filename) path
                    (when (.exists (io/file path)) path)))
@@ -108,10 +113,10 @@ symbols in *ns*."
         (-> parent nil? not)
           (recur parent)))))
 
-(defn- ensure-dir [file]
-  (let [file (io/file file)]
+(defn- ensure-dir [path]
+  (let [file (io/file path)]
     (if (.isDirectory file)
-      file
+      path
       (.getParent file))))
 
 (def ^:private lein-cmd "lein")
@@ -123,17 +128,23 @@ symbols in *ns*."
 (def ^:private nrepl-server-cmd
   [lein-path "repl" ":headless"])
 
+(def ^:private nrepl-server-cmd-trampoline
+  [lein-path "trampoline" "repl" ":headless"])
+
 (def ^:private default-port nil)
 
 (def ^:private default-host "127.0.0.1")
 
 (def ^:private default-ns "user")
 
-(defn- start-nrepl-server [path]
+(defn- start-nrepl-server [path & [trampoline?]]
   (when-not lein-path
     (throw (ex-info "No leiningen command found." {})))
   (let [dir  (io/file (ensure-dir path))
-        proc (popen nrepl-server-cmd :dir dir)]
+        proc (popen (if trampoline?
+                      nrepl-server-cmd-trampoline
+                      nrepl-server-cmd)
+                    :dir dir)]
     {:proc proc
      :cin  (stdin proc)
      :cout (stdout proc)}))
@@ -156,7 +167,7 @@ symbols in *ns*."
   "Listen for each line of output from the
 server process and pass it to handler."
   [app conn handler]
-  (let [cout  ^BufferedReader (get-in conn [:server :cout])]
+  (let [cout ^BufferedReader (get-in conn [:server :cout])]
     (future
       (try 
         (loop [] (handler app conn (.readLine cout)))
@@ -281,7 +292,7 @@ input editor."
   [:split {:stuff {:conn-id conn-id}
            :orientation :vertical
            :resize-weight 1
-           :divider-location-right 100}
+           :divider-location 100}
    [:scroll [:text-editor {:read-only true
                            :class "output"}]]
    [:scroll [:text-editor {:class "input"
@@ -304,34 +315,42 @@ to the ui in the bottom section."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Commands
 
-(defn- start-and-connect-to-server!
+(defn- start-and-connect!
+  [{:keys [app] :as e} ^File file & [project?]]
+  (let [ui     (:ui @app)
+        path   (.getCanonicalPath file)
+        conn-id(gensym "nREPL-")
+        conn   {:id     conn-id
+                :server (start-nrepl-server path project?)
+                :file   file
+                :name   (-> file .getParent io/file .getName)}
+        tab    (-> (tab-view app conn)
+                   (ui/update :text-editor.output
+                              model/append "Starting nREPL server\n"))]
+       (listen-nrepl-server-output! app conn handle-nrepl-server-event)
+       (swap! app assoc-in [:connections conn-id] conn)
+       (ui/action
+         (ui/update! ui (ui/parent "bottom")
+                     (fn [x]
+                       (-> (ui/update-attr x :divider-location-right #(or % 200))
+                           (ui/update :#bottom ui/add tab)))))))
+  
+  
+(defn- start-and-connect-to-repl!
+  [{:keys [app] :as e}]
+  (start-and-connect! e (io/file "/.")))
+
+(defn- start-and-connect-to-project!
   "Ask the user to select a project file and fire a 
 child process with a running nREPL server, then create
 an nREPL client that connects to that server."
-  [e]
-  (let [app           (:app e)
-        ui            (:ui @app)
+  [{:keys [app] :as e}]
+  (let [ui            (:ui @app)
         dir           (lab/config @app :current-dir)
-        file-dialog   (ui/init (tplts/open-file-dialog dir @(:ui @app)))
-        [result ^File file] (ui/attr file-dialog :result)]
+        file-dialog   (ui/init (tplts/open-file-dialog dir @ui))
+        [result file] (ui/attr file-dialog :result)]
     (when (= result :accept)
-      (let [path   (.getCanonicalPath file)
-            server (start-nrepl-server path)
-            conn-id(gensym "nREPL-")
-            conn   {:id     conn-id
-                    :server server
-                    :file   file
-                    :name   (-> file .getParent io/file .getName)}
-            tab    (-> (tab-view app conn)
-                       (ui/update :text-editor.output
-                                  model/append "Starting nREPL server\n"))]
-        (listen-nrepl-server-output! app conn handle-nrepl-server-event)
-        (swap! app assoc-in [:connections conn-id] conn)
-        (ui/action
-          (ui/update! ui (ui/parent "bottom")
-                         (fn [x]
-                           (-> (ui/update-attr x :divider-location-right #(or % 200))
-                               (ui/update :#bottom ui/add tab)))))))))
+      (start-and-connect! e file true))))
 
 (defn- connect-to-server!
   [e]
@@ -385,7 +404,9 @@ an nREPL client that connects to that server."
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
               :global
-              {:category "Clojure > nREPL" :name "Start and Connect" :fn ::start-and-connect-to-server! :keystroke "ctrl r"}
+              {:category "Clojure > nREPL" :name "Start and Connect to Project" :fn ::start-and-connect-to-project! :keystroke "ctrl r"}
+              {:category "Clojure > nREPL" :name "Start and Connect to REPL" :fn ::start-and-connect-to-repl! :keystroke "ctrl alt r"}
+
               {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
    (km/keymap (ns-name *ns*)
               :lang :clojure
