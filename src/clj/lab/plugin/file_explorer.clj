@@ -71,7 +71,7 @@ directories are returned. Otherwise the file-seq for the
 (defn- search-file
   "Checks the search text in the field and finds the 
 files for which any part of its full path matches the
-search string. Finally it removes all the previos items
+search string. Finally it removes all the previous items
 and adds new found ones."
   [e]
   (let [field  (:source e)
