@@ -350,6 +350,10 @@ loc->def functions specified in the language."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Delimiters matching
 
+(def ignore? #{:net.cgrand.parsley/unfinished
+               :net.cgrand.parsley/unexpected
+               :string :comment :char :regex})
+
 (def ^:private delimiter? (set "()[]{}"))
 
 (def ^:private closing? (set ")]}"))
@@ -375,8 +379,9 @@ and returns the offset of its matching delimiter."
                              (map (juxt identity (partial lang/location root)))
                              (filter (comp delimiter? char-at))
                              first)
+        tag         (lang/location-tag loc)
         delim       (when offset (char-at [offset [loc pos]]))]
-    (when delim
+    (when (and (not (ignore? tag)) delim)
       [offset (find-matching-delimiter loc (closing? delim))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
