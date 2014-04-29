@@ -12,6 +12,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Util
 
+(defn- editor-info
+  "Takes a key event and returns a map with the computed
+information necessary for most paredit commands."
+  [{:keys [source char] :as e}]
+  (let [tree (lang/code-zip (lang/parse-tree @(ui/attr source :doc)))
+        pos  (ui/caret-position source)]
+    {:editor   source
+     :pos      pos
+     :ch       char
+     :doc      (ui/attr source :doc)
+     :tree     tree
+     :location (lang/location tree pos)}))
+
 (defn- list-parent
   "Returns the first location that contains a parent :list node
 or nil if there's not parent list."
@@ -42,6 +55,8 @@ string node."
 
 (def delimiters {\( \), \[ \], \{ \}, \" \"})
 
+(def delimiter? (reduce into #{} {\( \), \[ \], \{ \}, \" \"}))
+
 (def ignore? #{:net.cgrand.parsley/unfinished
                :net.cgrand.parsley/unexpected
                :string :comment :char :regex})
@@ -54,19 +69,17 @@ string node."
 (foo \"bar |baz\" quux)
 (foo \"bar |(baz\" quux)"
   [e]
-  (let [editor    (:source e)
-        opening   (:char e)
-        closing   (delimiters opening)
-        offset    (ui/caret-position editor)
-        root-loc  (-> @(ui/attr editor :doc) lang/parse-tree lang/code-zip)
-        [loc pos] (lang/location root-loc offset)
-        tag       (lang/location-tag loc)
-        s         (str opening
-                       (when-not (and (ignore? tag) (not= pos offset))
-                         closing))]
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
+        closing  (delimiters ch)
+        tag      (lang/location-tag loc)
+        s        (str ch
+                      (when-not (and (ignore? tag) (not= i pos))
+                        closing))]
     (ui/action
-      (model/insert editor offset s)
-      (ui/caret-position editor (inc offset)))))
+      (model/insert editor pos s)
+      (ui/caret-position editor (inc pos)))))
 
 (defn close-delimiter
   "Moves the caret to the closest closing delimiter
@@ -78,13 +91,10 @@ and the closing delimiter.
 ; Hello,| world!
 ; Hello,)| world!"
   [e]
-  (let [editor (:source e)
-        pos    (ui/caret-position editor)
-        ch     (:char e)
-        doc    (ui/attr editor :doc)
-        tree   (lang/code-zip (lang/parse-tree @doc))
-        [loc i](lang/location tree pos)
-        tag    (lang/location-tag loc)]
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
+        tag      (lang/location-tag loc)]
     (if (and (ignore? tag) (not= \" ch))
       (ui/action (model/insert editor pos (str ch)))
       (let [parent  (or (delim-parent loc)
@@ -101,7 +111,10 @@ and the closing delimiter.
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
 
-(defn- location-index [loc]
+
+(defn- location-index
+  "Returns the index of the location in the parent's children vector"
+  [loc]
   (loop [loc loc
          i 0]
     (if-not loc
@@ -111,6 +124,8 @@ and the closing delimiter.
                (inc i) i)))))
 
 (defn- indentation
+  "Figures out the indentation for loc based on its parent
+and the position relative to the sibilings."
   [editor ploc loc]
   (let [s     (model/text editor)
         tag   (lang/location-tag ploc)
@@ -126,11 +141,9 @@ and the closing delimiter.
       [(:or :vector :set :map) _] (inc (- delim start)))))
 
 (defn- format-code [e]
-  (let [editor  (:source e)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        pos     (ui/caret-position editor)
-        [loc i] (lang/location tree pos)
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
         delim?  (and (lang/loc-string? loc) (-> loc zip/left nil? not))
         loc     (if delim? loc (zip/up loc))
         loc     (if (lang/whitespace? loc)
@@ -155,11 +168,11 @@ and the closing delimiter.
 (defn insert-newline
   "Inserts a newline and formats the following lines.
 
-(let ((n frobbotz)) | (display (+ n 1)
-  port))
-(let ((n frobbotz))
-  |(display (+ n 1)
-            port))"
+  (let ((n frobbotz)) | (display (+ n 1)
+    port))
+  (let ((n frobbotz))
+    |(display (+ n 1)
+              port))"
   [e]
   (let [editor  (:source e)]
     (ui/action
@@ -169,11 +182,12 @@ and the closing delimiter.
 (defn close-delimiter-and-newline
   "Closes a delimiter and inserts a newline.
 
-(defun f (x|  ))
-(defun f (x)
-  |)
-; (Foo.|
-; (Foo.)|"
+  (defun f (x|  ))
+  (defun f (x)
+    |)
+
+  ; (Foo.|
+  ; (Foo.)|"
   [e]
   (close-delimiter e)
   (insert-newline e))
@@ -182,14 +196,97 @@ and the closing delimiter.
   (prn ::comment-dwin))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Deleting and killing
+
+(defn- delete-pos
+  "Deletes the character at pos from the contents of the
+  editor, taking into account if the character is a delimiter 
+  or not and the direction the caret should move if it is."
+  [editor pos [loc i] dir]
+  (let [txt (model/text editor)
+        len (model/length editor)
+        ch  (get txt pos)
+        ploc(zip/up loc)]
+    (when (<= 0 pos (dec len))
+      (cond
+        (not (delimiter? ch))
+          (model/delete editor pos (inc pos))
+        (and (not= \" ch)
+             (delimiter? ch)
+             (-> ploc zip/children count (<= 2)))
+          (let [start (lang/offset ploc)
+                len   (lang/location-length ploc)]
+           (model/delete editor start (+ start len)))
+        (and (= \" ch)
+             (lang/loc-string? loc)
+             (= 2 (lang/location-length loc)))
+          (let [len (lang/location-length loc)]
+           (model/delete editor i (+ i len)))
+        :else
+          (ui/caret-position editor (dir pos))))))
+
+(defn- delete-selection
+  "Deletes the selection of characters but not the delimiters."
+  [editor start end]
+  (let [txt (model/text editor)
+        sel (subs txt start end)]
+    (model/delete editor start end)
+    (model/insert editor start (->> sel (remove (comp not delimiter?)) (apply str)))))
+
+(defn- forward-delete  
+  "(quu|x \"zot\")
+  (quu| \"zot\")
+
+  (quux |\"zot\")
+  (quux \"|zot\")
+  (quux \"|ot\")
+
+  (foo (|) bar)
+  (foo | bar)
+
+  |(foo bar)
+  (|foo bar)"
+  [e]
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [s e]    (ui/selection editor)]
+    (if (= s e)
+      (delete-pos editor pos location inc)
+      (delete-selection editor s e))))
+
+(defn- backward-delete
+  "(\"zot\" q|uux)
+  (\"zot\" |uux)
+
+  (\"zot\"| quux)
+  (\"zot|\" quux)
+  (\"zo|\" quux)
+
+  (foo (|) bar)
+  (foo | bar)
+
+  (foo bar)|
+  (foo bar|)"
+  [e]
+  (let [{:keys [editor ch tree pos]}
+                 (editor-info e)
+        location (lang/location tree (dec pos)) ;; get the location for the prev position
+        [s e]    (ui/selection editor)]
+    (if (= s e)
+      (delete-pos editor (dec pos) location identity)
+      (delete-selection editor s e))))
+
+(defn- kill [e])
+(defn- forward-kill-word [e])
+(defn- backward-kill-word [e])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement & Navigation
 
 (defn- move [e movement]
-  (let [editor  (:source e)
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
         nxt     (movement loc)
         pos     (when nxt (lang/offset nxt))]
   (when pos
@@ -225,7 +322,7 @@ form or the start of the next one.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Depth-Changing Commands
 
-(defn wrap-around
+(defn- wrap-around
   "Looks for the location under the current caret position,
 finds the leftmost sibling in order to get the offset of the
 current form and add a closing and opening parentheses around
@@ -234,11 +331,9 @@ it.
 (foo |bar baz)
 (foo (|bar) baz)"
   [e]
-  (let [editor  (:source e)
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)]
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location]
     (when loc
       (let [parent  (zip/up loc)
             left    (-> loc zip/leftmost)
@@ -259,11 +354,9 @@ f is a function that takes the editor, the limits for the location and
 the limits for the parent list, returning the string that will replace
 the parent's list text."
   [e f]
-  (let [editor  (:source e)
-        pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
         tag     (lang/location-tag loc)
         [loc parent]
                 (if (= :list tag)
@@ -326,11 +419,10 @@ parentheses by deleting and inserting the modified substring.
 ;; Barfage & Slurpage
 
 (defn- slurp-sexp
-  [editor dir dirmost f]
-  (let [pos     (ui/caret-position editor)
-        doc     (ui/attr editor :doc)
-        tree    (lang/code-zip (lang/parse-tree @doc))
-        [loc i] (lang/location tree pos)
+  [e dir dirmost f]
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
         [parent next-loc]
                 (loop [parent   (delim-parent loc)
                        next-loc (adjacent parent dir)]
@@ -352,7 +444,7 @@ parentheses by deleting and inserting the modified substring.
 (a b ((c| d) e) f)
 (a b ((c| d e)) f)"
   [e]
-  (slurp-sexp (:source e) zip/right zip/rightmost
+  (slurp-sexp e zip/right zip/rightmost
               (fn [editor pos [pstart pend] [start end] delim]
                 (model/delete editor (dec pend) pend)
                 (model/insert editor (dec end) delim)
@@ -365,18 +457,17 @@ parentheses by deleting and inserting the modified substring.
 (a b ((c| d)) e f)
 (a (b (c| d) e) f)"
   [e]
-  (slurp-sexp (:source e) zip/left zip/leftmost
+  (slurp-sexp e zip/left zip/leftmost
               (fn [editor pos [pstart pend] [start end] delim]
                 (model/delete editor pstart (inc pstart))
                 (model/insert editor start delim)
                 (ui/caret-position editor pos))))
 
 (defn barf-sexp
-  [editor dir dirmost f]
-  (let [pos      (ui/caret-position editor)
-        doc      (ui/attr editor :doc)
-        tree     (lang/code-zip (lang/parse-tree @doc))
-        [loc i]  (lang/location tree pos)
+  [e dir dirmost f]
+  (let [{:keys [editor ch tree pos location]}
+                 (editor-info e)
+        [loc i]  location
         parent   (delim-parent loc)
         next-loc (when parent
                    (-> parent zip/down dirmost
@@ -392,7 +483,7 @@ parentheses by deleting and inserting the modified substring.
   "(foo (bar |baz quux) zot)
 (foo (bar |baz) quux zot)"
   [e]
-  (barf-sexp (:source e) zip/left zip/rightmost
+  (barf-sexp e zip/left zip/rightmost
              (fn [editor pos [pstart pend] [start end] delim]
                (when (<= pos end)
                  (model/delete editor (dec pend) pend)
@@ -403,7 +494,7 @@ parentheses by deleting and inserting the modified substring.
   "(foo (bar baz |quux) zot)
 (foo bar (baz |quux) zot)"
   [e]
-  (barf-sexp (:source e) zip/right zip/leftmost
+  (barf-sexp e zip/right zip/leftmost
              (fn [editor pos [pstart pend] [start end] delim]
                (when (>= pos (dec start))
                  (model/delete editor pstart (inc pstart))
@@ -430,6 +521,12 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::close-delimiter :keystroke "alt \"" :name "Close double quotes"}
     {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
     {:fn ::insert-newline :keystroke "ctrl j" :name "Newline"}
+    ;; Deleting and killing
+    {:fn ::forward-delete :keystroke "delete" :name "Delete forward"}
+    {:fn ::backward-delete :keystroke "back_space" :name "Delete backward"}
+    {:fn ::kill :keystroke "ctrl k" :name "Kill"}
+    {:fn ::forward-kill-word :keystroke "alt d" :name "Forward kill word"}
+    {:fn ::backward-kill-word :keystroke "alt backspace" :name "Backward kill word"}
     ;; Movement & Navigation
     {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
     {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}

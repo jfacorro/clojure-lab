@@ -23,10 +23,9 @@
       - paredit-comment-dwim M-;
       - paredit-newline C-j
     - Deleting and killing
-      - paredit-forward-delete C-d, delete
-      - paredit-backward-delete backsapce
       - paredit-kill C-k
       - paredit-forward-kill-word M-d
+      - paredit-backward-kill-word M-backspace
     - Miscellaneous Commands
       - paredit-split-sexp M-S
       - paredit-join-sexp M-J
@@ -128,6 +127,9 @@
       - paredit-close-curly }
       - paredit-close-round-and-newline M-)
       - paredit-meta-doublequote M-"
+    - Deleting and killing
+      - paredit-forward-delete delete
+      - paredit-backward-delete backspace
     - Movement & Navigation
       - paredit-forward C-M-f
       - paredit-backward C-M-b
