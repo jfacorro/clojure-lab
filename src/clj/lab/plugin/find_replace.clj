@@ -128,8 +128,8 @@
       (ui/action (ui/caret-position (current-text-editor @ui) position)))))
 
 (defn- line-at [s pos]
-  (let [start (find-char s pos #{\newline} -1)
-        end   (find-char s pos #{\newline} 1)]
+  (let [start (find-char s pos #{\newline} dec)
+        end   (find-char s pos #{\newline} inc)]
     (subs s (if start start 0) (if end end (count s)))))
 
 (defn- search-results-node [file txt [start end]]

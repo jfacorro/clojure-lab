@@ -132,7 +132,7 @@ and the position relative to the sibilings."
         delim (lang/offset ploc)
         snd-loc (-> ploc zip/down (adjacent zip/right) (adjacent zip/right))
         snd   (lang/offset snd-loc)
-        start (inc (or (find-char s delim #{\newline} -1) 0))
+        start (inc (or (find-char s delim #{\newline} dec) 0))
         index (location-index loc)]
     (match [tag index]
       [(:or :list :fn) 1] (inc (- delim start))
@@ -203,13 +203,16 @@ and the position relative to the sibilings."
   editor, taking into account if the character is a delimiter 
   or not and the direction the caret should move if it is."
   [editor pos [loc i] dir]
-  (let [txt (model/text editor)
-        len (model/length editor)
-        ch  (get txt pos)
-        ploc(zip/up loc)]
+  (let [txt  (model/text editor)
+        len  (model/length editor)
+        ch   (get txt pos)
+        ploc (zip/up loc)
+        tag  (lang/location-tag loc)
+        llen (lang/location-length loc)]
     (when (<= 0 pos (dec len))
       (cond
-        (not (delimiter? ch))
+        (or (not (delimiter? ch))
+            (and (ignore? tag) (< i pos (+ i llen))))
           (model/delete editor pos (inc pos))
         (and (not= \" ch)
              (delimiter? ch)
@@ -220,8 +223,7 @@ and the position relative to the sibilings."
         (and (= \" ch)
              (lang/loc-string? loc)
              (= 2 (lang/location-length loc)))
-          (let [len (lang/location-length loc)]
-           (model/delete editor i (+ i len)))
+          (model/delete editor i (+ i llen))
         :else
           (ui/caret-position editor (dir pos))))))
 
@@ -276,7 +278,36 @@ and the position relative to the sibilings."
       (delete-pos editor (dec pos) location identity)
       (delete-selection editor s e))))
 
-(defn- kill [e])
+(defn- kill
+  "(foo bar)|     ; Useless comment!
+  (foo bar)|
+
+  (|foo bar)     ; Useful comment!
+  (|)     ; Useful comment!
+
+  |(foo bar)     ; Useless line!
+  |
+  (foo \"|bar baz\"
+       quux)
+  (foo \"|\"
+       quux)"
+  [e]
+  (let [{:keys [editor ch tree pos location]}
+                (editor-info e)
+        [loc i] location
+        ploc    (delim-parent loc)
+        tag     (lang/location-tag loc)]
+    (cond
+      ploc
+        (model/delete editor pos pos)
+      (= :string tag)
+        (model/delete editor
+                      (inc i)
+                      (+ i (dec (lang/location-length loc))))
+      :else
+        (when-let [end (find-char (model/text editor) pos #{\newline} inc)]
+          (model/delete editor pos end)))))
+
 (defn- forward-kill-word [e])
 (defn- backward-kill-word [e])
 
@@ -360,16 +391,20 @@ the parent's list text."
         tag     (lang/location-tag loc)
         [loc parent]
                 (if (= :list tag)
-                  [(-> loc list-parent) (-> loc list-parent zip/up list-parent)]
-                  [(zip/up loc) (-> loc list-parent)])]
-    (when (and parent (not (lang/whitespace? loc)))
+                  [(-> loc delim-parent) (-> loc delim-parent zip/up delim-parent)]
+                  [(zip/up loc) (-> loc delim-parent)])]
+    (when (and parent
+               #_(not (lang/whitespace? loc)) ; commented out so it doesn't matter where 
+                                              ; inside a form you are when splicing.
+               )
       (ui/action
+        ; TODO: take into account delimiters like #{ or #(
         (let [[start end]   (lang/limits loc)
               [pstart pend] (lang/limits parent)
               s             (f editor [start end] [pstart pend])]
           (model/delete editor pstart pend)
           (model/insert editor pstart s)
-          (ui/caret-position editor pstart))))))
+          (ui/caret-position editor (dec pos)))))))
 
 (defn splice-sexp
   "Looks for the location under the current caret position,

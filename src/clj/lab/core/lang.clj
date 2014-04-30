@@ -96,15 +96,6 @@ parse tree with the modified nodes marked with node group-id."
   [loc]
   (-> loc zip/up zip/node))
 
-(defn location-tag
-  "Returns the tag for the location if any."
-  [loc]
-  (loop [loc loc]
-    (when loc
-      (if-not (map? (zip/node loc))
-        (recur (zip/up loc))
-        (:tag (zip/node loc))))))
-
 (defn code-zip
   "Builds a zipper using the root node in the document
 under the :parse-tree key."
@@ -121,11 +112,39 @@ under the :parse-tree key."
         :else
           (:length node)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Location Helpers
+
+(defn location-tag
+  "Returns the tag for the location if any."
+  [loc]
+  (loop [loc loc]
+    (when loc
+      (if-not (map? (zip/node loc))
+        (recur (zip/up loc))
+        (:tag (zip/node loc))))))
+
 (defn location-length
+  "Returns the length of the node tree for loc."
   [loc]
   (if loc
     (-> loc zip/node node-length)
     0))
+
+(defn loc-string?
+  "Returns true if the zipper location
+contains a string and false otherwise."
+  [loc]
+  (and loc (-> loc zip/node string?)))
+
+(defn select-location
+  "Returns the first location that satisifes the predicate
+  moving in the direction specified. If no match is found
+  returns nil."
+  [loc dir p]
+  (if (or (nil? loc) (p loc))
+    loc
+    (recur (dir loc) dir p)))
 
 (defn offset
   "Finds the offset of the given zipper location
@@ -182,18 +201,19 @@ false otherwise."
   [loc]
   (and loc (-> loc location-tag #{:whitespace} boolean)))
 
-(defn loc-string?
-  "Returns true if the zipper location
-contains a string and false otherwise."
-  [loc]
-  (and loc (-> loc zip/node string?)))
-
-(defn select-location [loc dir p]
-  (if (or (nil? loc) (p loc))
-    loc
-    (recur (dir loc) dir p)))
-
 (def ^:private ignore? #{:whitespace})
+
+(defn search
+  "Takes a location and a predicate, iterating depth first
+  through all nodes. Returning a list of locations that
+  satisfy the predicate."
+  [loc pred]
+  (loop [loc loc
+         res []]
+    (if (zip/end? loc)
+      res
+      (recur (zip/next loc)
+             (if (pred loc) (conj res loc) res)))))
 
 (defn- next-no-down
   "Finds the next zipper location that's not a children.
@@ -213,13 +233,8 @@ Source code taken from clojure.zip/next function."
                (recur (zip/up p)))
            [(zip/node p) :end])))))
 
-(defn search [loc p]
-  (loop [loc loc
-         res []]
-    (if (zip/end? loc)
-      res
-      (recur (zip/next loc)
-             (if (p loc) (conj res loc) res)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Token search
 
 (defn- tokens*
   "Gets the limits for each string in the tree, ignoring
