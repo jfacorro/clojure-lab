@@ -299,7 +299,10 @@ and the position relative to the sibilings."
         tag     (lang/location-tag loc)]
     (cond
       ploc
-        (model/delete editor pos pos)
+        (let [fst   (zip/down ploc)
+              start (lang/offset (zip/right fst))
+              end   (-> fst zip/rightmost lang/offset)]
+          (model/delete editor start end))
       (= :string tag)
         (model/delete editor
                       (inc i)
@@ -308,8 +311,63 @@ and the position relative to the sibilings."
         (when-let [end (find-char (model/text editor) pos #{\newline} inc)]
           (model/delete editor pos end)))))
 
-(defn- forward-kill-word [e])
-(defn- backward-kill-word [e])
+(def ^:private word?
+  (comp (partial re-find #"[A-Za-z_0-9¡!$%&*+\-\./<=>¿?]")
+        str))
+
+(def ^:private space? #{\space})
+
+(defn- kill-word
+  [e dir]
+  (let [{:keys [editor ch tree pos location]}
+               (editor-info e)
+        txt    (model/text editor)
+        start  (find-char txt pos word? dir)
+        end    (when start (find-char txt (dir start) (comp not word?) dir))]
+    (when-let [[start end] (and start end
+                                (map #(if (= dir dec) (inc %) %)         ; if backwards then increment limits.
+                                     [(min start end) (max start end)]))]
+      (model/delete editor (or (when (and (not= dir dec)
+                                          (space? (get txt (dec start))))
+                                 (inc (find-char txt (dec start) (comp not space?) dec)))
+                               start)
+                           (or (when (and (= dir dec)
+                                          (space? (get txt end)))
+                                 (find-char txt end (comp not space?) inc))
+                               end)))))
+
+(defn- forward-kill-word
+  "|(foo bar)    ; baz
+  (| bar)    ; baz
+  (|)    ; baz
+  ()    ;|
+
+  ;;;| Frobnicate
+  (defun frobnicate ...)
+  ;;;|
+  (defun frobnicate ...)
+  ;;;
+  (| frobnicate ...)"
+  [e]
+  (kill-word e inc))
+
+(defn- backward-kill-word
+  "(foo bar)    ; baz
+  (quux)|
+
+  (foo bar)    ; baz
+  (|)
+
+  (foo bar)    ; |
+  ()
+
+  (foo |)    ; 
+  ()
+
+  (|)    ; 
+  ()"
+  [e]
+  (kill-word e dec))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement & Navigation
@@ -561,7 +619,7 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::backward-delete :keystroke "back_space" :name "Delete backward"}
     {:fn ::kill :keystroke "ctrl k" :name "Kill"}
     {:fn ::forward-kill-word :keystroke "alt d" :name "Forward kill word"}
-    {:fn ::backward-kill-word :keystroke "alt backspace" :name "Backward kill word"}
+    {:fn ::backward-kill-word :keystroke "alt back_space" :name "Backward kill word"}
     ;; Movement & Navigation
     {:fn ::backward :keystroke "ctrl alt b" :name "Backward"}
     {:fn ::forward :keystroke "ctrl alt f" :name "Forward"}
