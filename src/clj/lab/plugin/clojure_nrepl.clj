@@ -160,8 +160,9 @@ returns it if found."
                       (and port-file (read-string (slurp port-file)))
                       default-port)
         host      (or host default-host)]
-  (when port
-    (repl/client (repl/connect :host host :port port) 1000))))
+  (when-let [connection (and port (repl/connect :host host :port port))]
+    {:connection connection
+     :client     (repl/client connection Long/MAX_VALUE)})))
 
 (defn- listen-nrepl-server-output!
   "Listen for each line of output from the
@@ -184,13 +185,13 @@ and updates the conn."
   (cond
     (.contains event "nREPL server started on port")
       (try
-        (let [path    (.getCanonicalPath ^File file)
-              port    (second (re-find #"port (\d+) " event))
-              host    (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
-              client  (start-nrepl-client path :port port :host host)
-              conn    (as-> (assoc conn :client client) conn
-                        (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
-                                                    default-ns)))]
+        (let [path        (.getCanonicalPath ^File file)
+              port        (second (re-find #"port (\d+) " event))
+              host        (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
+              client-info (start-nrepl-client path :port port :host host)
+              conn        (as-> (merge conn client-info) conn
+                            (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
+                                                        default-ns)))]
           (swap! app assoc-in [:connections id] conn)
           (console-output! app "nREPL client connected\n"))
         (catch Exception ex

@@ -20,7 +20,7 @@
                        :comment :meta :fn  :deref :char
                        :quote :syntax-quote :unquote :unquote-splice
                        :reader-var :reader-discard}
-              :symbol #"(?<!0x|0|0x[A-Fa-f\d]{42})[a-zA-Z!$%&*+\-\./<=>?_][a-zA-Z0-9!$%&*+\-\./:<=>?_#]*"
+              :symbol #"(?<!0x|0|0x[A-Fa-f\d]{42})[a-zA-Z¡!$%&*+\-\./<=>¿?_][a-zA-Z0-9¡!$%&*+\-\./:<=>¿?_#]*"
               :keyword #"::?#?[\w-_*+\?/\.!>]+"
               :whitespace #"[ \t\r\n,]+"
 
