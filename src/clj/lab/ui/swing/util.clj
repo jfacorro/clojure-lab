@@ -270,6 +270,16 @@ with Color instances."
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Border
 
+(defn- top-left-bottom-right [x]
+  (if-let [n (and (sequential? x) (count x))]
+    (let [[a b c d]  x]
+      (case (int n)
+        1 [a a a a]
+        2 [a b a b]
+        3 [a b a c]
+        4 [a b c d]))
+    [x x x x]))
+
 (defn border 
   "Takes a style of border and additional arguments according
   to the style:
@@ -283,7 +293,8 @@ with Color instances."
     :none
       (BorderFactory/createEmptyBorder)
     :line
-      (BorderFactory/createLineBorder (color (or x 0)) (or y 1))
+      (let [[top left bottom right] (top-left-bottom-right (or y 1))]
+        (BorderFactory/createMatteBorder top left bottom right (color (or x 0))))
     :titled
       (BorderFactory/createTitledBorder ^String x)))
 
@@ -304,14 +315,7 @@ can be a single value or a collection specifying:
  [top-bottom left right]
  [top left bottom right]"
   [x]
-  (let [[top left bottom right] (if-let [n (and (sequential? x) (count x))]
-                                  (let [[a b c d]  x]
-                                    (case (int n)
-                                      1 [a a a a]
-                                      2 [a b a b]
-                                      3 [a b a c]
-                                      4 [a b c d]))
-                                  [x x x x])]
+  (let [[top left bottom right] (top-left-bottom-right x)]
     (BorderFactory/createEmptyBorder top left bottom right)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;

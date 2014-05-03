@@ -19,13 +19,8 @@
 #### Paredit
   - Implement
     - Basic Insertion Commands
-      - paredit-backslash \
       - paredit-comment-dwim M-;
       - paredit-newline C-j
-    - Deleting and killing
-      - paredit-kill C-k
-      - paredit-forward-kill-word M-d
-      - paredit-backward-kill-word M-backspace
     - Miscellaneous Commands
       - paredit-split-sexp M-S
       - paredit-join-sexp M-J
@@ -130,6 +125,9 @@
     - Deleting and killing
       - paredit-forward-delete delete
       - paredit-backward-delete backspace
+      - paredit-kill C-k
+      - paredit-forward-kill-word M-d
+      - paredit-backward-kill-word M-backspace
     - Movement & Navigation
       - paredit-forward C-M-f
       - paredit-backward C-M-b
