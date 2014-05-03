@@ -42,7 +42,7 @@
               :number #"(0x[\dA-Fa-f]+|\d(?!x)\d*\.?\d*[MN]?)"
               :reader-var ["#'" :symbol]
               :reader-discard ["#_" :expr]
-              :comment #"(#!|;).*[\n\r]*"
+              :comment #"(#!|;).*[\n\r]"
               :deref ["@" :expr]])
 
 (def styles-mapping
