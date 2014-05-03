@@ -1,5 +1,5 @@
 (ns lab.ui.swing.tab
-  (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map listen]])
+  (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map listen ignore]])
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util])
@@ -118,3 +118,7 @@
   [c evt f]
   (let [listener (util/create-listener c evt f)]
       (.addChangeListener ^JTabbedPane (impl c) listener)))
+
+(defmethod ignore [:tabs :change]
+  [c _ listener]
+  (.removeChangeListener ^JTabbedPane (impl c) listener))

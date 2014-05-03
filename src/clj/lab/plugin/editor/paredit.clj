@@ -55,7 +55,7 @@ string node."
 
 (def delimiters {\( \), \[ \], \{ \}, \" \"})
 
-(def delimiter? (reduce into #{} {\( \), \[ \], \{ \}, \" \"}))
+(def delimiter? (reduce into #{} delimiters))
 
 (def ignore? #{:net.cgrand.parsley/unfinished
                :net.cgrand.parsley/unexpected
@@ -77,9 +77,8 @@ string node."
         s        (str ch
                       (when-not (and (ignore? tag) (not= i pos))
                         closing))]
-    (ui/action
-      (model/insert editor pos s)
-      (ui/caret-position editor (inc pos)))))
+    (model/insert editor pos s)
+    (ui/caret-position editor (inc pos))))
 
 (defn close-delimiter
   "Moves the caret to the closest closing delimiter

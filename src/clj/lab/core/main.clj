@@ -444,7 +444,7 @@ inserting a fixed first parameter, which is the app."
    :split       {:divider-size 3
                  :background 0x666666
                  :divider-background 0x999999}
-   :tabs        {:selected-tab-style   {:border [:line 0x00FFFF [0 0 3 0]]}
+   :tabs        {:selected-tab-style   {:border [:line 0x00FFFF [0 0 2 0]]}
                  :unselected-tab-style {:border :none}}})
 
 (defn app-view [title]
