@@ -20,10 +20,6 @@
   - Implement
     - Basic Insertion Commands
       - paredit-comment-dwim M-;
-      - paredit-newline C-j
-    - Miscellaneous Commands
-      - paredit-split-sexp M-S
-      - paredit-join-sexp M-J
 
 #### Menu
   - Define a way to specify the order of the menu items.
@@ -122,6 +118,7 @@
       - paredit-close-curly }
       - paredit-close-round-and-newline M-)
       - paredit-meta-doublequote M-"
+      - paredit-newline C-j
     - Deleting and killing
       - paredit-forward-delete delete
       - paredit-backward-delete backspace
