@@ -33,12 +33,15 @@ or nil if there's not parent list."
                    #(or (nil? %)
                         (= :list (-> % zip/node :tag)))))
 
+(defn- delim-location? [loc]
+  (#{:list :vector :map :set :fn} (-> loc zip/node :tag)))
+
 (defn- delim-parent
   "Returns the first location that contains a parent :list node."
   [loc]
   (lang/select-location (zip/up loc) zip/up
                    #(or (nil? %)
-                        (#{:list :vector :map :set :fn} (-> % zip/node :tag)))))
+                        (delim-location? %))))
 
 (defn- adjacent
   "Returns the first sibling location in the direction
@@ -50,16 +53,41 @@ string node."
     #(not (or (lang/whitespace? %)
               (lang/loc-string? %)))))
 
+;; Predicates
+
+(def ^:private delimiters {\( \), \[ \], \{ \}, \" \"})
+
+(def ^:private delimiter? (reduce into #{} delimiters))
+
+(def ^:private ignore? #{:net.cgrand.parsley/unfinished
+               :net.cgrand.parsley/unexpected
+               :string :comment :char :regex})
+
+(def ^:private word?
+  (comp (partial re-find #"[A-Za-z_0-9¡!$%&*+\-\./<=>¿?]")
+        str))
+
+(def ^:private space? #{\space})
+
+(defn- beginning-of-line
+  "Finds the index of the beginning of the line in pos."
+  [txt pos]
+  (let [bol  (find-char txt pos #{\newline} dec)
+        bol  (if (= bol pos)
+               (find-char txt (dec pos) #{\newline} dec)
+               bol)]
+    (or (and bol (inc bol)) 0)))
+
+(defn- end-of-line
+  "Finds the index of the end of the line in pos."
+  [txt pos]
+  (let [eol (find-char txt pos #{\newline} inc)]
+    (or eol (count txt))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Basic Insertion Commands
 
-(def delimiters {\( \), \[ \], \{ \}, \" \"})
-
-(def delimiter? (reduce into #{} delimiters))
-
-(def ignore? #{:net.cgrand.parsley/unfinished
-               :net.cgrand.parsley/unexpected
-               :string :comment :char :regex})
+(declare insert-newline)
 
 (defn open-delimiter
   "Opens a delimiter and inserts the closing one.
@@ -110,6 +138,18 @@ and the closing delimiter.
             (when wstart (model/delete editor wstart wend))
             (ui/caret-position editor (or (and wstart (inc wstart)) end))))))))
 
+(defn close-delimiter-and-newline
+  "Closes a delimiter and inserts a newline.
+
+  (defun f (x|  ))
+  (defun f (x)
+    |)
+
+  ; (Foo.|
+  ; (Foo.)|"
+  [e]
+  (close-delimiter e)
+  (insert-newline e))
 
 (defn- location-index
   "Returns the index of the location in the parent's children vector"
@@ -129,40 +169,42 @@ and the position relative to the sibilings."
   (let [s     (model/text editor)
         tag   (lang/location-tag ploc)
         delim (lang/offset ploc)
-        snd-loc (-> ploc zip/down (adjacent zip/right) (adjacent zip/right))
-        snd   (lang/offset snd-loc)
-        start (inc (or (find-char s delim #{\newline} dec) 0))
+        snd   (-> ploc zip/down
+                  (adjacent zip/right)
+                  (adjacent zip/right)
+                  lang/offset)
+        start (beginning-of-line s delim)
         index (location-index loc)]
     (match [tag index]
       [(:or :list :fn) 1] (inc (- delim start))
-      [(:or :list :fn) 2] (+ (- delim start) 2)
+      [(:or :list :fn) _] (+ (- delim start) 2)
       [(:or :list :fn) _] (- snd start)
       [(:or :vector :set :map) _] (inc (- delim start)))))
 
-(defn- format-code [e]
+(defn- indent-line
+  "Insert indentation to the current line."
+  [e]
   (let [{:keys [editor ch tree pos location]}
-                 (editor-info e)
-        [loc i]  location
-        delim?  (and (lang/loc-string? loc) (-> loc zip/left nil? not))
-        loc     (if delim? loc (zip/up loc))
-        loc     (if (lang/whitespace? loc)
-                  (or (adjacent loc zip/right)
-                      (-> loc zip/down zip/rightmost))
-                  loc)
+                (editor-info e)
+        ;; Look for the beginning, end of the line and the first non-space char
+        txt     (model/text editor)
+        bol     (beginning-of-line txt pos)
+        eol     (end-of-line txt pos)
+        !spc    (find-char txt bol (comp not space?) inc)
+
+        ;; Compute the corresponding indentation using the most immediate
+        ;; delimiter paren, if any.
+        [loc i] (lang/location tree !spc)
+        loc     (if (and (delim-location? (zip/up loc)) ; check if the location is the closing delimiter
+                         (nil? (zip/right loc)))
+                  loc
+                  (lang/select-location loc zip/up (comp not lang/loc-string?)))
         ploc    (delim-parent loc)
-        tag     (lang/location-tag ploc)]
-    (when (and ploc (not (ignore? tag)))
-      (let [indent(indentation editor ploc loc)
-            spc   (apply str (repeat indent " "))
-            [wstart wend] (when (-> loc zip/left lang/whitespace?) (-> loc zip/left lang/limits))]
-        (if wstart
-          (let [ws (->> (model/substring editor wstart wend)
-                     (remove #{\space})
-                     (apply str))]
-            (model/delete editor wstart wend)
-            (model/insert editor wstart ws)
-            (model/insert editor (+ wstart (count ws)) spc))
-          (model/insert editor pos spc))))))
+        indent  (if ploc (indentation editor ploc loc) 0)
+        spc     (apply str (repeat indent \space))]
+    (model/delete editor bol !spc)
+    (when ploc
+      (model/insert editor bol spc))))
 
 (defn insert-newline
   "Inserts a newline and formats the following lines.
@@ -172,24 +214,9 @@ and the position relative to the sibilings."
   (let ((n frobbotz))
     |(display (+ n 1)
               port))"
-  [e]
-  (let [editor  (:source e)]
-    (ui/action
-      (model/insert editor (ui/caret-position editor) "\n")
-      (format-code e))))
-
-(defn close-delimiter-and-newline
-  "Closes a delimiter and inserts a newline.
-
-  (defun f (x|  ))
-  (defun f (x)
-    |)
-
-  ; (Foo.|
-  ; (Foo.)|"
-  [e]
-  (close-delimiter e)
-  (insert-newline e))
+  [{:keys [source] :as e}]
+  (model/insert source (ui/caret-position source) "\n")
+  (indent-line e))
 
 (defn comment-dwin [e]
   (prn ::comment-dwin))
@@ -309,12 +336,6 @@ and the position relative to the sibilings."
       :else
         (when-let [end (find-char (model/text editor) pos #{\newline} inc)]
           (model/delete editor pos end)))))
-
-(def ^:private word?
-  (comp (partial re-find #"[A-Za-z_0-9¡!$%&*+\-\./<=>¿?]")
-        str))
-
-(def ^:private space? #{\space})
 
 (defn- kill-word
   [e dir]
@@ -612,7 +633,8 @@ parentheses by deleting and inserting the modified substring.
     {:fn ::open-delimiter :keystroke "\"" :name "Open double quotes"}
     {:fn ::close-delimiter :keystroke "alt \"" :name "Close double quotes"}
     {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim"}
-    {:fn ::insert-newline :keystroke "ctrl j" :name "Newline"}
+    {:fn ::insert-newline :keystroke "ctrl j" :name "Newline and indent"}
+    {:fn ::indent-line :keystroke "tab" :name "Indent line"}
     ;; Deleting and killing
     {:fn ::forward-delete :keystroke "delete" :name "Delete forward"}
     {:fn ::backward-delete :keystroke "back_space" :name "Delete backward"}

@@ -50,13 +50,13 @@ wins. Returns a channel that takes the input events."
 
 (defn find-char
   "Finds the next char in s for which pred is true,
-  starting to look from position cur, in the direction 
-  specified by dt (1 or -1). Returns the index if found
-  or nil otherwise."
-  [s cur pred dir]
-  (cond (or (neg? cur) (<= (count s) cur)) nil
-        (pred (get s cur)) cur
-        :else (recur s (dir cur) pred dir)))
+  starting to look from position i, stepping through the 
+  positions determined by the application of the step function.
+  Returns the index if found or nil otherwise."
+  [s i pred step]
+  (cond (or (neg? i) (<= (count s) i)) nil
+        (pred (get s i)) i
+        :else (recur s (step i) pred step)))
 
 (defn remove-at
   "Removes the element in the ith position from the given vector."
