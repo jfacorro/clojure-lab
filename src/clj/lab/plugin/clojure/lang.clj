@@ -1,4 +1,4 @@
-(ns lab.plugin.clojure-lang
+(ns lab.plugin.clojure.lang
   "Clojure language specification."
   (:require [clojure.zip :as zip]
             [clojure.string :as str]
@@ -388,7 +388,7 @@ and returns the offset of its matching delimiter."
 ;; Keymap
 
 (def ^:private keymap
-  (km/keymap 'lab.plugin.clojure-lang
+  (km/keymap 'lab.plugin.clojure.lang
     :lang :clojure
     {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
     {:fn ::toggle-comment :keystroke "alt c" :name "Comment code"}))
@@ -452,6 +452,6 @@ nodes in the first level."
 (defn init! [app]
   (swap! app assoc-in [:langs (:id clojure)] clojure))
 
-(plugin/defplugin lab.plugin.clojure-lang
+(plugin/defplugin lab.plugin.clojure.lang
   :type :global
   :init! init!)

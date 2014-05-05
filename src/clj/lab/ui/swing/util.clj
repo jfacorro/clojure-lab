@@ -294,7 +294,7 @@ with Color instances."
       (BorderFactory/createEmptyBorder)
     :line
       (let [[top left bottom right] (top-left-bottom-right (or y 1))]
-        (BorderFactory/createMatteBorder top left bottom right (color (or x 0))))
+        (BorderFactory/createMatteBorder ^int top ^int left ^int bottom ^int right ^Color (color (or x 0))))
     :titled
       (BorderFactory/createTitledBorder ^String x)))
 

@@ -1,4 +1,4 @@
-(ns lab.plugin.clojure-repl
+(ns lab.plugin.clojure.repl
   "Clojure REPL process."
   (:require popen
             [leiningen.core.eval :as eval]
@@ -194,7 +194,7 @@ child process with a running repl."
               :lang :clojure
               {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 
-(plugin/defplugin lab.plugin.clojure-repl
+(plugin/defplugin lab.plugin.clojure.repl
   :type  :global
   :init! #'init!
   :keymaps keymaps)

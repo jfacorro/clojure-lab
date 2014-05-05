@@ -1,4 +1,4 @@
-(ns lab.plugin.markdown-lang
+(ns lab.plugin.markdown.lang
   "Markdown language specification."
   (:require [clojure.zip :as zip]
             [lab.core :as lab]
@@ -100,6 +100,6 @@ return the default style."
 (defn init! [app]
   (swap! app assoc-in [:langs (:id markdown)] markdown))
 
-(plugin/defplugin lab.plugin.markdown-lang
+(plugin/defplugin lab.plugin.markdown.lang
   :type  :global
   :init! init!)

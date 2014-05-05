@@ -1,4 +1,4 @@
-(ns lab.plugin.clojure-nrepl
+(ns lab.plugin.clojure.nrepl
   "Clojure nREPL connection.
 
   Most of the ideas for this plugin were taken from the [Cider](https://github.com/clojure-emacs/cider)
@@ -16,7 +16,7 @@
                        [history :as h]]
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
-            [lab.plugin.clojure-lang :as clj-lang])
+            [lab.plugin.clojure.lang :as clj-lang])
    (:import [java.io File BufferedReader]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;

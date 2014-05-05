@@ -28,11 +28,11 @@
                     lab.plugin.code-outline
 
                     ; Languages
-                    lab.plugin.markdown-lang
-                    lab.plugin.clojure-lang
+                    lab.plugin.markdown.lang
+                    lab.plugin.clojure.lang
 
                     ;Clojure plugins
-                    lab.plugin.clojure-nrepl]
+                    lab.plugin.clojure.nrepl]
    :lang-plugins  '{:clojure [lab.plugin.editor.syntax-highlighting
                                lab.plugin.editor.autocomplete
                                lab.plugin.editor.delimiter-matching

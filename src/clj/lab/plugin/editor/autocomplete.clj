@@ -8,7 +8,7 @@
                        [document :as doc]]
             [lab.ui [core :as ui]
                     [templates :as tplts]]
-            [lab.plugin.clojure-nrepl :as nrepl]))
+            [lab.plugin.clojure.nrepl :as nrepl]))
 
 (defn token-location-at-caret
   "Takes an editor and finds the token immediately after
