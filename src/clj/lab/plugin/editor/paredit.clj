@@ -170,9 +170,9 @@ and the position relative to the sibilings."
         tag   (lang/location-tag ploc)
         delim (lang/offset ploc)
         snd   (-> ploc zip/down
-                  (adjacent zip/right)
-                  (adjacent zip/right)
-                  lang/offset)
+                (adjacent zip/right)
+                (adjacent zip/right)
+                lang/offset)
         start (beginning-of-line s delim)
         index (location-index loc)]
     (match [tag index]
@@ -206,7 +206,7 @@ and the position relative to the sibilings."
     (when ploc
       (model/insert editor bol spc))))
 
-(defn insert-newline
+(defn- insert-newline
   "Inserts a newline and formats the following lines.
 
   (let ((n frobbotz)) | (display (+ n 1)
@@ -218,8 +218,79 @@ and the position relative to the sibilings."
   (model/insert source (ui/caret-position source) "\n")
   (indent-line e))
 
-(defn comment-dwin [e]
-  (prn ::comment-dwin))
+(defn- empty-line?
+  "Takes a string and the index limits of a string.
+  Returns true if the line is made up of space only."
+  [s start end]
+  (= (or (find-char s start (comp not space?) inc)
+         end)
+     end))
+
+(defn- comment-dwin
+  "(foo |bar)   ; baz
+  (foo bar)                               ; |baz
+
+  (frob grovel)|
+  (frob grovel)                           ;|
+
+  (zot (foo bar)
+  |
+       (baz quux))
+
+  (zot (foo bar)
+       ;; |
+       (baz quux))
+
+  (zot (foo bar) |(baz quux))
+  (zot (foo bar)
+       ;; |
+       (baz quux))
+
+  (defun hello-world ...)
+  ;;; |
+  (defun hello-world ...)"
+  [e]
+  (let [{:keys [editor ch tree pos location]}
+                (editor-info e)
+        [loc _] location
+        loc     (lang/select-location loc zip/up (comp not lang/loc-string?))
+        txt     (model/text editor)
+        bol     (beginning-of-line txt pos)
+        eol     (end-of-line txt pos)
+
+        [last-loc last-pos]
+                (lang/location tree eol)
+        child?  (delim-parent loc)
+        empty-ln? (empty-line? txt bol eol)]
+    (cond
+      ;; Indent inline comment
+      ;; (There's a comment in the same line)
+      (= :comment (lang/location-tag last-loc))
+        (let [len (- last-pos bol)
+              spc (apply str (repeat (- 40 len) " "))]
+          (model/insert editor last-pos spc))
+      ;; Add inline comment
+      ;; (The line does not have a comment and the caret is at the end)
+      (and (not empty-ln?) (= pos eol))
+        (let [len (- eol bol)
+              spc (apply str (repeat (- 40 len) " "))]
+          (model/insert editor eol (str spc ";")))
+      ;; Create a comment in a whole line
+      ;; (Current location is the child of some parent structure)
+      child?
+        (let [n   (if (= pos bol) 1 2)
+              nls (apply str (repeat n "\n"))]
+          (when (not empty-ln?)
+            (model/insert editor pos nls)
+            (indent-line e))
+          (model/insert editor (+ pos (dec n)) ";; ")
+          (indent-line e))
+      ;; Comment section
+      :else
+        (do
+          (when (not empty-ln?)
+            (model/insert editor pos "\n"))
+          (model/insert editor pos ";;; ")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Deleting and killing
