@@ -1,11 +1,13 @@
 (ns lab.plugin.clojure-nrepl
   "Clojure nREPL connection.
 
-Most of the ideas for this plugin were taken from the Cider emacs minor mode."
+  Most of the ideas for this plugin were taken from the [Cider](https://github.com/clojure-emacs/cider)
+  and [REPLy](https://github.com/trptcolin/reply)"
   (:require [popen :refer [popen kill stdin stdout]]
             [clojure.java.io :as io]
             [clojure.string :refer [split] :as str]
-            [clojure.tools.nrepl :as repl]
+            [clojure.tools.nrepl :as nrepl]
+            [clojure.tools.nrepl.transport :as nrepl.transport]
             [lab.core :as lab]
             [lab.core [plugin :as plugin]
                       [keymap :as km]]
@@ -58,9 +60,8 @@ symbols in *ns*."
 (defn- eval-in-server
   "Evaluates code by sending it to the server of this connection."
   [{:keys [client current-ns] :as conn} code]
-;;  (prn current-ns code)
   (when client
-    (repl/message client
+    (nrepl/message client
       (merge {:op   :eval
               :code code}
              (when current-ns
@@ -152,7 +153,8 @@ returns it if found."
 (defn- stop-nrepl-server [conn]
   (eval-in-server conn "(System/exit 0)"))
 
-(defn- start-nrepl-client [path & {:keys [host port]}]
+(defn- start-nrepl-client
+  [path & {:keys [host port]}]
   (let [path      (ensure-dir path)
         port-file (or (locate-file ".nrepl-port" path)
                       (locate-file "target/repl-port" path))
@@ -160,9 +162,9 @@ returns it if found."
                       (and port-file (read-string (slurp port-file)))
                       default-port)
         host      (or host default-host)]
-  (when-let [connection (and port (repl/connect :host host :port port))]
+  (when-let [connection (and port (nrepl/connect :host host :port port))]
     {:connection connection
-     :client     (repl/client connection Long/MAX_VALUE)})))
+     :client     (nrepl/client connection Long/MAX_VALUE)})))
 
 (defn- listen-nrepl-server-output!
   "Listen for each line of output from the
@@ -170,8 +172,8 @@ server process and pass it to handler."
   [app conn handler]
   (let [cout ^BufferedReader (get-in conn [:server :cout])]
     (future
-      (try 
-        (loop [] (handler app conn (.readLine cout)))
+      (try
+        (while true (handler app conn (.readLine cout)))
         (catch Exception _)))))
 
 (declare console-output!)
