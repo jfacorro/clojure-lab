@@ -9,17 +9,11 @@
 
 #### Code Editor
   - Features:
-    - Indent code.
     - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
 
 #### Code Outline:
   - When going to line, position the line in the top (or middle) of the scroll.
     - Depends on the implementation of the editor's Go to line.
-
-#### Paredit
-  - Implement
-    - Basic Insertion Commands
-      - paredit-comment-dwim M-;
 
 #### Menu
   - Define a way to specify the order of the menu items.
@@ -27,8 +21,6 @@
 
 ### App (Control)
     - Plugin management:
-      - Unload a plugin.
-      - Keep track of what plugins have been loaded.
       - (?) Allow plugins to define their own dependencies.
     - Remove lab.plugin.clojure-repl since it was replaced by lab.plugin.clojure-nrepl
 
@@ -72,6 +64,7 @@
   - Comment / Uncomment lines.
   - Go to line.
   - Move the following code editor features to their own plugin. This could be done by adding a hook to an editor
+    - Indent code (implemented in paredit)
     - Syntax highlighting.
     - Delimiter matching.
     - Undo/redo.
@@ -118,6 +111,7 @@
       - paredit-close-curly }
       - paredit-close-round-and-newline M-)
       - paredit-meta-doublequote M-"
+      - paredit-comment-dwim M-;
       - paredit-newline C-j
     - Deleting and killing
       - paredit-forward-delete delete
@@ -151,3 +145,6 @@
     - Define the way plugins/add-ons are loaded.
     - Link Document to ui/text-editor.
     - Establish the way key bindings are defined.
+    - Plugin management:
+      - Unload a plugin.
+      - Keep track of what plugins have been loaded.
