@@ -3,7 +3,9 @@
             [clojure.core.async.impl.protocols :as async-protocols]
             [clojure [string :as str]
                      [reflect :as r]
-                     [pprint :as p]]))
+                     [pprint :as p]]
+            [clojure.java.io :as io])
+  (:import [java.io File]))
 
 (defn channel?
   [x]
@@ -67,3 +69,49 @@ wins. Returns a channel that takes the input events."
   "Takes a vector and returns the index of x."
   [^clojure.lang.PersistentVector v x]
   (.indexOf v x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; File Utils
+
+(defn locate-file
+  "Takes a filename and a string containing a concatenated
+  list of directories, looks for the file in each dir and
+  returns it if found."
+  [filename paths]
+  (->> (str/split paths (re-pattern (File/pathSeparator)))
+       (map #(as-> (str % (File/separator) filename) path
+                   (when (.exists (io/file path)) path)))
+       (filter identity)
+       first))
+
+(defn locate-dominating-file
+  "Look up the directory hierarchy from FILE for a file named NAME.
+  Stop at the first parent directory containing a file NAME,
+  and return the directory.  Return nil if not found."
+  [path filename]
+  (loop [path path]
+    (let [filepath (str path (File/separator) filename)
+          file     (io/file filepath)
+          parent   (.getParent file)]
+      (cond
+        (.exists file)
+          filepath
+        (-> parent nil? not)
+          (recur parent)))))
+
+(defn ensure-dir
+  "Takes a path and if it corresponds to a file returns the
+  path to its parent directory, otherwise it returns the paht itself."
+  [path]
+  (let [file (io/file path)]
+    (if (.isDirectory file)
+      path
+      (.getParent file))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Exception
+
+(defn stacktrace->str [^Exception ex]
+  (let [sw  (java.io.StringWriter.)]
+    (.printStackTrace ex (java.io.PrintWriter. sw))
+    (str sw)))

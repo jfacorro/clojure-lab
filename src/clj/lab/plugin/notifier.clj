@@ -1,6 +1,7 @@
 (ns lab.plugin.notifier
   (:require [lab.core.plugin :as plugin]
             [lab.ui.core :as ui]
+            [lab.util :as util]
             [lab.ui.templates :as tplts]
             [clojure.repl :as repl]))
 
@@ -17,8 +18,6 @@
 (defn- show-error-info
   [app ^Exception ex]
   (let [ui     (@app :ui)
-        sw     (java.io.StringWriter.)
-        _      (.printStackTrace ex (java.io.PrintWriter. sw))
         title  (->> (or (.getMessage ex) ex)
                  str
                  (truncate 50)
@@ -26,7 +25,7 @@
         tab    (-> (tplts/tab "notifier")
                  (ui/update-attr :header ui/update :label ui/attr :text title)
                  (ui/add [:scroll {:border :none}
-                           (-> [:text-area {:text (str sw) :read-only true}]
+                           (-> [:text-area {:text (util/stacktrace->str ex) :read-only true}]
                              ui/init
                              (ui/caret-position 0))]))]
     (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 200)

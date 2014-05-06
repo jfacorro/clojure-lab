@@ -9,6 +9,7 @@
             [clojure.tools.nrepl :as nrepl]
             [clojure.tools.nrepl.transport :as nrepl.transport]
             [lab.core :as lab]
+            [lab.util :as util]
             [lab.core [plugin :as plugin]
                       [keymap :as km]]
             [lab.model [document :as doc]
@@ -17,14 +18,14 @@
             [lab.ui.core :as ui]
             [lab.ui.templates :as tplts]
             [lab.plugin.clojure.lang :as clj-lang])
-   (:import [java.io File BufferedReader]))
+   (:import [java.io File BufferedReader]
+            [java.util.concurrent LinkedBlockingQueue TimeUnit]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Namespace symbol list
 
 (def ^:private ns-symbols-fns
-  "Code that is sent to the nREPL server to get all
-symbols in *ns*."
+  "Code that is sent to the nREPL server to get all symbols in *ns*."
   '(letfn [(into! [to from]
             (reduce conj! to from))
            (ns-qualified-public-symbols
@@ -57,91 +58,75 @@ symbols in *ns*."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Eval code
 
+(declare console-output!)
+
+(defn- poll-responses
+  [app {:keys [queue connection] :as conn}]
+  (let [poll (fn []
+               (let [continue? (try
+                                 (when-let [{:keys [out err] :as response} (nrepl.transport/recv connection)]
+                                   (when err (console-output! app err))
+                                   (when out (console-output! app out))
+                                   (when-not (or err out)
+                                     (.offer ^LinkedBlockingQueue queue response)))
+                                 true
+                                 (catch Exception _ false))]
+                 (when continue?
+                   (recur))))]
+    (doto (Thread. poll)
+      (.setName "nREPL poller")
+      (.setDaemon true)
+      (.start))))
+
+(defn- responses
+  [{:keys [queue] :as conn}]
+  (lazy-seq
+    (cons (.poll ^LinkedBlockingQueue queue
+                 50
+                 TimeUnit/MILLISECONDS)
+          (responses conn))))
+
+(defn- done? [response]
+  (some #{"done" "error"} (:status response)))
+
+(defn- command-responses
+  [conn]
+  (->> (responses conn)
+    (filter identity)
+    (take-while (comp not done?))))
+
 (defn- eval-in-server
   "Evaluates code by sending it to the server of this connection."
   [{:keys [client current-ns] :as conn} code]
   (when client
-    (nrepl/message client
-      (merge {:op   :eval
-              :code code}
-             (when current-ns
-               {:ns current-ns})))))
+    (let [message (merge {:op :eval, :code code} 
+                         (and current-ns {:ns current-ns}))]
+      (nrepl/message client message))))
 
-(defn- response-values
-  [responses]
-;;  (prn responses)
-  (->> responses
-    (filter :value)
-    (map :value)))
-
-(defn- response-output
-  [responses]
-;;  (prn responses)
-  (->> responses
-    (mapcat #(map (fn [k]
-                    (when-let [v (% k)]
-                      {:type k :val v}))
-                  [:value :out :err]))
-    (filter identity)))
-
-(defn- eval-and-get-value [conn code]
-  (let [reponses  (eval-in-server conn code)
-        [x & _]   (response-values reponses)]
-    (and x (read-string x))))
+(defn- eval-and-get-value
+  [conn code]
+  (eval-in-server conn code)
+  (first (nrepl/response-values (command-responses conn))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; nREPL server & client
 
-(defn- locate-file
-  "Takes a filename and a string containing a concatenated
-list of directories, looks for the file in each dir and
-returns it if found."
-  [filename paths]
-  (->> (split paths (re-pattern (File/pathSeparator)))
-       (map #(as-> (str % (File/separator) filename) path
-                   (when (.exists (io/file path)) path)))
-       (filter identity)
-       first))
-
-(defn- locate-dominating-file [path filename]
-  (loop [path path]
-    (let [filepath (str path (File/separator) filename)
-          file     (io/file filepath)
-          parent   (.getParent file)]
-      (cond
-        (.exists file)
-          filepath
-        (-> parent nil? not)
-          (recur parent)))))
-
-(defn- ensure-dir [path]
-  (let [file (io/file path)]
-    (if (.isDirectory file)
-      path
-      (.getParent file))))
-
 (def ^:private lein-cmd "lein")
-
 (def ^:private lein-path
-  (or (locate-file lein-cmd (System/getenv "PATH"))
-      (locate-file (str lein-cmd ".bat") (System/getenv "PATH"))))
+  (or (util/locate-file lein-cmd (System/getenv "PATH"))
+      (util/locate-file (str lein-cmd ".bat") (System/getenv "PATH"))))
 
-(def ^:private nrepl-server-cmd
-  [lein-path "repl" ":headless"])
-
-(def ^:private nrepl-server-cmd-trampoline
-  [lein-path "trampoline" "repl" ":headless"])
+(def ^:private nrepl-server-cmd [lein-path "repl" ":headless"])
+(def ^:private nrepl-server-cmd-trampoline [lein-path "trampoline" "repl" ":headless"])
 
 (def ^:private default-port nil)
-
 (def ^:private default-host "127.0.0.1")
-
 (def ^:private default-ns "user")
 
 (defn- start-nrepl-server [path & [trampoline?]]
   (when-not lein-path
     (throw (ex-info "No leiningen command found." {})))
-  (let [dir  (io/file (ensure-dir path))
+  (let [dir  (io/file (util/ensure-dir path))
         proc (popen (if trampoline?
                       nrepl-server-cmd-trampoline
                       nrepl-server-cmd)
@@ -150,54 +135,55 @@ returns it if found."
      :cin  (stdin proc)
      :cout (stdout proc)}))
 
-(defn- stop-nrepl-server [conn]
-  (eval-in-server conn "(System/exit 0)"))
+(defn- stop-nrepl-server
+  [{:keys [connection] :as conn}]
+  (eval-in-server conn "(System/exit 0)")
+  (when (isa? (class connection) java.io.Closeable)
+    (.close ^java.io.Closeable connection)))
 
-(defn- start-nrepl-client
-  [path & {:keys [host port]}]
-  (let [path      (ensure-dir path)
-        port-file (or (locate-file ".nrepl-port" path)
-                      (locate-file "target/repl-port" path))
-        port      (or (and port (read-string port))
-                      (and port-file (read-string (slurp port-file)))
-                      default-port)
-        host      (or host default-host)]
-  (when-let [connection (and port (nrepl/connect :host host :port port))]
+(defn- create-nrepl-client
+  "Creates an nREPL client, returning a map with its connection, the client
+  function and a queue that holds the responses."
+  [& {:keys [host port]}]
+  (let [port       (or (and port (read-string port))
+                       default-port)
+        host       (or host default-host)
+        connection (nrepl/connect :host host :port port)]
     {:connection connection
-     :client     (nrepl/client connection Long/MAX_VALUE)})))
+     :client     (nrepl/client connection Long/MAX_VALUE)
+     :queue      (LinkedBlockingQueue.)}))
 
 (defn- listen-nrepl-server-output!
-  "Listen for each line of output from the
-server process and pass it to handler."
+  "Listen for each line of output from the server process and 
+  pass it to handler."
   [app conn handler]
   (let [cout ^BufferedReader (get-in conn [:server :cout])]
     (future
       (try
-        (while true (handler app conn (.readLine cout)))
-        (catch Exception _)))))
-
-(declare console-output!)
+        (loop [event (.readLine cout)]
+          (when event
+            (handler app conn event)
+            (recur (.readLine cout))))
+        (catch Exception ex)))))
 
 (defn- handle-nrepl-server-event
   "Takes the app, the connection and a line from the server process
-output. Based on the contents of the message, starts an nrepl client
-and updates the conn."
-  [app {:keys [file id] :as conn} ^String event]
+  output. Based on the contents of the message, starts an nrepl client
+  and updates the conn."
+  [app {:keys [id] :as conn} ^String event]
   (console-output! app (str event "\n"))
-  (cond
-    (.contains event "nREPL server started on port")
-      (try
-        (let [path        (.getCanonicalPath ^File file)
-              port        (second (re-find #"port (\d+) " event))
-              host        (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
-              client-info (start-nrepl-client path :port port :host host)
-              conn        (as-> (merge conn client-info) conn
-                            (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
-                                                        default-ns)))]
-          (swap! app assoc-in [:connections id] conn)
-          (console-output! app "nREPL client connected\n"))
-        (catch Exception ex
-          (.printStackTrace ex)))))
+  (when (and event (re-find #"nREPL server started on port" event))
+    (try
+      (let [port        (second (re-find #"port (\d+) " event))
+            host        (second (re-find #"host (\d+\.\d+\.\d+\.\d+)" event))
+            client-info (create-nrepl-client :host host :port port)
+            conn        (merge conn client-info) 
+            _           (poll-responses app conn)
+            conn        (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
+                                                    default-ns))]
+        (swap! app assoc-in [:connections id] conn)
+        (console-output! app "nREPL client connected\n"))
+      (catch Exception ex))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; View
@@ -235,28 +221,28 @@ and killing the associated process."
 
 (defn- console-eval-code!
   "Send the code provided to the nREPL server and prints
-the results in the output editor."
+  the results in the output editor."
   [app code]
   (let [ui      (:ui @app)
         console (ui/find @ui [:#nrepl :split])
-        conn-id (:conn-id (ui/stuff console))]
+        conn-id (:conn-id (ui/stuff console))
+        conn    (get-in @app [:connections conn-id])]
     (when conn-id
-      (doseq [{:keys [type val]} (-> (get-in @app [:connections conn-id])
-                                     (eval-in-server code)
-                                     response-output)]
-        (console-output! app (if (= type :value) (str val "\n") val))))))
+      (eval-in-server conn code)
+      (doseq [{:keys [ns value] :as res} (command-responses conn)]
+        (when value
+          (console-output! app (str value "\n")))))))
 
 (defn- console-add-history!
   "Adds the code provided to the nREPL console command history."
   [app console-in code]
-  (let [id (ui/attr console-in :id)]
-    (ui/update! (:ui @app)
-                :#nrepl
-                ui/update-attr :stuff
-                update-in [:history] #(-> %
-                                          h/fast-forward
-                                          (h/add code)
-                                          h/fast-forward))))
+  (ui/update! (:ui @app)
+              :#nrepl
+              ui/update-attr :stuff
+              update-in [:history] #(-> %
+                                        h/fast-forward
+                                        (h/add code)
+                                        h/fast-forward)))
 
 (defn- console-eval-input!
   "Evaluates the code that has been entered in the console's 
@@ -327,16 +313,15 @@ to the ui in the bottom section."
                 :server (start-nrepl-server path project?)
                 :file   file
                 :name   (-> file .getParent io/file .getName)}
-        tab    (-> (tab-view app conn)
-                   (ui/update :text-editor.output
-                              model/append "Starting nREPL server\n"))]
+        tab    (tab-view app conn)]
        (listen-nrepl-server-output! app conn handle-nrepl-server-event)
        (swap! app assoc-in [:connections conn-id] conn)
        (ui/action
          (ui/update! ui (ui/parent "bottom")
                      (fn [x]
                        (-> (ui/update-attr x :divider-location-right #(or % 200))
-                           (ui/update :#bottom ui/add tab)))))))
+                           (ui/update :#bottom ui/add tab))))
+         (console-output! app "Starting nREPL server\n"))))
   
   
 (defn- start-and-connect-to-repl!
@@ -394,7 +379,7 @@ an nREPL client that connects to that server."
           conn    (get-in app [:connections conn-id])]
       (if (and conn (= (:name lang) "Clojure"))
         (let [doc-ns (clj-lang/find-namespace @doc :default default-ns)]
-          (eval-in-server conn (format "(in-ns '%s)" doc-ns))
+          (eval-and-get-value conn (format "(ns %s)" doc-ns))
           (assoc-in app [:connections conn-id :current-ns] doc-ns))
         app))))
 
