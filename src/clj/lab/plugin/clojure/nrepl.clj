@@ -229,9 +229,10 @@ and killing the associated process."
         conn    (get-in @app [:connections conn-id])]
     (when conn-id
       (eval-in-server conn code)
-      (doseq [{:keys [ns value] :as res} (command-responses conn)]
-        (when value
-          (console-output! app (str value "\n")))))))
+      (future 
+        (doseq [{:keys [ns value] :as res} (command-responses conn)]
+          (when value
+            (console-output! app (str value "\n"))))))))
 
 (defn- console-add-history!
   "Adds the code provided to the nREPL console command history."
