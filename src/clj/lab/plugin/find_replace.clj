@@ -256,13 +256,13 @@ function to look for the next match."
 (defn- show-dialog
   "Show the find and replace dialog, selecting the tab
 with the id specified."
-  [{:keys [app] :as e} view-find & [no-editor-required]]
+  [{:keys [app] :as e} view & [no-editor-required]]
   (let [ui      (:ui @app)
         editor  (current-text-editor @ui)
         dialog  (atom nil)]
     (when (or no-editor-required editor)
       (-> dialog
-        (reset! (ui/init (view-find @ui dialog)))
+        (reset! (ui/init (view @ui dialog)))
         (ui/attr :visible true)))))
 
 (defn- show-find

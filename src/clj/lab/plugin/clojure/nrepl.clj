@@ -315,15 +315,14 @@ to the ui in the bottom section."
                 :file   file
                 :name   (-> file .getParent io/file .getName)}
         tab    (tab-view app conn)]
-       (listen-nrepl-server-output! app conn handle-nrepl-server-event)
-       (swap! app assoc-in [:connections conn-id] conn)
-       (ui/action
-         (ui/update! ui (ui/parent "bottom")
-                     (fn [x]
-                       (-> (ui/update-attr x :divider-location-right #(or % 200))
-                           (ui/update :#bottom ui/add tab))))
-         (console-output! app "Starting nREPL server\n"))))
-  
+    (listen-nrepl-server-output! app conn handle-nrepl-server-event)
+    (swap! app assoc-in [:connections conn-id] conn)
+    (ui/action
+      (ui/update! ui (ui/parent "bottom")
+        (fn [x]
+          (-> (ui/update-attr x :divider-location-right #(or % 200))
+            (ui/update :#bottom ui/add tab))))
+      (console-output! app "Starting nREPL server\n"))))
   
 (defn- start-and-connect-to-repl!
   [{:keys [app] :as e}]
@@ -404,8 +403,8 @@ an nREPL client that connects to that server."
 (defn- init! [app]
   (swap! app assoc :connections {})
   (swap! app
-         update-in [:langs :clojure]
-         update-in [:autocomplete] conj #'symbols-in-scope-from-connection))
+    update-in [:langs :clojure]
+    update-in [:autocomplete] conj #'symbols-in-scope-from-connection))
 
 (plugin/defplugin (ns-name *ns*)
   :type    :global
