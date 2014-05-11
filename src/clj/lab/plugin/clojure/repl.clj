@@ -96,7 +96,7 @@ it. If not project file is supplied, a bare REPL is started."
   [{:keys [source app] :as e}]
   (let [ui          (:ui @app)
         editor      source
-        file-path   (doc/path @(ui/attr editor :doc))
+        file-path   (:path @(ui/attr editor :doc))
         [start end] (ui/selection editor)
         selection   (if (= start end)
                       (if file-path

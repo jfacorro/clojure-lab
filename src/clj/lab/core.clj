@@ -127,7 +127,7 @@ default configuration."
   "Loads the plugins associated with the language assigned
 to the doc."
   [app doc]
-  (let [lang-id (-> @doc doc/lang :id)]
+  (let [lang-id (-> @doc :lang :id)]
     (doseq [plugin ((config @app :lang-plugins) lang-id)]
       (pl/load-plugin! app plugin))))
 
@@ -158,7 +158,7 @@ within the opened documents."
 (defn find-doc-by-name
   "Returns the document that has the supplied name."
   [app x]
-  (find-doc-by app #(= x (doc/name %))))
+  (find-doc-by app #(= x (:name %))))
 
 (defn same-file?
   "Checks if the two files supplied are the same."
@@ -170,7 +170,7 @@ within the opened documents."
   "Returns the document that has the supplied path."
   [app x]
   (let [x (io/file x)]
-    (find-doc-by app #(same-file? (doc/file %) x))))
+    (find-doc-by app #(same-file? (-> % :path io/file) x))))
 
 (defn new-document
   "Creates a new document, adds it to the document
@@ -216,7 +216,7 @@ documents collection."
   [app doc]
   (when doc
     (swap! doc doc/save))
-  (config app :current-dir (doc/path @doc)))
+  (config app :current-dir (:path @doc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configuration

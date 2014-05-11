@@ -57,11 +57,11 @@ or the current document if non is specified."
       (when outline
         (if-not doc
           (ui/action (ui/update! ui :#outline-tree ui/remove-all))
-          (let [lang        (doc/lang @doc)
+          (let [lang        (:lang @doc)
                 definitions (:definitions lang)
                 parse-tree  (lang/parse-tree @doc nil)
                 defs        (and definitions (definitions parse-tree))
-                root        (into [:tree-node {:item (doc/name @doc)}]
+                root        (into [:tree-node {:item (:name @doc)}]
                               (map (partial #'def->tree-node app) defs))]
             (ui/action
               (ui/update! ui :#outline-tree

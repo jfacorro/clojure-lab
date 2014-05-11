@@ -9,7 +9,7 @@
 (defn- check-for-delimiters [e highlights]
   (let [editor    (:source e)
         doc       (ui/attr editor :doc)
-        lang      (doc/lang @doc)
+        lang      (:lang @doc)
         pos       (:position e)
         delimiter-match (:delimiter-match lang)
         add-hl    #(ui/add-highlight editor % (inc %) 0x888888)]

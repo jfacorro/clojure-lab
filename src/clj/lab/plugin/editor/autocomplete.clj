@@ -87,7 +87,7 @@ the selection."
 lang and runs them accumulating theirs results in a set.
 Returns nil if there's no token in the current caret position."
   [{:keys [app source] :as e}]
-  (let [lang  (doc/lang @(ui/attr source :doc))
+  (let [lang  (:lang @(ui/attr source :doc))
         fns   (:autocomplete lang)]
     (when-let [loc (token-location-at-caret source)]
       (-> (reduce into #{} (map #(% e) fns))

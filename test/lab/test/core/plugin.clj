@@ -45,17 +45,17 @@
 (deftest load-and-unload-local-plugin
   (swap! app lab/new-document)
   (let [doc (lab/current-document @app)]
-    (is (nil? (doc/keymap @doc)))
+    (is (nil? (:keymap @doc)))
     (is (= 0 (count (:plugins @doc))))
-    (is (nil? (km/find (doc/keymap @doc) #{"ctrl" "o"})))
+    (is (nil? (km/find (:keymap @doc) #{"ctrl" "o"})))
     (is (nil? (:init? @doc)))
     (is (= :hooked (hooked 1)))
 
     (load-plugin! app 'lab.test.core.dummy-local-plugin)
-    (is (doc/keymap @doc))
+    (is (:keymap @doc))
     (is (= 1 (count (:plugins @doc))))
     (is (= 'lab.test.core.dummy-local-plugin (-> @doc :plugins first :name)))
-    (is (km/find (doc/keymap @doc) #{"ctrl" "o"}))
+    (is (km/find (:keymap @doc) #{"ctrl" "o"}))
     (is (:init? @doc))
     (is (= :hook (hooked 1)))
 
@@ -64,9 +64,9 @@
       (is (= 1 (count (:plugins @doc)))))
 
     (unload-plugin! app 'lab.test.core.dummy-local-plugin)
-    (is (nil? (doc/keymap @doc)))
+    (is (nil? (:keymap @doc)))
     (is (= 0 (count (:plugins @doc))))
-    (is (nil? (km/find (doc/keymap @doc) #{"ctrl" "o"})))
+    (is (nil? (km/find (:keymap @doc) #{"ctrl" "o"})))
     (is (nil? (:init? @doc)))
     (is (= :hooked (hooked 1)))))
 

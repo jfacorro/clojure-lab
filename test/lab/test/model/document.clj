@@ -1,5 +1,5 @@
 (ns lab.test.model.document
-  (:refer-clojure :exclude [name replace])
+  (:refer-clojure :exclude [replace])
   (:use clojure.test
         [lab.test :only [->test ->is]]
         lab.model.document)
@@ -23,7 +23,7 @@
 (use-fixtures :each temp-document-config)
 ;---------------------------
 (deftest document-creation
-  (is (= "Untitled 1" (name (document default-lang))))
+  (is (= "Untitled 1" (:name (document default-lang))))
   (is (= "" (text (document default-lang)))))
 ;---------------------------
 (deftest document-manipulation
@@ -33,20 +33,20 @@
     (->test
         ; Check new document properties
         (document default-lang)
-        (->is = false modified?)
+        (->is = false :modified?)
         (->is = "" text)
         (->is = 0 length)
-        (->is = "Untitled 1" name)
+        (->is = "Untitled 1" :name)
 
         ; Bind the document to a file
         (bind tmp-file)
-        (->is = false modified?)
+        (->is = false :modified?)
         (->is = file-content text)
-        (->is = "tmp" name)
+        (->is = "tmp" :name)
 
         ; Append text to the document
         (append end)
-        (->is = true modified?)
+        (->is = true :modified?)
         (->is = (str file-content end) text)
 
         ; Insert text in the middle
@@ -61,10 +61,10 @@
         (->is not= (slurp tmp-file) text)
         (save)
         (->is = (slurp tmp-file) text)
-        (->is = false modified?))))
+        (->is = false :modified?))))
 ;---------------------------
 (deftest bind-non-existing-file
-  (is (= "bla" (-> (document default-lang) (bind "./bla") name))))
+  (is (= "bla" (-> (document default-lang) (bind "./bla") :name))))
 ;---------------------------
 (deftest search-and-replace
   (let [doc (append (document default-lang) "abc\nabc\nd")]

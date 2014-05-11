@@ -38,10 +38,10 @@
 
 (defn- doc-modified-update-title
   [app id key doc old-state new-state]
-  (when (not= (doc/modified? old-state) (doc/modified? new-state))
+  (when (not= (:modified? old-state) (:modified? new-state))
     (let [ui    (:ui @app)
-          name  (doc/name new-state)
-          title (if (doc/modified? new-state) (str name "*") name)]
+          name  (:name new-state)
+          title (if (:modified? new-state) (str name "*") name)]
       (ui/update! ui (ui/id= id) update-tab-title title))))
 
 (defn- has-doc? [doc editor]
@@ -107,7 +107,7 @@ and call the app's open-document function."
 document before closing. Returns true if the document
 should be closed and false otherwise."
   [app tab doc]
-  (if-not (doc/modified? @doc)
+  (if-not (:modified? @doc)
     true
     (let [result (tplts/confirm "Save changes"
                                 "Do you want to save the changes made to this file before closing?"
@@ -151,7 +151,7 @@ associated to it."
 (defn- assign-path!
   "When saving, if the document doesn't have a path, get one from the user."
   [app doc current-dir]
-  (if (doc/path @doc)
+  (if (:path @doc)
     doc
     (let [ui            (:ui @app)
           file-dialog   (ui/init (tplts/save-file-dialog current-dir @ui))
@@ -166,9 +166,9 @@ associated to it."
         doc     (-> tab (ui/find :text-editor) (ui/attr :doc))
         cur-dir (lab/config @app :current-dir)
         result  (assign-path! app doc cur-dir)]
-    (when (doc/path @doc)
+    (when (:path @doc)
         (ui/update! ui (ui/id= tab-id)
-                    update-tab-title (doc/name @doc))
+                    update-tab-title (:name @doc))
         (swap! app lab/save-document doc))
     result))
 
@@ -231,8 +231,8 @@ and signals the highlighting process."
         editor (:source e)
         doc    (ui/attr editor :doc)
         [x y]  (ui/key-stroke (dissoc e :source))
-        cmd    (->> [(doc/keymap @doc)
-                     (-> @doc doc/lang :keymap)
+        cmd    (->> [(:keymap @doc)
+                     (-> @doc :lang :keymap)
                      (@app :keymap)]
                  (map #(km/find-or % y x))
                  (drop-while nil?)
@@ -288,8 +288,8 @@ and signals the highlighting process."
   "Creates a tab with an editor."
   [app doc]
   (let [id    (ui/genid)
-        title (doc/name @doc)
-        tool-tip (doc/path @doc)]
+        title (:name @doc)
+        tool-tip (:path @doc)]
     (-> (tplts/tab id)
         (ui/update-attr :stuff assoc :close-tab close-document-button)
         (ui/attr :tool-tip tool-tip)

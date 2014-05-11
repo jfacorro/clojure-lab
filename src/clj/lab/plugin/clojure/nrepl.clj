@@ -371,7 +371,7 @@ an nREPL client that connects to that server."
   (if-not doc
     (f app doc)
     (let [app     (f app doc)
-          lang    (doc/lang @doc)
+          lang    (:lang @doc)
           ui      (:ui app)
           console (ui/find @ui [:#nrepl :split])
           conn-id (:conn-id (ui/stuff console))

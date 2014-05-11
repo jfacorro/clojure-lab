@@ -18,7 +18,7 @@ are applied their highlight."
   [editor & [incremental]]
   (let [doc         (ui/attr editor :doc)
         node-group  (and incremental (gensym "group-"))
-        lang        (doc/lang @doc)
+        lang        (:lang @doc)
         styles      (:styles lang)
         old-text    (doc/text editor)
         parse-tree  (lang/parse-tree @doc node-group)

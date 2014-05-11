@@ -12,7 +12,7 @@
     (when editor
       (let [id     (ui/attr editor :id)
             doc    (ui/attr editor :doc)
-            hist   (doc/history @doc)]
+            hist   (:history @doc)]
         (swap! doc f)
         ;; TODO: Fix this abominable scheme for undo/redo
         (swap! doc assoc :read-only true)

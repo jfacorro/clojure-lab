@@ -10,8 +10,6 @@ that may need to be computed or mantained)."
             [lab.util :as util]
             [clojure.java.io :as io]))
 
-(declare modified?)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; History
 
@@ -54,13 +52,13 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document Record
 
-(defrecord Document [name path modified buffer lang]
+(defrecord Document [name path modified? buffer lang]
   p/Text
   (insert [this offset s]
     (let [ops [(->InsertText offset s)]]
       (-> this
         (update-in [:buffer] p/insert offset s)
-        (assoc-in [:modified] true)
+        (assoc-in [:modified?] true)
         (archive-operations ops))))
   (append [this s]
     (p/insert this (p/length this) s))
@@ -70,7 +68,7 @@ that may need to be computed or mantained)."
       (-> this
         (archive-operations ops)
         (update-in [:buffer] p/delete start end)
-        (assoc-in [:modified] true))))
+        (assoc-in [:modified?] true))))
   (length [this]
     (p/length buffer))
   (text [this]
@@ -110,61 +108,25 @@ buffer."
         name   (.getName file)
         props  {:buffer   buf
                 :path     path
-                :modified (boolean new?)
+                :modified? (boolean new?)
                 :name     name}]
     (merge doc props)))
 
 (defn close
   "Closes a file checking if its been modified first."
   [doc]
-  (if (modified? doc)
+  (if (:modified? doc)
     (throw (RuntimeException. "Sorry, can't close a modified document."))))
 
 (defn save
   "Saves the document to a file in path."
-  [{:keys [path modified] :as doc}]
+  [{:keys [path modified?] :as doc}]
   (assert path "The document doesn't have a path.")
-  (if modified
+  (if modified?
     (do
       (spit path (text doc))
-      (assoc doc :modified false))
+      (assoc doc :modified? false))
     doc))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Properties 
-
-(defn name
-  "Returns the document's name."
-  [doc]
-  (:name doc))
-
-(defn path
-  "Returns the path for the binded file if any."
-  [doc]
-  (:path doc))
-
-(defn file
-  "If the document is bound to a file, then an instance
-  of this file is returned, otherwise returns nil."
-  [doc]
-  (io/file (path doc)))
-
-(defn modified?
-  "Returns true if the document was modified since 
-  it was created, opened or the last time it was saved."
-  [doc]
-  (:modified doc))
-
-(defn lang [doc]
-  (:lang doc))
-
-(defn keymap
-  "Returns the local document keymap."
-  [doc]
-  (:keymap doc))
-
-(defn history [doc]
-  (:history doc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undo/Redo
@@ -238,7 +200,7 @@ buffer."
   [lang & [path]]
   (let [doc (map->Document {:name     (when-not path (untitled!))
                             :path     nil
-                            :modified false
+                            :modified? false
                             :lang     lang
                             :buffer   (default-buffer lang)
                             :history  (h/history)})]
