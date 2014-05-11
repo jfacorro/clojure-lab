@@ -26,6 +26,7 @@
                     lab.plugin.file-explorer
                     lab.plugin.find-replace
                     lab.plugin.code-outline
+                    lab.plugin.helper
 
                     ; Languages
                     lab.plugin.markdown.lang

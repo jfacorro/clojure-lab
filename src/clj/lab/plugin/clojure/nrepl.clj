@@ -80,11 +80,10 @@
 
 (defn- responses
   [{:keys [queue] :as conn}]
-  (lazy-seq
-    (cons (.poll ^LinkedBlockingQueue queue
-                 50
-                 TimeUnit/MILLISECONDS)
-          (responses conn))))
+  (when queue
+    (lazy-seq
+      (cons (.poll ^LinkedBlockingQueue queue 50 TimeUnit/MILLISECONDS)
+        (responses conn)))))
 
 (defn- done? [response]
   (some #{"done" "error"} (:status response)))

@@ -8,13 +8,15 @@
 (defn- dialog-init [c]
   (let [abs    (atom nil)
         owner  (as-> (ui/attr c :owner) x (when x ^JFrame (impl x)))
+        undecorated (ui/attr c :undecorated)
         dialog (proxy [JDialog lab.ui.protocols.Implementation] [owner]
                  (abstract ([] @abs)
                            ([x] (reset! abs x) this)))]
     (util/register-key-binding (.getRootPane dialog) "escape"
                                (fn [e] (.setVisible dialog false) (.dispose dialog))
                                :focused-window)
-    dialog))
+    (doto dialog
+      (.setUndecorated (boolean undecorated)))))
 
 (definitializations
   :file-dialog   JFileChooser
@@ -89,6 +91,7 @@ is set before processing other attribute's code."
      (.. ^JDialog (impl c) getRootPane (setDefaultButton (impl v))))
   (:resizable [c _ v]
     (.setResizable ^JDialog (impl c) v))
+  (:undecorated [c _ v])
 
   :file-dialog
   (:title [c _ v]

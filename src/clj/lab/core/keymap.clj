@@ -10,6 +10,15 @@
   [km {ks :keystroke :as cmd}]
   (assoc-in km [:bindings (ks->set ks)] cmd))
 
+(defn commands
+  "Returns a map with keymap names "
+  [km]
+  (loop [{:keys [parent bindings name] :as km} km
+         cmds {}]
+    (if km
+      (recur parent (update-in cmds [name] into (vals bindings)))
+      cmds)))
+
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,
 :lang or :local) and any number of commands that are added as key-bindings."

@@ -145,13 +145,16 @@
 ;; Color
 
 (defn color
-  "Takes a map of RGB values (i.e. {:r 0 :g 0 :b 0}), an integer
+  "Takes a map of RGB values (i.e. {:r 0 :g 0 :b 0 :a 0}), an integer
   representing the three values (0xFFFFFF) or a Color instance,
   and returns a java.awt.Color."
   ([x] 
     (cond (map? x)
-            (let [{:keys [r g b]} x]
-              (color r g b))
+            (let [{:keys [r g b a]} x]
+              (color r g b a))
+          (vector? x)
+            (let [[r g b a] x]
+              (color r g b a))
           (integer? x)
             (color (util/int-to-rgb x))
           (instance? Color x)
@@ -159,7 +162,10 @@
           :else
             (throw (ex-info "Invalid color format." {:value x}))))
   ([r g b]
-    (Color. ^int r ^int g ^int b)))
+    (color r g b nil))
+  ([r g b a]
+    (let [^int a (or a 255)]
+      (Color. ^int r ^int g ^int b a))))
     
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Font

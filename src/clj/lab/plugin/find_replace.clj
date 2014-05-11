@@ -27,7 +27,7 @@
               :modal false
               :owner owner
               :default-button find-next-btn}
-    [:panel {:layout [:box :page]}
+     [:panel {:layout [:box :page]}
       [:panel {:layout [:box :line] :padding 5}
        [:label {:text "Find "}]
        [:text-field {:id "find-text"
