@@ -13,25 +13,25 @@ A plugin is created through the use of `defplugin`, which defines a var named `p
 Usage:
 
     (defplugin 'plugin-name
-      \"Some docstring for the plugin var.\"
+      "Some docstring for the plugin var."
       :type    :global
       :keymaps [km1 km2 km3 ,,,]
       :hooks   {target-var1 hook-fn1 ,,,}
       :init!   init-fn!
       :unload! unload-fn!)
 
-- `name`: can be a symbol, a keyword or a string, all the rest of the fields are optional except for the `:type`:
-- `:type`: possible values are `:global` or `:local`.
-- `:keymaps`: vector that holds keymaps of different types which will be registered and unregisterd with the multimethods defined in `lab.core.keymap`.
-- `:hooks`: map with vars as keys and fns (or vars holding fns) as values, which will be used as a hook using the `robert-hooke` library.
-- `:init!`: function that takes a single argument which is the atom holding the whole app.
-- `:unload!`: function that takes a sinlge argument which is the atom holding the whole app.
+- `name` can be a symbol, a keyword or a string, all the rest of the fields are optional except for the `:type`:
+- `:type` possible values are `:global` or `:local`.
+- `:keymaps` vector that holds keymaps of different types which will be registered and unregisterd with the multimethods defined in `lab.core.keymap`.
+- `:hooks` map with vars as keys and fns (or vars holding fns) as values, which will be used as a hook using the `robert-hooke` library.
+- `:init!` function that takes a single argument which is the atom holding the whole app.
+- `:unload!` function that takes a sinlge argument which is the atom holding the whole app.
 
 ## Loading
 
 While `:global` plugins when loaded are registered in the application, `:local` plugins are registered in the application's current document. If a plugin is already loaded (which is detected by checking the registered plugins) then nothing is done.
 
-The order of actions dureing the loading of a plugin is the following:
+The order of actions during the loading of a plugin is the following:
 
 1. Register Plugin (in the app or current document).
 2. Add Hooks (if any).
