@@ -48,7 +48,7 @@
         local  (->> (ui/listeners source :key)
                  (filter map?)
                  first)]
-    (prn (ui/listeners source :key) (:tag source))
+    #_(prn (ui/listeners source :key) (:tag source))
     (reduce
       (fn [labels [k cmds]]
         (reduce

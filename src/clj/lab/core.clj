@@ -97,9 +97,7 @@ default configuration."
 ;;; Plugin registration
 
 (defn- conj-set [s plugin]
-  (if s
-    (conj s plugin)
-    #{plugin}))
+  (conj (or s #{}) plugin))
 
 (defmethod pl/register-plugin! :global
   [app plugin]

@@ -114,7 +114,8 @@ the unload! function."
 
 (defmacro defplugin
   "Defines a `#'plugin` var with the plugin's definition. All of 
-the following values are optional when defining the plugin.
+the following values are optional when defining the plugin, except for
+the name.
 
 Usage:
 
@@ -128,23 +129,17 @@ Usage:
 
 `name` can be a symbol, a keyword or a string, all the rest of the
 fields are optional except for the `:type`:
-  - `:type` should be one of :global, :lang or :local, this determines where
+  - `:type` should be one of `:global` or `:local`, this determines where
     the plugin is registered as loaded.
-      - :global in the app.
-      - :lang in the language specified (if the type is :lang then a :lang field
-        should be provided).
-      - :local in the app's current document.
-  - `:keymaps` should be vector that holds keymaps of different types
+  - `:keymaps` vector that holds keymaps of different types
     which will be registered and unregisterd with the multimethods
     defined in `lab.core.keymap`.
-  - `:hooks` should be a map with vars as keys and fns (or vars holding fns)
+  - `:hooks` map with vars as keys and fns (or vars holding fns)
     as values, which will be used as a hook using the robert-hooke lib.
-  - `:init!` should be fn that takes a sinlge argument which is the atom holding
-     the whole app. This fn will be called when loading the plugin, after 
-    the keymaps are registered and before the hooks are added.
-  - `:unload!` should be fn that takes a sinlge argument which is the atom holding
-     the whole app. This fn will be called when unloading the plugin, after 
-    the keymaps have been unregistered and before the hooks are removed."
+  - `:init!` fn that takes a single argument which is the atom holding
+     the whole app.
+  - `:unload!` fn that takes a single argument which is the atom holding
+     the whole app."
   [name & [docstr & opts :as options]]
   `(def ~'plugin
       ~(if (string? docstr) docstr (str "Plugin " name))
