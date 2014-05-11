@@ -1,6 +1,6 @@
 (ns lab.ui.swing.menu
-  (:use     [lab.ui.protocols :only [impl to-map listen ignore]])
   (:require [lab.ui.core :as ui]
+            [lab.ui.protocols :refer [impl to-map listen ignore]]
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util])
   (:import  [javax.swing JMenuBar JMenu JMenuItem JSeparator JPopupMenu JComponent]
@@ -13,7 +13,7 @@
   :menu-item   JMenuItem
   :menu-separator JSeparator
   :pop-up-menu JPopupMenu)
-  
+
 (defattributes
   :menu
   (:text [c _ v]

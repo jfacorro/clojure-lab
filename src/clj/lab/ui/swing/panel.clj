@@ -69,6 +69,8 @@
     (:orientation [c _ v]
       (.setOrientation ^JSplitPane (impl c) (util/split-orientations v)))
   :scroll
+    (:layout [c _ v]
+      (throw (ex-info "Can't change the layout of a :scroll component:" {:layout v})))
     (:vertical-increment [c _ v]
       (.. ^JScrollPane (impl c) getVerticalScrollBar (setUnitIncrement 16)))
     (:margin-control [c _ v]
