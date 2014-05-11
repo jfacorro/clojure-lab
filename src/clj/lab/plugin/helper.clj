@@ -7,39 +7,59 @@
   [owner]
   [:dialog {:owner owner
             :modal true
-            :size [500 500]
+            :size [600 500]
             :resizable false
-            :undecorated true
-            :opacity 1}
-   [:scroll {:border :none}
+            :background [0 0 0 0]
+            :undecorated true}
+   [:scroll {:border [:line [0 0 0 0x44] 2]
+             :transparent true
+             :vertical-increment 16}
     [:panel {:layout [:box :page]
              :padding 5
-             :background [0 0 0 255]}]]])
+             :background [0 0 0]}]]])
 
-(defn- section-label [txt]
-  [:label {:text txt
-           :color 0xFFFFFF
-           :font [:size 16 :style :bold]}])
+(defn- section-label
+  [txt]
+  [:panel {:layout [:box :line]
+           :transparent true}
+   [:label {:text txt
+            :color 0xFFFFFF
+            :font [:size 16 :style :bold]}]
+   [:panel {:transparent true}]])
 
 (defn- command-label
   [{:keys [name category keystroke]}]
-  [:label {:text (str "[" (.toUpperCase keystroke) "] " category " - " name)
-           :color 0xFFFFFF
-           :font [:size 14]}])
+  [:panel {:layout [:box :line]
+           :transparent true}
+   [:label {:text (str category " - " name)
+            :color 0xFFFFFF
+            :font [:size 14]}]
+   [:panel {:transparent true
+            :border [:line 0x333333 [0 0 1 0]]
+            :padding [0 10]}]
+   [:label {:text (.toUpperCase ^String (str keystroke))
+            ;; :width 100
+            :color 0xFFFFFF
+            :font [:size 14 :style :bold]}]])
 
-(defn- commands-list [app source]
-  (let [global (:keymap @app)]
-    (reduce-kv
-      (fn [labels k cmds]
+(defn- commands-list
+  [app source]
+  (let [global (:keymap @app)
+        local  (->> (ui/listeners source :key)
+                 (filter map?)
+                 first)]
+    (prn (ui/listeners source :key) (:tag source))
+    (reduce
+      (fn [labels [k cmds]]
         (reduce
           (fn [labels cmd]
             (if (:keystroke cmd)
               (conj labels (command-label cmd))
               labels))
           (conj labels (section-label (str k)))
-          cmds))
+          (sort-by :category cmds)))
       []
-      (km/commands global))))
+      (mapcat km/commands [global local]))))
 
 (defn- help-info
   [{:keys [app source] :as e}]

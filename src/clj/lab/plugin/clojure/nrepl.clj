@@ -271,10 +271,11 @@ input editor."
   (console-traverse-history! e h/forward))
 
 (def ^:private console-keymap
-  (km/keymap :nrepl :local
-             {:keystroke "ctrl enter" :fn ::console-eval-input!}
-             {:keystroke "ctrl up" :fn ::console-prev-history!}
-             {:keystroke "ctrl down" :fn ::console-next-history!}))
+  (km/keymap "nREPL Console"
+    :local
+    {:keystroke "ctrl enter" :fn ::console-eval-input! :name "Eval"}
+    {:keystroke "ctrl up" :fn ::console-prev-history! :name "Prev History"}
+    {:keystroke "ctrl down" :fn ::console-next-history! :name "Next History"}))
 
 (defn- console-view
   [conn-id]
@@ -397,7 +398,7 @@ an nREPL client that connects to that server."
               {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
    (km/keymap (ns-name *ns*)
               :lang :clojure
-              {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
+              {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 
 (defn- init! [app]
   (swap! app assoc :connections {})

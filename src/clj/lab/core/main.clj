@@ -264,12 +264,16 @@ and signals the highlighting process."
     ui/init
     (ui/apply-stylesheet (:styles @app))))
 
+(defn- editor-keymap
+  [{:keys [keymap lang] :as doc}]
+  (or (km/append (:keymap lang) keymap) {}))
+
 (defn text-editor-view
   "Creates a text editor with a document attached to it."
   [doc]
   (-> [:text-editor {:doc doc
                      :text (doc/text @doc)
-                     :listen [:key ::handle-key
+                     :listen [:key handle-key #_(editor-keymap @doc)
                               :insert ::text-editor-change
                               :delete ::text-editor-change]}]
       ui/init
@@ -398,8 +402,9 @@ current text-editor."
 (def ^:private memoized-kw->fn (memoize kw->fn))
 
 (defn- handle-keymap
-  [km e]
+  [km {:keys [app] :as e}]
   (let [[x y] (ui/key-stroke e)
+        km    (km/append (:keymap @app) km)
         cmd   (km/find-or km x y)]
     (when cmd
       (ui/consume e)
