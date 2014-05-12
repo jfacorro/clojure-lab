@@ -124,7 +124,7 @@
 
 (defn- start-nrepl-server [path & [trampoline?]]
   (when-not lein-path
-    (throw (ex-info "No leiningen command found." {})))
+    (throw (ex-info "No leiningen command found in PATH." {})))
   (let [dir  (io/file (util/ensure-dir path))
         proc (popen (if trampoline?
                       nrepl-server-cmd-trampoline
