@@ -82,7 +82,7 @@ and adds new found ones."
       (let [files  (current-dirs (:app e))
             re     (re-pattern s)
             result (->> files
-                     (filter #(.isFile %))
+                     (filter #(.isFile ^File %))
                      (filter #(re-find re (.getCanonicalPath ^File %)))
                      (take max-files)
                      sort)

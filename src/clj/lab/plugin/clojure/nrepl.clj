@@ -56,6 +56,31 @@
     (ns-all-symbols *ns*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Connection
+
+(defn- init-connections
+  [app]
+  (assoc app ::connections {}))
+
+(defn- connection
+  "Gets and sets a connection in the ::connections app key."
+  ([app id]
+   (get-in app [::connections id]))
+  ([app id conn]
+   (assoc-in app [::connections id] conn)))
+
+(defn- remove-connection
+  [app id]
+  (update-in app [::connections] dissoc id))
+
+(defn- current-connection
+  [app]
+  (let [ui      (:ui app)
+        console (ui/find @ui [:#nrepl :split])
+        conn-id (:conn-id (ui/stuff console))]
+    (connection app conn-id)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Eval code
 
 (declare console-output!)
@@ -102,10 +127,16 @@
                          (and current-ns {:ns current-ns}))]
       (nrepl/message client message))))
 
-(defn- eval-and-get-value
+(defn- conn-eval-and-get-value
   [conn code]
   (eval-in-server conn code)
   (first (nrepl/response-values (command-responses conn))))
+
+(defn eval-and-get-value
+  "Evaluates the code in the current nREPL connection
+  and returns the value."
+  [app code]
+  (conn-eval-and-get-value (current-connection @app) code))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; nREPL server & client
@@ -178,9 +209,9 @@
             client-info (create-nrepl-client :host host :port port)
             conn        (merge conn client-info) 
             _           (poll-responses app conn)
-            conn        (assoc conn :current-ns (or (eval-and-get-value conn "(str *ns*)")
+            conn        (assoc conn :current-ns (or (conn-eval-and-get-value conn "(str *ns*)")
                                                     default-ns))]
-        (swap! app assoc-in [:connections id] conn)
+        (swap! app connection id conn)
         (console-output! app "nREPL client connected\n"))
       (catch Exception ex))))
 
@@ -195,7 +226,7 @@ and killing the associated process."
         id   (:tab-id (ui/stuff source))
         tab  (ui/find @ui (ui/id= id))
         conn-id (-> (ui/find tab :split) ui/stuff :conn-id)
-        conn (get-in @app [:connections conn-id])
+        conn (connection @app conn-id)
         proc (:server conn)]
     (if (instance? Thread proc)
       (do
@@ -206,7 +237,7 @@ and killing the associated process."
             result (tplts/confirm "Closing REPL" msg @ui)]
         (when (= :ok result)
           (stop-nrepl-server conn)
-          (swap! app update-in [:connections] dissoc conn-id)
+          (swap! app remove-connection conn-id)
           (ui/update! ui (ui/parent id) ui/remove tab))))))
 
 (defn- console-output!
@@ -222,16 +253,11 @@ and killing the associated process."
   "Send the code provided to the nREPL server and prints
   the results in the output editor."
   [app code]
-  (let [ui      (:ui @app)
-        console (ui/find @ui [:#nrepl :split])
-        conn-id (:conn-id (ui/stuff console))
-        conn    (get-in @app [:connections conn-id])]
-    (when conn-id
-      (eval-in-server conn code)
-      (future 
-        (doseq [{:keys [ns value] :as res} (command-responses conn)]
-          (when value
-            (console-output! app (str value "\n"))))))))
+  (when-let [conn (current-connection @app)]
+    (eval-in-server conn code)
+    (future
+      (doseq [{:keys [ns value] :as res} (command-responses conn)]
+        (when value (console-output! app (str value "\n")))))))
 
 (defn- console-add-history!
   "Adds the code provided to the nREPL console command history."
@@ -316,7 +342,7 @@ to the ui in the bottom section."
                 :name   (-> file .getParent io/file .getName)}
         tab    (tab-view app conn)]
     (listen-nrepl-server-output! app conn handle-nrepl-server-event)
-    (swap! app assoc-in [:connections conn-id] conn)
+    (swap! app connection conn-id conn)
     (ui/action
       (ui/update! ui (ui/parent "bottom")
         (fn [x]
@@ -357,12 +383,8 @@ an nREPL client that connects to that server."
 
 (defn- symbols-in-scope-from-connection
   [{:keys [editor app] :as e}]
-  (let [ui      (:ui @app)
-        console (ui/find @ui [:#nrepl :split])
-        conn-id (:conn-id (ui/stuff console))
-        conn    (get-in @app [:connections conn-id])]
-    (when conn
-      (eval-and-get-value conn (str ns-symbols-fns)))))
+  (when-let [conn (current-connection @app)]
+    (conn-eval-and-get-value conn (str ns-symbols-fns))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Hooks
@@ -373,14 +395,11 @@ an nREPL client that connects to that server."
     (f app doc)
     (let [app     (f app doc)
           lang    (:lang @doc)
-          ui      (:ui app)
-          console (ui/find @ui [:#nrepl :split])
-          conn-id (:conn-id (ui/stuff console))
-          conn    (get-in app [:connections conn-id])]
+          conn    (current-connection app)]
       (if (and conn (= (:name lang) "Clojure"))
         (let [doc-ns (clj-lang/find-namespace @doc :default default-ns)]
-          (eval-and-get-value conn (format "(ns %s)" doc-ns))
-          (assoc-in app [:connections conn-id :current-ns] doc-ns))
+          (conn-eval-and-get-value conn (format "(ns %s)" doc-ns))
+          (connection app (:id conn) (assoc conn :current-ns doc-ns)))
         app))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -401,7 +420,7 @@ an nREPL client that connects to that server."
               {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 
 (defn- init! [app]
-  (swap! app assoc :connections {})
+  (swap! app init-connections)
   (swap! app
     update-in [:langs :clojure]
     update-in [:autocomplete] conj #'symbols-in-scope-from-connection))
