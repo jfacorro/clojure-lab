@@ -106,7 +106,7 @@ Returns nil if there's no token in the current caret position."
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.editor.autocomplete
       :local
-      {:fn ::autocomplete :keystroke "ctrl space"})])
+      {:fn ::autocomplete :keystroke "ctrl space" :name "Autocomplete"})])
 
 (plugin/defplugin lab.plugin.editor.autocomplete
   :type    :local

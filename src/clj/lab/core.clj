@@ -126,8 +126,8 @@ default configuration."
 to the doc."
   [app doc]
   (let [lang-id (-> @doc :lang :id)]
-    (doseq [plugin ((config @app :lang-plugins) lang-id)]
-      (pl/load-plugin! app plugin))))
+    (doseq [plugin-name ((config @app :lang-plugins) lang-id)]
+      (pl/load-plugin! app plugin-name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document operations

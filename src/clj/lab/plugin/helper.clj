@@ -31,7 +31,8 @@
   [{:keys [name category keystroke]}]
   [:panel {:layout [:box :line]
            :transparent true}
-   [:label {:text (str category " - " name)
+   [:label {:text (str (or (and category (str category " - "))) 
+                    name)
             :color 0xFFFFFF
             :font [:size 14]}]
    [:panel {:transparent true
@@ -42,13 +43,30 @@
             :color 0xFFFFFF
             :font [:size 14 :style :bold]}]])
 
+(defn- default-local-keymap
+  [x]
+  (->> (ui/listeners x :key)
+    (filter map?)
+    first))
+
+(defmulti local-keymap
+  "Takes a UI component and returns its local keymap."
+  :tag)
+
+(defmethod local-keymap :default
+  [x]
+  (default-local-keymap x))
+
+(defmethod local-keymap :text-editor
+  [x]
+  (if-let [doc (ui/attr x :doc)]
+    (:keymap @doc)
+    (default-local-keymap x)))
+
 (defn- commands-list
   [app source]
   (let [global (:keymap @app)
-        local  (->> (ui/listeners source :key)
-                 (filter map?)
-                 first)]
-    #_(prn (ui/listeners source :key) (:tag source))
+        local  (local-keymap source)]
     (reduce
       (fn [labels [k cmds]]
         (reduce

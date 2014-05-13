@@ -5,4 +5,3 @@
   - Selection library
   - Events
   - Public API: attributes and functions
-
