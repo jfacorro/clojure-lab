@@ -19,24 +19,24 @@ that may need to be computed or mantained)."
   (update-in doc [:history] h/add ops))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Editing operations and their inverse
+;;; Undoable protocol
 
-(defprotocol Bijection
-  (direct [this] "Returns a direct monadic function of this operation.")
-  (inverse [this] "Returns an inverse monadic function of this operation."))
+(defprotocol Undobable
+  (redo* [this] "Returns a function that redoes some operation.")
+  (undo* [this] "Returns a function that undoes some operation."))
 
 (defrecord InsertText [offset s]
-  Bijection
-  (direct [this]
+  Undobable
+  (redo* [this]
     #(p/insert % offset s))
-  (inverse [this]
+  (undo* [this]
     #(p/delete % offset (+ offset (count s)))))
 
 (defrecord DeleteText [start end s]
-  Bijection
-  (direct [this]
+  Undobable
+  (redo* [this]
     #(p/delete % start end))
-  (inverse [this]
+  (undo* [this]
     #(p/insert % start s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,7 +138,7 @@ buffer."
   ([x hist]
     (let [ops     (h/current hist)
           hist    (h/rewind hist)
-          inv-ops (->> ops (map inverse) reverse)]
+          inv-ops (->> ops (map undo*) reverse)]
       (h/with-no-history
         [(reduce #(%2 %) x inv-ops) hist]))))
 
@@ -150,7 +150,7 @@ buffer."
     (let [hist     (h/forward old-hist)
           ops      (when (not= hist old-hist)
                      (h/current hist))
-          inv-ops  (map direct ops)]
+          inv-ops  (map redo* ops)]
       (h/with-no-history
         [(reduce #(%2 %) x inv-ops) hist]))))
 
