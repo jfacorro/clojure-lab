@@ -21,19 +21,19 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undoable protocol
 
-(defprotocol Undobable
+(defprotocol Undoable
   (redo* [this] "Returns a function that redoes some operation.")
   (undo* [this] "Returns a function that undoes some operation."))
 
 (defrecord InsertText [offset s]
-  Undobable
+  Undoable
   (redo* [this]
     #(p/insert % offset s))
   (undo* [this]
     #(p/delete % offset (+ offset (count s)))))
 
 (defrecord DeleteText [start end s]
-  Undobable
+  Undoable
   (redo* [this]
     #(p/delete % start end))
   (undo* [this]
