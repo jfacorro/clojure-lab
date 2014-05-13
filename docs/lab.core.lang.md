@@ -5,6 +5,7 @@
     - The most basic one is the extension of the file.
     - Arbitrary rules can be added.
   - There has to be a default language (plain document).
+  - Parse tree
   - Properties
     - :name: descriptive name.
     - description: 
