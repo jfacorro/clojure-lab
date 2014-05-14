@@ -38,7 +38,8 @@
                               lab.plugin.editor.autocomplete
                               lab.plugin.editor.delimiter-matching
                               lab.plugin.editor.rainbow-delimiters
-                              lab.plugin.editor.paredit]
+                              lab.plugin.editor.paredit
+                              lab.plugin.clojure.macroexpand]
                     :markdown [lab.plugin.editor.syntax-highlighting]}
    :plugins-dir   "plugins"
    :current-dir   "."

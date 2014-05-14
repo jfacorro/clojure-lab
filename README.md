@@ -30,16 +30,13 @@ Even when I discovered [Counterclockwise][3] and [Light Table][5] was annouced ,
 
 ## Running the Application
 
-There are currently two runnable applications, the **proto**(type) and **lab** proper.
-The entry points for each of these are in the namespaces `proto.main` and `lab.main` respectively.
-
-    $ lein repl
-    user> (use 'proto.main)
-    user> (-main)
+The application can be run by either using the `lein run` or starting a REPL and then calling the `-main` function:
 
     $ lein repl
     user> (use 'lab.main)
     user> (-main nil)
+
+An executable `lab.jar` file can be generated through the use of the `lein build` command.
 
 ## Features
 
@@ -47,32 +44,32 @@ Most of the features in the following list were extracted from the post [The Ide
 
 ### Code Editing
 
-- Syntax highlighting.
-- Brace, bracket, paren matching.
-- Paredit equivalency.
-- Easily-togglable rainbow parens.
+- Syntax highlighting. **DONE**
+- Brace, bracket, paren matching. **DONE**
+- Paredit equivalency. **DONE**
+- Easily-togglable rainbow parens. **DONE**
 - S-expression navigation.
-- in-place popup macroexpansion.
-- Auto completion.
+- In-place popup macroexpansion. **DONE**
+- Auto completion. **DONE**
 
 ### Project Organization
 
-- File management.
+- File management. **DONE**
 - Code compilation.
 - Dependencies resolution (maven & leiningen support).
-- Initial configuration
-- Static analysis
-    - Current file code outline.
+- Initial configuration. **DONE**
+- Static analysis:
+    - Current file code outline. **DONE**
     - Static namespace browser.
 
 ### REPL
-- Multiple REPLs support (each running on a separate process).
+- Multiple REPLs support (each running on a separate process). **DONE**
 - Execution history:
     - Search.
-    - Execute again.
+    - Execute again. **DONE**
 - Runtime namespace browser.
 - Full editor capability in the REPL.
-- Automatic generation and configuration of the classpath for local REPLs.
+- Automatic generation and configuration of the classpath for local REPLs. **DONE (Leiningen)**
 
 ### Nice-to-have
 - Full Java support Integrated (debugging, code completion, profiling, etc.).
@@ -86,7 +83,7 @@ Most of the features in the following list were extracted from the post [The Ide
 
 # License
 
-Copyright © 2013 Juan Facorro
+Copyright © 2014 Juan Facorro
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
