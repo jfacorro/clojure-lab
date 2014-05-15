@@ -219,14 +219,14 @@ and signals the highlighting process."
   [{:keys [app type source offset text length] :as e}]
   (let [editor   source
         doc      (ui/attr editor :doc)]
-    (when (not (:read-only @doc))
-      (case type
-        :insert (swap! doc doc/insert offset text)
-        :remove (swap! doc doc/delete offset (+ offset length))))))
+    (case type
+      :insert (swap! doc doc/insert offset text)
+      :remove (swap! doc doc/delete offset (+ offset length)))))
 
 ;; Key handle
 
-(defn- handle-key [{app :app :as e}]
+(defn- handle-key
+  [{app :app :as e}]
   (let [ui     (:ui @app)
         editor (:source e)
         doc    (ui/attr editor :doc)
@@ -243,6 +243,7 @@ and signals the highlighting process."
         (ui/handle-event (:fn cmd) e)))))
 
 ;; Change font size
+
 (defn change-font-size [e]
   (when (contains? (:modifiers e) :ctrl)
     (let [app    (:app e)

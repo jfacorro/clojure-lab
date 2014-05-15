@@ -15,10 +15,9 @@
             hist   (:history @doc)]
         (swap! doc f)
         ;; TODO: Fix this abominable scheme for undo/redo
-        (swap! doc assoc :read-only true)
-        (let [[editor hist] (f editor hist)]
-          (ui/update! ui (ui/id= id) (constantly editor)))
-        (swap! doc dissoc :read-only)))))
+        (doc/no-op
+          (let [[editor hist] (f editor hist)]
+            (ui/update! ui (ui/id= id) (constantly editor))))))))
 
 (defn redo! [e]
   (undo-redo! e doc/redo))

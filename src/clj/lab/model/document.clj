@@ -74,23 +74,39 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Document Record
 
+(def ^{:private true :dynamic true} *no-op* false)
+
+(defmacro no-op
+  "Any text editing operations (insertor delete) done to any document
+  in the body are a no op (i.e. the document's text is unaltered)."
+  [& body]
+  `(binding [*no-op* true]
+    ~@body))
+
+(defmacro ^:private with-no-op [doc & body]
+  `(if *no-op*
+     ~doc
+     ~@body))
+
 (defrecord Document [name path modified? buffer lang]
   p/Text
   (insert [this offset s]
-    (let [ops [(->InsertText offset s)]]
-      (-> this
-        (update-in [:buffer] p/insert offset s)
-        (assoc-in [:modified?] true)
-        (archive-operations ops))))
+    (with-no-op this
+      (let [ops [(->InsertText offset s)]]
+        (-> this
+          (update-in [:buffer] p/insert offset s)
+          (assoc-in [:modified?] true)
+          (archive-operations ops)))))
   (append [this s]
     (p/insert this (p/length this) s))
   (delete [this start end]
-    (let [s   (p/substring buffer start end)
-          ops [(->DeleteText start end s)]]
-      (-> this
-        (archive-operations ops)
-        (update-in [:buffer] p/delete start end)
-        (assoc-in [:modified?] true))))
+    (with-no-op this
+      (let [s   (p/substring buffer start end)
+            ops [(->DeleteText start end s)]]
+        (-> this
+          (archive-operations ops)
+          (update-in [:buffer] p/delete start end)
+          (assoc-in [:modified?] true)))))
   (length [this]
     (p/length buffer))
   (text [this]
