@@ -21,23 +21,45 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undoable protocol
 
-(defprotocol Undoable
-  (redo* [this] "Returns a function that redoes some operation.")
-  (undo* [this] "Returns a function that undoes some operation."))
-
 (defrecord InsertText [offset s]
-  Undoable
-  (redo* [this]
+  h/Undoable
+  (h/redo [this]
     #(p/insert % offset s))
-  (undo* [this]
+  (h/undo [this]
     #(p/delete % offset (+ offset (count s)))))
 
 (defrecord DeleteText [start end s]
-  Undoable
-  (redo* [this]
+  h/Undoable
+  (h/redo [this]
     #(p/delete % start end))
-  (undo* [this]
+  (h/undo [this]
     #(p/insert % start s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Document Undo/Redo
+
+(defn undo
+  ([x]
+    (let [[x hist] (undo x (:history x))]
+      (assoc x :history hist)))
+  ([x hist]
+    (let [ops     (h/current hist)
+          hist    (h/rewind hist)
+          inv-ops (->> ops (map h/undo) reverse)]
+      (h/with-no-history
+        [(reduce #(%2 %) x inv-ops) hist]))))
+
+(defn redo 
+  ([x]
+    (let [[x hist] (redo x (:history x))]
+      (assoc x :history hist)))
+  ([x old-hist]
+    (let [hist     (h/forward old-hist)
+          ops      (when (not= hist old-hist)
+                     (h/current hist))
+          inv-ops  (map h/redo ops)]
+      (h/with-no-history
+        [(reduce #(%2 %) x inv-ops) hist]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Default buffer implementation
@@ -127,32 +149,6 @@ buffer."
       (spit path (text doc))
       (assoc doc :modified? false))
     doc))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Undo/Redo
-
-(defn undo
-  ([x]
-    (let [[x hist] (undo x (:history x))]
-      (assoc x :history hist)))
-  ([x hist]
-    (let [ops     (h/current hist)
-          hist    (h/rewind hist)
-          inv-ops (->> ops (map undo*) reverse)]
-      (h/with-no-history
-        [(reduce #(%2 %) x inv-ops) hist]))))
-
-(defn redo 
-  ([x]
-    (let [[x hist] (redo x (:history x))]
-      (assoc x :history hist)))
-  ([x old-hist]
-    (let [hist     (h/forward old-hist)
-          ops      (when (not= hist old-hist)
-                     (h/current hist))
-          inv-ops  (map redo* ops)]
-      (h/with-no-history
-        [(reduce #(%2 %) x inv-ops) hist]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Text operations

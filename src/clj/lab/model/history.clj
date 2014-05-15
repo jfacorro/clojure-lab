@@ -3,6 +3,10 @@
   (:refer-clojure :exclude [empty empty?])
   (:require [clojure.core :as core]))
 
+(defprotocol Undoable
+  (redo [this] "Returns a function that redoes some operation.")
+  (undo [this] "Returns a function that undoes some operation."))
+
 (def ^{:dynamic true :private true} *save-in-history*
   "Indicates if record-operations function should add
   operations to the history. Should be set to false when
@@ -25,8 +29,7 @@ sure that operations are being saved."
   `(binding [*save-in-history* true]
     ~@body))
 
-
-(defn history
+ (defn history
   "Creates a history that mantains two stacks (past and future)."
   ([]
     (history [] []))
@@ -82,9 +85,9 @@ sure that operations are being saved."
   [{:keys [future present past] :as h} op]
   (if *save-in-history*
     (assoc h
-           :past    (if present (conj past present) past)
-           :present op
-           :future  [])
+      :past    (if present (conj past present) past)
+      :present op
+      :future  [])
     h))
   
 (defn empty
