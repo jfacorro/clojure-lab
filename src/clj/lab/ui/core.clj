@@ -457,6 +457,19 @@ used in the component's definition (e.g. in event handlers)."
   (reduce apply-class (hiccup->component c) stylesheet))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Getting info for a component
+
+(defn info-attr [tag]
+  (->> (methods p/set-attr)
+    keys
+    (filter #(isa? h/hierarchy tag (first %)))
+    (sort-by first)))
+
+(defn info-components []
+  (->> (methods p/initialize)
+    keys))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Properties for all UI components implementation independent
 
 (defattributes
