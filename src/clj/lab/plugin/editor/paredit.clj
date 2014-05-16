@@ -148,8 +148,9 @@ and the closing delimiter.
   ; (Foo.|
   ; (Foo.)|"
   [e]
-  (close-delimiter e)
-  (insert-newline e))
+  (doc/bundle-operations
+    (close-delimiter e)
+    (insert-newline e)))
 
 (defn- location-index
   "Returns the index of the location in the parent's children vector"
@@ -202,9 +203,10 @@ and the position relative to the sibilings."
         ploc    (delim-parent loc)
         indent  (if ploc (indentation editor ploc loc) 0)
         spc     (apply str (repeat indent \space))]
-    (model/delete editor bol !spc)
-    (when ploc
-      (model/insert editor bol spc))))
+    (doc/bundle-operations
+      (model/delete editor bol !spc)
+      (when ploc
+        (model/insert editor bol spc)))))
 
 (defn- insert-newline
   "Inserts a newline and formats the following lines.
@@ -215,8 +217,9 @@ and the position relative to the sibilings."
     |(display (+ n 1)
               port))"
   [{:keys [source] :as e}]
-  (model/insert source (ui/caret-position source) "\n")
-  (indent-line e))
+  (doc/bundle-operations
+    (model/insert source (ui/caret-position source) "\n")
+    (indent-line e)))
 
 (defn- empty-line?
   "Takes a string and the index limits of a string.
@@ -262,35 +265,36 @@ and the position relative to the sibilings."
                 (lang/location tree eol)
         child?  (delim-parent loc)
         empty-ln? (empty-line? txt bol eol)]
-    (cond
-      ;; Indent inline comment
-      ;; (There's a comment in the same line)
-      (= :comment (lang/location-tag last-loc))
-        (let [len (- last-pos bol)
-              spc (apply str (repeat (- 40 len) " "))]
-          (model/insert editor last-pos spc))
-      ;; Add inline comment
-      ;; (The line does not have a comment and the caret is at the end)
-      (and (not empty-ln?) (= pos eol))
-        (let [len (- eol bol)
-              spc (apply str (repeat (- 40 len) " "))]
-          (model/insert editor eol (str spc ";")))
-      ;; Create a comment in a whole line
-      ;; (Current location is the child of some parent structure)
-      child?
-        (let [n   (if (= pos bol) 1 2)
-              nls (apply str (repeat n "\n"))]
-          (when (not empty-ln?)
-            (model/insert editor pos nls)
+    (doc/bundle-operations
+      (cond
+        ;; Indent inline comment
+        ;; (There's a comment in the same line)
+        (= :comment (lang/location-tag last-loc))
+          (let [len (- last-pos bol)
+                spc (apply str (repeat (- 40 len) " "))]
+            (model/insert editor last-pos spc))
+        ;; Add inline comment
+        ;; (The line does not have a comment and the caret is at the end)
+        (and (not empty-ln?) (= pos eol))
+          (let [len (- eol bol)
+                spc (apply str (repeat (- 40 len) " "))]
+            (model/insert editor eol (str spc ";")))
+        ;; Create a comment in a whole line
+        ;; (Current location is the child of some parent structure)
+        child?
+          (let [n   (if (= pos bol) 1 2)
+                nls (apply str (repeat n "\n"))]
+            (when (not empty-ln?)
+              (model/insert editor pos nls)
+              (indent-line e))
+            (model/insert editor (+ pos (dec n)) ";; ")
             (indent-line e))
-          (model/insert editor (+ pos (dec n)) ";; ")
-          (indent-line e))
-      ;; Comment section
-      :else
-        (do
-          (when (not empty-ln?)
-            (model/insert editor pos "\n"))
-          (model/insert editor pos ";;; ")))))
+        ;; Comment section
+        :else
+          (do
+            (when (not empty-ln?)
+              (model/insert editor pos "\n"))
+            (model/insert editor pos ";;; "))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Deleting and killing
@@ -306,31 +310,33 @@ and the position relative to the sibilings."
         ploc (zip/up loc)
         tag  (lang/location-tag loc)
         llen (lang/location-length loc)]
-    (when (<= 0 pos (dec len))
-      (cond
-        (or (not (delimiter? ch))
-            (and (ignore? tag) (< i pos (+ i llen))))
-          (model/delete editor pos (inc pos))
-        (and (not= \" ch)
-             (delimiter? ch)
-             (-> ploc zip/children count (<= 2)))
-          (let [start (lang/offset ploc)
-                len   (lang/location-length ploc)]
-           (model/delete editor start (+ start len)))
-        (and (= \" ch)
-             (lang/loc-string? loc)
-             (= 2 (lang/location-length loc)))
-          (model/delete editor i (+ i llen))
-        :else
-          (ui/caret-position editor (dir pos))))))
+    (doc/bundle-operations
+      (when (<= 0 pos (dec len))
+        (cond
+          (or (not (delimiter? ch))
+              (and (ignore? tag) (< i pos (+ i llen))))
+            (model/delete editor pos (inc pos))
+          (and (not= \" ch)
+               (delimiter? ch)
+               (-> ploc zip/children count (<= 2)))
+            (let [start (lang/offset ploc)
+                  len   (lang/location-length ploc)]
+              (model/delete editor start (+ start len)))
+          (and (= \" ch)
+               (lang/loc-string? loc)
+               (= 2 (lang/location-length loc)))
+            (model/delete editor i (+ i llen))
+          :else
+            (ui/caret-position editor (dir pos)))))))
 
 (defn- delete-selection
   "Deletes the selection of characters but not the delimiters."
   [editor start end]
   (let [txt (model/text editor)
         sel (subs txt start end)]
-    (model/delete editor start end)
-    (model/insert editor start (->> sel (remove (comp not delimiter?)) (apply str)))))
+    (doc/bundle-operations
+      (model/delete editor start end)
+      (model/insert editor start (->> sel (remove (comp not delimiter?)) (apply str))))))
 
 (defn- forward-delete  
   "(quu|x \"zot\")
@@ -395,15 +401,16 @@ and the position relative to the sibilings."
         ploc    (delim-parent loc)
         tag     (lang/location-tag loc)]
     (cond
+      ;; "|bar baz" => "|"
+      (= :string tag)                    
+        (model/delete editor
+                      (inc i)
+                      (+ i (dec (lang/location-length loc))))
       ploc
         (let [fst   (zip/down ploc)
               start (lang/offset (zip/right fst))
               end   (-> fst zip/rightmost lang/offset)]
           (model/delete editor start end))
-      (= :string tag)
-        (model/delete editor
-                      (inc i)
-                      (+ i (dec (lang/location-length loc))))
       :else
         (when-let [end (find-char (model/text editor) pos #{\newline} inc)]
           (model/delete editor pos end)))))
@@ -521,8 +528,9 @@ it.
             i       (if (= left loc) i (lang/offset left))]
         (when-not (lang/whitespace? parent)
           (ui/action
-            (model/insert editor (+ i len) ")")
-            (model/insert editor i "(")))))))
+            (doc/bundle-operations
+              (model/insert editor (+ i len) ")")
+              (model/insert editor i "("))))))))
 
 (defn- splice-sexp-killing
   "Looks for the location in the current caret position.
@@ -542,17 +550,15 @@ the parent's list text."
                 (if (= :list tag)
                   [(-> loc delim-parent) (-> loc delim-parent zip/up delim-parent)]
                   [(zip/up loc) (-> loc delim-parent)])]
-    (when (and parent
-               #_(not (lang/whitespace? loc)) ; commented out so it doesn't matter where 
-                                              ; inside a form you are when splicing.
-               )
+    (when parent               
       (ui/action
-        ; TODO: take into account delimiters like #{ or #(
+        ;; TODO: take into account delimiters like #{ or #(
         (let [[start end]   (lang/limits loc)
               [pstart pend] (lang/limits parent)
               s             (f editor [start end] [pstart pend])]
-          (model/delete editor pstart pend)
-          (model/insert editor pstart s)
+          (doc/bundle-operations 
+            (model/delete editor pstart pend)
+            (model/insert editor pstart s))
           (ui/caret-position editor (dec pos)))))))
 
 (defn splice-sexp
@@ -618,7 +624,8 @@ parentheses by deleting and inserting the modified substring.
       (let [[pstart pend] (lang/limits parent)
             delim         (-> parent zip/down dirmost zip/node)
             [start end]   (lang/limits next-loc)]
-        (f editor pos [pstart pend] [start end] delim)))))
+        (doc/bundle-operations
+          (f editor pos [pstart pend] [start end] delim))))))
 
 (defn forward-slurp-sexp
   "(foo (bar |baz) quux zot)
@@ -661,7 +668,8 @@ parentheses by deleting and inserting the modified substring.
       (let [plims (lang/limits parent)
             delim (-> parent zip/down dirmost zip/node)
             lims  (lang/limits next-loc)]
-        (f editor pos plims lims delim)))))
+        (doc/bundle-operations 
+          (f editor pos plims lims delim))))))
 
 (defn forward-barf-sexp
   "(foo (bar |baz quux) zot)

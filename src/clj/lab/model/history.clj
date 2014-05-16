@@ -89,7 +89,13 @@ sure that operations are being saved."
       :present op
       :future  [])
     h))
-  
+
+(defn update
+  "Takes a function that receives the history's present
+  value and additional arguments."
+  [h f & args]
+  (apply update-in h [:present] f args))
+
 (defn empty
   "Removes all operations from the history."
   [_]

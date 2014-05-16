@@ -13,10 +13,32 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; History
 
+(def ^{:private true :dynamic true} *bundle* nil)
+
+(defn- current-bundle [doc]
+  (-> doc :history h/current meta ::bundle))
+
 (defn- archive-operations
   "Add a list of operations in the history."
   [doc ops]
-  (update-in doc [:history] h/add ops))
+  (cond
+    (and *bundle* (= *bundle* (current-bundle doc)))
+      (update-in doc [:history] h/update into ops)
+    *bundle*
+      (update-in doc [:history] h/add (with-meta ops {::bundle *bundle*}))
+    :else
+      (update-in doc [:history] h/add ops)))
+
+(defmacro bundle-operations
+  "Creates a context in which all operations done to a document
+  are bundled in a sinlge operation in its history.
+  When two o more bundlings are nested, only the first onr is 
+  considered."
+  [& body]
+  `(if *bundle*
+     ~@body
+     (binding [*bundle* (gensym "bundle-")]
+       ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Undoable protocol
