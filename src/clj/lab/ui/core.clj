@@ -459,15 +459,33 @@ used in the component's definition (e.g. in event handlers)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Getting info for a component
 
-(defn info-attr [tag]
+(defn info-attrs [tag]
   (->> (methods p/set-attr)
     keys
     (filter #(isa? h/hierarchy tag (first %)))
-    (sort-by first)))
+    (map second)
+    distinct
+    sort))
 
 (defn info-components []
   (->> (methods p/initialize)
     keys))
+
+(defn info-events
+  "Returns all available events for "
+  [tag]
+  (->> (methods p/listen)
+    keys
+    (filter #(isa? h/hierarchy tag (first %)))
+    (map second)
+    distinct
+    sort))
+
+(defn info [tag]
+  (clojure.pprint/pprint
+    {:component tag
+     :attrs (info-attrs tag)
+     :events (info-events tag)}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Properties for all UI components implementation independent
