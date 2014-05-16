@@ -314,7 +314,7 @@ and the position relative to the sibilings."
       (when (<= 0 pos (dec len))
         (cond
           (or (not (delimiter? ch))
-              (and (ignore? tag) (< i pos (+ i llen))))
+              (and (ignore? tag) (< i pos (+ i (dec llen)))))
             (model/delete editor pos (inc pos))
           (and (not= \" ch)
                (delimiter? ch)

@@ -13,7 +13,7 @@ that may need to be computed or mantained)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; History
 
-(def ^{:private true :dynamic true} *bundle* nil)
+(def ^{:dynamic true} *bundle* nil)
 
 (defn- current-bundle [doc]
   (-> doc :history h/current meta ::bundle))
@@ -36,7 +36,7 @@ that may need to be computed or mantained)."
   considered."
   [& body]
   `(if *bundle*
-     ~@body
+     (do ~@body)
      (binding [*bundle* (gensym "bundle-")]
        ~@body)))
 
