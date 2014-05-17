@@ -235,8 +235,7 @@ from the current position of the caret."
           result  (when (seq ptrn)
                         (first (find-limits ptrn (subs (model/text editor) offset))))]
     (if result
-      (or (ui/selection editor (map (partial + offset) result))
-          true)
+      (boolean (ui/selection editor (map (partial + offset) result)))
       (when (seq (find-limits ptrn (model/text editor)))
           (ui/caret-position editor 0)
           (find-next e))))))
@@ -247,8 +246,9 @@ function to look for the next match."
   [{:keys [app source] :as e}]
   (let [dialog  (:dialog (ui/stuff source))
         ptrn    (model/text (ui/find @dialog :#find-text))]
-    (swap! app assoc ::find-pattern ptrn)
-    (find-next e)))
+    (when (seq ptrn)
+      (swap! app assoc ::find-pattern ptrn)
+      (find-next e))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Show dialogs

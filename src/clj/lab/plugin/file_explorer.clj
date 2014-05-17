@@ -70,9 +70,9 @@ directories are returned. Otherwise the file-seq for the
 
 (defn- search-file
   "Checks the search text in the field and finds the 
-files for which any part of its full path matches the
-search string. Finally it removes all the previous items
-and adds new found ones."
+  files for which any part of its full path matches the
+  search string. Finally it removes all the previous items
+  and adds new found ones."
   [e]
   (let [field  (:source e)
         dialog (:dialog (ui/stuff field))
@@ -266,21 +266,24 @@ should be cancelled when the tab is closed."
                 :#file-explorer
                 ui/update-attr :stuff update-in [:watches] conj f)))
 
+(defn- create-file-explorer! [app]
+  (let [ui (:ui @app)]
+    (when-not (ui/find @ui :#file-explorer)
+      (ui/update! ui :#left ui/add (file-explorer app)))))
+
 (defn- open-directory
   "Create the file explorer tab if it doesn't exist and add
 the directory structure to it, otherwise just add the directory
 structure."
-  [e]
-  (let [app          (:app e)
-        ui           (:ui @app)
+  [{:keys [app] :as e}]
+  (let [ui           (:ui @app)
         dir          (lab/config @app :current-dir)
         dir-dialog   (ui/init (tplts/directory-dialog "Open Directory" dir @ui))
         [result dir] (ui/attr dir-dialog :result)
         dir          ^File (when dir (io/file (.getCanonicalPath ^File dir)))]
     (when (= result :accept)
       (swap! app lab/config :current-dir (.getCanonicalPath dir))
-      (when-not (ui/find @ui :#file-explorer)
-        (ui/update! ui :#left ui/add (file-explorer app)))
+      (create-file-explorer! app)
       (ui/update! ui [:#file-explorer :#file-explorer-root] ui/add (load-dir dir))
       (watch-dir! app dir))))
 
@@ -290,6 +293,10 @@ structure."
               {:category "File" :name "Open Dir" :fn ::open-directory :keystroke "ctrl d"}
               {:category "File" :name "Search & Open" :fn ::search-open-file :keystroke "ctrl alt o"})])
 
+(defn- init! [app]
+  (create-file-explorer! app))
+
 (defplugin lab.plugin.file-explorer
-  :type :global
+  :type    :global
+  :init!   #'init!
   :keymaps keymaps)

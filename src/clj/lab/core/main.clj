@@ -436,6 +436,14 @@ inserting a fixed first parameter, which is the app."
 (def styles
   {#{:label :tree :button}
                 {:font [:name "Consolas" :size 14]}
+   :tree        {:background 0x333333
+                 :selected-node-background 0x666666
+                 :selected-node-color 0xFFFFFF
+                 :unselected-node-background 0x333333
+                 :unselected-node-color 0xFFFFFF
+                 :open-icon "folder.png"
+                 :closed-icon "folder.png"
+                 :leaf-icon "file.png"}
    #{:text-editor :text-area :scroll :split :panel :tree}
                 {:border :none :padding 0}
    :line-number {:font        [:name "Consolas" :size 16]

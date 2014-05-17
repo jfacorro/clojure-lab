@@ -2,49 +2,42 @@
   (:use     [lab.ui.protocols :only [Component abstract impl Selection selection to-map listen ignore]])
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]]
-            [lab.ui.swing.util :as util])
-  (:import  [javax.swing JTabbedPane JScrollPane JPanel JComponent 
-                         UIManager UIDefaults]
+            [lab.ui.swing.util :as util :refer [set-prop]])
+  (:import  [javax.swing JTabbedPane JScrollPane JPanel JComponent]
             [java.awt Insets Color]))
-
-(defn- set-prop [^UIDefaults m k v]
-  (doto m
-    (.remove k)
-    (.put k v)))
 
 (def transparent (Color. 0 0 0 0))
 
-(-> (UIManager/getDefaults)
-  (set-prop "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
-  (set-prop "TabbedPane.tabInsets" (Insets. 0 0 0 0))
-  (set-prop "TabbedPane.selectedTabPadInsets" (Insets. 0 0 0 0))
-  (set-prop "TabbedPane.contentBorderInsets" (Insets. 0 0 0 0))
-  
-  (set-prop "TabbedPane.tabsOverlapBorder" true)
-  (set-prop "TabbedPane.selectionFollowsFocus" true)
-  (set-prop "TabbedPane.opaque" false)
-  (set-prop "TabbedPane.tabsOpaque" false)
+(set-prop "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
+(set-prop "TabbedPane.tabInsets" (Insets. 0 0 0 0))
+(set-prop "TabbedPane.selectedTabPadInsets" (Insets. 0 0 0 0))
+(set-prop "TabbedPane.contentBorderInsets" (Insets. 0 0 0 0))
 
-  (set-prop "TabbedPane.labelShift" 0)
-  (set-prop "TabbedPane.textIconGap" 0)
-  (set-prop "TabbedPane.tabRunOverlay" 0)
-  (set-prop "TabbedPane.selectedLabelShift" 0)
+(set-prop "TabbedPane.tabsOverlapBorder" true)
+(set-prop "TabbedPane.selectionFollowsFocus" true)
+(set-prop "TabbedPane.opaque" false)
+(set-prop "TabbedPane.tabsOpaque" false)
 
-  (set-prop "TabbedPane.darkShadow" transparent)
-  (set-prop "TabbedPane.highlight" transparent)
-  (set-prop "TabbedPane.light" transparent)
-  (set-prop "TabbedPane.shadow" transparent)
+(set-prop "TabbedPane.labelShift" 0)
+(set-prop "TabbedPane.textIconGap" 0)
+(set-prop "TabbedPane.tabRunOverlay" 0)
+(set-prop "TabbedPane.selectedLabelShift" 0)
 
-  (set-prop "TabbedPane.borderHightlightColor" transparent)
-  (set-prop "TabbedPane.selectHighlight" transparent)
-  (set-prop "TabbedPane.background" transparent)
-  (set-prop "TabbedPane.foreground" transparent)
-  
-  (set-prop "TabbedPane.unselectedBackground" transparent)
-  (set-prop "TabbedPane.selected" transparent)
-  (set-prop "TabbedPane.tabAreaBackground" transparent)
-  (set-prop "TabbedPane.focus" transparent)
-  (set-prop "TabbedPane.contentAreaColor" transparent))
+(set-prop "TabbedPane.darkShadow" transparent)
+(set-prop "TabbedPane.highlight" transparent)
+(set-prop "TabbedPane.light" transparent)
+(set-prop "TabbedPane.shadow" transparent)
+
+(set-prop "TabbedPane.borderHightlightColor" transparent)
+(set-prop "TabbedPane.selectHighlight" transparent)
+(set-prop "TabbedPane.background" transparent)
+(set-prop "TabbedPane.foreground" transparent)
+
+(set-prop "TabbedPane.unselectedBackground" transparent)
+(set-prop "TabbedPane.selected" transparent)
+(set-prop "TabbedPane.tabAreaBackground" transparent)
+(set-prop "TabbedPane.focus" transparent)
+(set-prop "TabbedPane.contentAreaColor" transparent)
 
 (defn- style-tab-header [tab style]
   (reduce-kv ui/attr (ui/attr tab :header) style))

@@ -10,10 +10,17 @@
            [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener WindowAdapter]
            [javax.swing.event CaretListener DocumentListener ChangeListener]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent InputMap
-                        BoxLayout GroupLayout SpringLayout]
+                        BoxLayout GroupLayout SpringLayout
+                        UIManager UIDefaults]
            [javax.swing.text StyleConstants SimpleAttributeSet DefaultHighlighter$DefaultHighlightPainter]))
 
 (def ^Toolkit toolkit (Toolkit/getDefaultToolkit))
+
+(defn set-prop [k v]
+  (doto ^UIDefaults (UIManager/getDefaults)
+    (.remove k)
+    (.put k v))
+  nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SplitPane Orientations

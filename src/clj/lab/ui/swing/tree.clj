@@ -2,12 +2,19 @@
   (:use     [lab.ui.protocols :only [Component Selection Implementation impl abstract to-map
                                      listen ignore]])
   (:require [lab.ui.core :as ui]
-            [lab.ui.util :refer [defattributes definitializations]])
+            [lab.ui.util :refer [defattributes definitializations]]
+            [lab.ui.swing.util :as util])
   (:import  [javax.swing JTree JTree$DynamicUtilTreeNode]
-            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel TreePath DefaultTreeModel]
+            [javax.swing.tree TreeNode DefaultMutableTreeNode DefaultTreeModel 
+                              TreePath DefaultTreeModel DefaultTreeCellRenderer]
             [javax.swing.event TreeSelectionListener TreeExpansionListener 
                                TreeExpansionEvent]
             [java.awt.event MouseAdapter KeyAdapter]))
+
+(util/set-prop "Tree.paintLines" false)
+(util/set-prop "Tree.line" (util/color 0xFFFFFF))
+(util/set-prop "Tree.expandedIcon" (util/icon "expand.png"))
+(util/set-prop "Tree.collapsedIcon" (util/icon "collapse.png"))
 
 (defn- update-tree-from-node [^DefaultMutableTreeNode node]
   (let [root (.getRoot node)
@@ -15,7 +22,7 @@
       (when (and tree (.getModel tree))
         (.reload ^DefaultTreeModel (.getModel tree) node))))
 
-(defn tree-node-init [c] 
+(defn tree-node-init [c]
   (let [ab        (atom nil)
         meta-data (atom nil)
         children  (when-not (ui/attr c :leaf) (to-array []))]
@@ -127,10 +134,35 @@ event can be :click or :key."
       (.setSelectionRow this row)
       this)))
 
+(defn- ^DefaultTreeCellRenderer cell-renderer [c]
+  (.getCellRenderer ^JTree (impl c)))
+
 (defattributes
   :tree
   (:hide-root [c _ v]
     (.setRootVisible ^JTree (impl c) (not v)))
+  (:selected-node-background [c _ v]
+    (doto (cell-renderer c)
+      (.setBackgroundSelectionColor (util/color v))))
+  (:unselected-node-background [c _ v]
+    (doto (cell-renderer c)
+      (.setBackgroundNonSelectionColor (util/color v))))
+  (:selected-node-color [c _ v]
+    (doto (cell-renderer c)
+      (.setTextSelectionColor (util/color v))))
+  (:unselected-node-color [c _ v]
+    (doto (cell-renderer c)
+      (.setTextNonSelectionColor (util/color v))))
+  (:closed-icon [c _ v]
+    (doto (cell-renderer c)
+      (.setClosedIcon (util/icon v))))
+  (:open-icon [c _ v]
+    (doto (cell-renderer c)
+      (.setOpenIcon (util/icon v))))
+  (:leaf-icon [c _ v]
+    (doto (cell-renderer c)
+      (.setLeafIcon (util/icon v))))
+
   :tree-node
     (:leaf [c _ v])
     (:item [c attr item]
