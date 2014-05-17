@@ -63,7 +63,7 @@
                      :padding 0}]]
       [:panel {:height 10000}]]
      [:panel {:layout [:box :y] :padding 3 :width 100}
-      [:panel {:layout :border} find-next-btn]
+      find-next-btn
       [:button {:text "Replace"
                 :listen [:click ::replace-click]
                 :stuff {:dialog dialog}}]

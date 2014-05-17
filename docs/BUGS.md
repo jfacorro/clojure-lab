@@ -6,9 +6,6 @@
 ## Menu
 - Some shortcuts don't work: ctrl alt r, ctrl tab (unless the focus is on an editor).
 
-## Search/replace
-- Searching the empty string causes StackOverflow.
-
 ## Rainbow delimiters
 - Implementation too slow.
   - usage lang/offset and lang/search functions are too costly.
