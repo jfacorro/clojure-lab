@@ -205,9 +205,9 @@ tree. Returns a tree node."
 
 (defn- open-document-tree
   "Opens the document that's selected in the tree."
-  [app tree]
+  [{:keys [app source] :as e}]
   (let [ui      (:ui @app)
-        tree    (ui/find @ui (ui/id= (ui/attr tree :id)))
+        tree    (ui/find @ui (ui/id= (ui/attr source :id)))
         node    (ui/find @ui (ui/id= (ui/selection tree)))
         ^File file (ui/attr node :item)]
     (when (and node (.isFile file))
@@ -217,23 +217,39 @@ tree. Returns a tree node."
   "Handler for the click event of an item in the tree."
   [{:keys [app source click-count] :as e}]
   (when (= click-count 2)
-    (open-document-tree app source)))
+    (open-document-tree e)))
 
-(defn- open-document-tree-enter
-  [{:keys [app event source description] :as e}]
-  (when (and (= :pressed event) (= description :enter))
-    (open-document-tree app source)))
+(declare stop-watch!)
+
+(defn- remove-from-tree
+  [{:keys [app source] :as e}]
+  (let [ui      (:ui @app)
+        id      (ui/attr source :id)
+        root    (ui/find @ui :#file-explorer-root)
+        node    (ui/find @ui (ui/id= (ui/selection source)))
+        ^File file (ui/attr node :item)]
+    (when (and node
+            (.isDirectory file)
+            ((set (ui/children root)) node))
+      (stop-watch! app (ui/attr node :item))
+      (ui/update! ui [(ui/id= id) :#file-explorer-root] ui/remove node))))
+
+(def ^:private file-explorer-keymap
+  (km/keymap "File Explorer"
+    :local
+    {:keystroke "enter" :fn ::open-document-tree :name "Open File"}
+    {:keystroke "delete" :fn ::remove-from-tree :name "Remove from Explorer"}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File explorer tab creation
 
-(defn- stop-all-watches! [app]
-  (let [ui        (:ui @app)
-        watchers  (-> (ui/find @ui :#file-explorer) ui/stuff :watches)]
+(defn- stop-all-watches!
+  [app]
+  (let [watches  (::watches @app)]
     ;; Cancel all directory watches
-    (doseq [w watchers] (future-cancel w))
+    (doseq [w watches] (future-cancel w))
     ;; Empty the watches collection
-    (ui/update! ui :#file-explorer ui/update-attr :stuff assoc-in [:watches] nil)))
+    (swap! app dissoc ::watches)))
 
 (defn- close-file-explorer [e]
   (stop-all-watches! (:app e))
@@ -249,9 +265,17 @@ tree. Returns a tree node."
     (ui/add [:scroll
               [:tree {:hide-root true
                       :listen [:click ::open-document-tree-click
-                               :key ::open-document-tree-enter]}
+                               :key file-explorer-keymap]}
                 [:tree-node {:id "file-explorer-root" :item ::root}]]])
     (ui/apply-stylesheet (:styles @app))))
+
+(defn- stop-watch!
+  [app dir]
+  (let [watches (::watches @app)
+        watch   (first (filter #(util/same-file? (:dir (meta %)) dir) watches))]
+    (when watch
+      (future-cancel watch))
+    (swap! app assoc ::watches (remove #{watch} watches))))
 
 (defn- watch-dir!
   "Creates a future in which the a watching service is run and
@@ -262,9 +286,7 @@ should be cancelled when the tab is closed."
                                  :event-types [:create :delete]
                                  :callback (partial #'handle-file-change app)
                                  :options {:recursive true}}]))]
-    (ui/update! (:ui @app)
-                :#file-explorer
-                ui/update-attr :stuff update-in [:watches] conj f)))
+    (swap! app update-in [::watches] conj (with-meta f {:dir dir}))))
 
 (defn- create-file-explorer! [app]
   (let [ui (:ui @app)]

@@ -73,6 +73,12 @@ wins. Returns a channel that takes the input events."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File Utils
 
+(defn same-file?
+  "Checks if the two files supplied are the same."
+  [^File x ^File y]
+  (when (and x y)
+    (= (.getCanonicalPath x) (.getCanonicalPath y))))
+
 (defn locate-file
   "Takes a filename and a string containing a concatenated
   list of directories, looks for the file in each dir and

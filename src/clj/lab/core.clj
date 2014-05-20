@@ -4,7 +4,8 @@
             [lab.core.keymap :as km]
             [lab.core.plugin :as pl]
             [lab.core.lang   :as lang]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [lab.util :as util])
   (:import [java.io File]))
 
 (declare 
@@ -159,17 +160,11 @@ within the opened documents."
   [app x]
   (find-doc-by app #(= x (:name %))))
 
-(defn same-file?
-  "Checks if the two files supplied are the same."
-  [^File x ^File y]
-  (when (and x y)
-    (= (.getCanonicalPath x) (.getCanonicalPath y))))
-
 (defn find-doc-by-path
   "Returns the document that has the supplied path."
   [app x]
   (let [x (io/file x)]
-    (find-doc-by app #(same-file? (-> % :path io/file) x))))
+    (find-doc-by app #(util/same-file? (-> % :path io/file) x))))
 
 (defn new-document
   "Creates a new document, adds it to the document
