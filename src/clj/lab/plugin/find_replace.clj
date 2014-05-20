@@ -105,13 +105,14 @@
        [:panel]
        find-all-btn]]]))
 
-(defn- view-find-results []
+(defn- view-find-results [app]
   (-> (tplts/tab "find-results")
     (ui/update-attr :header ui/update :label ui/attr :text "Search Results")
     (ui/add [:scroll
              [:tree {:border    :none
                      :hide-root true}
-              [:tree-node {:id "find-results-root"}]]])))
+              [:tree-node {:id "find-results-root"}]]])
+    (ui/apply-stylesheet (:styles @app))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Find in Files
@@ -188,7 +189,7 @@ directory to the text field that holds the path."
       (ui/action
         (ui/attr @dialog :visible false)
         (when-not (ui/find @ui :#find-results)
-          (ui/update! ui :#bottom ui/add (view-find-results)))
+          (ui/update! ui :#bottom ui/add (view-find-results app)))
         (future
           (find-in-files app path recursive? txt))))))
 
