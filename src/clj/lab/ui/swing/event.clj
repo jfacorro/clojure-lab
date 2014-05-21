@@ -10,7 +10,8 @@
                            KeyEvent
                            MouseEvent MouseWheelEvent
                            FocusEvent
-                           ActionEvent]))
+                           ActionEvent
+                           WindowEvent]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Event hijacking
@@ -250,3 +251,10 @@ latest version."
        :text     text
        :type     event-type
        :document doc})))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Window Event
+
+(extend WindowEvent
+  p/Event
+  event-object)

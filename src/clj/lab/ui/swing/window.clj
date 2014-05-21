@@ -2,20 +2,19 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util]
-            [lab.ui.protocols :refer [impl Implementation listen ignore]])
+            [lab.ui.protocols :refer [impl Implementation listen ignore abstract]])
   (:import  [javax.swing JFrame WindowConstants]
             [java.awt Window]
             [java.awt.event WindowAdapter]))
 
-(extend-type JFrame
-  Implementation
-  (abstract
-    ([this] nil)
-    ([this the-abstract] this)))
-
 (defn- window-init [c]
-  (doto (JFrame.)
-    (.setDefaultCloseOperation WindowConstants/DO_NOTHING_ON_CLOSE)))
+  (let [ab     (atom nil)
+        window (proxy [JFrame lab.ui.protocols.Implementation] []
+                 (abstract
+                   ([] @ab)
+                   ([x] (reset! ab x) this)))]
+    (doto window
+      (.setDefaultCloseOperation WindowConstants/DO_NOTHING_ON_CLOSE))))
 
 (definitializations :window window-init)
 
