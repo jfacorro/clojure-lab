@@ -444,7 +444,7 @@ inserting a fixed first parameter, which is the app."
                  :open-icon "folder.png"
                  :closed-icon "folder.png"
                  :leaf-icon "file.png"}
-   #{:text-editor :text-area :scroll :split :panel :tree}
+   #{:text-editor :text-area :text-field :scroll :split :panel :tree}
                 {:border :none :padding 0}
    :line-number {:font        [:name "Consolas" :size 16]
                  :background  0x666666
@@ -452,7 +452,7 @@ inserting a fixed first parameter, which is the app."
                  :current-line-color 0x00FFFF}
    [:pop-up-menu :scroll]
                 {:border [:line 0xFFFFFF 1]}
-   #{:text-editor :text-area :console}
+   #{:text-editor :text-area :text-field :console}
                 {:font        [:name "Consolas" :size 16]
                  :background  0x333333
                  :color       0xFFFFFF

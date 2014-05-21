@@ -100,9 +100,9 @@ directories are returned. Otherwise the file-seq for the
 
 (defn- search-open-file
   "Creates a dialog with a text field that allows to search
-for files whose complete path match the text provided. If the
-File Explorer is open then the files are searched in the directories
-loaded, otherwise the '.' directory is used."
+  for files whose complete path match the text provided. If the
+  File Explorer is open then the files are searched in the directories
+  loaded, otherwise the '.' directory is used."
   [{:keys [app] :as e}]
   ;; Add ESC as an exit dialog key.
   (let [dialog (atom nil)
@@ -111,6 +111,7 @@ loaded, otherwise the '.' directory is used."
     (ui/action
       (-> dialog
         (reset! (ui/init (view-search-file @ui dialog ch)))
+        (ui/apply-stylesheet (:styles @app))
         ;; Show the modal dialog without modifying the atom so that
         ;; there's no retry when the compare-and-set! is done on the atom.
         (ui/attr :visible true)))))
