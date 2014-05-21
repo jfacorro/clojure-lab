@@ -14,6 +14,8 @@
                  [org.clojure/tools.logging "0.2.6"]
                  [org.slf4j/slf4j-log4j12 "1.7.5"]
 
+                 [markdown-clj "0.9.44"]
+
                  [clojure-watch "LATEST"]]
   :uberjar-name "lab.jar"
   :java-source-paths ["src/java"]

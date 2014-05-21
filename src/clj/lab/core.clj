@@ -41,7 +41,8 @@
                               lab.plugin.editor.rainbow-delimiters
                               lab.plugin.editor.paredit
                               lab.plugin.clojure.macroexpand]
-                    :markdown [lab.plugin.editor.syntax-highlighting]}
+                    :markdown [lab.plugin.editor.syntax-highlighting
+                               lab.plugin.markdown.preview]}
    :plugins-dir   "plugins"
    :current-dir   "."
    :default-lang  (:id lang/plain-text)})
