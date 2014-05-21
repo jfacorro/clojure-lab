@@ -7,6 +7,28 @@
            [java.awt BorderLayout]
            [javax.swing.plaf.basic BasicSplitPaneDivider]))
 
+(util/set-prop "scrollbar" (util/color 0xCC0000))
+(util/set-prop "ScrollBar.background" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.darkShadow" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.foreground" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.highlight" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.shadow" (util/color 0xCCCCCC))
+
+(util/set-prop "ScrollBar.track" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.trackForeground" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.trackHighlight" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.trackHighlightForeground" (util/color 0xCCCCCC))
+
+(util/set-prop "ScrollBar.thumb" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.thumbDarkShadow" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.thumbHighlight" (util/color 0xCCCCCC))
+(util/set-prop "ScrollBar.thumbShadow" (util/color 0xCCCCCC))
+
+(util/set-prop "ScrollBar.width" (int 15))
+(util/set-prop "ScrollBar.height" (int 15))
+
+(util/set-prop "" (util/color 0xCCCCCC))
+
 (extend-protocol Component
   JSplitPane
   (add [this child]

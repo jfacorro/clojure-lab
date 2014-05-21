@@ -351,7 +351,7 @@ and signals the highlighting process."
 
 (defn- toggle-word-wrap
   "Toggles between activating and deactivating word wrap for the
-current text-editor."
+  current text-editor."
   [{:keys [app] :as e}]
   ;; The following implementation is actually sepcific for Swing.
   (let [ui     (:ui @app)
@@ -434,7 +434,7 @@ inserting a fixed first parameter, which is the app."
 ;;; Default styles
 
 (def styles
-  {#{:label :tree :button}
+  [#{:label :tree :button}
                 {:font [:name "Consolas" :size 14]}
    :tree        {:background 0x333333
                  :selected-node-background 0x666666
@@ -450,6 +450,8 @@ inserting a fixed first parameter, which is the app."
                  :background  0x666666
                  :color       0xFFFFFF
                  :current-line-color 0x00FFFF}
+   [:pop-up-menu :scroll]
+                {:border [:line 0xFFFFFF 1]}
    #{:text-editor :text-area :console}
                 {:font        [:name "Consolas" :size 16]
                  :background  0x333333
@@ -459,7 +461,7 @@ inserting a fixed first parameter, which is the app."
                  :background 0x666666
                  :divider-background 0x666666}
    :tabs        {:selected-tab-style   {:border [:line 0x00FFFF [0 0 2 0]]}
-                 :unselected-tab-style {:border :none}}})
+                 :unselected-tab-style {:border :none}}])
 
 (defn app-view [title]
   (ui/init

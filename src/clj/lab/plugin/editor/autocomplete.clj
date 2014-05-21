@@ -32,9 +32,9 @@ the current caret position."
 
 (defn- select-autocomplete
   "Takes an event whose source is a node from the autocompletion
-tree list. Identifies the selected option in the autocomplete
-popup menu and replaces the token at the caret position with 
-the selection."
+  tree list. Identifies the selected option in the autocomplete
+  popup menu and replaces the token at the caret position with 
+  the selection."
   [{:keys [source] :as e}]
   (let [txt    (ui/attr source :item)
         {:keys [editor popup]}
@@ -100,8 +100,8 @@ Returns nil if there's no token in the current caret position."
 (defn- autocomplete
   [{:keys [app source] :as e}]
   (when-let [symbols (completion-tokens e)]
-    (popup-menu source
-                (sort symbols))))
+    (-> (popup-menu source (sort symbols))
+      (ui/apply-stylesheet (:styles @app)))))
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.editor.autocomplete

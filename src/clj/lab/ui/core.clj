@@ -454,7 +454,10 @@ used in the component's definition (e.g. in event handlers)."
   a stylesheet (map where the key is a selector and the values a map of attributes
   and values) and applies it to the matching components."
   [c stylesheet]
-  (reduce apply-class (hiccup->component c) stylesheet))
+  (let [pairs (if (map? stylesheet)
+                stylesheet
+                (partition 2 stylesheet))]
+    (reduce apply-class (hiccup->component c) pairs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Getting info for a component
