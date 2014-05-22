@@ -287,7 +287,6 @@ tree. Returns a tree node."
                  :border :none
                  :padding 0
                  :transparent true
-                 :size [100 20]
                  :listen [:click ::open-directory]}]
        [:scroll
         [:tree {:hide-root true
