@@ -25,15 +25,15 @@ open files."
             :size  [500 150]
             :modal true
             :owner owner}
-    [:panel {:layout [:box :page]}
-      [:text-field {:border :none
-                    :stuff  {:dialog dialog}
-                    :listen [:insert chan
-                             :delete chan]}]
-      [:panel {:layout :border}
-        [:scroll {:border :none}
-          [:tree {:id "results" :hide-root true}
-            [:tree-node {:item :root}]]]]]])
+   [:panel {:layout [:box :page]}
+    [:text-field {:border :none
+                  :stuff  {:dialog dialog}
+                  :listen [:insert chan
+                           :delete chan]}]
+    [:panel {:layout :border}
+     [:scroll {:border :none}
+      [:tree {:id "results" :hide-root true}
+       [:tree-node {:item :root}]]]]]])
 
 (defn- open-document-dialog
   "Check the event for double click or enter key, if so
@@ -278,11 +278,22 @@ tree. Returns a tree node."
     (ui/update :tab
                ui/update-attr :header
                ui/update :label ui/attr :text "File Explorer")
-    (ui/add [:scroll
-              [:tree {:hide-root true
-                      :listen [:click ::open-document-tree-click
-                               :key file-explorer-keymap]}
-                [:tree-node {:id "file-explorer-root" :item ::root}]]])
+    (ui/add 
+      [:panel {:layout [:box :page]
+               :background 0x333333}
+       [:button {:text "Add dir"
+                 :icon "add.png"
+                 :color 0xFFFFFF
+                 :border :none
+                 :padding 0
+                 :transparent true
+                 :size [100 20]
+                 :listen [:click ::open-directory]}]
+       [:scroll
+        [:tree {:hide-root true
+                :listen [:click ::open-document-tree-click
+                         :key file-explorer-keymap]}
+         [:tree-node {:id "file-explorer-root" :item ::root}]]]])
     (ui/apply-stylesheet (:styles @app))))
 
 (defn- stop-watch!
