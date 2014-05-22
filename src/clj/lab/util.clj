@@ -114,6 +114,18 @@ wins. Returns a channel that takes the input events."
       path
       (.getParent file))))
 
+(defn relativize
+  "Takes two files (or absolute paths) and returns the relative path
+  if the second argument is a child of the first one."
+  [parent child]
+  (let [result (-> (io/file parent) 
+                 .toURI
+                 (.relativize (.toURI (io/file child)))
+                 .getPath)]
+    (if (.exists (io/file (str parent "/" result)))
+      result
+      child)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exception
 

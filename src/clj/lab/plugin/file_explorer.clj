@@ -50,21 +50,36 @@ open the document associated with the selected item."
           (ui/update! dialog :dialog ui/attr :visible false)
           (open-document app (.getCanonicalPath file)))))))
 
-(defn- file-label [^File file]
-  (str (.getName file) " - [" (.getPath file) "]"))
+(defn- file-label
+  "Returns the file label, trying to get the relative path
+  to the current dirs."
+  [^File file dirs]
+  (let [dirs (map #(.getParent %) dirs)
+        path (reduce (fn [x dir]
+                       (as-> (util/relativize dir x) rel
+                         (if (not= x rel)
+                           (reduced rel)
+                           x)))
+               file
+               dirs)]
+    (str (.getName file) " - [" (.getPath (io/file path)) "]")))
 
 (defn- current-dirs
-  "Looks for the File Explorer tree root. If it is
-found then the concatenated file-seqs for the loaded
-directories are returned. Otherwise the file-seq for the
-\".\" directory is returned."
+  "Looks for the File Explorer tree root and returns
+  a sequence of its children's associated directory."
   [app]
-  (let [root  (ui/find @(:ui @app) :#file-explorer-root)
-        dirs  (when root (->> (ui/children root)
-                           (map #(ui/attr % :item))))]
-    (if-not dirs
-      (file-seq (io/file "."))
-      (apply concat (map file-seq dirs)))))
+  (let [root (ui/find @(:ui @app) :#file-explorer-root)]
+    (when root (map #(ui/attr % :item) (ui/children root)))))
+
+(defn- current-files
+  "If it is
+  found then the concatenated file-seqs for the loaded
+  directories are returned. Otherwise the file-seq for the
+  \".\" directory is returned."
+  [app]
+  (if-let [dirs (current-dirs app)]
+    (apply concat (map file-seq dirs))
+    (file-seq (io/file "."))))
 
 (def ^:private max-files 25)
 
@@ -73,13 +88,13 @@ directories are returned. Otherwise the file-seq for the
   files for which any part of its full path matches the
   search string. Finally it removes all the previous items
   and adds new found ones."
-  [e]
-  (let [field  (:source e)
-        dialog (:dialog (ui/stuff field))
-        s      (model/text field)]
+  [{:keys [source app] :as e}]
+  (let [dialog (:dialog (ui/stuff source))
+        s      (model/text source)]
     (if (< (count s) 3)
       (ui/action (ui/update! dialog :#results ui/remove-all))
-      (let [files  (current-dirs (:app e))
+      (let [files  (current-files app)
+            dirs   (current-dirs app)
             re     (re-pattern s)
             result (->> files
                      (filter #(.isFile ^File %))
@@ -91,8 +106,8 @@ directories are returned. Otherwise the file-seq for the
                                          :key ::open-document-dialog]}]
             root   (->> result
                      (map #(-> (ui/init node)
-                             (ui/attr :item (file-label %))
-                             (ui/attr :stuff {:dialog dialog :file %})))
+                            (ui/attr :item (file-label % dirs))
+                            (ui/attr :stuff {:dialog dialog :file %})))
                      (reduce ui/add (ui/init [:tree-node {:item ::root}])))]
         (ui/action
           (ui/update! dialog :#results ui/remove-all)
