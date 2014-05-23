@@ -1,6 +1,6 @@
 # Clojure Lab
 
-<img src="https://raw.github.com/jfacorro/clojure-lab/master/resources/logo.png" width="200" style="float:right" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/resources/logo.png" align="right" style="float:right" />
 
 **Clojure Lab** is a project that aims to build a development environment for Clojure in Clojure, its main goals are *usability* and *extensibility*. This project is currently under development, so most of the assertions that follow are closer to wishful thinking than reality... for now :).
 
