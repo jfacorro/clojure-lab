@@ -15,10 +15,6 @@
   - When going to line, position the line in the top (or middle) of the scroll.
     - Depends on the implementation of the editor's Go to line.
 
-#### Menu
-  - Define a way to specify the order of the menu items.
-    - Menu item information can be defined as the meta of the command function.
-
 ### App (Control)
     - Plugin management:
       - (?) Allow plugins to define their own dependencies.

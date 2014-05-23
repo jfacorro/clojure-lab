@@ -22,6 +22,7 @@
   of calling [build-hierarchy]."
   {:component [; containers
                :window :panel :split :scroll
+               :toolbar
                ; menu
                :menu-bar :menu :menu-item :menu-separator 
                :pop-up-menu
