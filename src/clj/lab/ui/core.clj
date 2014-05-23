@@ -308,7 +308,8 @@ x should be a vector with the content [tag-keyword attrs-map? children*]"
   "Called when initializing a component. Gets all defined
 attributes and sets their corresponding values."
   [{attrs :attrs :as component}]
-  (let [f (fn [c [k v]]
+  (let [component (vary-meta component assoc :init-attrs (set (keys attrs)))
+        f (fn [c [k v]]
             (attr c k (if (component? v) (init v) v)))]
     (reduce f component attrs)))
 
@@ -443,11 +444,17 @@ used in the component's definition (e.g. in event handlers)."
 ;; Stylesheets
 
 (defn- apply-class
+  "Apply the attributes and their values using the selector
+  provided. Don't apply the attributes that were specified
+  during the component's initialization (:init-attrs key in meta)."
   [c [selector attrs]]
-  (reduce (fn [c [attr-name value]]
-            (update c selector attr attr-name value))
-          c
-          attrs))
+  (let [init-attrs (-> c meta :init-attrs)]
+    (reduce (fn [c [attr-name value]]
+              (if (init-attrs attr-name)
+                c
+                (update c selector update-attr attr-name #(or % value))))
+      c
+      attrs)))
 
 (defn apply-stylesheet
   "Takes an atom with the root of a (initialized abstract UI) component and
