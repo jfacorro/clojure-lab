@@ -302,19 +302,24 @@ and signals the highlighting process."
         (ui/add (text-editor-create app doc))
         (ui/apply-stylesheet (:styles @app)))))
 
-(defn- debugging? []
-  (= "true" (System/getProperty "clojure.debug")))
+(def ^:private debugging? (= "true" (System/getProperty "clojure.debug")))
 
-(defn- exit! [{:keys [app] :as e}]
-  (if (debugging?)
-    (do
-      (ui/attr @(:ui @app) :visible false)
-      (reset! app nil))
-    (let [result (tplts/confirm "Bye bye"
-                                "Are you sure you want to leave this magical experience?"
-                                (-> @app :ui deref))]
-      (when (= result :ok)
-          (System/exit 0)))))
+(defn- exit!
+  "Checks if there are any modified documents before leaving."
+  [{:keys [app] :as e}]
+  (let [modified? (some (comp :modified? deref) (:documents @app))
+        result    (if modified?
+                    (tplts/confirm "Bye, but first..."
+                      "There are some documents with unsaved changes. Do you want to leave anyway?"
+                      (-> @app :ui deref))
+                    :ok)]
+    (cond
+      (and debugging? (= result :ok))
+        (do
+          (ui/attr @(:ui @app) :visible false)
+          (reset! app nil))
+      (= result :ok)
+        (System/exit 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Toogle Fullscreen

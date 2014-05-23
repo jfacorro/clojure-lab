@@ -54,7 +54,7 @@ open the document associated with the selected item."
   "Returns the file label, trying to get the relative path
   to the current dirs."
   [^File file dirs]
-  (let [dirs (map #(.getParent %) dirs)
+  (let [dirs (map #(.getParent ^File %) dirs)
         path (reduce (fn [x dir]
                        (as-> (util/relativize dir x) rel
                          (if (not= x rel)
