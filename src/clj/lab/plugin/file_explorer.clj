@@ -281,16 +281,14 @@ tree. Returns a tree node."
     (ui/add 
       [:panel {:layout [:box :page]
                :background 0x333333}
-       [:toolbar {:background 0x333333
-                  :floatable false
-                  :border :none}
-        [:button {:text "Add dir"
-                  :icon "add.png"
-                  :color 0xFFFFFF
-                  :border :none
-                  :padding 0
-                  :transparent true
-                  :listen [:click ::open-directory]}]]
+       [:button {:text "Add dir"
+                 :icon "add.png"
+                 :align :left
+                 :color 0xFFFFFF
+                 :border :none
+                 :padding 0
+                 :transparent true
+                 :listen [:click ::open-directory]}]
        [:scroll
         [:tree {:hide-root true
                 :listen [:click ::open-document-tree-click

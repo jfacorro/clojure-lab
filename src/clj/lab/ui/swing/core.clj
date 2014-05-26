@@ -33,7 +33,8 @@
                           tab
                           misc-control
                           event
-                          console])
+                          console
+			  toolbar])
   (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
            javax.swing.border.CompoundBorder
            java.awt.Component))
@@ -94,43 +95,45 @@
 
 (defattributes
   :component
-    (:transparent [c _ v]
-      (.setOpaque ^JComponent (p/impl c) (not v)))
-    (:layout [c _ v]
-      (let [v (if (sequential? v) v [v])
-            c ^JComponent (p/impl c)]
-        (.setLayout c (util/layout c v))))
-    (:border [c _ v]
-      (let [v       (if (sequential? v) v [v])
-            border  (apply util/border v)
-            x       ^JComponent (p/impl c)
-            current (.getBorder x)]
-        (if-not (util/compound-border? current)
-          (.setBorder x border)
-          (.setBorder x (util/compound-border (.getOutsideBorder ^CompoundBorder current) border)))))
-    (:padding [c _ v]
-      (let [x       ^JComponent (p/impl c)
-            current (.getBorder x)]
-        (.setBorder x (util/compound-border (util/padding v)
-                                            (if (util/compound-border? current)
-                                              (.getInsideBorder ^CompoundBorder (.getBorder x))
-                                              (.getBorder x))))))
-    (:background [c _ v]
-      (.setBackground ^Component (p/impl c) (util/color v)))
-    (:color [c _ v]
-      (.setForeground ^Component (p/impl c) (util/color v)))
-    (:font [c _ v]
-      (.setFont ^Component (p/impl c) (util/font v)))
-    (:size [c _ [w h :as v]]
-      (.setPreferredSize ^Component (p/impl c) (util/dimension w h)))
-    (:width [c _ w]
-      (ui/attr c :size [w (.getHeight ^Component (p/impl c))]))
-    (:height [c _ h]
-      (ui/attr c :size [(.getWidth ^Component (p/impl c)) h]))
-    (:location [c _ [x y]]
-      (.setLocation ^Component (p/impl c) x y))
-    (:visible [c _ v]
-      (.setVisible ^Component (p/impl c) v)))
+  (:transparent [c _ v]
+    (.setOpaque ^JComponent (p/impl c) (not v)))
+  (:layout [c _ v]
+    (let [v (if (sequential? v) v [v])
+          c ^JComponent (p/impl c)]
+      (.setLayout c (util/layout c v))))
+  (:border [c _ v]
+    (let [v       (if (sequential? v) v [v])
+          border  (apply util/border v)
+          x       ^JComponent (p/impl c)
+          current (.getBorder x)]
+      (if-not (util/compound-border? current)
+        (.setBorder x border)
+        (.setBorder x (util/compound-border (.getOutsideBorder ^CompoundBorder current) border)))))
+  (:padding [c _ v]
+    (let [x       ^JComponent (p/impl c)
+          current (.getBorder x)]
+      (.setBorder x (util/compound-border (util/padding v)
+                      (if (util/compound-border? current)
+                        (.getInsideBorder ^CompoundBorder (.getBorder x))
+                        (.getBorder x))))))
+  (:background [c _ v]
+    (.setBackground ^Component (p/impl c) (util/color v)))
+  (:color [c _ v]
+    (.setForeground ^Component (p/impl c) (util/color v)))
+  (:font [c _ v]
+    (.setFont ^Component (p/impl c) (util/font v)))
+  (:size [c _ [w h :as v]]
+    (.setPreferredSize ^Component (p/impl c) (util/dimension w h)))
+  (:width [c _ w]
+    (ui/attr c :size [w (.getHeight ^Component (p/impl c))]))
+  (:height [c _ h]
+    (ui/attr c :size [(.getWidth ^Component (p/impl c)) h]))
+  (:location [c _ [x y]]
+    (.setLocation ^Component (p/impl c) x y))
+  (:visible [c _ v]
+    (.setVisible ^Component (p/impl c) v))
+  (:align [c _ v]
+    (.setAlignmentX ^JComponent (p/impl c) (util/alignment v))))
 
 ;;;;;;;;;;;;;;;;;
 ;; Key

@@ -229,6 +229,8 @@ and the position relative to the sibilings."
          end)
      end))
 
+(def ^:private inline-comment-offset 60)
+
 (defn- comment-dwin
   "(foo |bar)   ; baz
   (foo bar)                               ; |baz
@@ -271,13 +273,13 @@ and the position relative to the sibilings."
         ;; (There's a comment in the same line)
         (= :comment (lang/location-tag last-loc))
           (let [len (- last-pos bol)
-                spc (apply str (repeat (- 40 len) " "))]
+                spc (apply str (repeat (- inline-comment-offset len) " "))]
             (model/insert editor last-pos spc))
         ;; Add inline comment
         ;; (The line does not have a comment and the caret is at the end)
         (and (not empty-ln?) (= pos eol))
           (let [len (- eol bol)
-                spc (apply str (repeat (- 40 len) " "))]
+                spc (apply str (repeat (- inline-comment-offset len) " "))]
             (model/insert editor eol (str spc ";")))
         ;; Create a comment in a whole line
         ;; (Current location is the child of some parent structure)

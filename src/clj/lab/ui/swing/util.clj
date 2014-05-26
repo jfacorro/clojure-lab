@@ -6,7 +6,7 @@
             [clojure.java.io :as io])
   (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
                      BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
-                     KeyboardFocusManager]
+                     KeyboardFocusManager Component]
            [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener WindowAdapter]
            [javax.swing.event CaretListener DocumentListener ChangeListener]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent InputMap
@@ -413,3 +413,16 @@ component and its parents."
         (doseq [k ks] (remove-key-binding x k))
         (.setFocusTraversalKeys x KeyboardFocusManager/FORWARD_TRAVERSAL_KEYS (apply disj forward-keys ks))
         (.setFocusTraversalKeys x KeyboardFocusManager/BACKWARD_TRAVERSAL_KEYS (apply disj backward-keys ks))))))
+
+;;;;;;;;;;;;;;;;;;;;
+;; Alignment
+
+(def ^:private alignment-map
+  {:left   Component/LEFT_ALIGNMENT
+   :right  Component/RIGHT_ALIGNMENT
+   :center Component/CENTER_ALIGNMENT})
+
+(defn alignment
+  "Returns the alignment given the key."
+  [v]
+  (alignment-map v))
