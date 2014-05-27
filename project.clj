@@ -31,4 +31,4 @@
                    :debug true}
              :aot {:aot :all}
              :uberjar {:main lab.main
-                       :aot [lab.main]}})
+                       :aot [lab.main #"lab.ui.*" #"lab.core.*"]}})
