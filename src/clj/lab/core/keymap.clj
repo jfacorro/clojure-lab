@@ -21,18 +21,17 @@
 
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,
-:lang or :local) and any number of commands that are added as key-bindings."
+  :lang or :local) and any number of commands that are added as key-bindings."
   [name type & [lang & lang-cmds :as cmds]]
-  (let [km  {:name name :type type :bindings {}}
-        km  (if (= type :lang)
-              (-> (reduce add-command km lang-cmds)
-                (assoc :lang lang))
-              (reduce add-command km cmds))]
-    km))
+  (let [km {:name name :type type :bindings {}}]
+    (if (= type :lang)
+      (-> (reduce add-command km lang-cmds)
+        (assoc :lang lang))
+      (reduce add-command km cmds))))
 
 (defn find
   "Given a keystroke looks for the corresponding commands in
-the supplied keymap and if not found in its parent."
+  the supplied keymap and if not found in its parent."
   [km ks]
   (when km
     (if-let [cmd (get-in km [:bindings ks])]
@@ -41,8 +40,8 @@ the supplied keymap and if not found in its parent."
 
 (defn find-or
   "Takes a keymap and any number of keystrokes.
-Looks for the first keystroke that maps to a command 
-and returns this command."
+  Looks for the first keystroke that maps to a command 
+  and returns this command."
   [km & kss]
   (->> (map (partial find km) kss)
     (drop-while nil?)
@@ -50,7 +49,7 @@ and returns this command."
 
 (defn append
   "Append a child keymap to an existinig one. If either one 
-is nil the other is returned."
+  is nil the other is returned."
   [parent child]
   (cond
     (nil? parent) child
@@ -59,7 +58,7 @@ is nil the other is returned."
 
 (defn remove
   "Append a child keymap to an existinig one. If either one 
-is nil the other is returned."
+  is nil the other is returned."
   [top km-name]
   (loop [cur  top
          prev nil]

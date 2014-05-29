@@ -116,8 +116,8 @@ and content"
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
-              :global
-              {:category "View" :name "Outline" :fn #'create-outline-tree! :keystroke "alt O"})])
+     :global
+     {:category "View" :name "Outline" :fn #'create-outline-tree! :keystroke "alt O"})])
 
 (plugin/defplugin lab.plugin.code-outline
   :type  :global

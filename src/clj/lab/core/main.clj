@@ -497,17 +497,17 @@ inserting a fixed first parameter, which is the app."
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
-              :global
-              {:category "File", :name "New", :fn ::new-document, :keystroke "ctrl n"}
-              {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}
-              {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
-              {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
-
-              {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
-              {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
-              {:category "View", :name "Word Wrap", :fn ::toggle-word-wrap}
-              {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
-              {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"})])
+     :global
+     {:category "File", :name "New", :fn ::new-document, :keystroke "ctrl n"}
+     {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}
+     {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
+     {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
+     
+     {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
+     {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
+     {:category "View", :name "Word Wrap", :fn ::toggle-word-wrap}
+     {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
+     {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."

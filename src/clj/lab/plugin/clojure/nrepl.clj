@@ -410,14 +410,14 @@ an nREPL client that connects to that server."
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
-              :global
-              {:category "Clojure > nREPL" :name "Start and Connect to Project" :fn ::start-and-connect-to-project! :keystroke "ctrl r"}
-              {:category "Clojure > nREPL" :name "Start and Connect to REPL" :fn ::start-and-connect-to-repl! :keystroke "ctrl alt r"}
-
-              {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
+     :global
+     {:category "Clojure > nREPL" :name "Start and Connect to Project" :fn ::start-and-connect-to-project! :keystroke "ctrl r"}
+     {:category "Clojure > nREPL" :name "Start and Connect to REPL" :fn ::start-and-connect-to-repl! :keystroke "ctrl alt r"}
+     
+     {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
    (km/keymap (ns-name *ns*)
-              :lang :clojure
-              {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
+     :lang :clojure
+     {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 
 (defn- init! [app]
   (swap! app init-connections)

@@ -338,9 +338,9 @@ structure."
 
 (def ^:private keymaps
   [(km/keymap (ns-name *ns*)
-              :global
-              {:category "File" :name "Open Dir" :fn ::open-directory :keystroke "ctrl d"}
-              {:category "File" :name "Search & Open" :fn ::search-open-file :keystroke "ctrl alt o"})])
+     :global
+     {:category "File" :name "Open Dir" :fn ::open-directory :keystroke "ctrl d"}
+     {:category "File" :name "Search & Open" :fn ::search-open-file :keystroke "ctrl alt o"})])
 
 (defn- init! [app]
   (create-file-explorer! app))

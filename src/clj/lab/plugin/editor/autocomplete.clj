@@ -74,7 +74,7 @@ the current caret position."
                                :source   editor
                                :border   :none}
                  [:scroll {:size [250 100]
-                           :border :none}
+                           :border [:line 0xFFFFFF 1]}
                   [:tree {:hide-root true}]]])
         root  (matches-nodes editor popup matches)]
     (-> popup
@@ -105,8 +105,8 @@ Returns nil if there's no token in the current caret position."
 
 (def ^:private keymaps
   [(km/keymap 'lab.plugin.editor.autocomplete
-      :local
-      {:fn ::autocomplete :keystroke "ctrl space" :name "Autocomplete"})])
+     :local
+     {:fn ::autocomplete :keystroke "ctrl space" :name "Autocomplete"})])
 
 (plugin/defplugin lab.plugin.editor.autocomplete
   :type    :local
