@@ -15,9 +15,7 @@
   [km]
   (let [kms      (loop [{:keys [parent] :as km} km
                         kms []]
-                   (if parent
-                     (recur parent (conj kms km))
-                     (conj kms km)))
+                   (or (and (not km) kms) (recur parent (conj kms km))))
         bindings (->> kms
                    (map (fn [{:keys [name bindings]}]
                           (reduce #(update-in %1 [%2] assoc :km-name name)
