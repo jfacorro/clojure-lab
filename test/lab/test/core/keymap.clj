@@ -1,7 +1,7 @@
 (ns lab.test.core.keymap
   (:refer-clojure :exclude [remove find])
   (:require [clojure.test :refer [deftest is run-tests]]
-            [lab.core.keymap :as km :refer [append remove keymap find]]))
+            [lab.core.keymap :as km :refer [append remove keymap find commands]]))
 
 (def global (keymap :global-keymap :global
                     {:fn :*-global :keystroke "ctrl *"}))
@@ -65,3 +65,12 @@
     (is (nil? (find lang-local ctrl-*)))
 
     (is (nil? empty-km))))
+
+(deftest get-commands
+  (let [global-lang-local (-> global (append lang) (append local))
+        result {:global-keymap #{{:fn :*-global :keystroke "ctrl *"}}
+                :lang-keymap   #{{:fn :ctrl-b-lang :keystroke "ctrl b"}}
+                :local-keymap  #{{:fn :ctrl-a-local :keystroke "ctrl a"}
+                                {:fn :alt-a-local :keystroke "alt a"}
+                                {:fn :alt-a-local :keystroke "alt l"}}}]
+    (is (= result (commands global-lang-local)))))

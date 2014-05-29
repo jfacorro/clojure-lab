@@ -11,13 +11,26 @@
   (assoc-in km [:bindings (ks->set ks)] cmd))
 
 (defn commands
-  "Returns a map with keymap names "
+  "Returns a map with keymap names as keys and the commands as their values."
   [km]
-  (loop [{:keys [parent bindings name] :as km} km
-         cmds {}]
-    (if km
-      (recur parent (update-in cmds [name] into (vals bindings)))
-      cmds)))
+  (let [kms      (loop [{:keys [parent] :as km} km
+                        kms []]
+                   (if parent
+                     (recur parent (conj kms km))
+                     (conj kms km)))
+        bindings (->> kms
+                   (map (fn [{:keys [name bindings]}]
+                          (reduce #(update-in %1 [%2] assoc :km-name name)
+                            bindings
+                            (keys bindings))))
+                   reverse
+                   (reduce merge {}))]
+    (reduce (fn [cmds {:keys [km-name] :as cmd}]
+              (update-in cmds [km-name]
+                (fnil conj #{(dissoc cmd :km-name)})
+                (dissoc cmd :km-name)))
+      {}
+      (vals bindings))))
 
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,
