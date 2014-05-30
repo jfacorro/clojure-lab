@@ -1,6 +1,7 @@
 (ns lab.plugin.editor.paredit
   (:require [clojure.zip :as zip]
             [clojure.core.match :refer [match]]
+            [clojure.string :as str]
             [lab.ui.core :as ui]
             [lab.util :refer [timeout-channel find-limits find-char]]
             [lab.model.document :as doc]
@@ -297,6 +298,31 @@ and the position relative to the sibilings."
             (when (not empty-ln?)
               (model/insert editor pos "\n"))
             (model/insert editor pos ";;; "))))))
+
+(defn- comment-toggle
+  "(foo bar)
+  ;; (foo bar)
+
+  ;; (foo bar)
+  (foo bar)"
+  [e]
+  (let [editor (:source e)
+        text   (model/text editor)
+        [start end] (ui/selection editor)
+        sol    (beginning-of-line text start)
+        eol    (end-of-line text end)
+        text   (model/substring editor sol eol)
+        replacement (if (= \; (get text 0))
+                      (str/replace text #"(\n?\s*);;" "$1")
+                      (str ";;" (str/replace text "\n" "\n;;")))
+        delta  (- (count replacement) (count text))]
+    (ui/action
+      (doc/bundle-operations
+        (model/delete editor sol eol)
+        (model/insert editor sol replacement)
+        (if (not= start end)
+          (ui/selection editor [sol (+ delta eol 1)])
+          (ui/caret-position editor (+ start delta)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Deleting and killing
@@ -714,6 +740,7 @@ parentheses by deleting and inserting the modified substring.
      {:fn ::open-delimiter :keystroke "\"" :name "Open double quotes" :category "Basic Insertion"}
      {:fn ::close-delimiter :keystroke "alt \"" :name "Close double quotes" :category "Basic Insertion"}
      {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim" :category "Basic Insertion"}
+     {:fn ::comment-toggle :keystroke "alt c" :name "Comment toggle" :category "Basic Insertion"}
      {:fn ::insert-newline :keystroke "ctrl j" :name "Newline and indent" :category "Basic Insertion"}
      {:fn ::indent-line :keystroke "tab" :name "Indent line" :category "Basic Insertion"}
      ;; Deleting & Killing

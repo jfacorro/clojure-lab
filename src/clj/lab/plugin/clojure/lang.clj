@@ -266,52 +266,12 @@ check if its one of the registered symbols."
         offset (ui/caret-position editor)]
     (model/insert editor offset "  ")))
 
-;; Comment
-
-(defn- start-of-line
-  "Finds the offset for the start of the current line,
-which is the offset after the first previous \\newline."
-  [offset text]
-  (loop [offset offset]
-    (if (or (zero? offset) (= (get text (dec offset)) \newline))
-      offset
-      (recur (dec offset)))))
-
-(defn- end-of-line
-  "Finds the offset for the next position after the end of 
-the current line."
-  [offset text]
-  (loop [offset offset]
-    (cond
-      (>= offset (count text))
-        (count text)
-      (= (get text offset) \newline)
-        offset
-      :else
-        (recur (inc offset)))))
-
-(defn- toggle-comment [e]
-  (let [editor (:source e)
-        text   (model/text editor)
-        [start end] (ui/selection editor)
-        sol    (start-of-line start text)
-        eol    (end-of-line end text)
-        text   (model/substring editor sol eol)
-        replacement (if (= \; (get text 0))
-                      (str/replace text #"(\n?\s*);;" "$1")
-                      (str ";;" (str/replace text "\n" "\n;;")))
-        delta  (- (count replacement) (count text))]
-    (ui/action
-      (model/delete editor sol eol)
-      (model/insert editor sol replacement)
-      (if (not= start end)
-        (ui/selection editor [sol (+ delta eol 1)])
-        (ui/caret-position editor (+ start delta))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Namespace
 
 (defn- ns-list?
+  "Takes an parse tree node and returns true if it is
+  an ns form or false otherwise."
   [node]
   (and (node-list? node)
        (as-> (node-first node) x
@@ -319,7 +279,11 @@ the current line."
                     (= "ns" (-> x :content first)))
            (name-symbol-in-def node)))))
 
-(defn find-namespace [doc & {:keys [default]}]
+(defn find-namespace
+  "Takes a document and tries to find an ns form in it.
+  If there is one, then the namespace name is returned,
+  otherwise it returns the default if provided."
+  [doc & {:keys [default]}]
   (let [root     (lang/parse-tree doc)
         children (:content root)
         ns-node  (loop [[node & nodes] children]
@@ -390,8 +354,7 @@ and returns the offset of its matching delimiter."
 (def ^:private keymap
   (km/keymap 'lab.plugin.clojure.lang
     :lang :clojure
-    {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}
-    {:fn ::toggle-comment :keystroke "alt c" :name "Comment code"}))
+    {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autcompletion
