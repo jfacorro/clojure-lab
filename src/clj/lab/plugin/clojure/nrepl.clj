@@ -344,7 +344,7 @@ to the ui in the bottom section."
     (listen-nrepl-server-output! app conn handle-nrepl-server-event)
     (swap! app connection conn-id conn)
     (ui/action
-      (ui/update! ui (ui/parent "bottom")
+      (ui/update! ui :#top-bottom
         (fn [x]
           (-> (ui/update-attr x :divider-location-right #(or % 200))
             (ui/update :#bottom ui/add tab))))

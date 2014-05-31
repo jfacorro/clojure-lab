@@ -143,10 +143,10 @@ to the ui in the bottom section."
                   (ui/update-attr :header ui/update :label ui/attr :text title)
                   (ui/add [:scroll [:console {:conn repl}]])
                   (ui/apply-stylesheet styles))
-        split   (ui/find @ui (ui/parent "bottom"))
+        split   (ui/find @ui :#top-bottom)
         div-loc (or (ui/attr split :divider-location-right) 0)]
     (when (< div-loc 10)
-      (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 150))
+      (ui/update! ui :#top-bottom ui/attr :divider-location-right 150))
     (ui/update! ui :#bottom ui/add tab)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

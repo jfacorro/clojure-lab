@@ -82,7 +82,7 @@ or the current document if non is specified."
         ui      (:ui @app)
         outline (ui/find @ui :#outline-tree)]
     (if-not outline
-      (let [split (ui/find @ui (ui/parent "right"))]
+      (let [split (ui/find @ui :#center-right)]
         (ui/update! ui :#right ui/add (outline-tree app))
         (when-not (ui/attr split :divider-location-right)
           (ui/update! ui :#center-right ui/attr :divider-location-right 150))

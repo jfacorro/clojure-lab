@@ -28,7 +28,7 @@
                            (-> [:text-area {:text (util/stacktrace->str ex) :read-only true}]
                              ui/init
                              (ui/caret-position 0))]))]
-    (ui/update! ui (ui/parent "bottom") ui/attr :divider-location-right 200)
+    (ui/update! ui :#top-bottom ui/attr :divider-location-right 200)
     (ui/update! ui :#bottom ui/add tab)))
 
 (defn- default-error-handler
