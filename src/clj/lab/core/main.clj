@@ -450,11 +450,14 @@ inserting a fixed first parameter, which is the app."
                  :closed-icon "folder.png"
                  :leaf-icon "file.png"}
    #{:text-editor :text-area :text-field :scroll :split :panel :tree}
-                {:border :none :padding 0}
+                {:border :none
+                 :padding 0}
    :line-number {:font        [:name "Consolas" :size 16]
-                 :background  0x666666
+                 :background  0x222222
                  :color       0xFFFFFF
-                 :current-line-color 0x00FFFF}
+                 :current-line-color 0x99FFFF
+                 :border [:line 0x99FFFF [0 0 0 1]]
+                 :padding [0 5]}
    [:pop-up-menu :scroll]
                 {:border [:line 0xFFFFFF 1]}
    #{:text-editor :text-area :text-field :console}
@@ -463,11 +466,14 @@ inserting a fixed first parameter, which is the app."
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}
    :panel       {:background 0x666666}
-   :split       {:divider-size 3
+   :split       {:divider-size 2
                  :background 0x666666
                  :divider-background 0x666666}
-   :tabs        {:selected-tab-style   {:border [:line 0x00FFFF [0 0 2 0]]}
-                 :unselected-tab-style {:border :none}}])
+   :tabs        {:selected-tab-style   {:border [:line 0x99FFFF [0 0 2 0]]}
+                 :unselected-tab-style {:border :none}}
+   [:#nrepl :split]
+                {:divider-size 2
+                 :divider-background 0x99FFFF}])
 
 (defn app-view [title]
   (ui/init

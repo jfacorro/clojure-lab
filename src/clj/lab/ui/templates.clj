@@ -48,8 +48,7 @@ includes a label and a closing button."
   ([id]
     (ui/init
       [:tab {:id id
-             :header [:panel {:transparent false
-                              :background 0x333333
+             :header [:panel {:background 0x333333
                               :stuff  {:tab-id id}
                               :listen [:click ::tab-click]}
                        [:label {:color 0xFFFFFF}]

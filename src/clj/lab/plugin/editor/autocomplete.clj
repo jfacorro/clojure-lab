@@ -73,8 +73,7 @@ the current caret position."
                 [:pop-up-menu {:location location
                                :source   editor
                                :border   :none}
-                 [:scroll {:size [250 100]
-                           :border [:line 0xFFFFFF 1]}
+                 [:scroll {:size [250 100]}
                   [:tree {:hide-root true}]]])
         root  (matches-nodes editor popup matches)]
     (-> popup

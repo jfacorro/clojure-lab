@@ -443,18 +443,23 @@ used in the component's definition (e.g. in event handlers)."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Stylesheets
 
+(defn- init-attr?
+  "Returns true if attr-name was specified in the initialization
+  of component c and false otherwise."
+  [c attr-name]
+  ((-> c meta :init-attrs) attr-name))
+
 (defn- apply-class
   "Apply the attributes and their values using the selector
   provided. Don't apply the attributes that were specified
   during the component's initialization (:init-attrs key in meta)."
   [c [selector attrs]]
-  (let [init-attrs (-> c meta :init-attrs)]
-    (reduce (fn [c [attr-name value]]
-              (if (init-attrs attr-name)
-                c
-                (update c selector update-attr attr-name #(or % value))))
-      c
-      attrs)))
+  (update c selector #(reduce (fn [x [attr-name value]]
+                                (if (init-attr? x attr-name)
+                                  x
+                                  (attr x attr-name value)))
+                       %
+                       attrs)))
 
 (defn apply-stylesheet
   "Takes an atom with the root of a (initialized abstract UI) component and
