@@ -283,10 +283,9 @@ tree. Returns a tree node."
                :background 0x333333}
        [:button {:text "Add dir"
                  :icon "add.png"
-                 :align :left
                  :color 0xFFFFFF
                  :border :none
-                 :padding 0
+                 :padding [7 1]
                  :transparent true
                  :listen [:click ::open-directory]}]
        [:scroll

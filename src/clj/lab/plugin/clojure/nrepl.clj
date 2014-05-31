@@ -307,7 +307,7 @@ input editor."
   [conn-id]
   [:split {:stuff {:conn-id conn-id}
            :orientation :vertical
-           :resize-weight 1
+           :resize-weight 0.9
            :divider-location 100}
    [:scroll [:text-editor {:read-only true
                            :class "output"}]]

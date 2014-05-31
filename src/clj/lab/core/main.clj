@@ -462,6 +462,7 @@ inserting a fixed first parameter, which is the app."
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}
+   :panel       {:background 0x666666}
    :split       {:divider-size 3
                  :background 0x666666
                  :divider-background 0x666666}
@@ -478,16 +479,19 @@ inserting a fixed first parameter, which is the app."
               :icons   ["icon-16.png" "icon-32.png" "icon-64.png"]
               :menu    [:menu-bar]
               :listen  [:closing ::exit!]}
-      [:split {:orientation :vertical
-               :resize-weight 1}
-        [:split {:resize-weight 0
-                 :divider-location 150}
-          [:tabs {:id "left" :border :none}]
-          [:split {:resize-weight 1}
-            [:tabs {:id "center"
-                    :listen [:change ::switch-document-ui!]}]
-            [:tabs {:id "right"}]]]
-        [:tabs {:id "bottom"}]]]))
+     [:split {:id "top-bottom"
+              :orientation :vertical
+              :resize-weight 1}
+      [:split {:id "left-center-right"
+               :resize-weight 0
+               :divider-location 150}
+       [:tabs {:id "left" :border :none}]
+       [:split {:id "center-right"
+                :resize-weight 1}
+        [:tabs {:id "center"
+                :listen [:change ::switch-document-ui!]}]
+        [:tabs {:id "right"}]]]
+      [:tabs {:id "bottom"}]]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Plugin definition

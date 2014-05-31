@@ -85,7 +85,7 @@ or the current document if non is specified."
       (let [split (ui/find @ui (ui/parent "right"))]
         (ui/update! ui :#right ui/add (outline-tree app))
         (when-not (ui/attr split :divider-location-right)
-          (ui/update! ui (ui/parent "right") ui/attr :divider-location-right 150))
+          (ui/update! ui :#center-right ui/attr :divider-location-right 150))
         (update-outline-tree! @app))
       (when-let [tab (ui/find @ui :#outline-tab)]
         (ui/update! ui :#right ui/remove tab)))))
