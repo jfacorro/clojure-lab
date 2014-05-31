@@ -108,14 +108,15 @@
           current (.getBorder x)]
       (if-not (util/compound-border? current)
         (.setBorder x border)
-        (.setBorder x (util/compound-border (.getOutsideBorder ^CompoundBorder current) border)))))
+        (.setBorder x (util/compound-border border (.getInsideBorder ^CompoundBorder current))))))
   (:padding [c _ v]
     (let [x       ^JComponent (p/impl c)
           current (.getBorder x)]
-      (.setBorder x (util/compound-border (util/padding v)
+      (.setBorder x (util/compound-border 
                       (if (util/compound-border? current)
-                        (.getInsideBorder ^CompoundBorder (.getBorder x))
-                        (.getBorder x))))))
+                        (.getOutsideBorder ^CompoundBorder current)
+                        current)
+                      (util/padding v)))))
   (:background [c _ v]
     (.setBackground ^Component (p/impl c) (util/color v)))
   (:color [c _ v]

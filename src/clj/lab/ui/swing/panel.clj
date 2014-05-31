@@ -5,7 +5,7 @@
             [lab.ui.swing.util :as util])
   (:import [javax.swing JPanel JSplitPane JScrollPane JButton JComponent]
            [java.awt BorderLayout]
-           [javax.swing.plaf.basic BasicSplitPaneDivider]))
+           [javax.swing.plaf.basic BasicSplitPaneDivider BasicSplitPaneUI]))
 
 (util/set-prop "scrollbar" (util/color 0xCC0000))
 (util/set-prop "ScrollBar.background" (util/color 0xCCCCCC))
@@ -27,8 +27,6 @@
 (util/set-prop "ScrollBar.width" (int 15))
 (util/set-prop "ScrollBar.height" (int 15))
 
-(util/set-prop "" (util/color 0xCCCCCC))
-
 (extend-protocol Component
   JSplitPane
   (add [this child]
@@ -49,16 +47,24 @@
     (.. this getViewport (remove ^java.awt.Container child))
     this))
 
-(definitializations
-  :split       JSplitPane
-  :panel       JPanel
-  :scroll      JScrollPane)
-
 (defn- find-divider [^JSplitPane split]
   (->> split 
     .getComponents 
     (filter (partial instance? BasicSplitPaneDivider))
     first))
+
+(defn- init-split
+  "Create the split pane and replace the UI implementation for a
+  bare one, so that the divider and the rest of its properties can be
+  set, regardless of the Look & Feel used."
+  [c]
+  (doto (JSplitPane.)
+    (.setUI (BasicSplitPaneUI.))))
+
+(definitializations
+  :split       init-split
+  :panel       JPanel
+  :scroll      JScrollPane)
 
 (defattributes
   :split
