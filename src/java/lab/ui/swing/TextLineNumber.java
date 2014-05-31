@@ -25,8 +25,6 @@ public class TextLineNumber extends JPanel
 	public final static float CENTER = 0.5f;
 	public final static float RIGHT = 1.0f;
 
-	private final static Border OUTER = new MatteBorder(0, 0, 0, 2, Color.GRAY);
-
 	private final static int HEIGHT = Integer.MAX_VALUE - 1000000;
 
 	//  Text component this TextTextLineNumber component is in sync with
@@ -126,8 +124,7 @@ public class TextLineNumber extends JPanel
 	public void setBorderGap(int borderGap)
 	{
 		this.borderGap = borderGap;
-		Border inner = new EmptyBorder(0, borderGap, 0, borderGap);
-		setBorder( new CompoundBorder(OUTER, inner) );
+		setBorder(new EmptyBorder(0, borderGap, 0, borderGap));
 		lastDigits = 0;
 		setPreferredWidth();
 	}
