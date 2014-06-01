@@ -5,13 +5,15 @@
   and [REPLy](https://github.com/trptcolin/reply)"
   (:require [popen :refer [popen kill stdin stdout]]
             [clojure.java.io :as io]
+            [clojure.zip :as zip]
             [clojure.string :refer [split] :as str]
             [clojure.tools.nrepl :as nrepl]
             [clojure.tools.nrepl.transport :as nrepl.transport]
             [lab.core :as lab]
             [lab.util :as util]
             [lab.core [plugin :as plugin]
-                      [keymap :as km]]
+                      [keymap :as km]
+                      [lang :as lang]]
             [lab.model [document :as doc]
                        [protocols :as model]
                        [history :as h]]
@@ -54,6 +56,13 @@
                         (mapcat #(ns-qualified-public-symbols (str %) %)
                                 (all-ns))]))))]
     (ns-all-symbols *ns*)))
+
+(defn- docstring
+  [{:keys [tag content] :as node}]
+  (when (= tag :symbol)
+    `(do
+       (require 'clojure.repl)
+       (with-out-str (clojure.repl/doc ~(symbol (first content)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Connection
@@ -381,6 +390,37 @@ an nREPL client that connects to that server."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Autocomplete
 
+(defn- inline-info
+  "Returns a string with the information for the symbol
+  in the current caret position."
+  [{:keys [source app] :as e}]
+  (let [pos  (ui/caret-position source)
+        location (ui/caret-location source)
+        root (-> source (ui/attr :doc) deref lang/parse-tree lang/code-zip)
+        [loc i] (lang/location root pos)
+        conn (current-connection @app)
+        code (docstring (-> loc zip/up zip/node))]
+    (when-let [info (and code (conn-eval-and-get-value conn (str code)))]
+      (-> [:pop-up-menu {:size [500 200]
+                         :location location
+                         :source source
+                         :border :none}
+           [:scroll {:vertical-increment 16}
+            [:panel {:border :none
+                     :layout :border}
+             [:text-editor {:border :none
+                            :text info
+                            :read-only true
+                            :line-highlight-color [0 0 0 0]
+                            :font ["Consolas" 14]}]]]]
+        ui/init
+        (ui/update :text-editor ui/caret-position 0)
+        (ui/attr :visible true)
+        (ui/apply-stylesheet (:styles @app))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Autocomplete
+
 (defn- symbols-in-scope-from-connection
   [{:keys [editor app] :as e}]
   (when-let [conn (current-connection @app)]
@@ -417,7 +457,8 @@ an nREPL client that connects to that server."
      {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
    (km/keymap (ns-name *ns*)
      :lang :clojure
-     {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
+     {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"}
+     {:category "Clojure > nREPL" :name "Documentation string" :fn ::inline-info :keystroke "ctrl i"})])
 
 (defn- init! [app]
   (swap! app init-connections)
