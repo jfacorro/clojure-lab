@@ -254,20 +254,21 @@ and signals the highlighting process."
 
 (defn- handle-key
   [{app :app :as e}]
-  (let [ui     (:ui @app)
-        editor (:source e)
-        doc    (ui/attr editor :doc)
-        [x y]  (ui/key-stroke (dissoc e :source))
-        cmd    (->> [(:keymap @doc)
-                     (-> @doc :lang :keymap)
+  (when-not (ui/consumed? e)
+    (let [ui     (:ui @app)
+          editor (:source e)
+          doc    (ui/attr editor :doc)
+          [x y]  (ui/key-stroke (dissoc e :source))
+          cmd    (->> [(:keymap @doc)
+                       (-> @doc :lang :keymap)
                      (@app :keymap)]
-                 (map #(km/find-or % y x))
-                 (drop-while nil?)
-                 first)]
-    (when cmd
-      (ui/consume e)
-      (when (= :pressed (:event e))
-        (ui/handle-event (:fn cmd) e)))))
+                   (map #(km/find-or % y x))
+                   (drop-while nil?)
+                   first)]
+      (when cmd
+        (ui/consume e)
+        (when (= :pressed (:event e))
+          (ui/handle-event (:fn cmd) e))))))
 
 (defn text-editor-view
   "Creates a text editor with a document attached to it."
@@ -276,7 +277,7 @@ and signals the highlighting process."
                      :text (doc/text @doc)
                      :listen [:key #'handle-key             ;; FIXME: This should be using a keymap
                                                             ;; using the (editor-keymap @doc), but lang plugin
-                                                            ;; are being loaded after the editor is created
+                                                            ;; are being loaded after the editor is created.
                               :insert ::text-editor-change
                               :delete ::text-editor-change]}]
       ui/init
@@ -411,12 +412,14 @@ and signals the highlighting process."
 
 (defn- handle-keymap
   [km {:keys [app] :as e}]
-  (let [[x y] (ui/key-stroke e)
-        cmd   (km/find-or km x y)]
-    (when cmd
-      (ui/consume e)
-      (when (= :pressed (:event e))
-        (ui/handle-event (:fn cmd) e)))))
+  (when-not (ui/consumed? e)
+    (let [[x y] (ui/key-stroke e)
+          km    (km/append (:keymap @app) km)
+          cmd   (km/find-or km x y)]
+      (when cmd
+        (ui/consume e)
+        (when (= :pressed (:event e))
+          (ui/handle-event (:fn cmd) e))))))
 
 (defn event-handler
   "Replaces the UI's default event-handler implementation, 

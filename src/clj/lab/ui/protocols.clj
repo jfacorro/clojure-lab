@@ -20,7 +20,8 @@
 
 (defprotocol Event
   (to-map [this] "Serializes the event into a map.")
-  (consume [this] "Consumes this event, preventing it from bubbling up."))
+  (consume [this] "Consumes this event, preventing it from bubbling up.")
+  (consumed? [this] "Returns true if the event has been consumed, false otherwise."))
 
 (defprotocol StyledTextEditor
   (apply-style [this tokens styles] [this start len style]

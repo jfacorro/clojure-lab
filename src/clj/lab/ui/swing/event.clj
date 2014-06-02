@@ -111,7 +111,8 @@ latest version."
              (-> {:source (p/abstract (.getSource this))}
                p/map->UIEvent
                (p/impl this)))
-   :consume consume})
+   :consume consume
+   :consumed? (constantly false)})
 
 (extend java.util.EventObject
   p/Event
@@ -132,7 +133,8 @@ latest version."
 
 (def input-event
   {:to-map  (fn [^InputEvent this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})
-   :consume (fn [^InputEvent this] (.consume this))})
+   :consume (fn [^InputEvent this] (.consume this))
+   :consumed? (fn [^InputEvent this] (.isConsumed this))})
 
 (def key-event
   {:to-map (fn [^KeyEvent this]

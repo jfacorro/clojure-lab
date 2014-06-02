@@ -1,6 +1,5 @@
 (ns lab.ui.swing.text
   (:use     [lab.ui.protocols :only [impl abstract
-                                     Event to-map
                                      listen ignore
                                      TextEditor StyledTextEditor
                                      Selection selection caret-position]])

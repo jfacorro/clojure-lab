@@ -171,6 +171,7 @@ as the abstraction of its implementation."
   p/Event
   (to-map [this] this)
   (consume [this] (p/consume (p/impl this)))
+  (consumed? [this] (p/consumed? (p/impl this)))
   
   p/Abstract
   (impl
@@ -257,6 +258,7 @@ as the abstraction of its implementation."
 ;; Events 
 
 (def consume #'p/consume)
+(def consumed? #'p/consumed?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Private supporting functions
