@@ -83,17 +83,17 @@ default configuration."
   app)
 
 (defmethod km/unregister-multi :global
-  [app keymap]
-  (update-in app [:keymap] km/remove (:name keymap)))
+  [app {:keys [id] :as keymap}]
+  (update-in app [:keymap] km/remove id))
 
 (defmethod km/unregister-multi :lang
-  [app {lang :lang :as keymap}]
-  (update-in app [:langs lang :keymap] km/remove (:name keymap)))
+  [app {:keys [lang id] :as keymap}]
+  (update-in app [:langs lang :keymap] km/remove id))
 
 (defmethod km/unregister-multi :local
-  [app keymap]
+  [app {:keys [id] :as keymap}]
   (when-let [doc (current-document app)]
-    (swap! doc update-in [:keymap] km/remove (:name keymap)))
+    (swap! doc update-in [:keymap] km/remove id))
   app)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

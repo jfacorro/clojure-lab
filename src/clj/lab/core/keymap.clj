@@ -30,11 +30,20 @@
       {}
       (vals bindings))))
 
+(defn- generate-id
+  "Generates a namespace qualified keyword to be used
+  as a keymap id."
+  []
+  (keyword (str (ns-name *ns*)) (str (gensym "id-"))))
+
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,
   :lang or :local) and any number of commands that are added as key-bindings."
   [name type & [lang & lang-cmds :as cmds]]
-  (let [km {:name name :type type :bindings {}}]
+  (let [km {:id (generate-id) 
+            :name name 
+            :type type 
+            :bindings {}}]
     (if (= type :lang)
       (-> (reduce add-command km lang-cmds)
         (assoc :lang lang))
@@ -68,14 +77,14 @@
     :else         (assoc child :parent parent)))
 
 (defn remove
-  "Append a child keymap to an existinig one. If either one 
-  is nil the other is returned."
-  [top km-name]
+  "Removes the keymap with the specified id from the
+  keymap hierarchy."
+  [top id]
   (loop [cur  top
          prev nil]
     (cond
       (nil? cur) top
-      (= (:name cur) km-name)
+      (= (:id cur) id)
         (if (:parent cur)
           (append (:parent cur) prev)
           (dissoc prev :parent))

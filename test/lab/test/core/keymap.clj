@@ -48,10 +48,10 @@
 
 (deftest remove-and-find
   (let [global-lang-local (-> global (append lang) (append local))
-        global-lang       (remove global-lang-local :local-keymap)
-        global-local      (remove global-lang-local :lang-keymap)
-        lang-local        (remove global-lang-local :global-keymap)
-        empty-km          (remove lang :lang-keymap)
+        global-lang       (remove global-lang-local (:id local))
+        global-local      (remove global-lang-local (:id lang))
+        lang-local        (remove global-lang-local (:id global))
+        empty-km          (remove lang (:id lang))
         ctrl-*            (#'km/ks->set "ctrl *")
         ctrl-a            (#'km/ks->set "ctrl a")
         ctrl-b            (#'km/ks->set "ctrl b")
