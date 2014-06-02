@@ -6,6 +6,7 @@
             [lab.model.protocols :as model]
             [lab.core [plugin :as plugin]
                       [lang :as lang]
+                      [keymap :as km]
                       [main :as main]]))
 
 (def rainbow-styles
@@ -50,45 +51,59 @@
   (let [colls  (lang/search root collection?)]
     (mapcat delims colls)))
 
-(defn- color-delimiters! [editor]
+(defn- color-delimiters! [editor & [styles]]
   (let [doc   (ui/attr editor :doc)
         txt   (model/text editor)
         root  (lang/code-zip (lang/parse-tree @doc))
-        tokens (delimiters-tokens root)]
+        tokens (delimiters-tokens root)
+        styles (or styles (-> @doc :lang :styles))]
     (ui/action
       (when (= txt (model/text editor))
-        (ui/apply-style editor tokens depths-styles))))
+        (ui/apply-style editor tokens styles))))
   editor)
 
 (defn- text-editor-change! [e]
   (let [editor (:source e)]
-    (color-delimiters! editor)))
+    (color-delimiters! editor depths-styles)))
 
 (defn- text-editor-init [editor]
-  (let [ch  (timeout-channel 500 #'text-editor-change!)]
+  (let [ch (timeout-channel 500 #'text-editor-change!)]
     (-> editor
-      color-delimiters!
+      (color-delimiters! depths-styles)
       (ui/update-attr :stuff assoc ::listener ch)
       (ui/listen :insert ch)
       (ui/listen :delete ch))))
 
 (defn- text-editor-unload [editor]
-  (let [ch  (::listener (ui/stuff editor))]
+  (let [ch (::listener (ui/stuff editor))]
     (-> editor
       (ui/update-attr :stuff dissoc ::listener)
       (ui/ignore :insert ch)
-      (ui/ignore :delete ch))))
+      (ui/ignore :delete ch)
+      color-delimiters!)))
+
+(defn- toogle-rainbow
+  [{:keys [source app] :as e}]
+  (let [ui (:ui @app)
+        id (ui/attr source :id)]
+    (if (-> source ui/stuff ::listener)
+      (ui/update! ui (ui/id= id) text-editor-unload)
+      (ui/update! ui (ui/id= id) text-editor-init))))
+
+(def ^:private keymap
+  (km/keymap "Rainbow Delimiters" :local
+    {:fn ::toogle-rainbow :keystroke "ctrl p" :name "Toogle Rainbow Delimiters"}))
 
 (defn init! [app]
   (let [ui     (:ui @app)
         editor (main/current-text-editor @ui)
         id     (ui/attr editor :id)]
-    (ui/update! ui (ui/id= id) text-editor-init)))
+    (ui/update! ui (ui/id= id) #(-> % text-editor-init (ui/listen :key keymap)))))
 
 (defn unload! [app]
   (let [ui (:ui @app)
         id (ui/attr (main/current-text-editor @ui) :id)]
-    (ui/update! ui (ui/id= id) text-editor-unload)))
+    (ui/update! ui (ui/id= id) #(-> % text-editor-unload (ui/ignore :key keymap)))))
 
 (plugin/defplugin lab.plugin.editor.rainbow-delimiters
   :type    :local

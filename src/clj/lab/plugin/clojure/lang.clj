@@ -406,7 +406,7 @@ nodes in the first level."
                  :make-node #'make-node}
      :grammar   grammar
      :rank      (partial lang/file-extension? "clj")
-     :styles    styles
+     :styles    #(styles % (:default styles))
      :definitions #'definitions
      :delimiter-match #'delimiter-match
      :keymap    keymap

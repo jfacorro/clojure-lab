@@ -60,7 +60,7 @@
 (defmethod local-keymap :text-editor
   [x]
   (if-let [doc (ui/attr x :doc)]
-    (:keymap @doc)
+    (km/append (:keymap @doc) (default-local-keymap x))
     (default-local-keymap x)))
 
 (defn- commands-list
