@@ -449,6 +449,7 @@ inserting a fixed first parameter, which is the app."
                  :open-icon "folder.png"
                  :closed-icon "folder.png"
                  :leaf-icon "file.png"}
+   :scroll      {:vertical-increment 16}
    #{:text-editor :text-area :text-field :scroll :split :panel :tree}
                 {:border :none
                  :padding 0}

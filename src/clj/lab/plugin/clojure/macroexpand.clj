@@ -7,7 +7,10 @@
             [lab.ui.core :as ui]
             [lab.plugin.clojure.nrepl :as nrepl]))
 
-(defn- current-form [editor]
+(defn- current-form
+  "Takes a text editor and returns a string with the contents
+  of the inner-most form found in the current position."
+  [editor]
   (let [doc  (ui/attr editor :doc)
         root (lang/code-zip (lang/parse-tree @doc))
         pos  (ui/caret-position editor)
@@ -17,37 +20,39 @@
       (model/substring editor s e))))
 
 (defn- show-popup
-  [editor expansion]
+  [app editor expansion]
   (let [location (ui/caret-location editor)
         popup (ui/init [:pop-up-menu {:size [500 200]
                                       :location location
                                       :source editor
                                       :border :none}
-                        [:scroll {:border :none
-                                  :vertical-increment 16}
+                        [:scroll
                          [:panel {:border :none
                                   :layout :border}
                           [:text-editor {:border :none
                                          :text expansion
                                          :read-only true
-                                         :line-highlight-color 0xCCCCCC
+                                         :line-highlight-color [0 0 0 0]
                                          :font ["Consolas" 14]}]]]])]
     (-> popup
       (ui/update :text-editor ui/caret-position 0)
       (ui/attr :visible true)
-      (ui/update :text-editor ui/focus))))
+      (ui/update :text-editor ui/focus)
+      (ui/apply-stylesheet (:styles @app)))))
 
 (defn- macroexpansion
+  "Shows the current form's macroexpansion in a popup."
   [{:keys [app source] :as e}]
-  (let [form `(macroexpand '~(read-string (current-form source)))
-        expansion (nrepl/eval-and-get-value app (str form))
-        result (with-out-str (clojure.pprint/pprint expansion))]
-    (show-popup source result)))
+  (when-let [form (current-form source)]
+    (let [code (when form `(macroexpand '~(read-string form)))
+          expansion (nrepl/eval-and-get-value app (str code))
+          result (with-out-str (clojure.pprint/pprint expansion))]
+      (show-popup app source result))))
 
 (def ^:private keymaps
-  [(km/keymap ::keymap
+  [(km/keymap "Clojure Macroexpand"
      :local
-     {:keystroke "ctrl alt enter" :fn ::macroexpansion :name "In place macroexpansion"})])
+     {:keystroke "ctrl alt enter" :fn ::macroexpansion :name "Inline macroexpansion"})])
 
 (defplugin ::plugin
   :type :local

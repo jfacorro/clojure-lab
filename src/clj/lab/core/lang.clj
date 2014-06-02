@@ -168,8 +168,8 @@ node in the way to the root."
 
 (defn location
   "Finds the location that contains the offset,
-returns a vector with the location and its start
-offset."
+  returns a vector with the location and its start
+  offset."
   [root-loc offset]
   ; Check the bounds for offset
   (when-let [root-length (and (<= 0 offset)
