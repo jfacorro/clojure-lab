@@ -279,7 +279,7 @@ with the id specified."
   (show-dialog e view-find-in-files true))
 
 (def ^:private keymaps
-  [(km/keymap 'lab.plugin.find-replace
+  [(km/keymap "Find & Replace"
      :global
      {:category "Edit" :fn ::show-find :keystroke "ctrl f" :name "Find"}
      {:category "Edit" :fn ::show-find-in-files :keystroke "alt f" :name "Find in Files"}

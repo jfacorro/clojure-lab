@@ -185,12 +185,12 @@ child process with a running repl."
   (swap! app assoc :repls #{}))
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "REPL"
      :global
      {:category "Clojure > REPL" :name "Project" :fn ::open-project-repl! :keystroke "ctrl r"}
      {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "ctrl alt r"}
      {:category "Clojure > REPL" :name "Lab" :fn ::open-lab-repl!})
-   (km/keymap (ns-name *ns*)
+   (km/keymap "REPL"
      :lang :clojure
      {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
 

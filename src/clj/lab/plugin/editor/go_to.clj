@@ -61,7 +61,7 @@
 ;;; Plugin Definition
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "Go to line"
      :global
      {:category "Edit", :name "Go to Line" :fn ::goto-line! :keystroke "ctrl g"})])
 

@@ -55,7 +55,7 @@ the current caret position."
       ui/focus)))
 
 (defn- matches-nodes [editor popup matches]
-  (let [km    (km/keymap :autocomplete :local
+  (let [km    (km/keymap "Autocomplete" :local
                          {:fn ::select-autocomplete :keystroke "enter"})
         stuff {:editor editor :popup popup}]
     (-> [:tree-node {:item :root}]
@@ -103,7 +103,7 @@ Returns nil if there's no token in the current caret position."
       (ui/apply-stylesheet (:styles @app)))))
 
 (def ^:private keymaps
-  [(km/keymap 'lab.plugin.editor.autocomplete
+  [(km/keymap "Autocomplete"
      :local
      {:fn ::autocomplete :keystroke "ctrl space" :name "Autocomplete"})])
 

@@ -352,7 +352,7 @@ and returns the offset of its matching delimiter."
 ;; Keymap
 
 (def ^:private keymap
-  (km/keymap 'lab.plugin.clojure.lang
+  (km/keymap "Clojure"
     :lang :clojure
     {:fn ::insert-tab :keystroke "tab" :name "Insert tab"}))
 

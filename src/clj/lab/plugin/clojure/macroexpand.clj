@@ -27,13 +27,10 @@
                                       :source editor
                                       :border :none}
                         [:scroll
-                         [:panel {:border :none
-                                  :layout :border}
-                          [:text-editor {:border :none
-                                         :text expansion
+                         [:panel {:layout :border}
+                          [:text-editor {:text expansion
                                          :read-only true
-                                         :line-highlight-color [0 0 0 0]
-                                         :font ["Consolas" 14]}]]]])]
+                                         :line-highlight-color [0 0 0 0]}]]]])]
     (-> popup
       (ui/update :text-editor ui/caret-position 0)
       (ui/attr :visible true)
@@ -50,7 +47,7 @@
       (show-popup app source result))))
 
 (def ^:private keymaps
-  [(km/keymap "Clojure Macroexpand"
+  [(km/keymap "Macroexpand"
      :local
      {:keystroke "ctrl alt enter" :fn ::macroexpansion :name "Inline macroexpansion"})])
 

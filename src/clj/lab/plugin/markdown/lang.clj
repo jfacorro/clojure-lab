@@ -72,17 +72,18 @@ return the default style."
         [s e] (ui/selection source)
         txt   (model/substring source s e)]
     (ui/action
-      (when (not= s e)
-        (model/delete source s e))
-      (model/insert source s (str delim txt delim))
-      (ui/caret-position source (dec (ui/caret-position source))))))
+      (doc/bundle-operations
+        (when (not= s e)
+          (model/delete source s e))
+        (model/insert source s (str delim txt delim)))
+      (ui/caret-position source (- (ui/caret-position source) (count delim))))))
 
 (def ^:private keymap
-   (km/keymap ::markdown-lang
+   (km/keymap "Markdown"
      :lang :markdown
-     {:fn (partial #'wrap-in "`") :keystroke "ctrl k"}
-     {:fn (partial #'wrap-in "**") :keystroke "ctrl b"}
-     {:fn (partial #'wrap-in "*") :keystroke "ctrl i"}))
+     {:fn (partial #'wrap-in "`") :keystroke "ctrl k" :name "Code Snippet"}
+     {:fn (partial #'wrap-in "**") :keystroke "ctrl b" :name "Bold"}
+     {:fn (partial #'wrap-in "*") :keystroke "ctrl i" :name "Italic"}))
 
 (def markdown
   {:id       :markdown

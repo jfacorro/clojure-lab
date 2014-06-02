@@ -26,7 +26,7 @@
   (undo-redo! e doc/undo))
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "Undo/Redo"
      :global
      {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
      {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])

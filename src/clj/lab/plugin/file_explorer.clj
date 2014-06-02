@@ -336,7 +336,7 @@ structure."
       (watch-dir! app dir))))
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "File Explorer"
      :global
      {:category "File" :name "Open Dir" :fn ::open-directory :keystroke "ctrl d"}
      {:category "File" :name "Search & Open" :fn ::search-open-file :keystroke "ctrl alt o"})])

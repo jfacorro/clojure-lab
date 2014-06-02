@@ -77,7 +77,7 @@
           (conj labels (section-label (str k)))
           (sort-by :category cmds)))
       []
-      (mapcat km/commands [global local]))))
+      (mapcat km/commands [local global]))))
 
 (defn- help-info
   [{:keys [app source] :as e}]
@@ -88,7 +88,7 @@
       (ui/attr :visible true))))
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "Contextual Help"
      :global
      {:category "Help" :name "Show Info" :fn ::help-info :keystroke "f1"})])
 

@@ -449,18 +449,19 @@ an nREPL client that connects to that server."
   {#'lab.core/switch-document #'switch-document-hook})
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "nREPL"
      :global
      {:category "Clojure > nREPL" :name "Start and Connect to Project" :fn ::start-and-connect-to-project! :keystroke "ctrl r"}
      {:category "Clojure > nREPL" :name "Start and Connect to REPL" :fn ::start-and-connect-to-repl! :keystroke "ctrl alt r"}
      
      {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
-   (km/keymap (ns-name *ns*)
+   (km/keymap "nREPL"
      :lang :clojure
      {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"}
      {:category "Clojure > nREPL" :name "Documentation string" :fn ::inline-info :keystroke "ctrl i"})])
 
-(defn- init! [app]
+(defn- init!
+  [app]
   (swap! app init-connections)
   (swap! app
     update-in [:langs :clojure]

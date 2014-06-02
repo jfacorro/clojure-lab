@@ -725,7 +725,7 @@ parentheses by deleting and inserting the modified substring.
 ;; Keymap
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "Paredit"
      :local
      ;; Basic Insertion Commands
      {:fn ::open-delimiter :keystroke "(" :name "Open round" :category "Basic Insertion"}

@@ -507,7 +507,7 @@ inserting a fixed first parameter, which is the app."
   {#'lab.core.plugin/register-keymap! #'register-keymap-hook})
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "Basic Commands"
      :global
      {:category "File", :name "New", :fn ::new-document, :keystroke "ctrl n"}
      {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}

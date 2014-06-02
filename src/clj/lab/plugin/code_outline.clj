@@ -115,7 +115,7 @@ and content"
    #'lab.core.main/text-editor-view #'text-editor-hook})
 
 (def ^:private keymaps
-  [(km/keymap (ns-name *ns*)
+  [(km/keymap "Code Outline"
      :global
      {:category "View" :name "Outline" :fn #'create-outline-tree! :keystroke "alt O"})])
 

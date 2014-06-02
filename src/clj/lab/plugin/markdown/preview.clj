@@ -12,6 +12,7 @@
   (-> (tmplts/tab "html-preview")
     (ui/update-attr :header ui/update :label ui/attr :text "Html Preview")
     (ui/add [:scroll [:text-editor {:content-type "text/html"
+                                    :line-highlight-color [0 0 0 0]
                                     :read-only true}]])))
 
 (defn- update-html!
@@ -53,9 +54,9 @@
         (ui/update! ui (ui/id= id) text-editor-init)))))
 
 (def ^:private keymaps
-  [(km/keymap ::keymap
+  [(km/keymap "Markdown"
      :local
-     {:keystroke "ctrl p" :fn ::show-preview})])
+     {:keystroke "ctrl p" :fn ::show-preview :name "Html Preview"})])
 
 (defplugin "Markdown HTML Preview"
   :type  :global
