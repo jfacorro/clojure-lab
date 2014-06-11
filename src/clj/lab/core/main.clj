@@ -58,7 +58,7 @@ it is brought into focus and the tab containing it is selected."
         id     (ui/attr editor :id)
         tab-id (-> (ui/find @ui [:#center [:tab (ui/child id)]]) (ui/attr :id))]
     (if editor
-      (ui/action
+      (do
         (ui/update! ui :#center tplts/select-tab tab-id)
         (ui/update! ui (ui/id= id) ui/focus))
       (let [tab    (document-tab app doc)
@@ -66,10 +66,10 @@ it is brought into focus and the tab containing it is selected."
             editor (ui/find tab :text-editor)
             id     (ui/attr editor :id)]
         (add-watch doc id (partial #'doc-modified-update-title app tab-id))
-        (ui/action
-          (ui/update! ui :#center ui/add tab)
-          (ui/update! ui (ui/id= id) ui/focus)
-          (lab/load-lang-plugins! app doc))))))
+        
+        (ui/update! ui :#center ui/add tab)
+        (ui/update! ui (ui/id= id) ui/focus)
+        (lab/load-lang-plugins! app doc)))))
 
 (defn open-document
   "Adds a new tab with the open document."
