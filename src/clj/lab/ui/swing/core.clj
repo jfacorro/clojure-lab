@@ -48,7 +48,8 @@
 ;; Register Inconsolata font
 
 (util/register-font "Inconsolata.otf")
-
+(util/register-font "LucidaTypewriterRegular.otf")
+ 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; UI protocols implementation
   

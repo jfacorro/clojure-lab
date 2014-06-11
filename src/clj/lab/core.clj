@@ -247,4 +247,9 @@ app's configuration map."
     (doseq [plugin-name (mapcat (partial config @app)
                                 [:core-plugins :plugins])]
       (pl/load-plugin! app plugin-name))
+    ; Preload all language plugins to avoid lags when opening a file
+    (doseq [plugin-name (as-> (config @app :lang-plugins) x
+                          (mapcat x (keys x)))]
+      (pl/load-plugin! app plugin-name))
+
     app))

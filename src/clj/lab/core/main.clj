@@ -457,7 +457,7 @@ inserting a fixed first parameter, which is the app."
    #{:text-editor :text-area :text-field :scroll :split :panel :tree}
                 {:border :none
                  :padding 0}
-   :line-number {:font        [:name "Consolas" :size 16]
+   :line-number {:font        [:name "Lucida Sans Typewriter" :size 14]
                  :background  0x222222
                  :color       0xFFFFFF
                  :current-line-color 0x99FFFF
@@ -466,7 +466,7 @@ inserting a fixed first parameter, which is the app."
    [:pop-up-menu :scroll]
                 {:border [:line 0xFFFFFF 1]}
    #{:text-editor :text-area :text-field :console}
-                {:font        [:name "Consolas" :size 16]
+                {:font        [:name "Lucida Sans Typewriter" :size 14]
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}
