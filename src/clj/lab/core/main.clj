@@ -93,7 +93,8 @@ and call the app's open-document function."
 
 (defn- new-document
   "Creates a new document and shows it in a new tab."
-  [{app :app :as e}]  
+  {:order 1}
+  [{app :app :as e}]
   (swap! app lab/new-document)
   (open-document-ui! app (lab/current-document @app)))
 
@@ -195,17 +196,28 @@ associated to it."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Register Keymap
 
+(defn- command-order
+  "Takes a command specified in a global keymap and extracts
+  the :order metadata associated with the fn's var."
+  [{:keys [fn]}]
+  (let [fn-var (if (keyword? fn)
+                 (util/memoized-kw->fn fn)
+                 fn)]
+    (or (-> fn-var meta :order)
+      Integer/MAX_VALUE)))
+
 (defn- register-keymap-hook
   "Processes the :global keymaps adding their commands 
-to the UI's main menu."
+  to the UI's main menu."
   [f app keymap]
   (case (:type keymap)
     :global
       (let [ui    (:ui @app)
-            cmds  (-> keymap :bindings vals)]
+            cmds  (->> keymap :bindings vals 
+                    (sort-by command-order))]
         (ui/update! ui [] (partial reduce menu/add-option) cmds))
-     :lang  nil
-     :local nil)
+    :lang  nil
+    :local nil)
   (f app keymap))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -404,12 +416,6 @@ and signals the highlighting process."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Event handler
 
-(defn- kw->fn [k]
-  (or (-> k str (subs 1) symbol resolve)
-      (throw (Exception. (str "The keyword " k " does not resolve to a var.")))))
-
-(def ^:private memoized-kw->fn (memoize kw->fn))
-
 (defn- handle-keymap
   [km {:keys [app] :as e}]
   (when-not (ui/consumed? e)
@@ -430,7 +436,7 @@ inserting a fixed first parameter, which is the app."
       (or (fn? f) (var? f))
         (f e)
       (keyword? f)
-        ((memoized-kw->fn f) e)
+        ((util/memoized-kw->fn f) e)
       (util/channel? f)
         (async/put! f e)
       (map? f)

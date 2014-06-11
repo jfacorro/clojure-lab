@@ -38,6 +38,12 @@ wins. Returns a channel that takes the input events."
     (.replace " " "-")
     keyword))
 
+(defn- kw->fn [k]
+  (or (-> k str (subs 1) symbol resolve)
+      (throw (Exception. (str "The keyword " k " does not resolve to a var.")))))
+
+(def memoized-kw->fn (memoize kw->fn))
+
 (defn find-limits
   "Returns a lazy sequence of vectors with the
   limits of the matches found in the string 
