@@ -448,9 +448,11 @@ inserting a fixed first parameter, which is the app."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Default styles
 
+(def default-font [:name "Monospaced" :size 15])
+
 (def styles
   [#{:label :tree :button}
-                {:font [:name "ABeeZee" :size 15]}
+                {:font default-font}
    :tree        {:background 0x333333
                  :selected-node-background 0x666666
                  :selected-node-color 0xFFFFFF
@@ -463,7 +465,7 @@ inserting a fixed first parameter, which is the app."
    #{:text-editor :text-area :text-field :scroll :split :panel :tree}
                 {:border :none
                  :padding 0}
-   :line-number {:font        [:name "ABeeZee" :size 15]
+   :line-number {:font        default-font
                  :background  0x222222
                  :color       0xFFFFFF
                  :current-line-color 0x99FFFF
@@ -472,7 +474,7 @@ inserting a fixed first parameter, which is the app."
    [:pop-up-menu :scroll]
                 {:border [:line 0xFFFFFF 1]}
    #{:text-editor :text-area :text-field :console}
-                {:font        [:name "ABeeZee" :size 15]
+                {:font        default-font
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}

@@ -30,12 +30,28 @@ Even when I discovered [Counterclockwise][3] and [Light Table][5] was annouced ,
 
 ## Running the Application
 
+### Requirements
+
+In order to fire up Clojure Lab from the REPL, build or run it you need:
+
+- [Leiningen](https://github.com/technomancy/leiningen/) installed and in your `$PATH`.
+- [JDK 1.7.0](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html) installed.
+
+### REPL
+
 The application can be run by either using the `lein run` or starting a REPL and then calling the `-main` function:
 
     $ lein repl
     lab.main> (-main)
 
-An executable `lab.jar` file can be generated through the use of the `lein build` command.
+### Building
+
+An executable `lab.jar` file can be generated through the use of the `lein build` command. 
+
+### Downloading
+
+Since Clojure Lab is still under development there's no download yet, sorry about that.
+Once some issues are solved I'll add a link to a runnable JAR.
 
 ## Features
 
