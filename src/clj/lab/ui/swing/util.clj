@@ -3,7 +3,8 @@
             [lab.ui.util :as util]
             [lab.ui.hierarchy :as h]
             [lab.ui.protocols :as uip]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.tools.logging :as log])
   (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
                      BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
                      KeyboardFocusManager Component]
@@ -205,10 +206,13 @@ all optional and creates a Font."
             (Font. name (font-style style) size))))
 
 (defn register-font [font-path]
-  (let [ge          (GraphicsEnvironment/getLocalGraphicsEnvironment)
-        font-stream (-> font-path io/resource io/input-stream)
-        font        (Font/createFont Font/TRUETYPE_FONT font-stream)]
-    (.registerFont ge font)))
+  (try
+    (let [ge          (GraphicsEnvironment/getLocalGraphicsEnvironment)
+          font-stream (-> font-path io/resource io/input-stream)
+          font        (Font/createFont Font/TRUETYPE_FONT font-stream)]
+      (.registerFont ge font))
+    (catch Exception ex
+      (log/error ex (format "The font %s could not be loaded" font-path)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Document Style

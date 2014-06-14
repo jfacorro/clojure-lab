@@ -450,7 +450,7 @@ inserting a fixed first parameter, which is the app."
 
 (def styles
   [#{:label :tree :button}
-                {:font [:name "Consolas" :size 14]}
+                {:font [:name "ABeeZee" :size 15]}
    :tree        {:background 0x333333
                  :selected-node-background 0x666666
                  :selected-node-color 0xFFFFFF
@@ -463,7 +463,7 @@ inserting a fixed first parameter, which is the app."
    #{:text-editor :text-area :text-field :scroll :split :panel :tree}
                 {:border :none
                  :padding 0}
-   :line-number {:font        [:name "Lucida Sans Typewriter" :size 14]
+   :line-number {:font        [:name "ABeeZee" :size 15]
                  :background  0x222222
                  :color       0xFFFFFF
                  :current-line-color 0x99FFFF
@@ -472,7 +472,7 @@ inserting a fixed first parameter, which is the app."
    [:pop-up-menu :scroll]
                 {:border [:line 0xFFFFFF 1]}
    #{:text-editor :text-area :text-field :console}
-                {:font        [:name "Lucida Sans Typewriter" :size 14]
+                {:font        [:name "ABeeZee" :size 15]
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}
@@ -523,6 +523,7 @@ inserting a fixed first parameter, which is the app."
      {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}
      {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
      {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
+     {:category "File", :name "Quit", :fn ::exit!, :keystroke "ctrl q"}
      
      {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
      {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
