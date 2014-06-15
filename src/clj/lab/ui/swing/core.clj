@@ -1,7 +1,7 @@
 (ns lab.ui.swing.core
   (:require [lab.ui.core :as ui]
             [lab.ui.swing.util :as util])
-  (:import [javax.swing SwingUtilities]))
+  (:import [javax.swing SwingUtilities UIManager]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; First define macro to perform ui actions
@@ -14,6 +14,11 @@
     (fn [] ~@body)))
 
 (ui/register-action-macro! #'swing-action)
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; Swing L&F
+
+(UIManager/setLookAndFeel "javax.swing.plaf.metal.MetalLookAndFeel")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Then require components implementations
@@ -35,14 +40,9 @@
                           event
                           console
 			  toolbar])
-  (:import [javax.swing UIManager JComponent AbstractAction SwingUtilities]
+  (:import [javax.swing JComponent AbstractAction SwingUtilities]
            javax.swing.border.CompoundBorder
            java.awt.Component))
-
-;;;;;;;;;;;;;;;;;;;;;;
-;; Swing L&F
-
-(UIManager/setLookAndFeel "javax.swing.plaf.metal.MetalLookAndFeel")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Register fonts

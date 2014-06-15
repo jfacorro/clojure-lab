@@ -3,15 +3,15 @@
   (:require [lab.ui.core :as ui]
             [lab.ui.util :refer [defattributes definitializations]]
             [lab.ui.swing.util :as util :refer [set-prop]])
-  (:import  [javax.swing JTabbedPane JScrollPane JPanel JComponent]
-            [java.awt Insets Color]))
+  (:import  [javax.swing JTabbedPane JPanel JComponent]))
 
-(def transparent (Color. 0 0 0 0))
+(def transparent (util/color [0 0 0 0]))
+(def no-insets (util/insets [0 0 0 0]))
 
-(set-prop "TabbedPane.tabAreaInsets" (Insets. 0 0 0 0))
-(set-prop "TabbedPane.tabInsets" (Insets. 0 0 0 0))
-(set-prop "TabbedPane.selectedTabPadInsets" (Insets. 0 0 0 0))
-(set-prop "TabbedPane.contentBorderInsets" (Insets. 0 0 0 0))
+(set-prop "TabbedPane.tabAreaInsets" no-insets)
+(set-prop "TabbedPane.tabInsets" no-insets)
+(set-prop "TabbedPane.selectedTabPadInsets" no-insets)
+(set-prop "TabbedPane.contentBorderInsets" no-insets)
 
 (set-prop "TabbedPane.tabsOverlapBorder" true)
 (set-prop "TabbedPane.selectionFollowsFocus" true)

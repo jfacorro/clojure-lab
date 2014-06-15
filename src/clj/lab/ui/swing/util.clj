@@ -7,7 +7,7 @@
             [clojure.tools.logging :as log])
   (:import [java.awt Dimension Color Font Toolkit Image GraphicsEnvironment GraphicsDevice Window
                      BorderLayout CardLayout FlowLayout GridBagLayout GridLayout
-                     KeyboardFocusManager Component]
+                     KeyboardFocusManager Component Insets]
            [java.awt.event MouseAdapter FocusAdapter KeyListener ActionListener WindowAdapter]
            [javax.swing.event CaretListener DocumentListener ChangeListener]
            [javax.swing BorderFactory JSplitPane KeyStroke ImageIcon JComponent InputMap
@@ -22,6 +22,13 @@
     (.remove k)
     (.put k v))
   nil)
+
+(defn list-props [query]
+  (->> (UIManager/getDefaults)
+    (filter #(-> % .getKey str (.contains query)))
+    (sort-by #(-> % .getKey str))
+    (map #(vector (.getKey % ) (.getValue %)))
+    (map prn)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SplitPane Orientations
@@ -334,6 +341,11 @@ can be a single value or a collection specifying:
   [x]
   (let [[top left bottom right] (top-left-bottom-right x)]
     (BorderFactory/createEmptyBorder top left bottom right)))
+
+(defn insets 
+  [x]
+  (let [[top left bottom right] (top-left-bottom-right x)]
+    (Insets. top left bottom right)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;; KeyStroke
