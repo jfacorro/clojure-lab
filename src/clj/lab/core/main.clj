@@ -478,12 +478,16 @@ inserting a fixed first parameter, which is the app."
                  :background  0x333333
                  :color       0xFFFFFF
                  :caret-color 0xFFFFFF}
-   :panel       {:background 0x666666}
+   :panel       {:background 0x666666
+                 :layout :border}
    :split       {:divider-size 2
                  :background 0x666666
                  :divider-background 0x666666}
    :tabs        {:selected-tab-style   {:border [:line 0x99FFFF [0 0 2 0]]}
-                 :unselected-tab-style {:border :none}}
+                 :unselected-tab-style {:border :none}
+                 ; Padding is necessary because :tabs inside
+                 ; a :split are drawn with a white line on top
+                 :padding [-2 0 0 0]}
    [:#nrepl :split]
                 {:divider-size 2
                  :divider-background 0x99FFFF}])
