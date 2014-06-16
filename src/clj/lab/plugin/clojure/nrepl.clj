@@ -355,7 +355,8 @@ to the ui in the bottom section."
     (ui/action
       (ui/update! ui :#top-bottom
         (fn [x]
-          (-> (ui/update-attr x :divider-location-right #(or % 200))
+          (-> x
+            (ui/update-attr :divider-location-right #(or % 200))
             (ui/update :#bottom ui/add tab))))
       (console-output! app "Starting nREPL server\n"))))
   

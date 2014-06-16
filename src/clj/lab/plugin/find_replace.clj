@@ -143,7 +143,9 @@
   (let [s       (slurp file)
         results (find-limits txt s)
         items   (map (partial search-results-node file s) results)
-        file-node (into [:tree-node {:item (.getCanonicalPath file)}] items)]
+        file-node (into [:tree-node {:item (.getCanonicalPath file)
+                                     :expanded true}] 
+                    items)]
   (when (seq items)
     (ui/action (ui/update! ui (ui/id= id) ui/add file-node)))))
 
@@ -154,11 +156,15 @@
       (file-seq x)
       (.listFiles x))))
 
-(defn- find-in-files [app path recursive txt]
+(defn- find-in-files
+  "Looks through all the content in the files in path.
+  Adds a node for every file where txt was found."
+  [app path recursive txt]
   (let [ui    (:ui @app)
         files (get-files path recursive)
         title (str "Find \"" txt "\" in \"" path "\"")
-        root  (ui/init [:tree-node {:item title}])
+        root  (ui/init [:tree-node {:item title
+                                    :expanded true}])
         id    (ui/attr root :id)]
     (ui/action
       (ui/update! ui [:#find-results :#find-results-root] ui/add root))
@@ -179,6 +185,9 @@ directory to the text field that holds the path."
     (ui/update! dialog :#path-text ui/attr :text path)))
 
 (defn- find-in-files-click
+  "Adds the results tree to the bottom section and
+  fires up the search. Results are added as they are 
+  found."
   [{:keys [app source] :as e}]
   (let [ui      (:ui @app)
         dialog  (:dialog (ui/stuff source))
@@ -189,7 +198,11 @@ directory to the text field that holds the path."
       (ui/action
         (ui/attr @dialog :visible false)
         (when-not (ui/find @ui :#find-results)
-          (ui/update! ui :#bottom ui/add (view-find-results app)))
+          (ui/update! ui :#top-bottom
+            (fn [x]
+              (-> x
+                (ui/update-attr :divider-location-right #(or % 200))
+                (ui/update :#bottom ui/add (view-find-results app))))))
         (future
           (find-in-files app path recursive? txt))))))
 

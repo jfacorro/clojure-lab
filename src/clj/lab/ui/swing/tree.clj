@@ -22,6 +22,34 @@
       (when (and tree (.getModel tree))
         (.reload ^DefaultTreeModel (.getModel tree) node))))
 
+(defn- add-node
+  [^DefaultMutableTreeNode parent ^DefaultMutableTreeNode child]
+  (let [root (.getRoot parent)
+        tree ^JTree (:tree (meta root))
+        model (and tree (.getModel tree))]
+    (if model
+      (let [c       (abstract child)
+            expand? (ui/attr c :expanded)
+            path    (TreePath. ^objects (.getPath child))]
+        (.insertNodeInto ^DefaultTreeModel model child parent (.getChildCount parent))
+        (if expand?
+          (.expandPath tree path)
+          (.collapsePath tree path)))
+      (do
+        (.add parent child)
+        (update-tree-from-node parent)))))
+
+(defn- remove-node
+  [^DefaultMutableTreeNode parent ^DefaultMutableTreeNode child]
+  (let [root (.getRoot parent)
+        tree ^JTree (:tree (meta root))
+        model ^DefaultTreeModel (and tree (.getModel tree))]
+    (if model
+      (.removeNodeFromParent ^DefaultTreeModel model child)
+      (do
+        (.remove parent child)
+        (update-tree-from-node parent)))))
+
 (defn tree-node-init [c]
   (let [ab        (atom nil)
         meta-data (atom nil)
@@ -90,12 +118,10 @@ event can be :click or :key."
 (extend-type DefaultMutableTreeNode
   Component
   (add [this child]
-    (.add this child)
-    (update-tree-from-node this)
+    (add-node this child)
     this)
   (remove [this child]
-    (.remove this ^DefaultMutableTreeNode child)
-    (update-tree-from-node this)
+    (remove-node this child)
     this)
   (children [this]
     (.children this))
@@ -164,10 +190,11 @@ event can be :click or :key."
       (.setLeafIcon (util/icon v))))
 
   :tree-node
-    (:leaf [c _ v])
-    (:item [c attr item]
-      (.setUserObject ^DefaultMutableTreeNode (impl c) item))
-    (:info [c _ v]))
+  (:leaf [c _ v])
+  (:item [c attr item]
+    (.setUserObject ^DefaultMutableTreeNode (impl c) item))
+  (:info [c _ v])
+  (:expanded [c _ v]))
 
 ;; Since the implementation of these events for the tree nodes
 ;; actually works through the tree events, there's nothing to do
