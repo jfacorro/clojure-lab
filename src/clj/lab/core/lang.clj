@@ -19,22 +19,22 @@ function from each lang to determine the appropiate one."
     (if (zero? rank) default lang)))
 
 (defn file-extension?
-  "Returns a positive number if the path's extension 
-equals ext, zero otherwise."
+  "Returns a 1 if the path's extension equals ext
+  and 0 otherwise."
   [ext ^String path]
   (if (= ext (-> path (.split "\\.") last))
     1
     0))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Language 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Language
 ;;
 ;; Holds the information for parsing each language.
-;; Its fields are self-explanatory except for lang?, which 
-;; should hold a predicate function that recieves a doc and
-;; returns true if the doc is of that language.
+;; Its fields are self-explanatory except for :rank, which 
+;; should hold a function that recieves a path and
+;; returns a number between 0 and 1.
 
-(defrecord Language [name options grammar lang? styles])
+(defrecord Language [id name options grammar rank styles])
 
 (def ^{:dynamic true} *node-group*
   "Determines the value that will be assigned to the nodes 
@@ -64,7 +64,7 @@ check if its one of the registered symbols."
 
 (def plain-text
   (map->Language
-    {:id       :plan-text
+    {:id       :plain-text
      :name     "Plain text"
      :options  {:main      :expr*
                 :root-tag  ::root

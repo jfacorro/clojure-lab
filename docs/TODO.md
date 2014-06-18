@@ -9,7 +9,7 @@
 
 #### Code Editor
   - Features:
-    - Listen for changes in opened files (i.e. "The file has been modified fo you want to reload it?").
+    - Listen for changes in opened files (i.e. "The file has been modified. Do you want to reload it?").
 
 #### Code Outline:
   - When going to line, position the line in the top (or middle) of the scroll.
@@ -19,6 +19,9 @@
     - Plugin management:
       - (?) Allow plugins to define their own dependencies.
     - Remove lab.plugin.clojure-repl since it was replaced by lab.plugin.clojure-nrepl
+
+## UI
+    - Set dark color for scrollbars.
 
 ## DONE
 

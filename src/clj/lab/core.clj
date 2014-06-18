@@ -45,11 +45,11 @@
                                lab.plugin.markdown.preview]}
    :plugins-dir   "plugins"
    :current-dir   "."
-   :default-lang  (:id lang/plain-text)})
+   :default-lang  :plain-text})
 
 (def default-app
   "Returns a new app with nothing initialized and a
-default configuration."
+  default configuration."
   {:name              "Clojure Lab"
    :config            default-config
    :documents         #{}

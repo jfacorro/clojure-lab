@@ -30,14 +30,15 @@
 
 (defn- update-html!
   [{:keys [app source] :as e}]
-  (let [ui (:ui @app)
-        pos  (ui/caret-position source)
-        html (md/md-to-html-string (model/text source))]
+  (let [ui   (:ui @app)
+        html (md/md-to-html-string (model/text source))
+        pos  (ui/caret-position source)]
     (ui/action
       (ui/update! ui [:#html-preview :text-editor]
                      #(-> % 
                        (ui/attr :text html)
-                       (ui/caret-position pos))))))
+                       (ui/caret-position (min pos 
+                                            (model/length %))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; hooks
