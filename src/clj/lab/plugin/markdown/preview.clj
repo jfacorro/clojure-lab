@@ -1,6 +1,7 @@
 (ns lab.plugin.markdown.preview
   (:require [lab.core [plugin :refer [defplugin]]
-                      [keymap :as km]]
+                      [keymap :as km]
+                      [main :as main]]
             [lab.util :refer [timeout-channel]]
             [lab.model.protocols :as model]
             [lab.ui [core :as ui]
@@ -23,7 +24,9 @@
         html (md/md-to-html-string txt)]
     (ui/action
       (ui/update! ui [:#html-preview :text-editor]
-                     ui/attr :text html))))
+                     #(-> %
+                       (ui/attr :text html)
+                       (ui/caret-position 0))))))
 
 (defn- update-html!
   [{:keys [app source] :as e}]
@@ -36,19 +39,22 @@
                        (ui/attr :text html)
                        (ui/caret-position pos))))))
 
-(defn- text-editor-init [editor]
-  (let [hl-ch  (timeout-channel 250 #'update-html!)]
-    (-> editor
-      (ui/update-attr :stuff assoc ::listener hl-ch)
-      (ui/listen :insert hl-ch)
-      (ui/listen :delete hl-ch))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; hooks
 
-(defn- text-editor-unload [editor]
-  (let [hl-ch  (::listener (ui/stuff editor))]
-    (-> editor
-      (ui/update-attr :stuff dissoc ::listener)
-      (ui/ignore :insert hl-ch)
-      (ui/ignore :delete hl-ch))))
+(defn- switch-document-hook
+  "Hook for #'lab.core/switch-document.
+  Updates the preview of the markup document."
+  [f app doc]
+  (let [app (f app doc)]
+    (future (update-html-from-doc (:ui app) doc))
+    app))
+
+(def ^:private hooks
+  {#'lab.core/switch-document #'switch-document-hook})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; keymaps commands
 
 (defn- show-preview 
   [{:keys [app source] :as e}]
@@ -60,26 +66,53 @@
                (ui/update :text-editor ui/attr :text html))]
     (when-not (ui/find @ui :#html-preview)
       (ui/action
-        (ui/update! ui :#right ui/add tab)
-        (ui/update! ui (ui/id= id) text-editor-init)))))
-
-(defn- switch-document-hook
-  "Hook for #'lab.core/switch-document.
-  Updates the preview of the markup document."
-  [f app doc]
-  (let [app (f app doc)]
-    (update-html-from-doc (:ui app) doc)
-    app))
-
-(def ^:private hooks
-  {#'lab.core/switch-document #'switch-document-hook})
+        (ui/update! ui :#right ui/add tab)))))
 
 (def ^:private keymaps
   [(km/keymap "Markdown"
      :local
      {:keystroke "ctrl p" :fn ::show-preview :name "Html Preview"})])
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; init!
+
+(defn- text-editor-init [editor]
+  (let [hl-ch  (timeout-channel 250 #'update-html!)]
+    (-> editor
+      (ui/update-attr :stuff assoc ::listener hl-ch)
+      (ui/listen :insert hl-ch)
+      (ui/listen :delete hl-ch))))
+
+(defn- init! [app]
+  (let [ui     (:ui @app)
+        editor (main/current-text-editor @ui)
+        id     (ui/attr editor :id)]
+    (when editor
+      (ui/update! ui (ui/id= id) text-editor-init))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; unload!
+
+(defn- text-editor-unload [editor]
+  (let [hl-ch  (::listener (ui/stuff editor))]
+    (-> editor
+      (ui/update-attr :stuff dissoc ::listener)
+      (ui/ignore :insert hl-ch)
+      (ui/ignore :delete hl-ch))))
+
+(defn- unload! [app]
+  (let [ui     (:ui @app)
+        editor (main/current-text-editor @ui)
+        id     (ui/attr editor :id)]
+    (when editor
+      (ui/update! ui (ui/id= id) text-editor-unload))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; plugin definition
+
 (defplugin "Markdown HTML Preview"
   :type    :local
+  :init!   #'init!
+  :unload! #'unload!
   :hooks   hooks
   :keymaps keymaps)
