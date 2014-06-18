@@ -84,6 +84,7 @@ they exist."
         {:keys [init! hooks keymaps] :as plugin}
                    (->> (ns-resolve plugin-ns 'plugin) deref)]
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
+    (log/info "Loaded plugin " plugin-name)
     (when (register-plugin! app plugin)
       (when hooks
         (add-hooks! hooks plugin-name))

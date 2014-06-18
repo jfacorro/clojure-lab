@@ -15,6 +15,16 @@
                                     :line-highlight-color [0 0 0 0]
                                     :read-only true}]])))
 
+(defn- update-html-from-doc
+  "Updates the HTML preview control with the contents
+  of the provided doc after it is parsed as markdown."
+  [ui doc]
+  (let [txt  (if doc (model/text @doc) "")
+        html (md/md-to-html-string txt)]
+    (ui/action
+      (ui/update! ui [:#html-preview :text-editor]
+                     ui/attr :text html))))
+
 (defn- update-html!
   [{:keys [app source] :as e}]
   (let [ui (:ui @app)
@@ -53,11 +63,23 @@
         (ui/update! ui :#right ui/add tab)
         (ui/update! ui (ui/id= id) text-editor-init)))))
 
+(defn- switch-document-hook
+  "Hook for #'lab.core/switch-document.
+  Updates the preview of the markup document."
+  [f app doc]
+  (let [app (f app doc)]
+    (update-html-from-doc (:ui app) doc)
+    app))
+
+(def ^:private hooks
+  {#'lab.core/switch-document #'switch-document-hook})
+
 (def ^:private keymaps
   [(km/keymap "Markdown"
      :local
      {:keystroke "ctrl p" :fn ::show-preview :name "Html Preview"})])
 
 (defplugin "Markdown HTML Preview"
-  :type  :global
+  :type    :local
+  :hooks   hooks
   :keymaps keymaps)
