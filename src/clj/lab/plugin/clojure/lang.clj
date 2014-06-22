@@ -405,7 +405,10 @@ nodes in the first level."
                  :space :whitespace*
                  :make-node #'make-node}
      :grammar   grammar
-     :rank      (partial lang/file-extension? "clj")
+     :rank      (fn [x]
+                  (->> ["clj" "cljs"]
+                    (map #(lang/file-extension? % x))
+                    (apply max)))
      :styles    #(styles % (:default styles))
      :definitions #'definitions
      :delimiter-match #'delimiter-match
