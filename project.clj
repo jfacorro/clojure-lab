@@ -17,7 +17,8 @@
                  [markdown-clj "0.9.44"]
 
                  [clojure-watch "0.1.9"]]
-  :uberjar-name "lab.jar"
+  :plugins       [[lein-cloverage "1.0.2"]]
+  :uberjar-name  "lab.jar"
   :java-source-paths ["src/java"]
   :source-paths ["src/clj"]
   :manifest {"SplashScreen-Image" "logo.png"}
