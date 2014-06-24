@@ -57,7 +57,7 @@ Lists
 3. item
 300001. item
 
-		- Tiene NroHasta && Existe comprobante dentro del rango en la misma u otra fecha
+		- This causes an ambiguous match
 
 Nested Lists
 ============

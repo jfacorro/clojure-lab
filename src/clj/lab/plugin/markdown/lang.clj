@@ -35,11 +35,10 @@
               :em #{#"(?<!\*)\*(?!\*)(?<! ).+?(?! )(?<!\*)\*(?!\*)"
                     #"(?<!_)_(?!\_)(?<! ).+?(?! )(?<!_)_(?!\_)"}
               :list #"[ \t]{0,3}(?:[-\+\*]|\d+\.)[ \t]"
-              :link #{#"\[.+?\]\(.+?\)"
-                      #"\[.+?\]\[.*?\]"
+              :link #{#"\[.+?\](\(.+?\)|\[.+?\])"
                       #" {0,3}\[.+?\]:[ \t]+.+"}
               :html #"(?s)</?[^ ][\w]*.*?/?>"
-              :code #{#"(?: {4} *|\t+)(?! |[-\+\*]|\d+\.)(?<![-\+\*]|\d+\.).*"
+              :code #{#"(?: {4} *|\t+[^-])(?! |[-\+\*]|\d+\.)(?<![-\+\*]|\d+\.).*"
                       #"(?<!`)`(?!`).+?(?<!`)`(?!`)"
                       #"``.+?``"}
               :blockquote #">.*"
@@ -104,3 +103,18 @@ return the default style."
 (plugin/defplugin lab.plugin.markdown.lang
   :type  :global
   :init! init!)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Code for testing out the grammar
+
+(comment
+
+(let [txt "		- This caused an ambiguous match."]
+  (-> (doc/document markdown)
+    (doc/insert 0 txt)
+    lang/parse-tree
+    clojure.pprint/pprint))
+
+)
+
+
