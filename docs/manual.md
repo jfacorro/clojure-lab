@@ -14,7 +14,7 @@ At any moment, you can get a list of the commands available by pressing <kbd>F1<
 
 ## File Explorer
 
-This control allows you to browse and open any number of directories, which will be added as items and will let you access in a quick and practical way to the files you will be working with. To add a directory simply press <kbd>Ctrl</kbd>+<kbd>D</kbd> or the button **Add dir** on the top of the control. 
+This control allows you to browse and open any number of directories, which will be added as items and will let you access in a quick and practical way, the files you will be working with. To add a directory simply press <kbd>Ctrl</kbd>+<kbd>D</kbd> or the button **Add dir** on the top of the control. 
 
 ![][file-explorer]
 
@@ -30,4 +30,4 @@ Appart from being able to open a file through a traditional file dialog, the **F
   [help]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/help.png
   [file-explorer]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer.png
   [file-explorer-remove]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer-remove.png
-  [file-explorer-search-open.png]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer-search-open.png
+  [file-explorer-search-open]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer-search-open.png
