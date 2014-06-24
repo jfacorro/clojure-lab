@@ -38,7 +38,8 @@
 
 (defn keymap
   "Takes a name that should be a symbol or a keyword, a type (:global,
-  :lang or :local) and any number of commands that are added as key-bindings."
+  :lang or :local) and any number of commands are added with their 
+  corresponding keystrokes."
   [name type & [lang & lang-cmds :as cmds]]
   (let [km {:id (generate-id) 
             :name name 
