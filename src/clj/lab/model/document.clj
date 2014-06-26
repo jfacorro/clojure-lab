@@ -215,6 +215,14 @@ buffer."
     (-> (reduce f doc limits)
       (archive-operations ops))))
 
+(defn switch-lang [doc lang]
+  (let [txt (text doc)]
+    (-> doc
+      (assoc 
+        :lang lang
+        :buffer (default-buffer lang))
+      (insert 0 txt))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; New documents name generation
 

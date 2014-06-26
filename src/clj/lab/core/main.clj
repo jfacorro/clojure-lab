@@ -168,9 +168,10 @@ associated to it."
         cur-dir (lab/config @app :current-dir)
         result  (assign-path! app doc cur-dir)]
     (when (:path @doc)
-        (ui/update! ui (ui/id= tab-id)
-                    update-tab-title (:name @doc))
-        (swap! app lab/save-document doc))
+      (ui/update! ui (ui/id= tab-id)
+        update-tab-title (:name @doc))
+      (swap! app lab/save-document doc)
+      (lab/load-lang-plugins! app doc))
     result))
 
 (defn- save-document-menu

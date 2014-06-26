@@ -86,6 +86,7 @@ they exist."
     (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
     (log/info "Loaded plugin " plugin-name)
     (when (register-plugin! app plugin)
+      (log/info "Registered plugin " plugin-name)
       (when hooks
         (add-hooks! hooks plugin-name))
       (when init!

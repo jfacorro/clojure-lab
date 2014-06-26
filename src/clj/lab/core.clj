@@ -209,9 +209,16 @@ documents collection."
 (defn save-document
   "Saves a document to a file."
   [app doc]
-  (when doc
-    (swap! doc doc/save))
-  (config app :current-dir (:path @doc)))
+  (if doc
+    (let [langs (-> app :langs vals)
+          default (default-lang app)
+          path (:path @doc)
+          lang (lang/resolve-lang path langs default)]
+      (when-not (= lang default)
+        (swap! doc doc/switch-lang lang))
+      (swap! doc doc/save)
+      (config app :current-dir (:path @doc)))
+    app))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Configuration
