@@ -53,6 +53,10 @@ An executable `lab.jar` file can be generated through the use of the `lein build
 Since Clojure Lab is still under development there's no download yet, sorry about that.
 Once some issues are solved I'll add a link to a runnable JAR.
 
+## User Guide
+
+There's a small user manual/guide that shows how to start using **Clojure Lab** [here][8].
+
 ## Features
 
 Most of the features in the following list were extracted from the post [The Ideal Clojure Development Environment][1]:
@@ -109,3 +113,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
   [5]: http://www.lighttable.com/
   [6]: http://www.gnu.org/software/emacs/
   [7]: http://joyofclojure.com/
+  [8]: https://github.com/jfacorro/clojure-lab/blob/master/docs/manual.md
