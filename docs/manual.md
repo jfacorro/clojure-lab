@@ -32,9 +32,9 @@ Every document has a language associated to it, the default language for a new d
 
 Languages are currently assigned solely based on the document's path extension, `.md` for **Markdown** and `.clj` or `.cljs` for **Clojure**. The following image shows the looks of a Markdown and a Clojure file being edited.
 
-![][editing-markdown =200x]
+![][editing-markdown]
 
-![][editing-clojure =200x]
+![][editing-clojure]
 
 It's worth repeating that while editing your documents you can get a quick reminder of all available commands by pressing <kbd>F1</kbd>.
 
@@ -43,3 +43,5 @@ It's worth repeating that while editing your documents you can get a quick remin
   [file-explorer]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer.png
   [file-explorer-remove]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer-remove.png
   [file-explorer-search-open]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/file-explorer-search-open.png
+  [editing-markdown]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/editing-markdown.png
+  [editing-clojure]: https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/editing-clojure.png
