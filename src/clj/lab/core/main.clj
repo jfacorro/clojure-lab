@@ -506,7 +506,7 @@ inserting a fixed first parameter, which is the app."
      [:split {:id "top-bottom"
               :orientation :vertical
               :resize-weight 1}
-      [:split {:id "left-center-right"
+      [:split {:id "left-center"
                :resize-weight 0
                :divider-location 150}
        [:tabs {:id "left" :border :none}]

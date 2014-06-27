@@ -67,7 +67,11 @@
                (ui/update :text-editor ui/attr :text html))]
     (when-not (ui/find @ui :#html-preview)
       (ui/action
-        (ui/update! ui :#right ui/add tab)))))
+        (ui/update! ui :#center-right
+          (fn [x]
+            (-> x
+              (ui/update-attr :divider-location (constantly 0.5))
+              (ui/update :#right ui/add tab))))))))
 
 (def ^:private keymaps
   [(km/keymap "Markdown"

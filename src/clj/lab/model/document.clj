@@ -217,11 +217,12 @@ buffer."
 
 (defn switch-lang [doc lang]
   (let [txt (text doc)]
-    (-> doc
-      (assoc 
-        :lang lang
-        :buffer (default-buffer lang))
-      (insert 0 txt))))
+    (h/with-no-history
+      (-> doc
+        (assoc 
+          :lang lang
+          :buffer (default-buffer lang))
+        (insert 0 txt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; New documents name generation
