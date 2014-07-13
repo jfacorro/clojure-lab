@@ -406,7 +406,7 @@ nodes in the first level."
                  :make-node #'make-node}
      :grammar   grammar
      :rank      (fn [x]
-                  (->> ["clj" "cljs"]
+                  (->> ["clj" "cljs" "cljx"]
                     (map #(lang/file-extension? % x))
                     (apply max)))
      :styles    #(styles % (:default styles))
