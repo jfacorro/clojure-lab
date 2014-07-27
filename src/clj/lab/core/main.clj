@@ -481,7 +481,7 @@ inserting a fixed first parameter, which is the app."
                  :caret-color 0xFFFFFF}
    :panel       {:background 0x666666
                  :layout :border}
-   :split       {:divider-size 2
+   :split       {:divider-size 5
                  :background 0x666666
                  :divider-background 0x666666}
    :tabs        {:selected-tab-style   {:border [:line 0x99FFFF [0 0 2 0]]}
@@ -490,7 +490,7 @@ inserting a fixed first parameter, which is the app."
                  ; a :split are drawn with a white line on top
                  :padding [-2 0 0 0]}
    [:#nrepl :split]
-                {:divider-size 2
+                {:divider-size 5
                  :divider-background 0x99FFFF}])
 
 (defn app-view [title]
