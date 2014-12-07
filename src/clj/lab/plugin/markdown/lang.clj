@@ -66,23 +66,27 @@ return the default style."
 
 (defn- wrap-in
   "Wraps the current selection in the delim."
-  [delim {:keys [app source] :as e}]
-  (let [ui (:ui @app)
-        [s e] (ui/selection source)
-        txt   (model/substring source s e)]
-    (ui/action
-      (doc/bundle-operations
-        (when (not= s e)
-          (model/delete source s e))
-        (model/insert source s (str delim txt delim)))
-      (ui/caret-position source (- (ui/caret-position source) (count delim))))))
+  ([delim e]
+    (wrap-in delim delim e))
+  ([delim-begin delim-end {:keys [app source] :as e}]
+    (let [ui (:ui @app)
+          [start end] (ui/selection source)
+          txt   (model/substring source start end)]
+      (ui/action
+        (doc/bundle-operations
+          (when (not= start end)
+            (model/delete source start end))
+          (model/insert source start (str delim-begin txt delim-end)))
+        (ui/caret-position source (- (ui/caret-position source) (count delim-end)))))))
 
 (def ^:private keymap
    (km/keymap "Markdown"
      :lang :markdown
      {:fn (partial #'wrap-in "`") :keystroke "ctrl k" :name "Code Snippet"}
      {:fn (partial #'wrap-in "**") :keystroke "ctrl b" :name "Bold"}
-     {:fn (partial #'wrap-in "*") :keystroke "ctrl i" :name "Italic"}))
+     {:fn (partial #'wrap-in "*") :keystroke "ctrl i" :name "Italic"}
+     {:fn (partial #'wrap-in "<kbd> " " </kbd>") :keystroke "alt k" :name "Keystroke"}
+     {:fn (partial #'wrap-in "[" "]( )") :keystroke "alt l" :name "Link"}))
 
 (def markdown
   {:id       :markdown
