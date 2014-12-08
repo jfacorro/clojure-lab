@@ -4,7 +4,7 @@
                  [org.clojure/core.match "0.2.1"]
                  [org.clojure/core.async "0.1.267.0-0d7780-alpha"]
 
-                 [net.cgrand/parsley "0.9.2"]
+                 [net.cgrand/parsley "0.9.2" :exclusions [org.clojure/clojure]]
                  [popen "0.3.0"]
                  [leiningen "2.3.4"]
                  [org.clojure/tools.nrepl "0.2.3"]
