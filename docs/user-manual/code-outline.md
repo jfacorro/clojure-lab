@@ -2,7 +2,7 @@ This control shows you an overview of the elements defined in the file you are w
 
 In order to enable **Code Outline** for the current file, press the <kbd> Alt </kbd> + <kbd> O </kbd> key combination or click on the menu item **View > Outline**. This will display a new tab in the right section of the application, in which you will be able to see a list. 
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/outline-open.png" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/outline-open.png" />
 
 Every item in that list corresponds to an element defined in the contents of the associated file.
 
@@ -12,7 +12,7 @@ Having a **Code Outline** is particularly useful when working with large files s
 
 In order to get the cursor in the position where the definition of each element is, double-click on the item or select it and press the <kbd> Enter </kbd> key.
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/outline-position.png" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/outline-position.png" />
 
 ## Finding an Element
 
