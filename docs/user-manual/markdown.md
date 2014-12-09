@@ -11,7 +11,7 @@ Support for **Markdown** in **Clojure Lab** includes:
 
 This feature is always useful for identifying the different elements in the file visually. It is implemented as part of the **Markdown** language so you don't need to do anything in order to enable it.
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/markdown-syntax-hl.png" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/markdown-syntax-hl.png" />
 
 ## Shortcuts
 
@@ -29,7 +29,7 @@ When there is no text selected each shortcut simply inserts the delimiters for e
 
 When the **Code Outline** control is activated on a **Markdown** file, the elements displayed as the items in the list are all the titles present. The following is an example of the interaction between a file and the **Code Outline** control.
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/markdown-code-outline.png" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/markdown-code-outline.png" />
 
 As mentioned in the [Code Outline](Code-Outline) page, the list is always synchronized with the contents of the file.
 
@@ -37,6 +37,6 @@ As mentioned in the [Code Outline](Code-Outline) page, the list is always synchr
 
 It is possible for you to get an HTML preview of your **Markdown** files by pressing the keys <kbd> Ctrl </kbd> + <kbd> P </kbd> while editing the file. This will open a tab in the right section of the application which will show you the preview. 
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/markdown-preview.png" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/markdown-preview.png" />
 
 Just as the **Code Outline** is always up to date with the latest changes of the file, the preview is synchronized with its contents as well.

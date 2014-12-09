@@ -2,11 +2,11 @@ The **Editor** is the control you use to modify the content of your files. In ge
 
 By default every editor shows the number of each line in your file, you can hide these by pressing <kbd> Ctrl </kbd> + <kbd> L </kbd>.
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/editor-no-line-numbers.png" /> 
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/editor-no-line-numbers.png" /> 
 
 And show them again using the same key combination.
 
-<img src="file:///home/jfacorro/dev/clojure-lab/docs/screenshots/editor-line-numbers.png" />
+<img src="https://raw.github.com/jfacorro/clojure-lab/master/docs/screenshots/editor-line-numbers.png" />
 
 ## Undoing and Redoing Changes
 
