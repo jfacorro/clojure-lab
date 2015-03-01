@@ -36,7 +36,7 @@ are applied their highlight."
   editor)
 
 (defn- text-editor-change! [e]
-  (if-not (= :change (:type e))
+  (when-not (= :change (:type e))
     (highlight! (:source e) true)))
 
 (defn- text-editor-init [editor]

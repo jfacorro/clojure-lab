@@ -81,7 +81,7 @@ check if its one of the registered symbols."
   "Parses the incremental buffer of a Document and returns the
 parse tree with the modified nodes marked with node group-id."
   ([doc]
-    (parse-tree doc nil))
+    (parse-tree doc (gensym "group-")))
   ([doc group-id]
     (binding [*node-group* group-id]
       (p/parse-tree doc))))

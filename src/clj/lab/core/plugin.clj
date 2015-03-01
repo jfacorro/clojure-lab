@@ -81,9 +81,10 @@ they exist."
   [app plugin-name & [reload]]
   (require [plugin-name :reload reload])
   (let [plugin-ns  (the-ns plugin-name)
+        plugin     (ns-resolve plugin-ns 'plugin)
+        _          (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
         {:keys [init! hooks keymaps] :as plugin}
-                   (->> (ns-resolve plugin-ns 'plugin) deref)]
-    (assert plugin (str "Couldn't find a plugin definition in " plugin-name "."))
+                   @plugin]
     (log/info "Loaded plugin " plugin-name)
     (when (register-plugin! app plugin)
       (log/info "Registered plugin " plugin-name)
