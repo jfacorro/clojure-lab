@@ -63,7 +63,7 @@
 (def ^:private keymaps
   [(km/keymap "Go to line"
      :global
-     {:category "Edit", :name "Go to Line" :fn ::goto-line! :keystroke "ctrl g"})])
+     {:category "Edit", :name "Go to Line" :fn ::goto-line! :keystroke "meta g"})])
 
 (defplugin lab.plugin.editor.go-to
   "Implements the functionality 'go to line of current documet'."

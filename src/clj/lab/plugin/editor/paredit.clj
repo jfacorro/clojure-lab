@@ -741,17 +741,17 @@ parentheses by deleting and inserting the modified substring.
      {:fn ::close-delimiter :keystroke "alt \"" :name "Close double quotes" :category "Basic Insertion"}
      {:fn ::comment-dwin :keystroke "alt ;" :name "Comment dwim" :category "Basic Insertion"}
      {:fn ::comment-toggle :keystroke "alt c" :name "Comment toggle" :category "Basic Insertion"}
-     {:fn ::insert-newline :keystroke "ctrl j" :name "Newline and indent" :category "Basic Insertion"}
+     {:fn ::insert-newline :keystroke "meta j" :name "Newline and indent" :category "Basic Insertion"}
      {:fn ::indent-line :keystroke "tab" :name "Indent line" :category "Basic Insertion"}
      ;; Deleting & Killing
      {:fn ::forward-delete :keystroke "delete" :name "Delete forward" :category "Deleting & Killing"}
      {:fn ::backward-delete :keystroke "back_space" :name "Delete backward" :category "Deleting & Killing"}
-     {:fn ::kill :keystroke "ctrl k" :name "Kill" :category "Deleting & Killing"}
+     {:fn ::kill :keystroke "meta k" :name "Kill" :category "Deleting & Killing"}
      {:fn ::forward-kill-word :keystroke "alt d" :name "Forward kill word" :category "Deleting & Killing"}
      {:fn ::backward-kill-word :keystroke "alt back_space" :name "Backward kill word" :category "Deleting & Killing"}
      ;; Movement & Navigation
-     {:fn ::backward :keystroke "ctrl alt b" :name "Backward" :category "Movement & Navigation"}
-     {:fn ::forward :keystroke "ctrl alt f" :name "Forward" :category "Movement & Navigation"}
+     {:fn ::backward :keystroke "meta alt b" :name "Backward" :category "Movement & Navigation"}
+     {:fn ::forward :keystroke "meta alt f" :name "Forward" :category "Movement & Navigation"}
      ;; Depth-Changing
      {:fn ::wrap-around :keystroke "alt (" :name "Wrap around" :category "Depth-Changing"}
      {:fn ::splice-sexp :keystroke "alt s" :name "Splice sexp" :category "Depth-Changing"}
@@ -759,10 +759,10 @@ parentheses by deleting and inserting the modified substring.
      {:fn ::splice-sexp-killing-forward :keystroke "alt down" :name "Splice sexp forward" :category "Depth-Changing"}
      {:fn ::raise-sexp :keystroke "alt r" :name "Raise sexp" :category "Depth-Changing"}
      ;; Barfage & Slurpage
-     {:fn ::forward-slurp-sexp :keystroke "ctrl right" :name "Forward Slurp" :category "Barfage & Slurpage"}
-     {:fn ::forward-barf-sexp :keystroke "ctrl left" :name "Forward Barf" :category "Barfage & Slurpage"}
-     {:fn ::backward-slurp-sexp :keystroke "ctrl alt left" :name "Backward Slurp" :category "Barfage & Slurpage"}
-     {:fn ::backward-barf-sexp :keystroke "ctrl alt right" :name "Backward Barf" :category "Barfage & Slurpage"})])
+     {:fn ::forward-slurp-sexp :keystroke "meta right" :name "Forward Slurp" :category "Barfage & Slurpage"}
+     {:fn ::forward-barf-sexp :keystroke "meta left" :name "Forward Barf" :category "Barfage & Slurpage"}
+     {:fn ::backward-slurp-sexp :keystroke "meta alt left" :name "Backward Slurp" :category "Barfage & Slurpage"}
+     {:fn ::backward-barf-sexp :keystroke "meta alt right" :name "Backward Barf" :category "Barfage & Slurpage"})])
 
 (plugin/defplugin (ns-name *ns*)
   :type    :local

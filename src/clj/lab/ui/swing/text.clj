@@ -9,11 +9,22 @@
             [lab.ui.swing [util :as util]
                           [event :as event]])
   (:import  [lab.ui.swing TextLineNumber LineHighlighter]
-            [javax.swing JTextArea JTextPane JTextField]
-            [javax.swing.text JTextComponent Document]
+            [javax.swing JTextArea JTextPane JTextField UIManager]
+            [javax.swing.text JTextComponent Document DefaultEditorKit]
             [javax.swing.event DocumentListener CaretListener]
             [javax.swing.text DefaultStyledDocument StyledDocument SimpleAttributeSet]
             [java.awt Color]))
+
+(defn copy-paste-cut [im-name]
+  (let [im (UIManager/get im-name)]
+    (.put im (util/keystroke "meta c") DefaultEditorKit/copyAction)
+    (.put im (util/keystroke "meta v") DefaultEditorKit/pasteAction)
+    (.put im (util/keystroke "meta x") DefaultEditorKit/cutAction)))
+
+(map copy-paste-cut ["TextField.focusInputMap"
+                     "TextPane.focusInputMap"
+                     "TextArea.focusInputMap"
+                     "FormattedTextField.focusInputMap"])
 
 (extend-type JTextComponent
   TextEditor

@@ -76,7 +76,7 @@
 (def ^:private keymaps
   [(km/keymap "Markdown"
      :local
-     {:keystroke "ctrl p" :fn ::show-preview :name "Html Preview"})])
+     {:keystroke "meta p" :fn ::show-preview :name "Html Preview"})])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; init!

@@ -5,7 +5,7 @@
             lab.util)
   (:import [javax.swing UIManager JComponent AbstractAction]
            [javax.swing.event DocumentEvent DocumentEvent$EventType CaretEvent]
-           [java.awt Dimension]
+           [java.awt Dimension Toolkit]
            [java.awt.event InputEvent
                            KeyEvent
                            MouseEvent MouseWheelEvent
@@ -129,7 +129,8 @@ latest version."
 (def ^:private input-modifiers
   {:alt    InputEvent/ALT_MASK    
    :shift  InputEvent/SHIFT_MASK
-   :ctrl   InputEvent/CTRL_MASK})
+   :ctrl   InputEvent/CTRL_MASK
+   :meta   (.. Toolkit getDefaultToolkit getMenuShortcutKeyMask)})
 
 (def input-event
   {:to-map  (fn [^InputEvent this] {:modifiers (flag-modifiers input-modifiers (.getModifiers this))})
@@ -192,7 +193,8 @@ latest version."
 (def action-modifiers
   {:alt   ActionEvent/ALT_MASK
    :ctrl  ActionEvent/CTRL_MASK
-   :shift ActionEvent/SHIFT_MASK})
+   :shift ActionEvent/SHIFT_MASK
+   :meta   (.. Toolkit getDefaultToolkit getMenuShortcutKeyMask)})
 
 (def action-event
   {:to-map (fn [^ActionEvent this]

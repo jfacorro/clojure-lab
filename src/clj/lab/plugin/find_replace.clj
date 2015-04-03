@@ -294,10 +294,10 @@ with the id specified."
 (def ^:private keymaps
   [(km/keymap "Find & Replace"
      :global
-     {:category "Edit" :fn ::show-find :keystroke "ctrl f" :name "Find"}
+     {:category "Edit" :fn ::show-find :keystroke "meta f" :name "Find"}
      {:category "Edit" :fn ::show-find-in-files :keystroke "alt f" :name "Find in Files"}
      {:category "Edit" :fn ::find-next :keystroke "f3" :name "Find Next"}
-     {:category "Edit" :fn ::show-replace :keystroke "ctrl h" :name "Replace"})])
+     {:category "Edit" :fn ::show-replace :keystroke "meta h" :name "Replace"})])
 
 (plugin/defplugin lab.plugin.find-replace
   :type    :global

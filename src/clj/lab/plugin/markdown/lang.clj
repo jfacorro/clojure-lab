@@ -80,9 +80,9 @@ return the default style."
 (def ^:private keymap
    (km/keymap "Markdown"
      :lang :markdown
-     {:fn (partial #'wrap-in "`") :keystroke "ctrl k" :name "Code Snippet"}
-     {:fn (partial #'wrap-in "**") :keystroke "ctrl b" :name "Bold"}
-     {:fn (partial #'wrap-in "*") :keystroke "ctrl i" :name "Italic"}))
+     {:fn (partial #'wrap-in "`") :keystroke "meta k" :name "Code Snippet"}
+     {:fn (partial #'wrap-in "**") :keystroke "meta b" :name "Bold"}
+     {:fn (partial #'wrap-in "*") :keystroke "meta i" :name "Italic"}))
 
 (def markdown
   {:id       :markdown

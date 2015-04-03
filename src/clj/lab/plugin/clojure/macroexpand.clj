@@ -49,7 +49,7 @@
 (def ^:private keymaps
   [(km/keymap "Macroexpand"
      :local
-     {:keystroke "ctrl alt enter" :fn ::macroexpansion :name "Inline macroexpansion"})])
+     {:keystroke "meta alt enter" :fn ::macroexpansion :name "Inline macroexpansion"})])
 
 (defplugin ::plugin
   :type :local
