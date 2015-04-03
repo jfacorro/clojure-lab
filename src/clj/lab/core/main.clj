@@ -241,7 +241,7 @@ and signals the highlighting process."
 ;; Change font size
 
 (defn change-font-size [e]
-  (when (contains? (:modifiers e) :ctrl)
+  (when (contains? (:modifiers e) :meta)
     (let [app    (:app e)
           ui     (:ui @app)
           id     (-> (ui/find (:source e) :text-editor) (ui/attr :id))
@@ -526,17 +526,17 @@ inserting a fixed first parameter, which is the app."
 (def ^:private keymaps
   [(km/keymap "Basic Commands"
      :global
-     {:category "File", :name "New", :fn ::new-document, :keystroke "ctrl n"}
-     {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "ctrl o"}
-     {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "ctrl w"}
-     {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "ctrl s"}
-     {:category "File", :name "Quit", :fn ::exit!, :keystroke "ctrl q"}
+     {:category "File", :name "New", :fn ::new-document, :keystroke "meta n"}
+     {:category "File", :name "Open", :fn ::open-document-menu, :keystroke "meta o"}
+     {:category "File", :name "Close", :fn ::close-document-menu, :keystroke "meta w"}
+     {:category "File", :name "Save", :fn ::save-document-menu, :keystroke "meta s"}
+     {:category "File", :name "Quit", :fn ::exit!, :keystroke "meta q"}
      
      {:category "View", :name "Fullscreen", :fn ::toggle-fullscreen, :keystroke "f4"}
-     {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "ctrl l"}
+     {:category "View", :name "Show/Hide Line Numbers", :fn ::toggle-line-numbers, :keystroke "meta l"}
      {:category "View", :name "Word Wrap", :fn ::toggle-word-wrap}
-     {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "ctrl tab"}
-     {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "ctrl alt tab"})])
+     {:category "View", :name "Next tab", :fn ::next-tab, :keystroke "meta tab"}
+     {:category "View", :name "Prev tab", :fn ::prev-tab, :keystroke "meta alt tab"})])
 
 (defn- init!
   "Builds the basic UI and adds it to the app under the key :ui."

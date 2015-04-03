@@ -92,7 +92,7 @@
 
 (def ^:private keymap
   (km/keymap "Rainbow Delimiters" :local
-    {:fn ::toogle-rainbow :keystroke "ctrl p" :name "Toogle Rainbow Delimiters"}))
+    {:fn ::toogle-rainbow :keystroke "meta p" :name "Toogle Rainbow Delimiters"}))
 
 (defn init! [app]
   (let [ui     (:ui @app)

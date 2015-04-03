@@ -187,12 +187,12 @@ child process with a running repl."
 (def ^:private keymaps
   [(km/keymap "REPL"
      :global
-     {:category "Clojure > REPL" :name "Project" :fn ::open-project-repl! :keystroke "ctrl r"}
-     {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "ctrl alt r"}
+     {:category "Clojure > REPL" :name "Project" :fn ::open-project-repl! :keystroke "meta r"}
+     {:category "Clojure > REPL" :name "New" :fn ::open-repl! :keystroke "meta alt r"}
      {:category "Clojure > REPL" :name "Lab" :fn ::open-lab-repl!})
    (km/keymap "REPL"
      :lang :clojure
-     {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"})])
+     {:category "Clojure > REPL" :name "Eval" :fn ::eval-code! :keystroke "meta enter"})])
 
 (plugin/defplugin lab.plugin.clojure.repl
   :type  :global

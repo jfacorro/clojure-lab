@@ -28,8 +28,8 @@
 (def ^:private keymaps
   [(km/keymap "Undo/Redo"
      :global
-     {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "ctrl z"}
-     {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "ctrl y"})])
+     {:category "Edit", :name "Undo", :fn ::undo!, :keystroke "meta z"}
+     {:category "Edit", :name "Redo", :fn ::redo!, :keystroke "meta y"})])
 
 (defplugin lab.core.main
   "Provides the global commands for undo and redo operations."

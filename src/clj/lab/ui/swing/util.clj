@@ -354,7 +354,7 @@ can be a single value or a collection specifying:
   "Returns a swing key stroke based on the string provided."
   [^String s]
   (let [s (->> (.split s " ")
-            (map #(if-not (#{"ctrl" "shift" "alt"} %) (.toUpperCase ^String %) %))
+            (map #(if-not (#{"ctrl" "shift" "alt" "meta"} %) (.toUpperCase ^String %) %))
             (interpose " ")
             (apply str))]
     (KeyStroke/getKeyStroke ^String s)))

@@ -308,9 +308,9 @@ input editor."
 (def ^:private console-keymap
   (km/keymap "nREPL Console"
     :local
-    {:keystroke "ctrl enter" :fn ::console-eval-input! :name "Eval"}
-    {:keystroke "ctrl up" :fn ::console-prev-history! :name "Prev History"}
-    {:keystroke "ctrl down" :fn ::console-next-history! :name "Next History"}))
+    {:keystroke "meta enter" :fn ::console-eval-input! :name "Eval"}
+    {:keystroke "meta up" :fn ::console-prev-history! :name "Prev History"}
+    {:keystroke "meta down" :fn ::console-next-history! :name "Next History"}))
 
 (defn- console-view
   [conn-id]
@@ -452,14 +452,14 @@ an nREPL client that connects to that server."
 (def ^:private keymaps
   [(km/keymap "nREPL"
      :global
-     {:category "Clojure > nREPL" :name "Start and Connect to Project" :fn ::start-and-connect-to-project! :keystroke "ctrl r"}
-     {:category "Clojure > nREPL" :name "Start and Connect to REPL" :fn ::start-and-connect-to-repl! :keystroke "ctrl alt r"}
+     {:category "Clojure > nREPL" :name "Start and Connect to Project" :fn ::start-and-connect-to-project! :keystroke "meta r"}
+     {:category "Clojure > nREPL" :name "Start and Connect to REPL" :fn ::start-and-connect-to-repl! :keystroke "meta alt r"}
      
      {:category "Clojure > nREPL" :name "Connect" :fn ::connect-to-server!})
    (km/keymap "nREPL"
      :lang :clojure
-     {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "ctrl enter"}
-     {:category "Clojure > nREPL" :name "Documentation string" :fn ::inline-info :keystroke "ctrl i"})])
+     {:category "Clojure > nREPL" :name "Eval" :fn ::eval-code! :keystroke "meta enter"}
+     {:category "Clojure > nREPL" :name "Documentation string" :fn ::inline-info :keystroke "meta i"})])
 
 (defn- init!
   [app]
